@@ -1,59 +1,48 @@
-import type { PropsWithChildren, ReactNode } from "react";
-import { useState, useRef, useEffect } from "react";
-import { cn } from "@/lib/utils";
+"use client"
 
-interface PopoverProps extends PropsWithChildren {
-  trigger: ReactNode;
-  align?: "start" | "end" | "center";
-  className?: string;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
+
+import { cn } from "@/lib/utils"
+
+function Popover({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }
 
-export function Popover({ trigger, children, align = "start", className, open: controlledOpen, onOpenChange }: PopoverProps) {
-  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
-  const open = controlledOpen ?? uncontrolledOpen;
-  const ref = useRef<HTMLDivElement | null>(null);
+function PopoverTrigger({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+}
 
-  useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      if (!ref.current?.contains(event.target as Node)) {
-        setUncontrolledOpen(false);
-        onOpenChange?.(false);
-      }
-    };
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, []);
-
+function PopoverContent({
+  className,
+  align = "center",
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => {
-          const next = !open;
-          setUncontrolledOpen(next);
-          onOpenChange?.(next);
-        }}
-        className="w-full"
-      >
-        {trigger}
-      </button>
-      {open ? (
-        <div
-          className={cn(
-            "absolute z-40 mt-2 min-w-[200px] rounded-xl border border-border bg-card p-3 shadow-xl",
-            align === "start" && "left-0",
-            align === "end" && "right-0",
-            align === "center" && "left-1/2 -translate-x-1/2",
-            className
-          )}
-        >
-          {children}
-        </div>
-      ) : null}
-    </div>
-  );
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        data-slot="popover-content"
+        align={align}
+        sideOffset={sideOffset}
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-md border p-4 shadow-md outline-hidden",
+          className
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
+  )
 }
 
-Popover.displayName = "popover";
+function PopoverAnchor({
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />
+}
+
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }

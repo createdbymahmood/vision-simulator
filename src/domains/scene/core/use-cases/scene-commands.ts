@@ -7,6 +7,7 @@ import type {
   SceneSnapshot,
   SceneState,
   ShapeEntity,
+  SelectionKind,
   WallSegment,
 } from "../types";
 
@@ -20,6 +21,14 @@ type EntityMap = {
   areas: AreaEntity;
 };
 
+const selectionKindFromKey: Record<EntityCollectionKey, SelectionKind["kind"]> = {
+  walls: "wall",
+  shapes: "shape",
+  cameras: "camera",
+  people: "person",
+  areas: "area",
+};
+
 function clone<T>(value: T): T {
   return structuredClone(value);
 }
@@ -31,11 +40,13 @@ function makeAddCommand<K extends EntityCollectionKey>(
   return {
     label: `add-${key}`,
     redo: (state) => {
-      (state[key] as EntityMap[K][]).push(clone(entity));
-      state.selected = { kind: key.slice(0, -1) as any, id: entity.id };
+      const collection = state[key] as EntityMap[K][];
+      collection.push(clone(entity));
+      state.selected = { kind: selectionKindFromKey[key], id: entity.id };
     },
     undo: (state) => {
-      state[key] = (state[key] as EntityMap[K][]).filter((item) => item.id !== entity.id) as any;
+      const collection = state[key] as EntityMap[K][];
+      state[key] = collection.filter((item) => item.id !== entity.id) as SceneState[K];
       if (state.selected && "id" in state.selected && state.selected.id === entity.id) {
         state.selected = null;
       }
@@ -51,13 +62,15 @@ function makeRemoveCommand<K extends EntityCollectionKey>(
   return {
     label: `remove-${key}`,
     redo: (state) => {
-      state[key] = (state[key] as EntityMap[K][]).filter((item) => item.id !== id) as any;
+      const collection = state[key] as EntityMap[K][];
+      state[key] = collection.filter((item) => item.id !== id) as SceneState[K];
       if (state.selected && "id" in state.selected && state.selected.id === id) {
         state.selected = null;
       }
     },
     undo: (state) => {
-      (state[key] as EntityMap[K][]).push(clone(previous));
+      const collection = state[key] as EntityMap[K][];
+      collection.push(clone(previous));
     },
   };
 }
@@ -73,11 +86,12 @@ function makeUpdateCommand<K extends EntityCollectionKey>(
     redo: (state) => {
       const list = state[key] as EntityMap[K][];
       const next = list.map((item) => (item.id === id ? { ...item, ...patch } : item));
-      state[key] = next as any;
+      state[key] = next as SceneState[K];
     },
     undo: (state) => {
       const list = state[key] as EntityMap[K][];
-      state[key] = list.map((item) => (item.id === id ? clone(previous) : item)) as any;
+      const restored = list.map((item) => (item.id === id ? clone(previous) : item));
+      state[key] = restored as SceneState[K];
     },
   };
 }

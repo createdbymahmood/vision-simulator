@@ -57,13 +57,6 @@ Examples (choose ONE — do not blend):
 
 Partial commitment is worse than a bold wrong choice.
 
-> **Rule**
-> No “safe modern SaaS.”
-> No neutral-everything dashboards.
-> No default shadcn visual language.
-
----
-
 ### 3. Define the Hook
 
 Answer internally:

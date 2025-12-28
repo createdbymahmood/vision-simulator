@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCallbackRef } from "@radix-ui/react-use-callback-ref";
-import { Box, Map as MapIcon, ScanLine, Save } from "lucide-react";
-import { Tabs } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Box, Map as MapIcon, ScanLine } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToastProvider, useToast } from "@/components/ui/toast";
 import {
   SceneStoreProvider,
@@ -52,39 +50,25 @@ function AppShell() {
   return (
     <div className="min-h-screen bg-background/60 px-6 py-6 text-foreground">
       <div className="mx-auto flex max-w-screen-2xl flex-col gap-4">
-        <header className="flex items-center justify-between rounded-3xl border border-border/70 bg-gradient-to-r from-card/90 via-card/70 to-card/90 px-6 py-4 shadow-xl backdrop-blur">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-lg font-semibold text-primary shadow-inner shadow-primary/30">
-              CV
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold leading-tight">Simulation Analysis</h1>
-                <Badge variant="secondary">Live</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">• Click a person to select and show trail</p>
-              <p className="text-xs text-muted-foreground/80">{summary}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Tabs
-              value={view}
-              onValueChange={(v) => switchView(v as View)}
-              tabs={[
-                { value: "canvas", label: "Canvas", icon: <Box className="h-4 w-4" /> },
-                { value: "preview", label: "Preview", icon: <ScanLine className="h-4 w-4" /> },
-                { value: "map", label: "Map", icon: <MapIcon className="h-4 w-4" /> },
-              ]}
-            />
-            <Button variant="outline" onClick={onExport} className="gap-2">
-              <Save className="h-4 w-4" /> Export JSON
-            </Button>
-          </div>
-        </header>
+        <div className="flex items-center justify-between rounded-3xl border border-border/70 bg-card/80 px-6 py-3 shadow-sm">
+          <Tabs value={view} onValueChange={(v) => switchView(v as View)}>
+            <TabsList>
+              <TabsTrigger value="canvas" className="gap-1">
+                <Box className="h-4 w-4" /> Canvas
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="gap-1">
+                <ScanLine className="h-4 w-4" /> Preview
+              </TabsTrigger>
+              <TabsTrigger value="map" className="gap-1">
+                <MapIcon className="h-4 w-4" /> Map
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <p className="text-xs text-muted-foreground">{summary}</p>
+        </div>
 
         <main className="min-h-[78vh] rounded-3xl border border-border/70 bg-card/80 p-4 shadow-inner shadow-border/30 backdrop-blur">
-          {view === "canvas" ? <CanvasEditor onPreview={() => switchView("preview")} /> : null}
+          {view === "canvas" ? <CanvasEditor onPreview={() => switchView("preview")} onExport={onExport} /> : null}
           {view === "preview" ? <PreviewPanel /> : null}
           {view === "map" ? <MapEditor /> : null}
         </main>

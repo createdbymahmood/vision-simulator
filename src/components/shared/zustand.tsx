@@ -1,5 +1,5 @@
 import type { FC, PropsWithChildren } from "react";
-import { createContext, useContext, useRef } from "react";
+import { createContext, useContext, useMemo } from "react";
 import type { StateCreator, StoreApi } from "zustand";
 import { createStore } from "zustand";
 import { useStoreWithEqualityFn } from "zustand/traditional";
@@ -16,16 +16,8 @@ interface ZustandContextStore<
   getState: () => StoreApi<State> | null;
 }
 
-function useInitialStore<State extends object>(
-  initializer: () => StoreApi<State>
-): StoreApi<State> {
-  const storeRef = useRef<StoreApi<State> | null>(null);
-
-  if (!storeRef.current) {
-    storeRef.current = initializer();
-  }
-
-  return storeRef.current;
+function useInitialStore<State extends object>(initializer: () => StoreApi<State>): StoreApi<State> {
+  return useMemo(() => initializer(), [initializer]);
 }
 
 /**

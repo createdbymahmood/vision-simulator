@@ -34,6 +34,7 @@ Domain-first frontend guidance for React/TypeScript: carve features into domain 
 - Keep components tight (~150 lines or less). If a view gets bulky or has multiple sections, extract subcomponents.
 - Local-only pieces can live in the same file; reusable/complex pieces get their own file under `ui/`. Avoid 400–500 line components packed with Tailwind class strings.
 - Consolidate styling: use `clsx`/`cva` or small wrapper components instead of repeating long class lists.
+- Never ship oversized components: whenever a component grows past a sane size, split it into smaller pieces—inline subcomponents for local bits.
 
 ## Folder blueprint (React/TS)
 
