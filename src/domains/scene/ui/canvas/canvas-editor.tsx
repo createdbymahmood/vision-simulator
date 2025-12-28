@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { JSX } from "react";
 import { useCallbackRef } from "@radix-ui/react-use-callback-ref";
 import type { KonvaEventObject } from "konva/lib/Node";
@@ -30,19 +30,30 @@ interface DrawingShapeState {
 }
 
 function useStageSize(containerRef: React.RefObject<HTMLDivElement | null>) {
-  const [size, setSize] = useState({ width: 1200, height: 700 });
-  useEffect(() => {
-    const node = containerRef.current;
-    if (!node) return;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry?.contentRect) {
-        setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
-      }
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [containerRef]);
+  const fallbackHeight = Math.max(640, typeof window !== "undefined" ? window.innerHeight - 240 : 700);
+  const [size, setSize] = useState({ width: 1200, height: fallbackHeight });
+  const rafRef = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const width = containerRef.current?.clientWidth ?? size.width;
+      const height = Math.max(640, typeof window !== "undefined" ? window.innerHeight - 240 : size.height);
+      setSize((prev) => (prev.width === width && prev.height === height ? prev : { width, height }));
+    };
+
+    measure();
+    const onResize = () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(measure);
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [containerRef, size.height, size.width]);
+
   return size;
 }
 
@@ -283,7 +294,7 @@ export function CanvasEditor({ onPreview }: CanvasEditorProps) {
 
   return (
     <div className="flex h-full gap-3">
-      <div className="flex w-full flex-col gap-3" ref={containerRef}>
+      <div className="flex w-full flex-col gap-3" ref={containerRef} style={{ minHeight: "70vh" }}>
         <div className="sticky top-0 z-10 flex items-center justify-between rounded-2xl border border-border/70 bg-card/80 px-4 py-3 shadow-sm">
           <div className="flex items-center gap-2">
             <Badge variant={state.selectionMode ? "default" : "outline"}>Selection {state.selectionMode ? "On" : "Off"}</Badge>
@@ -324,7 +335,7 @@ export function CanvasEditor({ onPreview }: CanvasEditorProps) {
           <Stage
             ref={stageRef}
             width={Math.max(600, size.width - 20)}
-            height={Math.max(500, size.height - 40)}
+            height={Math.max(520, size.height - 80)}
             scaleX={1}
             scaleY={1}
             onWheel={handleWheel}
