@@ -4,3 +4,4 @@ export * from "./ui/scene-provider";
 export * from "./ui/scene-store";
 export * from "./ui/scene-layout";
 export * from "./ui/scene-history-store";
+export * from "./ui/canvas-editor";
