@@ -707,7 +707,7 @@ export const DrawingPreviewLine: React.FC<DrawingPreviewLineProps> = ({
   )
 }
 
-export const CameraVision: React.FC<CameraVisionProps> = ({points, scale}) => {
+export const CameraVision: React.FC<CameraVisionProps> = ({points}) => {
   if (!points.length) {
     return null
   }
@@ -715,16 +715,50 @@ export const CameraVision: React.FC<CameraVisionProps> = ({points, scale}) => {
     point.x * GRID_SIZE,
     point.y * GRID_SIZE,
   ])
+  const origin = points[0]
+  const farthest = points.reduce(
+    (max, point) => {
+      const dx = point.x - origin.x
+      const dy = point.y - origin.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      if (distance > max.distance) {
+        return {distance, point}
+      }
+      return max
+    },
+    {distance: 0, point: origin},
+  ).point
 
   return (
     <Line
       fill={DEFAULT_PREVIEW_COLOR}
+      fillRadialGradientStartRadius={0}
       listening={false}
       closed
-      opacity={0.15}
+      fillPriority='radial-gradient'
+      fillRadialGradientColorStops={[
+        0,
+        DEFAULT_PREVIEW_COLOR,
+        0.5,
+        DEFAULT_PREVIEW_COLOR,
+        1,
+        'rgba(56,189,248,0)',
+      ]}
+      fillRadialGradientEndPoint={{
+        x: origin.x * GRID_SIZE,
+        y: origin.y * GRID_SIZE,
+      }}
+      fillRadialGradientStartPoint={{
+        x: origin.x * GRID_SIZE,
+        y: origin.y * GRID_SIZE,
+      }}
+      opacity={0.35}
       points={konvaPoints}
-      stroke={DEFAULT_PREVIEW_COLOR}
-      strokeWidth={1.25 / scale}
+      strokeEnabled={false}
+      fillRadialGradientEndRadius={
+        Math.sqrt((farthest.x - origin.x) ** 2 + (farthest.y - origin.y) ** 2) *
+        GRID_SIZE
+      }
     />
   )
 }
