@@ -50,9 +50,12 @@ function ScenePersistenceBootstrap({
 
       if (existingScene) {
         setAutosaveStatus("saving");
-        await adapter.saveScene(existingScene);
-        markSceneSaved(Date.now());
-        setAutosaveStatus("idle");
+        try {
+          await adapter.saveScene(existingScene);
+          markSceneSaved(Date.now());
+        } finally {
+          setAutosaveStatus("idle");
+        }
       }
     });
     return () => {
@@ -87,8 +90,18 @@ export function SceneProvider({
     [persistence]
   );
 
+  const initialScene = useMemo(() => {
+    if ("loadSceneSync" in adapter) {
+      const stored = (adapter as ReturnType<typeof createLocalStorageSceneAdapter>).loadSceneSync();
+      if (stored) {
+        return stored;
+      }
+    }
+    return undefined;
+  }, [adapter]);
+
   return (
-    <sceneStore.Provider initialState={{}}>
+    <sceneStore.Provider initialState={{ scene: initialScene }}>
       <ScenePersistenceBootstrap adapter={adapter} />
       {children}
     </sceneStore.Provider>

@@ -9,26 +9,28 @@ function getStorage(): Storage | null {
 
 export function createLocalStorageSceneAdapter(
   key = DEFAULT_STORAGE_KEY
-): ScenePersistencePort {
+): ScenePersistencePort & { loadSceneSync: () => Scene | null } {
   const storageKey = key;
 
-  const loadScene = async (): Promise<Scene | null> => {
+  const loadSceneSync = (): Scene | null => {
     const storage = getStorage();
     if (!storage) {
       return null;
     }
-
     const raw = storage.getItem(storageKey);
     if (!raw) {
       return null;
     }
-
     try {
       return JSON.parse(raw) as Scene;
     } catch (error) {
       console.error("Failed to parse scene from storage", error);
       return null;
     }
+  };
+
+  const loadScene = async (): Promise<Scene | null> => {
+    return loadSceneSync();
   };
 
   const saveScene = async (scene: Scene): Promise<void> => {
@@ -53,5 +55,6 @@ export function createLocalStorageSceneAdapter(
     loadScene,
     saveScene,
     clearScene,
+    loadSceneSync,
   };
 }
