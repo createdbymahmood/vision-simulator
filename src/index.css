@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -103,43 +102,14 @@
 }
 
 @layer base {
-  body {
-    @apply bg-background text-foreground antialiased;
-    background-image: radial-gradient(
-        circle at 20% 20%,
-        color-mix(in oklch, var(--primary) 8%, transparent),
-        transparent 40%
-      ),
-      radial-gradient(
-        circle at 80% 0%,
-        color-mix(in oklch, var(--accent) 10%, transparent),
-        transparent 35%
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in oklch, var(--background) 100%, transparent),
-        color-mix(in oklch, var(--background) 95%, transparent)
-      );
-  }
-  h1,
-  h2,
-  h3,
-  h4 {
-    @apply font-semibold tracking-tight;
-    font-family: "Space Grotesk", "Public Sans", system-ui, -apple-system,
-      sans-serif;
-  }
-  code {
-    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-      Consolas, "Liberation Mono", "Courier New", monospace;
-  }
-}
-
-@layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: Geist, sans-serif;
+  }
+  ::selection {
+    @apply bg-muted-foreground/10 text-muted-foreground;
   }
 }
