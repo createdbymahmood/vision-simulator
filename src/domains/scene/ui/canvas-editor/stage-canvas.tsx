@@ -66,12 +66,19 @@ interface CanvasStageProps {
   onAddWall: (wall: SceneWall) => void
   onAddShape: (shape: SceneShape) => void
   onUpdateShape: (id: string, patch: Partial<SceneShape>) => void
+  onUpdateWall: (id: string, patch: Partial<SceneWall>) => void
   onUpdateCamera: (id: string, patch: Partial<SceneCamera>) => void
   onUpdatePerson: (id: string, patch: Partial<ScenePerson>) => void
   onAddCamera: (camera: SceneCamera) => void
   onAddPerson: (person: ScenePerson) => void
   onSelectEntity: (payload: {id: string; kind: SceneEntityKind} | null) => void
   onCloseOverlays: () => void
+}
+
+type WallDragSession = {
+  ids: string[]
+  initial: Record<string, SceneWall['coordinates']>
+  start: CanvasPoint
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -91,6 +98,7 @@ export function CanvasStage({
   onAddWall,
   onAddShape,
   onUpdateShape,
+  onUpdateWall,
   onUpdateCamera,
   onUpdatePerson,
   onAddCamera,
@@ -105,6 +113,7 @@ export function CanvasStage({
   )
   const [measurement, setMeasurement] = useState<CanvasMeasurement | null>(null)
   const [isPanning, setIsPanning] = useState(false)
+  const wallDragSession = useRef<WallDragSession | null>(null)
 
   useEffect(() => {
     if (size.width && size.height) {
@@ -387,6 +396,138 @@ export function CanvasStage({
     }
   })
 
+  const snapValue = useCallbackRef((value: number) => {
+    return snapEnabled ? Math.round(value) : value
+  })
+
+  const wallSharesEndpoint = useCallbackRef(
+    (a: SceneWall, b: SceneWall): boolean => {
+      const aPoints = [
+        {x: a.coordinates.x1, y: a.coordinates.y1},
+        {x: a.coordinates.x2, y: a.coordinates.y2},
+      ]
+      const bPoints = [
+        {x: b.coordinates.x1, y: b.coordinates.y1},
+        {x: b.coordinates.x2, y: b.coordinates.y2},
+      ]
+      return aPoints.some((aPt) =>
+        bPoints.some(
+          (bPt) =>
+            Math.abs(aPt.x - bPt.x) < 0.001 && Math.abs(aPt.y - bPt.y) < 0.001,
+        ),
+      )
+    },
+  )
+
+  const findConnectedWallIds = useCallbackRef(
+    (startId: string, walls: SceneWall[]): string[] => {
+      const startWall = walls.find((wall) => wall.id === startId)
+      if (!startWall) {
+        return [startId]
+      }
+      const visited = new Set<string>([startId])
+      const queue: SceneWall[] = [startWall]
+
+      while (queue.length) {
+        const current = queue.shift()
+        if (!current) {
+          continue
+        }
+        walls.forEach((wall) => {
+          if (visited.has(wall.id)) {
+            return
+          }
+          if (wallSharesEndpoint(current, wall)) {
+            visited.add(wall.id)
+            queue.push(wall)
+          }
+        })
+      }
+
+      return Array.from(visited)
+    },
+  )
+
+  const computeWallSession = useCallbackRef(
+    (wallId: string, start: CanvasPoint): WallDragSession => {
+      const ids = findConnectedWallIds(wallId, scene.walls)
+      const initial = ids.reduce<Record<string, SceneWall['coordinates']>>(
+        (acc, id) => {
+          const target = scene.walls.find((w) => w.id === id)
+          if (target) {
+            acc[id] = target.coordinates
+          }
+          return acc
+        },
+        {},
+      )
+      return {ids, initial, start}
+    },
+  )
+
+  const applyWallDelta = useCallbackRef((delta: CanvasPoint) => {
+    const session = wallDragSession.current
+    if (!session) {
+      return
+    }
+    session.ids.forEach((id) => {
+      const coords = session.initial[id]
+      if (!coords) {
+        return
+      }
+      const next = {
+        x1: snapValue(coords.x1 + delta.x),
+        y1: snapValue(coords.y1 + delta.y),
+        x2: snapValue(coords.x2 + delta.x),
+        y2: snapValue(coords.y2 + delta.y),
+      }
+      onUpdateWall(id, {coordinates: next})
+    })
+  })
+
+  const getPointerScenePoint = useCallbackRef(() => {
+    return pointFromStage(stageRef.current, offset, scale)
+  })
+
+  const beginWallDrag = useCallbackRef((wallId: string) => {
+    const pointer = getPointerScenePoint()
+    if (!pointer) {
+      return
+    }
+    wallDragSession.current = computeWallSession(wallId, pointer)
+  })
+
+  const updateWallDrag = useCallbackRef((wallId: string) => {
+    const pointer = getPointerScenePoint()
+    if (!pointer) {
+      return
+    }
+    const session =
+      wallDragSession.current ?? computeWallSession(wallId, pointer)
+    const deltaFromStart = {
+      x: pointer.x - session.start.x,
+      y: pointer.y - session.start.y,
+    }
+    wallDragSession.current = session
+    applyWallDelta(deltaFromStart)
+  })
+
+  const finishWallDrag = useCallbackRef((wallId: string) => {
+    const pointer = getPointerScenePoint()
+    if (!pointer) {
+      wallDragSession.current = null
+      return
+    }
+    const session =
+      wallDragSession.current ?? computeWallSession(wallId, pointer)
+    const deltaFromStart = {
+      x: pointer.x - session.start.x,
+      y: pointer.y - session.start.y,
+    }
+    applyWallDelta(deltaFromStart)
+    wallDragSession.current = null
+  })
+
   return (
     <div
       className='relative flex flex-1 overflow-hidden bg-white shadow-sm'
@@ -421,6 +562,9 @@ export function CanvasStage({
               key={wall.id}
               scale={scale}
               wall={wall}
+              onDragStart={() => beginWallDrag(wall.id)}
+              onDragMove={() => updateWallDrag(wall.id)}
+              onDragEnd={() => finishWallDrag(wall.id)}
               onSelect={() => onSelectEntity({id: wall.id, kind: 'wall'})}
               isSelected={
                 selection.selectedEntityId === wall.id &&
@@ -442,6 +586,7 @@ export function CanvasStage({
               shape={shape}
               onSelect={() => onSelectEntity({id: shape.id, kind: 'shape'})}
               onTransform={(next) => onUpdateShape(shape.id, next)}
+              snapEnabled={snapEnabled}
               isSelected={
                 selection.selectedEntityId === shape.id &&
                 selection.selectedEntityKind === 'shape'
@@ -467,6 +612,7 @@ export function CanvasStage({
                 opacity: 0.4,
                 lineThickness: 0.05,
               }}
+              snapEnabled={snapEnabled}
             />
           )}
           {scene.cameras.map((camera) => (
@@ -482,6 +628,7 @@ export function CanvasStage({
                 selection.selectedEntityId === camera.id &&
                 selection.selectedEntityKind === 'camera'
               }
+              snapEnabled={snapEnabled}
             />
           ))}
           {scene.people.map((person) => (
@@ -497,6 +644,7 @@ export function CanvasStage({
                 selection.selectedEntityId === person.id &&
                 selection.selectedEntityKind === 'person'
               }
+              snapEnabled={snapEnabled}
             />
           ))}
           {scene.areas.map((area) => (

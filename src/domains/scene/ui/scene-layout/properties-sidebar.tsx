@@ -37,7 +37,7 @@ export function PropertiesSidebar({
           </SheetDescription>
         </SheetHeader>
         {selected ? (
-          <div className='space-y-4'>
+          <div className='space-y-4 px-4'>
             <div className='text-sm font-medium'>
               {selected.id} ({(selected as {type?: string}).type ?? 'entity'})
             </div>

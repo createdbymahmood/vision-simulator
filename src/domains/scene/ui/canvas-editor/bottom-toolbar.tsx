@@ -1,5 +1,5 @@
 import {
-  ArrowLeftRightIcon,
+  BrickWall,
   CameraIcon,
   Circle,
   LineSquiggle,
@@ -48,7 +48,7 @@ export function CanvasBottomToolbar({
             </ToggleGroupItem>
 
             <ToggleGroupItem aria-label='Draw wall tool' value='wall'>
-              <ArrowLeftRightIcon className='size-5' />
+              <BrickWall className='size-5' />
             </ToggleGroupItem>
             <Popover>
               <PopoverTrigger asChild>

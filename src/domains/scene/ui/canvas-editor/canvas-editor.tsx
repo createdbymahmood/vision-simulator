@@ -46,6 +46,7 @@ export function CanvasEditor() {
   const selectEntity = useSceneStore((state) => state.selectEntity)
   const closeOverlays = useSceneStore((state) => state.closeOverlays)
   const addWall = useSceneStore((state) => state.addWall)
+  const updateWall = useSceneStore((state) => state.updateWall)
   const addShape = useSceneStore((state) => state.addShape)
   const updateShape = useSceneStore((state) => state.updateShape)
   const updateCamera = useSceneStore((state) => state.updateCamera)
@@ -183,6 +184,7 @@ export function CanvasEditor() {
           onOffsetChange={setOffset}
           onScaleChange={setScale}
           onSelectEntity={handleSelectEntity}
+          onUpdateWall={updateWall}
           onUpdateCamera={updateCamera}
           onUpdatePerson={updatePerson}
           onUpdateShape={updateShape}

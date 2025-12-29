@@ -1,3 +1,5 @@
+import type {KonvaEventObject} from 'konva/lib/Node'
+
 import {useEffect, useRef} from 'react'
 import {
   Circle,
@@ -28,19 +30,47 @@ export function WallSegment({
   scale,
   isSelected,
   onSelect,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
 }: {
   wall: SceneWall
   scale: number
   isSelected?: boolean
   onSelect?: () => void
+  onDragStart?: () => void
+  onDragMove?: (delta: CanvasPoint) => void
+  onDragEnd?: (delta: CanvasPoint) => void
 }) {
   return (
     <Line
       listening
       dash={isSelected ? [6, 4] : undefined}
+      draggable={Boolean(onDragEnd)}
       lineCap='round'
       lineJoin='round'
       onClick={onSelect}
+      onDragMove={(event: KonvaEventObject<DragEvent>) => {
+        if (!onDragMove) {
+          return
+        }
+        onDragMove({
+          x: event.target.x() / GRID_SIZE,
+          y: event.target.y() / GRID_SIZE,
+        })
+        event.target.position({x: 0, y: 0})
+      }}
+      onDragEnd={(event: KonvaEventObject<DragEvent>) => {
+        if (!onDragEnd) {
+          return
+        }
+        onDragEnd({
+          x: event.target.x() / GRID_SIZE,
+          y: event.target.y() / GRID_SIZE,
+        })
+        event.target.position({x: 0, y: 0})
+      }}
+      onDragStart={onDragStart}
       onTap={onSelect}
       opacity={wall.opacity}
       points={[
@@ -61,12 +91,14 @@ export function ShapeNode({
   scale,
   onSelect,
   onTransform,
+  snapEnabled,
 }: {
   shape: SceneShape
   isSelected: boolean
   scale: number
   onSelect: () => void
   onTransform: (next: Partial<SceneShape>) => void
+  snapEnabled: boolean
 }) {
   const shapeRef = useRef<any>(null)
   const transformerRef = useRef<any>(null)
@@ -120,8 +152,12 @@ export function ShapeNode({
           {...commonProps}
           onDragEnd={(event) => {
             onTransform({
-              x: event.target.x() / GRID_SIZE,
-              y: event.target.y() / GRID_SIZE,
+              x: snapEnabled
+                ? Math.round(event.target.x() / GRID_SIZE)
+                : event.target.x() / GRID_SIZE,
+              y: snapEnabled
+                ? Math.round(event.target.y() / GRID_SIZE)
+                : event.target.y() / GRID_SIZE,
             })
           }}
           onTransformEnd={(event) => {
@@ -168,8 +204,12 @@ export function ShapeNode({
           {...commonProps}
           onDragEnd={(event) => {
             onTransform({
-              x: event.target.x() / GRID_SIZE,
-              y: event.target.y() / GRID_SIZE,
+              x: snapEnabled
+                ? Math.round(event.target.x() / GRID_SIZE)
+                : event.target.x() / GRID_SIZE,
+              y: snapEnabled
+                ? Math.round(event.target.y() / GRID_SIZE)
+                : event.target.y() / GRID_SIZE,
             })
           }}
           onTransformEnd={(event) => {
@@ -214,8 +254,12 @@ export function ShapeNode({
           {...commonProps}
           onDragEnd={(event) => {
             onTransform({
-              x: event.target.x() / GRID_SIZE,
-              y: event.target.y() / GRID_SIZE,
+              x: snapEnabled
+                ? Math.round(event.target.x() / GRID_SIZE)
+                : event.target.x() / GRID_SIZE,
+              y: snapEnabled
+                ? Math.round(event.target.y() / GRID_SIZE)
+                : event.target.y() / GRID_SIZE,
             })
           }}
           onTransformEnd={(event) => {
@@ -262,8 +306,12 @@ export function ShapeNode({
         onDragEnd={(event) => {
           const target = event.target as any
           onTransform({
-            x: target.points()[0] / GRID_SIZE,
-            y: target.points()[1] / GRID_SIZE,
+            x: snapEnabled
+              ? Math.round(target.points()[0] / GRID_SIZE)
+              : target.points()[0] / GRID_SIZE,
+            y: snapEnabled
+              ? Math.round(target.points()[1] / GRID_SIZE)
+              : target.points()[1] / GRID_SIZE,
           })
         }}
         onTap={onSelect}
@@ -300,12 +348,14 @@ export function CameraNode({
   isSelected,
   onSelect,
   onMove,
+  snapEnabled,
 }: {
   camera: SceneCamera
   scale: number
   isSelected: boolean
   onSelect: () => void
   onMove: (point: CanvasPoint) => void
+  snapEnabled: boolean
 }) {
   return (
     <>
@@ -316,26 +366,30 @@ export function CameraNode({
         sides={3}
         x={camera.x * GRID_SIZE}
         y={camera.y * GRID_SIZE}
-        opacity={0.8}
-        rotation={camera.direction}
         onClick={onSelect}
-        onTap={onSelect}
         onDragEnd={(event) => {
           onMove({
-            x: event.target.x() / GRID_SIZE,
-            y: event.target.y() / GRID_SIZE,
+            x: snapEnabled
+              ? Math.round(event.target.x() / GRID_SIZE)
+              : event.target.x() / GRID_SIZE,
+            y: snapEnabled
+              ? Math.round(event.target.y() / GRID_SIZE)
+              : event.target.y() / GRID_SIZE,
           })
         }}
+        onTap={onSelect}
+        opacity={0.8}
+        rotation={camera.direction}
       />
       {isSelected && (
         <RegularPolygon
+          radius={16}
+          sides={3}
           x={camera.x * GRID_SIZE}
           y={camera.y * GRID_SIZE}
-          sides={3}
-          radius={16}
+          opacity={0.7}
           stroke={DEFAULT_PREVIEW_COLOR}
           strokeWidth={1.5 / scale}
-          opacity={0.7}
         />
       )}
     </>
@@ -348,12 +402,14 @@ export function PersonNode({
   isSelected,
   onSelect,
   onMove,
+  snapEnabled,
 }: {
   person: ScenePerson
   scale: number
   isSelected: boolean
   onSelect: () => void
   onMove: (point: CanvasPoint) => void
+  snapEnabled: boolean
 }) {
   return (
     <>
@@ -363,24 +419,28 @@ export function PersonNode({
         radius={person.radius * GRID_SIZE}
         x={person.x * GRID_SIZE}
         y={person.y * GRID_SIZE}
-        opacity={0.85}
         onClick={onSelect}
-        onTap={onSelect}
         onDragEnd={(event) => {
           onMove({
-            x: event.target.x() / GRID_SIZE,
-            y: event.target.y() / GRID_SIZE,
+            x: snapEnabled
+              ? Math.round(event.target.x() / GRID_SIZE)
+              : event.target.x() / GRID_SIZE,
+            y: snapEnabled
+              ? Math.round(event.target.y() / GRID_SIZE)
+              : event.target.y() / GRID_SIZE,
           })
         }}
+        onTap={onSelect}
+        opacity={0.85}
       />
       {isSelected && (
         <Circle
+          radius={person.radius * GRID_SIZE + 4}
           x={person.x * GRID_SIZE}
           y={person.y * GRID_SIZE}
-          radius={person.radius * GRID_SIZE + 4}
+          opacity={0.7}
           stroke={DEFAULT_PREVIEW_COLOR}
           strokeWidth={1.5 / scale}
-          opacity={0.7}
         />
       )}
     </>
