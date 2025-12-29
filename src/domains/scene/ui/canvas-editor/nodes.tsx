@@ -370,6 +370,8 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
           <Circle
             fill={fill}
             radius={(shape.width * GRID_SIZE) / 2}
+            x={(shape.width * GRID_SIZE) / 2}
+            y={(shape.length * GRID_SIZE) / 2}
             stroke={fill}
             strokeWidth={strokeWidth}
           />
@@ -377,6 +379,8 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
             <Circle
               dash={[6, 4]}
               radius={(shape.width * GRID_SIZE) / 2 + 4}
+              x={(shape.width * GRID_SIZE) / 2}
+              y={(shape.length * GRID_SIZE) / 2}
               stroke='#38bdf8'
               strokeWidth={1.5 / scale}
             />

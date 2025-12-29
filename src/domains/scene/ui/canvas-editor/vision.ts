@@ -45,9 +45,14 @@ const rectanglePoints = (shape: SceneShape): CanvasPoint[] => {
   return corners.map((corner) => rotatePoint(corner, center, shape.rotation))
 }
 
-const circlePoints = (shape: SceneShape, segments = 12): CanvasPoint[] => {
-  const radius = Math.max(shape.width, shape.length) / 2
-  const center = {x: shape.x + radius, y: shape.y + radius}
+const circlePoints = (shape: SceneShape, segments = 96): CanvasPoint[] => {
+  const radiusBase = Math.max(Math.min(shape.width, shape.length) / 2, 0.01)
+  const strokeAllowance = Math.max(shape.lineThickness ?? 0, 0) / 2
+  const radius = Math.max(radiusBase - strokeAllowance, 0.01)
+  const center = {
+    x: shape.x + shape.width / 2,
+    y: shape.y + shape.length / 2,
+  }
   return Array.from({length: segments}, (_, index) => {
     const angle = (index / segments) * Math.PI * 2
     return {
@@ -219,7 +224,7 @@ export const computeVisionPolygon = (
   const normalizeDelta = (angle: number) =>
     Math.atan2(Math.sin(angle - direction), Math.cos(angle - direction))
 
-  const sampleCount = Math.max(48, Math.ceil(clampedFov / 2.5))
+  const sampleCount = Math.max(120, Math.ceil(clampedFov / 1.5))
   const sampledDeltas = Array.from({length: sampleCount}, (_, index) => {
     const t = index / Math.max(sampleCount - 1, 1)
     return -halfFov + t * fovRadians

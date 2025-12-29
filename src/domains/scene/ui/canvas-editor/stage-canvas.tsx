@@ -679,6 +679,15 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       >
         <BackgroundLayer background={scene.background} />
         <CanvasGrid size={size} scale={scale} offset={offset} />
+        <Layer listening={false}>
+          {cameraVisions.map((vision) => (
+            <CameraVision
+              key={`vision-${vision.id}`}
+              scale={scale}
+              points={vision.points}
+            />
+          ))}
+        </Layer>
         <Layer>
           {scene.walls.map((wall) => (
             <WallSegment
@@ -718,13 +727,6 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
                 selection.selectedEntityId === shape.id &&
                 selection.selectedEntityKind === 'shape'
               }
-            />
-          ))}
-          {cameraVisions.map((vision) => (
-            <CameraVision
-              key={`vision-${vision.id}`}
-              scale={scale}
-              points={vision.points}
             />
           ))}
           {drawingShape && (
