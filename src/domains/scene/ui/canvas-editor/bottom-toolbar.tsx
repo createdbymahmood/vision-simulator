@@ -9,6 +9,7 @@ import {
   TriangleIcon,
   UserRoundIcon,
   WallpaperIcon,
+  HandIcon,
 } from 'lucide-react'
 
 import {Button} from '@/components/ui/button'
@@ -45,6 +46,9 @@ export function CanvasBottomToolbar({
           >
             <ToggleGroupItem aria-label='Select tool' value='select'>
               <MousePointer2Icon className='size-5' />
+            </ToggleGroupItem>
+            <ToggleGroupItem aria-label='Pan tool' value='pan'>
+              <HandIcon className='size-5' />
             </ToggleGroupItem>
 
             <ToggleGroupItem aria-label='Draw wall tool' value='wall'>

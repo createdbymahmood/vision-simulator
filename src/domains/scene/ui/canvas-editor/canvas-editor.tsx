@@ -55,7 +55,6 @@ export function CanvasEditor() {
   const addPerson = useSceneStore((state) => state.addPerson)
   const resetScene = useSceneStore((state) => state.resetScene)
   const hydrateScene = useSceneStore((state) => state.hydrateScene)
-  const autosave = useSceneStore((state) => state.autosave)
 
   const captureSnapshot = useSceneHistoryStore((state) => state.captureSnapshot)
   const undoSnapshot = useSceneHistoryStore((state) => state.undo)
@@ -67,16 +66,6 @@ export function CanvasEditor() {
   useEffect(() => {
     setSceneMode('canvas')
   }, [setSceneMode])
-
-  const autosaveLabel = useMemo(() => {
-    if (autosave.status === 'saving') {
-      return 'Autosaving…'
-    }
-    if (autosave.lastSavedAt) {
-      return `Saved ${new Date(autosave.lastSavedAt).toLocaleTimeString()}`
-    }
-    return 'Autosave ready'
-  }, [autosave.lastSavedAt, autosave.status])
 
   const activeShapeKindLabel = useMemo(() => {
     if (shapeTool === 'rectangle') return 'Rectangle'
@@ -153,9 +142,9 @@ export function CanvasEditor() {
   return (
     <div className='relative flex flex-col size-full'>
       <CanvasTopPanel
-        autosaveLabel={autosaveLabel}
         canRedo={Boolean(historyFuture.length)}
         canUndo={Boolean(historyPast.length)}
+        activeTool={activeTool}
         editMode={editMode}
         onClearBoard={() => setClearDialogOpen(true)}
         onExport={handleExport}

@@ -105,6 +105,7 @@ export type SceneEntity =
 export type SceneTool =
   | 'area'
   | 'camera'
+  | 'pan'
   | 'person'
   | 'select'
   | 'shape'

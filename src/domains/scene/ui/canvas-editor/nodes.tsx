@@ -177,7 +177,6 @@ export function ShapeNode({
           }
         }}
         onDragStart={() => {
-          onSelect()
           onInteractionStart?.()
         }}
         onDragEnd={(event) => {
@@ -188,7 +187,6 @@ export function ShapeNode({
           onInteractionEnd?.()
         }}
         onTransformStart={() => {
-          onSelect()
           onInteractionStart?.()
         }}
         onTransformEnd={(event) => {
@@ -243,7 +241,6 @@ export function ShapeNode({
           }
         }}
         onDragStart={() => {
-          onSelect()
           onInteractionStart?.()
         }}
         onDragEnd={(event) => {
@@ -254,7 +251,6 @@ export function ShapeNode({
           onInteractionEnd?.()
         }}
         onTransformStart={() => {
-          onSelect()
           onInteractionStart?.()
         }}
         onTransformEnd={(event) => {
@@ -307,7 +303,6 @@ export function ShapeNode({
           }
         }}
         onDragStart={() => {
-          onSelect()
           onInteractionStart?.()
         }}
         onDragEnd={(event) => {
@@ -318,7 +313,6 @@ export function ShapeNode({
           onInteractionEnd?.()
         }}
         onTransformStart={() => {
-          onSelect()
           onInteractionStart?.()
         }}
         onTransformEnd={(event) => {
@@ -372,7 +366,6 @@ export function ShapeNode({
         ref={shapeRef}
         onClick={onSelect}
         onDragStart={() => {
-          onSelect()
           onInteractionStart?.()
         }}
         onDragEnd={(event) => {

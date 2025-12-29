@@ -119,6 +119,7 @@ export function CanvasStage({
   const wallDragSession = useRef<WallDragSession | null>(null)
   const [isManipulating, setIsManipulating] = useState(false)
   const interactionCapturedRef = useRef(false)
+  const isPanTool = activeTool === 'pan'
 
   useEffect(() => {
     if (size.width && size.height) {
@@ -155,8 +156,11 @@ export function CanvasStage({
     if (activeTool === 'wall' || activeTool === 'shape') {
       return 'crosshair'
     }
+    if (isPanTool) {
+      return isPanning ? 'grabbing' : 'grab'
+    }
     return 'default'
-  }, [activeTool, editMode])
+  }, [activeTool, editMode, isPanning, isPanTool])
 
   const handleZoom = useCallbackRef((event: KonvaEventObject<WheelEvent>) => {
     event.evt.preventDefault()
@@ -283,6 +287,12 @@ export function CanvasStage({
       if (!stage) {
         return
       }
+      if (isPanTool && event.target === stage) {
+        setIsPanning(true)
+        onSelectEntity(null)
+        onCloseOverlays()
+        return
+      }
       const point = pointFromStage(stage, offset, scale)
       if (!point) {
         return
@@ -355,7 +365,7 @@ export function CanvasStage({
   )
 
   const handleStagePointerMove = useCallbackRef(() => {
-    if (isPanning) {
+    if (isPanning || activeTool === 'pan') {
       return
     }
     if (!drawingWall && !drawingShape) {
@@ -395,6 +405,9 @@ export function CanvasStage({
   const handleStagePointerUp = useCallbackRef(() => {
     if (drawingShape) {
       finishShape(drawingShape.start, drawingShape.current, shapeTool)
+    }
+    if (isPanTool) {
+      setIsPanning(false)
     }
   })
 
@@ -510,6 +523,18 @@ export function CanvasStage({
     setIsManipulating(true)
   })
 
+  const handleStageDragStart = useCallbackRef(() => {
+    if (isPanTool) {
+      setIsPanning(true)
+    }
+  })
+
+  const handleStageDragEnd = useCallbackRef(() => {
+    if (isPanTool) {
+      setIsPanning(false)
+    }
+  })
+
   const updateWallDrag = useCallbackRef((wallId: string) => {
     const pointer = getPointerScenePoint()
     if (!pointer) {
@@ -562,7 +587,7 @@ export function CanvasStage({
       <Stage
         height={size.height}
         width={size.width}
-        draggable={isPanning && !drawingWall && !drawingShape}
+        draggable={(isPanning || activeTool === 'pan') && !drawingWall && !drawingShape}
         ref={stageRef}
         scaleX={scale}
         scaleY={scale}
@@ -574,6 +599,8 @@ export function CanvasStage({
         onMouseMove={handleStagePointerMove}
         onMouseUp={handleStagePointerUp}
         onWheel={handleZoom}
+        onDragStart={handleStageDragStart}
+        onDragEnd={handleStageDragEnd}
       >
         <CanvasGrid size={size} scale={scale} offset={offset} />
         <Layer>
@@ -596,7 +623,10 @@ export function CanvasStage({
                 }
                 setIsManipulating(true)
               }}
-              onSelect={() => onSelectEntity({id: wall.id, kind: 'wall'})}
+              onSelect={() => {
+                if (isManipulating) return
+                onSelectEntity({id: wall.id, kind: 'wall'})
+              }}
               isSelected={
                 selection.selectedEntityId === wall.id &&
                 selection.selectedEntityKind === 'wall'
@@ -627,7 +657,10 @@ export function CanvasStage({
                 }
                 setIsManipulating(true)
               }}
-              onSelect={() => onSelectEntity({id: shape.id, kind: 'shape'})}
+              onSelect={() => {
+                if (isManipulating) return
+                onSelectEntity({id: shape.id, kind: 'shape'})
+              }}
               onTransform={(next) => onUpdateShape(shape.id, next)}
               isSelected={
                 selection.selectedEntityId === shape.id &&
@@ -677,7 +710,10 @@ export function CanvasStage({
               onMove={(point) =>
                 onUpdateCamera(camera.id, {x: point.x, y: point.y})
               }
-              onSelect={() => onSelectEntity({id: camera.id, kind: 'camera'})}
+              onSelect={() => {
+                if (isManipulating) return
+                onSelectEntity({id: camera.id, kind: 'camera'})
+              }}
               isSelected={
                 selection.selectedEntityId === camera.id &&
                 selection.selectedEntityKind === 'camera'
@@ -703,7 +739,10 @@ export function CanvasStage({
               onMove={(point) =>
                 onUpdatePerson(person.id, {x: point.x, y: point.y})
               }
-              onSelect={() => onSelectEntity({id: person.id, kind: 'person'})}
+              onSelect={() => {
+                if (isManipulating) return
+                onSelectEntity({id: person.id, kind: 'person'})
+              }}
               person={person}
               isSelected={
                 selection.selectedEntityId === person.id &&
