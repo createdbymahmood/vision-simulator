@@ -1,3 +1,5 @@
+/* eslint-disable @eslint-react/no-unstable-context-value */
+
 import type {VariantProps} from 'class-variance-authority'
 
 import * as ToggleGroupPrimitive from '@radix-ui/react-toggle-group'

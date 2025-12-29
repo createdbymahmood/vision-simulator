@@ -1,5 +1,6 @@
 import type {StateCreator} from 'zustand'
 
+/* eslint-disable max-lines-per-function */
 import {produce} from 'immer'
 
 import {createZustandContextStore} from '@/components/shared/zustand'

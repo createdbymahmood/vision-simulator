@@ -8,20 +8,10 @@ import {
 
 import {Button} from '@/components/ui/button'
 import {Switch} from '@/components/ui/switch'
+
 import type {SceneTool} from '../../core/scene-types'
 
-export function CanvasTopPanel({
-  editMode,
-  activeTool,
-  onToggleEditMode,
-  onClearBoard,
-  onUndo,
-  onRedo,
-  onExport,
-  canUndo,
-  canRedo,
-  onLivePreview,
-}: {
+interface CanvasTopPanelProps {
   editMode: boolean
   activeTool: SceneTool
   canUndo: boolean
@@ -32,7 +22,20 @@ export function CanvasTopPanel({
   onRedo: () => void
   onExport: () => void
   onLivePreview: () => void
-}) {
+}
+
+export const CanvasTopPanel: React.FC<CanvasTopPanelProps> = ({
+  editMode,
+  activeTool,
+  onToggleEditMode,
+  onClearBoard,
+  onUndo,
+  onRedo,
+  onExport,
+  canUndo,
+  canRedo,
+  onLivePreview,
+}) => {
   return (
     <div className='z-20 flex items-center gap-3 border-b bg-background/95 px-6 py-3 backdrop-blur'>
       <div className='flex items-center gap-2 text-sm'>

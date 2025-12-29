@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable max-lines-per-function, @eslint-react/no-nested-component-definitions, @typescript-eslint/no-shadow */
+
 import type {DayButton} from 'react-day-picker'
 
 import {ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon} from 'lucide-react'

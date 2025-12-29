@@ -1,7 +1,11 @@
+import type React from 'react'
+
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {
   BrickWall,
   CameraIcon,
   Circle,
+  HandIcon,
   LineSquiggle,
   MousePointer2Icon,
   RectangleCircle,
@@ -9,7 +13,6 @@ import {
   TriangleIcon,
   UserRoundIcon,
   WallpaperIcon,
-  HandIcon,
 } from 'lucide-react'
 
 import {Button} from '@/components/ui/button'
@@ -18,19 +21,31 @@ import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
 
 import type {SceneTool} from '../../core/scene-types'
 
-export function CanvasBottomToolbar({
-  activeTool,
-  activeShapeLabel,
-  onToolChange,
-  onShapeSelect,
-  onBackgroundClick,
-}: {
+interface CanvasBottomToolbarProps {
   activeTool: SceneTool
   activeShapeLabel: string
   onToolChange: (tool: SceneTool) => void
   onShapeSelect: (shape: 'circle' | 'line' | 'rectangle' | 'triangle') => void
   onBackgroundClick: () => void
-}) {
+}
+
+export const CanvasBottomToolbar: React.FC<CanvasBottomToolbarProps> = ({
+  activeTool,
+  activeShapeLabel,
+  onToolChange,
+  onShapeSelect,
+  onBackgroundClick,
+}) => {
+  const handleToolChange = useCallbackRef((value: string) => {
+    if (!value) return
+    onToolChange(value as SceneTool)
+  })
+  const handleSelectRectangle = useCallbackRef(() => onShapeSelect('rectangle'))
+  const handleSelectCircle = useCallbackRef(() => onShapeSelect('circle'))
+  const handleSelectTriangle = useCallbackRef(() => onShapeSelect('triangle'))
+  const handleSelectLine = useCallbackRef(() => onShapeSelect('line'))
+  const handleBackgroundClick = useCallbackRef(onBackgroundClick)
+
   return (
     <div className='fixed inset-x-0 bottom-6 z-30 flex justify-center px-4'>
       <div className='flex w-full max-w-fit items-center gap-4 rounded-full border bg-background/95 px-4 py-3 shadow-md backdrop-blur justify-center'>
@@ -39,10 +54,7 @@ export function CanvasBottomToolbar({
             spacing={4}
             type='single'
             value={activeTool}
-            onValueChange={(value) => {
-              if (!value) return
-              onToolChange(value as SceneTool)
-            }}
+            onValueChange={handleToolChange}
           >
             <ToggleGroupItem aria-label='Select tool' value='select'>
               <MousePointer2Icon className='size-5' />
@@ -65,7 +77,7 @@ export function CanvasBottomToolbar({
                 <div className='flex flex-col gap-2'>
                   <Button
                     size='icon'
-                    onClick={() => onShapeSelect('rectangle')}
+                    onClick={handleSelectRectangle}
                     variant={
                       activeShapeLabel === 'Rectangle' ? 'default' : 'outline'
                     }
@@ -75,7 +87,7 @@ export function CanvasBottomToolbar({
                   </Button>
                   <Button
                     size='icon'
-                    onClick={() => onShapeSelect('circle')}
+                    onClick={handleSelectCircle}
                     variant={
                       activeShapeLabel === 'Circle' ? 'default' : 'outline'
                     }
@@ -85,7 +97,7 @@ export function CanvasBottomToolbar({
                   </Button>
                   <Button
                     size='icon'
-                    onClick={() => onShapeSelect('triangle')}
+                    onClick={handleSelectTriangle}
                     variant={
                       activeShapeLabel === 'Triangle' ? 'default' : 'outline'
                     }
@@ -95,7 +107,7 @@ export function CanvasBottomToolbar({
                   </Button>
                   <Button
                     size='icon'
-                    onClick={() => onShapeSelect('line')}
+                    onClick={handleSelectLine}
                     variant={
                       activeShapeLabel === 'Line' ? 'default' : 'outline'
                     }
@@ -116,7 +128,11 @@ export function CanvasBottomToolbar({
             </ToggleGroupItem>
           </ToggleGroup>
 
-          <Button size='icon' variant='secondary' onClick={onBackgroundClick}>
+          <Button
+            size='icon'
+            variant='secondary'
+            onClick={handleBackgroundClick}
+          >
             <WallpaperIcon className='size-5' />
           </Button>
         </div>

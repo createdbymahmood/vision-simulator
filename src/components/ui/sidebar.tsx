@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable @typescript-eslint/naming-convention, @typescript-eslint/no-shadow */
+
 import type {VariantProps} from 'class-variance-authority'
 
 import {Slot} from '@radix-ui/react-slot'
@@ -261,6 +263,13 @@ function SidebarTrigger({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const {toggleSidebar} = useSidebar()
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      onClick?.(event)
+      toggleSidebar()
+    },
+    [onClick, toggleSidebar],
+  )
 
   return (
     <Button
@@ -269,10 +278,7 @@ function SidebarTrigger({
       data-sidebar='trigger'
       variant='ghost'
       data-slot='sidebar-trigger'
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
+      onClick={handleClick}
       {...props}
     >
       <PanelLeftIcon />
@@ -290,6 +296,7 @@ function SidebarRail({className, ...props}: React.ComponentProps<'button'>) {
       data-sidebar='rail'
       tabIndex={-1}
       title='Toggle Sidebar'
+      type='button'
       data-slot='sidebar-rail'
       onClick={toggleSidebar}
       className={cn(

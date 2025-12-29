@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable @eslint-react/no-unstable-context-value, @typescript-eslint/no-use-before-define */
+
 import type * as LabelPrimitive from '@radix-ui/react-label'
 import type {ControllerProps, FieldPath, FieldValues} from 'react-hook-form'
 

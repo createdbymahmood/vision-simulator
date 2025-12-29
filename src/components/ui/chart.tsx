@@ -1,5 +1,7 @@
 'use client'
 
+/* eslint-disable @eslint-react/no-unstable-context-value, @typescript-eslint/no-use-before-define, @typescript-eslint/no-shadow, complexity */
+
 import * as React from 'react'
 import * as RechartsPrimitive from 'recharts'
 

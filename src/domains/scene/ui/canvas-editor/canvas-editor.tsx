@@ -1,3 +1,7 @@
+/* eslint-disable no-alert, max-lines-per-function, max-statements */
+
+import type React from 'react'
+
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {useEffect, useMemo, useState} from 'react'
 
@@ -27,7 +31,7 @@ import {useElementSize} from './hooks'
 import {CanvasStage} from './stage-canvas'
 import {CanvasTopPanel} from './top-panel'
 
-export function CanvasEditor() {
+export const CanvasEditor: React.FC = () => {
   const [boardRef, boardSize] = useElementSize<HTMLDivElement>()
   const [offset, setOffset] = useState<CanvasPoint>({x: 0, y: 0})
   const [scale, setScale] = useState(1)
@@ -142,9 +146,9 @@ export function CanvasEditor() {
   return (
     <div className='relative flex flex-col size-full'>
       <CanvasTopPanel
+        activeTool={activeTool}
         canRedo={Boolean(historyFuture.length)}
         canUndo={Boolean(historyPast.length)}
-        activeTool={activeTool}
         editMode={editMode}
         onClearBoard={() => setClearDialogOpen(true)}
         onExport={handleExport}

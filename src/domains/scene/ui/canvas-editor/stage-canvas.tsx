@@ -1,5 +1,6 @@
 import type Konva from 'konva'
 import type {KonvaEventObject} from 'konva/lib/Node'
+import type React from 'react'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {useEffect, useMemo, useRef, useState} from 'react'
@@ -48,6 +49,7 @@ import {
   snapPoint,
   toCanvas,
 } from './utils'
+/* eslint-disable max-statements, complexity, @typescript-eslint/no-empty-function */
 
 interface CanvasStageProps {
   size: CanvasSize
@@ -84,7 +86,7 @@ interface WallDragSession {
 }
 
 // eslint-disable-next-line max-lines-per-function
-export function CanvasStage({
+export const CanvasStage: React.FC<CanvasStageProps> = ({
   size,
   offset,
   scale,
@@ -107,7 +109,7 @@ export function CanvasStage({
   onAddPerson,
   onSelectEntity,
   onCloseOverlays,
-}: CanvasStageProps) {
+}: CanvasStageProps) => {
   const canEdit = editMode
   const stageRef = useRef<Konva.Stage | null>(null)
   const [drawingWall, setDrawingWall] = useState<DrawingWallState | null>(null)
@@ -587,20 +589,22 @@ export function CanvasStage({
       <Stage
         height={size.height}
         width={size.width}
-        draggable={(isPanning || activeTool === 'pan') && !drawingWall && !drawingShape}
         ref={stageRef}
         scaleX={scale}
         scaleY={scale}
         x={offset.x}
         y={offset.y}
         onDblClick={handleStageDoubleClick}
+        onDragEnd={handleStageDragEnd}
         onDragMove={handleDragMove}
+        onDragStart={handleStageDragStart}
         onMouseDown={handleStagePointerDown}
         onMouseMove={handleStagePointerMove}
         onMouseUp={handleStagePointerUp}
         onWheel={handleZoom}
-        onDragStart={handleStageDragStart}
-        onDragEnd={handleStageDragEnd}
+        draggable={
+          (isPanning || activeTool === 'pan') && !drawingWall && !drawingShape
+        }
       >
         <CanvasGrid size={size} scale={scale} offset={offset} />
         <Layer>
