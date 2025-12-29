@@ -25,6 +25,7 @@ Domain-first frontend guidance for React/TypeScript: carve features into domain 
 - Always use Yarn as the primary package manager; run installs/scripts with `yarn` and avoid introducing npm/pnpm lockfiles.
 - Use `useCallbackRef` from `@radix-ui/react-use-callback-ref` instead of `React.useCallback` for stable callbacks.
 - Always use kebab-case for every filename and component; when React requires PascalCase identifiers, keep the public/display name in kebab-case (e.g., `task-list.tsx`, `TaskList.displayName = 'task-list'`).
+- Declare every React component as `export const ComponentName: React.FC = () => {}` (no default exports or function declarations) to keep typing and exports uniform.
 - Name event-like callbacks as `onX` (not `handleX`); e.g., `onConfirm`, `onSubmit`, `onToggle`.
 - Prefer lodash utilities imported from `@lodash-es` instead of bespoke helpers whenever possible.
 - Always use Zustand for any global state; avoid alternative global stores. Build stores as context-backed instances with `createZustandContextStore`, and write mutators with `immer`’s `produce` helpers plus typed `set/get` aliases (no inline anonymous mutations).
