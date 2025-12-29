@@ -126,14 +126,10 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   const [isManipulating, setIsManipulating] = useState(false)
   const interactionCapturedRef = useRef(false)
   const isPanTool = activeTool === 'pan'
-  const cameraVisions = useMemo(
-    () =>
-      scene.cameras.map((camera) => ({
-        id: camera.id,
-        points: computeVisionPolygon(camera, scene),
-      })),
-    [scene],
-  )
+  const cameraVisions = scene.cameras.map((camera) => ({
+    id: camera.id,
+    points: computeVisionPolygon(camera, scene),
+  }))
 
   useEffect(() => {
     if (size.width && size.height) {

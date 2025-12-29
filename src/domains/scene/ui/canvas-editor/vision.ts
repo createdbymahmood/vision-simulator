@@ -32,7 +32,7 @@ const rotatePoint = (
 }
 
 const rectanglePoints = (shape: SceneShape): CanvasPoint[] => {
-  const center = {x: shape.x + shape.width / 2, y: shape.y + shape.length / 2}
+  const origin = {x: shape.x, y: shape.y}
   const corners: CanvasPoint[] = [
     {x: shape.x, y: shape.y},
     {x: shape.x + shape.width, y: shape.y},
@@ -42,36 +42,51 @@ const rectanglePoints = (shape: SceneShape): CanvasPoint[] => {
   if (!shape.rotation) {
     return corners
   }
-  return corners.map((corner) => rotatePoint(corner, center, shape.rotation))
+  return corners.map((corner) => rotatePoint(corner, origin, shape.rotation))
 }
 
 const circlePoints = (shape: SceneShape, segments = 96): CanvasPoint[] => {
   const radiusBase = Math.max(Math.min(shape.width, shape.length) / 2, 0.01)
   const strokeAllowance = Math.max(shape.lineThickness ?? 0, 0) / 2
   const radius = Math.max(radiusBase - strokeAllowance, 0.01)
+  const origin = {x: shape.x, y: shape.y}
   const center = {
     x: shape.x + shape.width / 2,
     y: shape.y + shape.length / 2,
   }
+  const rotatedCenter =
+    shape.rotation && Math.abs(shape.rotation) > 0.0001
+      ? rotatePoint(center, origin, shape.rotation)
+      : center
   return Array.from({length: segments}, (_, index) => {
     const angle = (index / segments) * Math.PI * 2
     return {
-      x: center.x + radius * Math.cos(angle),
-      y: center.y + radius * Math.sin(angle),
+      x: rotatedCenter.x + radius * Math.cos(angle),
+      y: rotatedCenter.y + radius * Math.sin(angle),
     }
   })
 }
 
 const trianglePoints = (shape: SceneShape): CanvasPoint[] => {
-  const radius = Math.max(shape.width, shape.length) / 2
-  const baseRotation = shape.rotation ?? 0
-  const angles = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3].map(
-    (angle) => angle + baseRotation,
-  )
-  return angles.map((angle) => ({
-    x: shape.x + radius * Math.cos(angle),
-    y: shape.y + radius * Math.sin(angle),
-  }))
+  const baseRadius = Math.max(Math.min(shape.width, shape.length), 0.01) / 2
+  const strokeAllowance = Math.max(shape.lineThickness ?? 0, 0) / 2
+  const radius = Math.max(baseRadius - strokeAllowance, 0.01)
+  const center: CanvasPoint = {
+    x: shape.x + shape.width / 2,
+    y: shape.y + shape.length / 2,
+  }
+  const origin: CanvasPoint = {x: shape.x, y: shape.y}
+  const points: CanvasPoint[] = Array.from({length: 3}, (_, index) => {
+    const angle = -Math.PI / 2 + (index * (2 * Math.PI)) / 3
+    return {
+      x: center.x + radius * Math.cos(angle),
+      y: center.y + radius * Math.sin(angle),
+    }
+  })
+  if (!shape.rotation) {
+    return points
+  }
+  return points.map((point) => rotatePoint(point, origin, shape.rotation))
 }
 
 const shapeToSegments = (shape: SceneShape): Segment[] => {
@@ -110,13 +125,19 @@ const shapeToSegments = (shape: SceneShape): Segment[] => {
     const p4 = {x: start.x - nx, y: start.y - ny}
 
     const quad = [p1, p2, p3, p4]
-    return quad.map((point, index) => ({
+    const rotatedQuad =
+      shape.rotation && Math.abs(shape.rotation) > 0.0001
+        ? quad.map((point) => rotatePoint(point, start, shape.rotation))
+        : quad
+
+    return rotatedQuad.map((point, index) => ({
       a: point,
-      b: quad[(index + 1) % quad.length],
+      b: rotatedQuad[(index + 1) % rotatedQuad.length],
     }))
   }
 
-  const points = rectanglePoints(shape)
+  const points =
+    shape.type === 'triangle' ? trianglePoints(shape) : rectanglePoints(shape)
   return points.map((point, index) => ({
     a: point,
     b: points[(index + 1) % points.length],
@@ -208,10 +229,16 @@ export const computeVisionPolygon = (
   camera: Scene['cameras'][number],
   scene: Scene,
 ): CanvasPoint[] => {
-  const segments = [
-    ...wallsToSegments(scene.walls),
-    ...shapesToSegments(scene.shapes),
-  ]
+  const heightCutoff = (obstacleHeight?: number) =>
+    (obstacleHeight ?? camera.height) >= camera.height - 0.01
+
+  const wallSegments = wallsToSegments(
+    scene.walls.filter((wall) => heightCutoff(wall.height)),
+  )
+  const shapeSegments = shapesToSegments(
+    scene.shapes.filter((shape) => heightCutoff(shape.height)),
+  )
+  const segments = [...wallSegments, ...shapeSegments]
   const origin: CanvasPoint = {x: camera.x, y: camera.y}
   const clampedFov = Math.min(camera.fov, 179.9)
   const fovRadians = toRadians(clampedFov)

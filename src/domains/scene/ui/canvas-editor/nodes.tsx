@@ -238,69 +238,130 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
     },
   )
 
-  const handleRectangleTransformEnd = useCallbackRef(
-    (event: KonvaEventObject<Event>) => {
+  const applyRectangleTransform = useCallbackRef(
+    (event: KonvaEventObject<Event>, finalize: boolean) => {
       const node = event.target as any
       const scaleX = node.scaleX()
       const scaleY = node.scaleY()
-      node.scaleX(1)
-      node.scaleY(1)
-      onTransform({
+      const next = {
+        x: snapValue(node.x() / GRID_SIZE),
+        y: snapValue(node.y() / GRID_SIZE),
         width: snapValue(shape.width * scaleX),
         length: snapValue(shape.length * scaleY),
         rotation: (node.rotation() * Math.PI) / 180,
-      })
-      onInteractionEnd?.()
-      transformerRef.current?.forceUpdate?.()
+      }
+      node.scaleX(1)
+      node.scaleY(1)
+      onTransform(next)
+      if (finalize) {
+        onInteractionEnd?.()
+        transformerRef.current?.forceUpdate?.()
+      }
     },
+  )
+
+  const applyCircleTransform = useCallbackRef(
+    (event: KonvaEventObject<Event>, finalize: boolean) => {
+      const node = event.target as any
+      const scaleX = node.scaleX()
+      const scaleY = node.scaleY()
+      const next = {
+        x: snapValue(node.x() / GRID_SIZE),
+        y: snapValue(node.y() / GRID_SIZE),
+        width: snapValue(shape.width * scaleX),
+        length: snapValue(shape.length * scaleY),
+        rotation: (node.rotation() * Math.PI) / 180,
+      }
+      node.scaleX(1)
+      node.scaleY(1)
+      onTransform(next)
+      if (finalize) {
+        onInteractionEnd?.()
+        transformerRef.current?.forceUpdate?.()
+      }
+    },
+  )
+
+  const applyLineTransform = useCallbackRef(
+    (event: KonvaEventObject<Event>, finalize: boolean) => {
+      const node = event.target as any
+      const scaleX = node.scaleX()
+      const scaleY = node.scaleY()
+      const nextX = snapValue(node.x() / GRID_SIZE)
+      const nextY = snapValue(node.y() / GRID_SIZE)
+      const next = {
+        x: nextX,
+        y: nextY,
+        width: snapValue(shape.width * scaleX),
+        length: snapValue(shape.length * scaleY),
+        rotation: (node.rotation() * Math.PI) / 180,
+      }
+      node.scaleX(1)
+      node.scaleY(1)
+      onTransform(next)
+      if (finalize) {
+        onInteractionEnd?.()
+        transformerRef.current?.forceUpdate?.()
+      }
+    },
+  )
+
+  const handleRectangleTransform = useCallbackRef(
+    (event: KonvaEventObject<Event>) => applyRectangleTransform(event, false),
+  )
+
+  const handleCircleTransform = useCallbackRef(
+    (event: KonvaEventObject<Event>) => applyCircleTransform(event, false),
+  )
+
+  const handleLineTransform = useCallbackRef((event: KonvaEventObject<Event>) =>
+    applyLineTransform(event, false),
+  )
+
+  const handleRectangleTransformEnd = useCallbackRef(
+    (event: KonvaEventObject<Event>) => applyRectangleTransform(event, true),
   )
 
   const handleCircleTransformEnd = useCallbackRef(
-    (event: KonvaEventObject<Event>) => {
-      const node = event.target as any
-      const scaleX = node.scaleX()
-      node.scaleX(1)
-      node.scaleY(1)
-      onTransform({
-        width: snapValue(shape.width * scaleX),
-        length: snapValue(shape.length * scaleX),
-        rotation: 0,
-      })
-      onInteractionEnd?.()
-      transformerRef.current?.forceUpdate?.()
-    },
+    (event: KonvaEventObject<Event>) => applyCircleTransform(event, true),
   )
 
   const handleLineTransformEnd = useCallbackRef(
-    (event: KonvaEventObject<Event>) => {
-      const node = event.target as any
-      const scaleX = node.scaleX()
-      const scaleY = node.scaleY()
-      node.scaleX(1)
-      node.scaleY(1)
-      onTransform({
-        width: snapValue(shape.width * scaleX),
-        length: snapValue(shape.length * scaleY),
-        rotation: (node.rotation() * Math.PI) / 180,
-      })
-      transformerRef.current?.forceUpdate?.()
-    },
+    (event: KonvaEventObject<Event>) => applyLineTransform(event, true),
   )
 
   const handleLineDragEnd = useCallbackRef(
     (event: KonvaEventObject<DragEvent>) => {
-      const target = event.target as any
+      const deltaX = event.target.x() / GRID_SIZE
+      const deltaY = event.target.y() / GRID_SIZE
+      const nextX = shape.x + deltaX
+      const nextY = shape.y + deltaY
       onTransform({
-        x: snapEnabled
-          ? Math.round(target.points()[0] / GRID_SIZE)
-          : target.points()[0] / GRID_SIZE,
-        y: snapEnabled
-          ? Math.round(target.points()[1] / GRID_SIZE)
-          : target.points()[1] / GRID_SIZE,
+        x: snapEnabled ? snapValue(nextX) : nextX,
+        y: snapEnabled ? snapValue(nextY) : nextY,
       })
+      event.target.position({x: 0, y: 0})
       onInteractionEnd?.()
     },
   )
+
+  const handleLineDragMove = useCallbackRef(
+    (event: KonvaEventObject<DragEvent>) => {
+      const deltaX = event.target.x() / GRID_SIZE
+      const deltaY = event.target.y() / GRID_SIZE
+      const nextX = shape.x + deltaX
+      const nextY = shape.y + deltaY
+      onTransform({
+        x: snapEnabled ? snapValue(nextX) : nextX,
+        y: snapEnabled ? snapValue(nextY) : nextY,
+      })
+      event.target.position({x: 0, y: 0})
+    },
+  )
+
+  const handleLineDragStart = useCallbackRef(() => {
+    handleDragStart()
+  })
 
   const transformer = useMemo(
     () =>
@@ -328,6 +389,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
           onDragEnd={handleDragEnd}
           onDragMove={handleDragMove}
           onDragStart={handleDragStart}
+          onTransform={handleRectangleTransform}
           onTransformEnd={handleRectangleTransformEnd}
           onTransformStart={handleTransformStart}
         >
@@ -359,11 +421,13 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
         <Group
           x={shape.x * GRID_SIZE}
           y={shape.y * GRID_SIZE}
+          rotation={(shape.rotation * 180) / Math.PI}
           {...commonProps}
           dragBoundFunc={dragBoundPosition}
           onDragEnd={handleDragEnd}
           onDragMove={handleDragMove}
           onDragStart={handleDragStart}
+          onTransform={handleCircleTransform}
           onTransformEnd={handleCircleTransformEnd}
           onTransformStart={handleTransformStart}
         >
@@ -392,6 +456,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
   }
 
   if (shape.type === 'triangle') {
+    const triangleRadius = (Math.min(shape.width, shape.length) * GRID_SIZE) / 2
     return (
       <>
         <Group
@@ -403,21 +468,26 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
           onDragEnd={handleDragEnd}
           onDragMove={handleDragMove}
           onDragStart={handleDragStart}
+          onTransform={handleRectangleTransform}
           onTransformEnd={handleRectangleTransformEnd}
           onTransformStart={handleTransformStart}
         >
           <RegularPolygon
             fill={fill}
-            radius={(shape.width * GRID_SIZE) / 2}
+            radius={triangleRadius}
             sides={3}
+            x={(shape.width * GRID_SIZE) / 2}
+            y={(shape.length * GRID_SIZE) / 2}
             stroke={fill}
             strokeWidth={strokeWidth}
           />
           {isSelected && (
             <RegularPolygon
               dash={[6, 4]}
-              radius={(shape.width * GRID_SIZE) / 2 + 6}
+              radius={triangleRadius + 6}
               sides={3}
+              x={(shape.width * GRID_SIZE) / 2}
+              y={(shape.length * GRID_SIZE) / 2}
               stroke='#38bdf8'
               strokeWidth={1.5 / scale}
             />
@@ -434,20 +504,20 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
         draggable
         lineCap='round'
         ref={shapeRef}
+        x={shape.x * GRID_SIZE}
+        y={shape.y * GRID_SIZE}
         dragBoundFunc={dragBoundPosition}
         onClick={onSelect}
         onDragEnd={handleLineDragEnd}
-        onDragMove={handleDragMove}
-        onDragStart={handleDragStart}
+        onDragMove={handleLineDragMove}
+        onDragStart={handleLineDragStart}
         onTap={onSelect}
+        onTransform={handleLineTransform}
         onTransformEnd={handleLineTransformEnd}
+        onTransformStart={handleTransformStart}
         opacity={shape.opacity}
-        points={[
-          shape.x * GRID_SIZE,
-          shape.y * GRID_SIZE,
-          (shape.x + shape.width) * GRID_SIZE,
-          (shape.y + shape.length) * GRID_SIZE,
-        ]}
+        points={[0, 0, shape.width * GRID_SIZE, shape.length * GRID_SIZE]}
+        rotation={(shape.rotation * 180) / Math.PI}
         stroke={fill}
         strokeWidth={strokeWidth}
       />
