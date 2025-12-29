@@ -159,6 +159,19 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     }
   }, [])
 
+  useEffect(() => {
+    const handlePointerRelease = () => {
+      interactionCapturedRef.current = false
+      setIsManipulating(false)
+    }
+    window.addEventListener('pointerup', handlePointerRelease)
+    window.addEventListener('pointercancel', handlePointerRelease)
+    return () => {
+      window.removeEventListener('pointerup', handlePointerRelease)
+      window.removeEventListener('pointercancel', handlePointerRelease)
+    }
+  }, [])
+
   const cursor = useMemo(() => {
     if (!editMode) {
       return 'not-allowed'
