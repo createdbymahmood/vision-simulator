@@ -2,7 +2,13 @@ export type SceneMode = 'canvas' | 'map'
 
 export type SceneUnits = 'meters'
 
-export type SceneEntityKind = 'area' | 'camera' | 'person' | 'shape' | 'wall'
+export type SceneEntityKind =
+  | 'area'
+  | 'background'
+  | 'camera'
+  | 'person'
+  | 'shape'
+  | 'wall'
 
 export type SceneShapeKind = 'circle' | 'line' | 'rectangle' | 'triangle'
 
@@ -12,6 +18,13 @@ export interface SceneBackground {
   type: 'image' | 'solid'
   value: string
   opacity?: number
+  scale?: number
+  rotation?: number
+  position?: {
+    x: number
+    y: number
+  }
+  locked?: boolean
 }
 
 export interface SceneWall {
@@ -27,6 +40,7 @@ export interface SceneWall {
   thickness: number
   color: string
   opacity: number
+  material?: 'concrete' | 'drywall'
 }
 
 export interface SceneShape {
@@ -96,6 +110,7 @@ export interface Scene {
 }
 
 export type SceneEntity =
+  | (SceneBackground & {id: 'background'})
   | SceneArea
   | SceneCamera
   | ScenePerson

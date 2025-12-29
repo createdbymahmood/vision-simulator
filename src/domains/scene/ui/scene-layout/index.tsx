@@ -33,6 +33,9 @@ export const SceneLayout: React.FC = () => {
       camera: scene.cameras,
       person: scene.people,
       area: scene.areas,
+      background: scene.background
+        ? [{...scene.background, id: 'background'}]
+        : [],
     }
 
     return (
@@ -73,6 +76,7 @@ export const SceneLayout: React.FC = () => {
 
       <PropertiesSidebar
         selected={selectedEntity}
+        selectedKind={selection.selectedEntityKind}
         onClose={handleCloseProperties}
         open={overlays.isPropertiesOpen && Boolean(selectedEntity)}
       />

@@ -1,7 +1,8 @@
 import type {PointerDownOutsideEvent} from '@radix-ui/react-dismissable-layer'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
-import React from 'react'
+/* eslint-disable max-lines-per-function */
+import React, {useMemo} from 'react'
 
 import {Separator} from '@/components/ui/separator'
 import {
@@ -12,19 +13,47 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 
-import type {SceneEntity} from '../../core/scene-types'
+import type {
+  SceneBackground,
+  SceneCamera,
+  SceneEntity,
+  SceneEntityKind,
+  ScenePerson,
+  SceneShape,
+  SceneWall,
+} from '../../core/scene-types'
+
+import {useSceneHistoryStore} from '../scene-history-store'
+import {useSceneStore} from '../scene-store'
+import {
+  BackgroundPanel,
+  CameraPanel,
+  PersonPanel,
+  ShapePanel,
+  WallPanel,
+} from './property-panels'
 
 interface PropertiesSidebarProps {
   open: boolean
   selected: SceneEntity | null
+  selectedKind: SceneEntityKind | null
   onClose: () => void
 }
 
 export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   open,
   selected,
+  selectedKind,
   onClose,
 }) => {
+  const updateWall = useSceneStore((state) => state.updateWall)
+  const updateShape = useSceneStore((state) => state.updateShape)
+  const updateCamera = useSceneStore((state) => state.updateCamera)
+  const updatePerson = useSceneStore((state) => state.updatePerson)
+  const setBackground = useSceneStore((state) => state.setSceneBackground)
+  const scene = useSceneStore((state) => state.scene)
+  const captureSnapshot = useSceneHistoryStore((state) => state.captureSnapshot)
+
   const handleOpenChange = useCallbackRef((nextOpen: boolean) => {
     if (!nextOpen) {
       onClose()
@@ -40,33 +69,155 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
     },
   )
 
+  const ensureSnapshot = useCallbackRef(() => {
+    captureSnapshot(scene)
+  })
+
+  const handleWallChange = useCallbackRef(
+    (wallId: string, patch: Partial<SceneWall>) => {
+      ensureSnapshot()
+      updateWall(wallId, patch)
+    },
+  )
+  const handleShapeChange = useCallbackRef(
+    (shapeId: string, patch: Partial<SceneShape>) => {
+      ensureSnapshot()
+      updateShape(shapeId, patch)
+    },
+  )
+  const handleCameraChange = useCallbackRef(
+    (cameraId: string, patch: Partial<SceneCamera>) => {
+      ensureSnapshot()
+      updateCamera(cameraId, patch)
+    },
+  )
+  const handlePersonChange = useCallbackRef(
+    (personId: string, patch: Partial<ScenePerson>) => {
+      ensureSnapshot()
+      updatePerson(personId, patch)
+    },
+  )
+  const handleBackgroundChange = useCallbackRef((next: SceneBackground) => {
+    ensureSnapshot()
+    setBackground(next, {merge: true})
+  })
+
+  const handleWallPanelChange = useCallbackRef((patch: Partial<SceneWall>) => {
+    if (!selected || selectedKind !== 'wall') {
+      return
+    }
+    handleWallChange(selected.id, patch)
+  })
+
+  const handleShapePanelChange = useCallbackRef(
+    (patch: Partial<SceneShape>) => {
+      if (!selected || selectedKind !== 'shape') {
+        return
+      }
+      handleShapeChange(selected.id, patch)
+    },
+  )
+
+  const handleCameraPanelChange = useCallbackRef(
+    (patch: Partial<SceneCamera>) => {
+      if (!selected || selectedKind !== 'camera') {
+        return
+      }
+      handleCameraChange(selected.id, patch)
+    },
+  )
+
+  const handlePersonPanelChange = useCallbackRef(
+    (patch: Partial<ScenePerson>) => {
+      if (!selected || selectedKind !== 'person') {
+        return
+      }
+      handlePersonChange(selected.id, patch)
+    },
+  )
+
+  const handleBackgroundPanelChange = useCallbackRef(
+    (next: SceneBackground) => {
+      if (!selected || selectedKind !== 'background') {
+        return
+      }
+      handleBackgroundChange(next)
+    },
+  )
+
+  let panel: React.ReactNode = null
+  if (selected && selectedKind === 'wall') {
+    panel = (
+      <WallPanel
+        wall={selected as SceneWall}
+        onChange={handleWallPanelChange}
+      />
+    )
+  } else if (selected && selectedKind === 'shape') {
+    panel = (
+      <ShapePanel
+        shape={selected as SceneShape}
+        onChange={handleShapePanelChange}
+      />
+    )
+  } else if (selected && selectedKind === 'camera') {
+    panel = (
+      <CameraPanel
+        camera={selected as SceneCamera}
+        onChange={handleCameraPanelChange}
+      />
+    )
+  } else if (selected && selectedKind === 'person') {
+    panel = (
+      <PersonPanel
+        onChange={handlePersonPanelChange}
+        person={selected as ScenePerson}
+      />
+    )
+  } else if (selected && selectedKind === 'background') {
+    panel = (
+      <BackgroundPanel
+        background={selected as SceneBackground}
+        onChange={handleBackgroundPanelChange}
+      />
+    )
+  }
+
+  const title = useMemo(() => {
+    if (!selected || !selectedKind) {
+      return 'Properties'
+    }
+    if (selectedKind === 'wall') return `Wall • ${selected.id}`
+    if (selectedKind === 'shape') return `Shape • ${selected.id}`
+    if (selectedKind === 'camera') return `Camera • ${selected.id}`
+    if (selectedKind === 'person') return `Person • ${selected.id}`
+    if (selectedKind === 'background') return 'Background'
+    return 'Properties'
+  }, [selected, selectedKind])
+
   return (
     <Sheet modal={false} onOpenChange={handleOpenChange} open={open}>
       <SheetContent
+        className='w-[420px]'
         side='right'
         onPointerDownOutside={handlePointerDownOutside}
       >
-        <SheetHeader>
-          <SheetTitle>Properties</SheetTitle>
+        <SheetHeader className='pb-0'>
+          <SheetTitle>{title}</SheetTitle>
           <SheetDescription>
-            Contextual inspector driven by scene selection.
+            Live properties update the scene instantly.
           </SheetDescription>
         </SheetHeader>
-        {selected ? (
-          <div className='space-y-4 px-4'>
-            <div className='text-sm font-medium'>
-              {selected.id} ({(selected as {type?: string}).type ?? 'entity'})
-            </div>
-            <Separator />
-            <pre className='text-xs leading-6'>
-              {JSON.stringify(selected, null, 2)}
-            </pre>
-          </div>
-        ) : (
-          <p className='text-muted-foreground text-sm'>
-            Nothing selected. Click an entity chip or the workspace to close.
-          </p>
-        )}
+
+        <Separator />
+
+        <div className='px-4'>
+          {panel ?? (
+            <p className='text-muted-foreground text-sm'>
+              Nothing selected. Click an entity to edit its properties.
+            </p>
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   )

@@ -3,7 +3,7 @@
 import type React from 'react'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
-import {useEffect, useMemo, useState} from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 
 import type {
   SceneBackground,
@@ -29,6 +29,7 @@ export const CanvasEditor: React.FC = () => {
   const [editMode, setEditMode] = useState(true)
   const [shapeTool, setShapeTool] = useState<SceneShapeKind>('rectangle')
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const scene = useSceneStore((state) => state.scene)
   const selection = useSceneStore((state) => state.selection)
@@ -100,28 +101,52 @@ export const CanvasEditor: React.FC = () => {
     URL.revokeObjectURL(url)
   })
 
-  const handleBackgroundImage = useCallbackRef(() => {
-    const url = window.prompt('Enter background image URL')
-    if (!url) {
-      return
-    }
-    captureSnapshot(scene)
-    setSceneBackground({
-      type: 'image',
-      value: url,
-      opacity: 0.4,
-    } as SceneBackground)
-  })
-
-  const handleLivePreview = useCallbackRef(() => {
-    alert('Live preview not implemented yet')
-  })
-
   const handleSelectEntity = useCallbackRef(
     (payload: {id: string; kind: SceneEntityKind} | null) => {
       selectEntity(payload)
     },
   )
+
+  const handleBackgroundImage = useCallbackRef(() => {
+    fileInputRef.current?.click()
+  })
+
+  const handleBackgroundFileChange = useCallbackRef(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) {
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = () => {
+        const value = typeof reader.result === 'string' ? reader.result : ''
+        if (!value) {
+          return
+        }
+        captureSnapshot(scene)
+        const position = scene.background?.position ?? {x: 0, y: 0}
+        setSceneBackground(
+          {
+            type: 'image',
+            value,
+            opacity: scene.background?.opacity ?? 0.4,
+            scale: scene.background?.scale ?? 1,
+            rotation: scene.background?.rotation ?? 0,
+            position,
+            locked: scene.background?.locked ?? false,
+          } as SceneBackground,
+          {merge: false},
+        )
+        handleSelectEntity({id: 'background', kind: 'background'})
+      }
+      reader.readAsDataURL(file)
+      event.target.value = ''
+    },
+  )
+
+  const handleLivePreview = useCallbackRef(() => {
+    alert('Live preview not implemented yet')
+  })
 
   const handleToolChange = useCallbackRef((tool: SceneTool) => {
     setActiveTool(tool)
@@ -187,6 +212,13 @@ export const CanvasEditor: React.FC = () => {
         onBackgroundClick={handleBackgroundImage}
         onShapeSelect={handleShapeSelect}
         onToolChange={handleToolChange}
+      />
+      <input
+        accept='image/*'
+        className='hidden'
+        ref={fileInputRef}
+        type='file'
+        onChange={handleBackgroundFileChange}
       />
       <ClearBoardDialog
         onConfirm={handleClearBoard}

@@ -49,7 +49,10 @@ export interface SceneStoreActions {
   setCommandPaletteOpen: (open: boolean) => void
   setActivePopover: (popover: string | null) => void
   setSceneMode: (mode: SceneMode) => void
-  setSceneBackground: (background: SceneBackground | undefined) => void
+  setSceneBackground: (
+    background: SceneBackground | undefined,
+    options?: {merge?: boolean},
+  ) => void
   hydrateScene: (scene: Scene) => void
   resetScene: () => void
   markSceneSaved: (timestamp: number) => void
@@ -169,9 +172,17 @@ const createSceneStore: (
         state.scene.mode = mode
         touchUpdatedAt(state)
       }),
-    setSceneBackground: (background) =>
+    setSceneBackground: (background, options) =>
       mutate((state) => {
-        state.scene.background = background
+        if (!background) {
+          state.scene.background = undefined
+          touchUpdatedAt(state)
+          return
+        }
+        state.scene.background =
+          options?.merge && state.scene.background
+            ? {...state.scene.background, ...background}
+            : background
         touchUpdatedAt(state)
       }),
     hydrateScene: (scene) =>

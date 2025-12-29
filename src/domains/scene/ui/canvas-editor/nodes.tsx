@@ -83,6 +83,11 @@ interface DrawingPreviewLineProps {
   scale: number
 }
 
+interface CameraVisionProps {
+  points: CanvasPoint[]
+  scale: number
+}
+
 export const WallSegment: React.FC<WallSegmentProps> = ({
   wall,
   scale,
@@ -600,6 +605,28 @@ export const DrawingPreviewLine: React.FC<DrawingPreviewLineProps> = ({
       points={points}
       stroke={DEFAULT_PREVIEW_COLOR}
       strokeWidth={2 / scale}
+    />
+  )
+}
+
+export const CameraVision: React.FC<CameraVisionProps> = ({points, scale}) => {
+  if (!points.length) {
+    return null
+  }
+  const konvaPoints = points.flatMap((point) => [
+    point.x * GRID_SIZE,
+    point.y * GRID_SIZE,
+  ])
+
+  return (
+    <Line
+      fill={DEFAULT_PREVIEW_COLOR}
+      listening={false}
+      closed
+      opacity={0.15}
+      points={konvaPoints}
+      stroke={DEFAULT_PREVIEW_COLOR}
+      strokeWidth={1.25 / scale}
     />
   )
 }

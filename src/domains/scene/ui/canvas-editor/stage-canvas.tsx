@@ -26,6 +26,8 @@ import type {
   DrawingWallState,
 } from './types'
 
+import {BackgroundLayer} from './background-layer'
+import {findValidPersonPosition} from './collision'
 import {
   DEFAULT_PREVIEW_COLOR,
   DEFAULT_WALL_COLOR,
@@ -37,6 +39,7 @@ import {MeasurementOverlay} from './measurement-overlay'
 import {
   AreaNode,
   CameraNode,
+  CameraVision,
   DrawingPreviewLine,
   PersonNode,
   ShapeNode,
@@ -49,6 +52,7 @@ import {
   snapPoint,
   toCanvas,
 } from './utils'
+import {computeVisionPolygon} from './vision'
 /* eslint-disable max-statements, complexity, @typescript-eslint/no-empty-function */
 
 interface CanvasStageProps {
@@ -122,6 +126,14 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   const [isManipulating, setIsManipulating] = useState(false)
   const interactionCapturedRef = useRef(false)
   const isPanTool = activeTool === 'pan'
+  const cameraVisions = useMemo(
+    () =>
+      scene.cameras.map((camera) => ({
+        id: camera.id,
+        points: computeVisionPolygon(camera, scene),
+      })),
+    [scene],
+  )
 
   useEffect(() => {
     if (size.width && size.height) {
@@ -235,6 +247,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         thickness: 0.2,
         color: DEFAULT_WALL_COLOR,
         opacity: 0.9,
+        material: 'drywall',
       })
     }
     setDrawingWall(null)
@@ -323,7 +336,6 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       }
 
       if (activeTool === 'camera') {
-        onCaptureSnapshot(scene)
         const camera: SceneCamera = {
           id: crypto.randomUUID(),
           typePreset: 'fixed',
@@ -332,22 +344,27 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           height: 2.5,
           direction: 45,
           fov: 90,
-          depth: 12,
+          depth: 15,
           zoom: 1,
           resolution: '1080p',
-          nearPlane: 0.2,
+          nearPlane: 0.1,
         }
+        onCaptureSnapshot(scene)
         onAddCamera(camera)
         onSelectEntity({id: camera.id, kind: 'camera'})
         return
       }
 
       if (activeTool === 'person') {
+        const targetPoint = findValidPersonPosition(snapped, scene, 0.3)
+        if (!targetPoint) {
+          return
+        }
         onCaptureSnapshot(scene)
         const person: ScenePerson = {
           id: crypto.randomUUID(),
-          x: snapped.x,
-          y: snapped.y,
+          x: targetPoint.x,
+          y: targetPoint.y,
           radius: 0.3,
           height: 1.75,
           speed: 1.2,
@@ -360,7 +377,11 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       }
 
       if (event.target === stage) {
-        onSelectEntity(null)
+        if (scene.background && !scene.background.locked) {
+          onSelectEntity({id: 'background', kind: 'background'})
+        } else {
+          onSelectEntity(null)
+        }
         onCloseOverlays()
       }
     },
@@ -630,12 +651,6 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         'pointer-events-none': !canEdit,
       })}
     >
-      {scene.background?.type === 'image' && (
-        <div
-          className='absolute inset-0 bg-cover bg-center opacity-40'
-          style={{backgroundImage: `url(${scene.background.value})`}}
-        />
-      )}
       <Stage
         height={size.height}
         width={size.width}
@@ -656,6 +671,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
           (isPanning || activeTool === 'pan') && !drawingWall && !drawingShape
         }
       >
+        <BackgroundLayer background={scene.background} />
         <CanvasGrid size={size} scale={scale} offset={offset} />
         <Layer>
           {scene.walls.map((wall) => (
@@ -696,6 +712,13 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
                 selection.selectedEntityId === shape.id &&
                 selection.selectedEntityKind === 'shape'
               }
+            />
+          ))}
+          {cameraVisions.map((vision) => (
+            <CameraVision
+              key={`vision-${vision.id}`}
+              scale={scale}
+              points={vision.points}
             />
           ))}
           {drawingShape && (
