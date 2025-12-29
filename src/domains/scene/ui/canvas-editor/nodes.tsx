@@ -192,7 +192,10 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
     ref: shapeRef,
   }
 
-  const strokeWidth = Math.max(1.5, shape.lineThickness * GRID_SIZE) / scale
+  const strokeWidth =
+    shape.type === 'line'
+      ? Math.max(3, shape.lineThickness * GRID_SIZE) / scale
+      : Math.max(1.5, shape.lineThickness * GRID_SIZE) / scale
   const fill = shape.color || DEFAULT_SHAPE_COLOR
   const snapValue = useCallbackRef((value: number) =>
     snapEnabled ? Math.round(value) : value,
@@ -332,30 +335,24 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
 
   const handleLineDragEnd = useCallbackRef(
     (event: KonvaEventObject<DragEvent>) => {
-      const deltaX = event.target.x() / GRID_SIZE
-      const deltaY = event.target.y() / GRID_SIZE
-      const nextX = shape.x + deltaX
-      const nextY = shape.y + deltaY
+      const nextX = snapValue(event.target.x() / GRID_SIZE)
+      const nextY = snapValue(event.target.y() / GRID_SIZE)
       onTransform({
-        x: snapEnabled ? snapValue(nextX) : nextX,
-        y: snapEnabled ? snapValue(nextY) : nextY,
+        x: nextX,
+        y: nextY,
       })
-      event.target.position({x: 0, y: 0})
       onInteractionEnd?.()
     },
   )
 
   const handleLineDragMove = useCallbackRef(
     (event: KonvaEventObject<DragEvent>) => {
-      const deltaX = event.target.x() / GRID_SIZE
-      const deltaY = event.target.y() / GRID_SIZE
-      const nextX = shape.x + deltaX
-      const nextY = shape.y + deltaY
+      const nextX = snapValue(event.target.x() / GRID_SIZE)
+      const nextY = snapValue(event.target.y() / GRID_SIZE)
       onTransform({
-        x: snapEnabled ? snapValue(nextX) : nextX,
-        y: snapEnabled ? snapValue(nextY) : nextY,
+        x: nextX,
+        y: nextY,
       })
-      event.target.position({x: 0, y: 0})
     },
   )
 

@@ -252,8 +252,39 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
 
   const finishShape = useCallbackRef(
     (start: CanvasPoint, current: CanvasPoint, kind: SceneShapeKind) => {
-      const width = Math.abs(current.x - start.x) || 1
-      const length = Math.abs(current.y - start.y) || 1
+      const dx = current.x - start.x
+      const dy = current.y - start.y
+
+      if (kind === 'line') {
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        if (distance < 0.05) {
+          setDrawingShape(null)
+          setMeasurement(null)
+          return
+        }
+        onCaptureSnapshot(scene)
+        const lineShape: SceneShape = {
+          id: crypto.randomUUID(),
+          type: 'line',
+          x: start.x,
+          y: start.y,
+          rotation: 0,
+          width: dx,
+          length: dy,
+          height: 0.1,
+          color: DEFAULT_WALL_COLOR,
+          opacity: 0.75,
+          lineThickness: 0.05,
+        }
+        onAddShape(lineShape)
+        onSelectEntity({id: lineShape.id, kind: 'shape'})
+        setDrawingShape(null)
+        setMeasurement(null)
+        return
+      }
+
+      const width = Math.abs(dx) || 1
+      const length = Math.abs(dy) || 1
       const x = Math.min(start.x, current.x)
       const y = Math.min(start.y, current.y)
 
@@ -280,6 +311,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       onAddShape(defaultShape)
       onSelectEntity({id: defaultShape.id, kind: 'shape'})
       setDrawingShape(null)
+      setMeasurement(null)
     },
   )
 
@@ -424,6 +456,13 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         ...drawingShape,
         current: snapped,
       })
+      if (shapeTool === 'line') {
+        setMeasurement({
+          length: lengthBetween(drawingShape.start, snapped),
+          angle: angleBetween(drawingShape.start, snapped),
+          screen: toCanvas(snapped, offset, scale),
+        })
+      }
     }
   })
 
@@ -725,28 +764,39 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               }
             />
           ))}
-          {drawingShape && (
-            <ShapeNode
-              isSelected={false}
-              scale={scale}
-              snapEnabled={snapEnabled}
-              onSelect={noopSelect}
-              onTransform={noopTransform}
-              shape={{
-                id: 'preview',
-                type: shapeTool,
-                x: Math.min(drawingShape.start.x, drawingShape.current.x),
-                y: Math.min(drawingShape.start.y, drawingShape.current.y),
-                rotation: 0,
-                width: Math.abs(drawingShape.current.x - drawingShape.start.x),
-                length: Math.abs(drawingShape.current.y - drawingShape.start.y),
-                height: 0.1,
-                color: DEFAULT_PREVIEW_COLOR,
-                opacity: 0.4,
-                lineThickness: 0.05,
-              }}
-            />
-          )}
+          {drawingShape &&
+            (shapeTool === 'line' ? (
+              <DrawingPreviewLine
+                preview={drawingShape.current}
+                scale={scale}
+                anchors={[drawingShape.start]}
+              />
+            ) : (
+              <ShapeNode
+                isSelected={false}
+                scale={scale}
+                snapEnabled={snapEnabled}
+                onSelect={noopSelect}
+                onTransform={noopTransform}
+                shape={{
+                  id: 'preview',
+                  type: shapeTool,
+                  x: Math.min(drawingShape.start.x, drawingShape.current.x),
+                  y: Math.min(drawingShape.start.y, drawingShape.current.y),
+                  rotation: 0,
+                  width: Math.abs(
+                    drawingShape.current.x - drawingShape.start.x,
+                  ),
+                  length: Math.abs(
+                    drawingShape.current.y - drawingShape.start.y,
+                  ),
+                  height: 0.1,
+                  color: DEFAULT_PREVIEW_COLOR,
+                  opacity: 0.4,
+                  lineThickness: 0.05,
+                }}
+              />
+            ))}
           {scene.cameras.map((camera) => (
             <CameraNode
               camera={camera}
