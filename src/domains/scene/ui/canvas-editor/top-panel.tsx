@@ -45,8 +45,8 @@ export function CanvasTopPanel({
         <Badge>Top Panel</Badge>
         <span className="text-muted-foreground text-xs">{autosaveLabel}</span>
       </div>
-      <Separator orientation="vertical" className="h-6" />
-      <div className="flex items-center gap-2">
+
+      <div className="flex items-center gap-2 mr-auto">
         <Switch
           checked={editMode}
           onCheckedChange={onToggleEditMode}
