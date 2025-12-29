@@ -469,6 +469,19 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
     })
   })
 
+  const handleDragMove = useCallbackRef(
+    (event: KonvaEventObject<DragEvent>) => {
+      onMove({
+        x: snapEnabled
+          ? Math.round(event.target.x() / GRID_SIZE)
+          : event.target.x() / GRID_SIZE,
+        y: snapEnabled
+          ? Math.round(event.target.y() / GRID_SIZE)
+          : event.target.y() / GRID_SIZE,
+      })
+    },
+  )
+
   const handleDragStart = useCallbackRef(() => {
     onInteractionStart?.()
   })
@@ -485,6 +498,7 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
         dragBoundFunc={handleDragBound}
         onClick={onSelect}
         onDragEnd={handleDragEnd}
+        onDragMove={handleDragMove}
         onDragStart={handleDragStart}
         onTap={onSelect}
         opacity={0.8}

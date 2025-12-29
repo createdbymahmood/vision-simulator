@@ -191,46 +191,47 @@ export const computeVisionPolygon = (
     ...shapesToSegments(scene.shapes),
   ]
   const origin: CanvasPoint = {x: camera.x, y: camera.y}
-  const fovRadians = toRadians(camera.fov)
+  const clampedFov = Math.min(camera.fov, 179.9)
+  const fovRadians = toRadians(clampedFov)
   const direction = toRadians(camera.direction)
   const halfFov = fovRadians / 2
   const minDistance = camera.nearPlane ?? 0
   const maxDistance =
     camera.depth > 0 ? Math.max(camera.depth, minDistance) : maxDepthFallback
 
-  const baseAngles = [direction - halfFov, direction + halfFov, direction].map(
-    normalizeAngle,
-  )
+  const normalizeDelta = (angle: number) =>
+    Math.atan2(Math.sin(angle - direction), Math.cos(angle - direction))
+
+  const sampleCount = Math.max(48, Math.ceil(clampedFov / 2.5))
+  const sampledDeltas = Array.from({length: sampleCount}, (_, index) => {
+    const t = index / Math.max(sampleCount - 1, 1)
+    return -halfFov + t * fovRadians
+  })
 
   const vertices = getVertices(segments)
   const epsilon = 0.0001
-  const candidateAngles = vertices
+  const candidateDeltas = vertices
     .map((vertex) => Math.atan2(vertex.y - origin.y, vertex.x - origin.x))
     .flatMap((angle) => [angle - epsilon, angle, angle + epsilon])
-    .filter((angle) => {
-      const normalized = normalizeAngle(angle)
-      const delta = Math.atan2(
-        Math.sin(normalized - direction),
-        Math.cos(normalized - direction),
-      )
-      return Math.abs(delta) <= halfFov + 0.0001
-    })
+    .map(normalizeDelta)
+    .filter((delta) => Math.abs(delta) <= halfFov + 0.0001)
 
-  const angles = [...baseAngles, ...candidateAngles]
-  const normalizedAngles = Array.from(new Set(angles.map(normalizeAngle))).sort(
-    (a, b) => a - b,
-  )
+  const deltas = Array.from(
+    new Set([...sampledDeltas, ...candidateDeltas].map((delta) => delta)),
+  ).sort((a, b) => a - b)
 
-  const points = normalizedAngles.map((angle) => {
+  const points = deltas.map((delta) => {
+    const angle = normalizeAngle(direction + delta)
     const hit = findRayHit(origin, angle, maxDistance, segments)
     const dx = hit.x - origin.x
     const dy = hit.y - origin.y
     const distance = Math.sqrt(dx * dx + dy * dy)
-    if (distance < minDistance) {
-      return projectRay(origin, angle, minDistance)
+    const near = Math.max(minDistance, 0.01)
+    if (distance < near) {
+      return projectRay(origin, angle, near)
     }
     return hit
   })
 
-  return points
+  return [origin, ...points]
 }
