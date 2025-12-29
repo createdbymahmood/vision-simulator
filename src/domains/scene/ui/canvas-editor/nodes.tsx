@@ -229,6 +229,15 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
     onInteractionEnd?.()
   })
 
+  const handleDragMove = useCallbackRef(
+    (event: KonvaEventObject<DragEvent>) => {
+      onTransform({
+        x: snapValue(event.target.x() / GRID_SIZE),
+        y: snapValue(event.target.y() / GRID_SIZE),
+      })
+    },
+  )
+
   const handleRectangleTransformEnd = useCallbackRef(
     (event: KonvaEventObject<Event>) => {
       const node = event.target as any
@@ -317,6 +326,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
           {...commonProps}
           dragBoundFunc={dragBoundPosition}
           onDragEnd={handleDragEnd}
+          onDragMove={handleDragMove}
           onDragStart={handleDragStart}
           onTransformEnd={handleRectangleTransformEnd}
           onTransformStart={handleTransformStart}
@@ -352,6 +362,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
           {...commonProps}
           dragBoundFunc={dragBoundPosition}
           onDragEnd={handleDragEnd}
+          onDragMove={handleDragMove}
           onDragStart={handleDragStart}
           onTransformEnd={handleCircleTransformEnd}
           onTransformStart={handleTransformStart}
@@ -386,6 +397,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
           {...commonProps}
           dragBoundFunc={dragBoundPosition}
           onDragEnd={handleDragEnd}
+          onDragMove={handleDragMove}
           onDragStart={handleDragStart}
           onTransformEnd={handleRectangleTransformEnd}
           onTransformStart={handleTransformStart}
@@ -421,6 +433,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
         dragBoundFunc={dragBoundPosition}
         onClick={onSelect}
         onDragEnd={handleLineDragEnd}
+        onDragMove={handleDragMove}
         onDragStart={handleDragStart}
         onTap={onSelect}
         onTransformEnd={handleLineTransformEnd}

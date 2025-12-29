@@ -59,8 +59,9 @@ const circlePoints = (shape: SceneShape, segments = 12): CanvasPoint[] => {
 
 const trianglePoints = (shape: SceneShape): CanvasPoint[] => {
   const radius = Math.max(shape.width, shape.length) / 2
+  const baseRotation = shape.rotation ?? 0
   const angles = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3].map(
-    (angle) => angle + (shape.rotation ?? 0),
+    (angle) => angle + baseRotation,
   )
   return angles.map((angle) => ({
     x: shape.x + radius * Math.cos(angle),
@@ -69,17 +70,8 @@ const trianglePoints = (shape: SceneShape): CanvasPoint[] => {
 }
 
 const shapeToSegments = (shape: SceneShape): Segment[] => {
-  if (shape.type === 'line') {
-    return [
-      {
-        a: {x: shape.x, y: shape.y},
-        b: {x: shape.x + shape.width, y: shape.y + shape.length},
-      },
-    ]
-  }
-
   if (shape.type === 'circle') {
-    const points = circlePoints(shape)
+    const points = circlePoints(shape, 32)
     return points.map((point, index) => ({
       a: point,
       b: points[(index + 1) % points.length],
@@ -91,6 +83,31 @@ const shapeToSegments = (shape: SceneShape): Segment[] => {
     return points.map((point, index) => ({
       a: point,
       b: points[(index + 1) % points.length],
+    }))
+  }
+
+  if (shape.type === 'line') {
+    const start: CanvasPoint = {x: shape.x, y: shape.y}
+    const end: CanvasPoint = {
+      x: shape.x + shape.width,
+      y: shape.y + shape.length,
+    }
+    const dx = end.x - start.x
+    const dy = end.y - start.y
+    const length = Math.sqrt(dx * dx + dy * dy) || 1
+    const halfThickness = (shape.lineThickness || 0.05) / 2
+    const nx = (-dy / length) * halfThickness
+    const ny = (dx / length) * halfThickness
+
+    const p1 = {x: start.x + nx, y: start.y + ny}
+    const p2 = {x: end.x + nx, y: end.y + ny}
+    const p3 = {x: end.x - nx, y: end.y - ny}
+    const p4 = {x: start.x - nx, y: start.y - ny}
+
+    const quad = [p1, p2, p3, p4]
+    return quad.map((point, index) => ({
+      a: point,
+      b: quad[(index + 1) % quad.length],
     }))
   }
 

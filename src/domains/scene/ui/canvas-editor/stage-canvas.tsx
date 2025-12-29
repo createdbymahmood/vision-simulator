@@ -336,6 +336,9 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       }
 
       if (activeTool === 'camera') {
+        if (event.target !== stage) {
+          return
+        }
         const camera: SceneCamera = {
           id: crypto.randomUUID(),
           typePreset: 'fixed',
@@ -356,6 +359,9 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       }
 
       if (activeTool === 'person') {
+        if (event.target !== stage) {
+          return
+        }
         const targetPoint = findValidPersonPosition(snapped, scene, 0.3)
         if (!targetPoint) {
           return
