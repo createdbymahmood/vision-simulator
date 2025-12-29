@@ -43,7 +43,9 @@ export function CanvasTopPanel({
       <div className="flex items-center gap-2">
         <Badge variant="outline">Canvas Editor</Badge>
         <Badge>Top Panel</Badge>
-        <span className="text-muted-foreground text-xs">{autosaveLabel}</span>
+        <span className="text-muted-foreground text-xs tabular-nums">
+          {autosaveLabel}
+        </span>
       </div>
 
       <div className="flex items-center gap-2 mr-auto">

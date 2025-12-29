@@ -47,16 +47,16 @@ export function CanvasBottomToolbar({
             spacing={4}
           >
             <ToggleGroupItem value="select" aria-label="Select tool">
-              <MousePointer2Icon className="size-4" />
+              <MousePointer2Icon className="size-5" />
             </ToggleGroupItem>
 
             <ToggleGroupItem value="wall" aria-label="Draw wall tool">
-              <ArrowLeftRightIcon className="size-4" />
+              <ArrowLeftRightIcon className="size-5" />
             </ToggleGroupItem>
             <Popover>
               <PopoverTrigger asChild>
                 <ToggleGroupItem value="shape" aria-label="Draw shapes">
-                  <ShapesIcon className="size-4" />
+                  <ShapesIcon className="size-5" />
                   {/* {activeShapeLabel} */}
                 </ToggleGroupItem>
               </PopoverTrigger>
@@ -69,7 +69,7 @@ export function CanvasBottomToolbar({
                     onClick={() => onShapeSelect("rectangle")}
                     size="icon"
                   >
-                    <RectangleCircle className="size-4" />
+                    <RectangleCircle className="size-5" />
                     {/* Rectangle */}
                   </Button>
                   <Button
@@ -79,7 +79,7 @@ export function CanvasBottomToolbar({
                     onClick={() => onShapeSelect("circle")}
                     size="icon"
                   >
-                    <Circle className="size-4" />
+                    <Circle className="size-5" />
                     {/* Circle */}
                   </Button>
                   <Button
@@ -89,7 +89,7 @@ export function CanvasBottomToolbar({
                     onClick={() => onShapeSelect("triangle")}
                     size="icon"
                   >
-                    <TriangleIcon className="size-4" />
+                    <TriangleIcon className="size-5" />
                     {/* Triangle */}
                   </Button>
                   <Button
@@ -99,7 +99,7 @@ export function CanvasBottomToolbar({
                     onClick={() => onShapeSelect("line")}
                     size="icon"
                   >
-                    <LineSquiggle className="size-4" />
+                    <LineSquiggle className="size-5" />
                     {/* Line */}
                   </Button>
                 </div>
@@ -107,16 +107,16 @@ export function CanvasBottomToolbar({
             </Popover>
 
             <ToggleGroupItem value="camera" aria-label="Place camera">
-              <CameraIcon className="size-4" />
+              <CameraIcon className="size-5" />
             </ToggleGroupItem>
 
             <ToggleGroupItem value="person" aria-label="Place person">
-              <UserRoundIcon className="size-4" />
+              <UserRoundIcon className="size-5" />
             </ToggleGroupItem>
           </ToggleGroup>
 
           <Button variant="secondary" size="icon" onClick={onBackgroundClick}>
-            <WallpaperIcon className="size-4" />
+            <WallpaperIcon className="size-5" />
           </Button>
         </div>
       </div>

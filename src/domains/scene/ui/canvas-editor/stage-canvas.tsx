@@ -95,12 +95,9 @@ export function CanvasStage({
 }: CanvasStageProps) {
   const stageRef = useRef<Konva.Stage | null>(null);
   const [drawingWall, setDrawingWall] = useState<DrawingWallState | null>(null);
-  const [drawingShape, setDrawingShape] = useState<DrawingShapeState | null>(
-    null
-  );
-  const [measurement, setMeasurement] = useState<CanvasMeasurement | null>(
-    null
-  );
+  const [drawingShape, setDrawingShape] = useState<DrawingShapeState | null>(null);
+  const [measurement, setMeasurement] = useState<CanvasMeasurement | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
 
   useEffect(() => {
     if (size.width && size.height) {
@@ -110,6 +107,25 @@ export function CanvasStage({
       });
     }
   }, [onOffsetChange, size.height, size.width]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === "Space") {
+        setIsPanning(true);
+      }
+    };
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.code === "Space") {
+        setIsPanning(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   const cursor = useMemo(() => {
     if (!editMode) {
@@ -374,7 +390,7 @@ export function CanvasStage({
         y={offset.y}
         scaleX={scale}
         scaleY={scale}
-        draggable={activeTool === "select" && !drawingWall && !drawingShape}
+        draggable={isPanning && !drawingWall && !drawingShape}
         onDragMove={handleDragMove}
         onWheel={handleZoom}
         onMouseDown={handleStagePointerDown}
