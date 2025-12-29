@@ -33,6 +33,8 @@ export function WallSegment({
   onDragStart,
   onDragMove,
   onDragEnd,
+  onInteractionStart,
+  onInteractionEnd,
 }: {
   wall: SceneWall
   scale: number
@@ -41,6 +43,8 @@ export function WallSegment({
   onDragStart?: () => void
   onDragMove?: (delta: CanvasPoint) => void
   onDragEnd?: (delta: CanvasPoint) => void
+  onInteractionStart?: () => void
+  onInteractionEnd?: () => void
 }) {
   return (
     <Line
@@ -54,6 +58,7 @@ export function WallSegment({
         if (!onDragMove) {
           return
         }
+        onInteractionStart?.()
         onDragMove({
           x: event.target.x() / GRID_SIZE,
           y: event.target.y() / GRID_SIZE,
@@ -69,6 +74,7 @@ export function WallSegment({
           y: event.target.y() / GRID_SIZE,
         })
         event.target.position({x: 0, y: 0})
+        onInteractionEnd?.()
       }}
       onDragStart={onDragStart}
       onTap={onSelect}
@@ -92,6 +98,8 @@ export function ShapeNode({
   onSelect,
   onTransform,
   snapEnabled,
+  onInteractionStart,
+  onInteractionEnd,
 }: {
   shape: SceneShape
   isSelected: boolean
@@ -99,6 +107,8 @@ export function ShapeNode({
   onSelect: () => void
   onTransform: (next: Partial<SceneShape>) => void
   snapEnabled: boolean
+  onInteractionStart?: () => void
+  onInteractionEnd?: () => void
 }) {
   const shapeRef = useRef<any>(null)
   const transformerRef = useRef<any>(null)
@@ -109,12 +119,20 @@ export function ShapeNode({
     }
     if (isSelected && shapeRef.current) {
       transformerRef.current.nodes([shapeRef.current])
-      transformerRef.current.getLayer()?.batchDraw()
-      return
+    } else {
+      transformerRef.current.nodes([])
     }
-    transformerRef.current.nodes([])
     transformerRef.current.getLayer()?.batchDraw()
-  }, [isSelected])
+    transformerRef.current.forceUpdate?.()
+  }, [
+    isSelected,
+    shape.x,
+    shape.y,
+    shape.width,
+    shape.length,
+    shape.rotation,
+    shape.type,
+  ])
 
   const commonProps = {
     draggable: true,
@@ -126,6 +144,7 @@ export function ShapeNode({
 
   const strokeWidth = Math.max(1.5, shape.lineThickness * GRID_SIZE) / scale
   const fill = shape.color || DEFAULT_SHAPE_COLOR
+  const snapValue = (value: number) => (snapEnabled ? Math.round(value) : value)
 
   const transformer = isSelected ? (
     <Transformer
@@ -145,33 +164,47 @@ export function ShapeNode({
   if (shape.type === 'rectangle') {
     return (
       <>
-        <Group
-          x={shape.x * GRID_SIZE}
-          y={shape.y * GRID_SIZE}
-          rotation={(shape.rotation * 180) / Math.PI}
-          {...commonProps}
-          onDragEnd={(event) => {
-            onTransform({
-              x: snapEnabled
-                ? Math.round(event.target.x() / GRID_SIZE)
-                : event.target.x() / GRID_SIZE,
-              y: snapEnabled
-                ? Math.round(event.target.y() / GRID_SIZE)
-                : event.target.y() / GRID_SIZE,
-            })
-          }}
-          onTransformEnd={(event) => {
-            const node = event.target
-            const scaleX = node.scaleX()
-            const scaleY = node.scaleY()
-            node.scaleX(1)
-            node.scaleY(1)
-            onTransform({
-              width: shape.width * scaleX,
-              length: shape.length * scaleY,
-              rotation: (node.rotation() * Math.PI) / 180,
-            })
-          }}
+      <Group
+        x={shape.x * GRID_SIZE}
+        y={shape.y * GRID_SIZE}
+        rotation={(shape.rotation * 180) / Math.PI}
+        {...commonProps}
+        dragBoundFunc={(pos) => {
+          if (!snapEnabled) return pos
+          return {
+            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+          }
+        }}
+        onDragStart={() => {
+          onSelect()
+          onInteractionStart?.()
+        }}
+        onDragEnd={(event) => {
+          onTransform({
+            x: snapValue(event.target.x() / GRID_SIZE),
+            y: snapValue(event.target.y() / GRID_SIZE),
+          })
+          onInteractionEnd?.()
+        }}
+        onTransformStart={() => {
+          onSelect()
+          onInteractionStart?.()
+        }}
+        onTransformEnd={(event) => {
+          const node = event.target
+          const scaleX = node.scaleX()
+          const scaleY = node.scaleY()
+          node.scaleX(1)
+          node.scaleY(1)
+          onTransform({
+            width: snapValue(shape.width * scaleX),
+            length: snapValue(shape.length * scaleY),
+            rotation: (node.rotation() * Math.PI) / 180,
+          })
+          onInteractionEnd?.()
+          transformerRef.current?.forceUpdate?.()
+        }}
         >
           <Rect
             height={shape.length * GRID_SIZE}
@@ -198,31 +231,45 @@ export function ShapeNode({
   if (shape.type === 'circle') {
     return (
       <>
-        <Group
-          x={shape.x * GRID_SIZE}
-          y={shape.y * GRID_SIZE}
-          {...commonProps}
-          onDragEnd={(event) => {
-            onTransform({
-              x: snapEnabled
-                ? Math.round(event.target.x() / GRID_SIZE)
-                : event.target.x() / GRID_SIZE,
-              y: snapEnabled
-                ? Math.round(event.target.y() / GRID_SIZE)
-                : event.target.y() / GRID_SIZE,
-            })
-          }}
-          onTransformEnd={(event) => {
-            const node = event.target
-            const scaleX = node.scaleX()
-            node.scaleX(1)
-            node.scaleY(1)
-            onTransform({
-              width: shape.width * scaleX,
-              length: shape.length * scaleX,
-              rotation: 0,
-            })
-          }}
+      <Group
+        x={shape.x * GRID_SIZE}
+        y={shape.y * GRID_SIZE}
+        {...commonProps}
+        dragBoundFunc={(pos) => {
+          if (!snapEnabled) return pos
+          return {
+            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+          }
+        }}
+        onDragStart={() => {
+          onSelect()
+          onInteractionStart?.()
+        }}
+        onDragEnd={(event) => {
+          onTransform({
+            x: snapValue(event.target.x() / GRID_SIZE),
+            y: snapValue(event.target.y() / GRID_SIZE),
+          })
+          onInteractionEnd?.()
+        }}
+        onTransformStart={() => {
+          onSelect()
+          onInteractionStart?.()
+        }}
+        onTransformEnd={(event) => {
+          const node = event.target
+          const scaleX = node.scaleX()
+          node.scaleX(1)
+          node.scaleY(1)
+          onTransform({
+            width: snapValue(shape.width * scaleX),
+            length: snapValue(shape.length * scaleX),
+            rotation: 0,
+          })
+          onInteractionEnd?.()
+          transformerRef.current?.forceUpdate?.()
+        }}
         >
           <Circle
             fill={fill}
@@ -247,32 +294,46 @@ export function ShapeNode({
   if (shape.type === 'triangle') {
     return (
       <>
-        <Group
-          x={shape.x * GRID_SIZE}
-          y={shape.y * GRID_SIZE}
-          rotation={(shape.rotation * 180) / Math.PI}
-          {...commonProps}
-          onDragEnd={(event) => {
-            onTransform({
-              x: snapEnabled
-                ? Math.round(event.target.x() / GRID_SIZE)
-                : event.target.x() / GRID_SIZE,
-              y: snapEnabled
-                ? Math.round(event.target.y() / GRID_SIZE)
-                : event.target.y() / GRID_SIZE,
-            })
-          }}
-          onTransformEnd={(event) => {
-            const node = event.target
-            const scaleX = node.scaleX()
-            node.scaleX(1)
-            node.scaleY(1)
-            onTransform({
-              width: shape.width * scaleX,
-              length: shape.length * scaleX,
-              rotation: (node.rotation() * Math.PI) / 180,
-            })
-          }}
+      <Group
+        x={shape.x * GRID_SIZE}
+        y={shape.y * GRID_SIZE}
+        rotation={(shape.rotation * 180) / Math.PI}
+        {...commonProps}
+        dragBoundFunc={(pos) => {
+          if (!snapEnabled) return pos
+          return {
+            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+          }
+        }}
+        onDragStart={() => {
+          onSelect()
+          onInteractionStart?.()
+        }}
+        onDragEnd={(event) => {
+          onTransform({
+            x: snapValue(event.target.x() / GRID_SIZE),
+            y: snapValue(event.target.y() / GRID_SIZE),
+          })
+          onInteractionEnd?.()
+        }}
+        onTransformStart={() => {
+          onSelect()
+          onInteractionStart?.()
+        }}
+        onTransformEnd={(event) => {
+          const node = event.target
+          const scaleX = node.scaleX()
+          node.scaleX(1)
+          node.scaleY(1)
+          onTransform({
+            width: snapValue(shape.width * scaleX),
+            length: snapValue(shape.length * scaleX),
+            rotation: (node.rotation() * Math.PI) / 180,
+          })
+          onInteractionEnd?.()
+          transformerRef.current?.forceUpdate?.()
+        }}
         >
           <RegularPolygon
             fill={fill}
@@ -300,9 +361,20 @@ export function ShapeNode({
     <>
       <Line
         draggable
+        dragBoundFunc={(pos) => {
+          if (!snapEnabled) return pos
+          return {
+            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+          }
+        }}
         lineCap='round'
         ref={shapeRef}
         onClick={onSelect}
+        onDragStart={() => {
+          onSelect()
+          onInteractionStart?.()
+        }}
         onDragEnd={(event) => {
           const target = event.target as any
           onTransform({
@@ -313,6 +385,7 @@ export function ShapeNode({
               ? Math.round(target.points()[1] / GRID_SIZE)
               : target.points()[1] / GRID_SIZE,
           })
+          onInteractionEnd?.()
         }}
         onTap={onSelect}
         onTransformEnd={(event) => {
@@ -322,10 +395,11 @@ export function ShapeNode({
           node.scaleX(1)
           node.scaleY(1)
           onTransform({
-            width: shape.width * scaleX,
-            length: shape.length * scaleY,
+            width: snapValue(shape.width * scaleX),
+            length: snapValue(shape.length * scaleY),
             rotation: (node.rotation() * Math.PI) / 180,
           })
+          transformerRef.current?.forceUpdate?.()
         }}
         opacity={shape.opacity}
         points={[
@@ -349,6 +423,8 @@ export function CameraNode({
   onSelect,
   onMove,
   snapEnabled,
+  onInteractionStart,
+  onInteractionEnd,
 }: {
   camera: SceneCamera
   scale: number
@@ -356,11 +432,20 @@ export function CameraNode({
   onSelect: () => void
   onMove: (point: CanvasPoint) => void
   snapEnabled: boolean
+  onInteractionStart?: () => void
+  onInteractionEnd?: () => void
 }) {
   return (
     <>
       <RegularPolygon
         draggable
+        dragBoundFunc={(pos) => {
+          if (!snapEnabled) return pos
+          return {
+            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+          }
+        }}
         fill={DEFAULT_SHAPE_COLOR}
         radius={12}
         sides={3}
@@ -368,6 +453,7 @@ export function CameraNode({
         y={camera.y * GRID_SIZE}
         onClick={onSelect}
         onDragEnd={(event) => {
+          onInteractionEnd?.()
           onMove({
             x: snapEnabled
               ? Math.round(event.target.x() / GRID_SIZE)
@@ -377,6 +463,7 @@ export function CameraNode({
               : event.target.y() / GRID_SIZE,
           })
         }}
+        onDragStart={onInteractionStart}
         onTap={onSelect}
         opacity={0.8}
         rotation={camera.direction}
@@ -403,6 +490,8 @@ export function PersonNode({
   onSelect,
   onMove,
   snapEnabled,
+  onInteractionStart,
+  onInteractionEnd,
 }: {
   person: ScenePerson
   scale: number
@@ -410,17 +499,27 @@ export function PersonNode({
   onSelect: () => void
   onMove: (point: CanvasPoint) => void
   snapEnabled: boolean
+  onInteractionStart?: () => void
+  onInteractionEnd?: () => void
 }) {
   return (
     <>
       <Circle
         draggable
+        dragBoundFunc={(pos) => {
+          if (!snapEnabled) return pos
+          return {
+            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+          }
+        }}
         fill='#22c55e'
         radius={person.radius * GRID_SIZE}
         x={person.x * GRID_SIZE}
         y={person.y * GRID_SIZE}
         onClick={onSelect}
         onDragEnd={(event) => {
+          onInteractionEnd?.()
           onMove({
             x: snapEnabled
               ? Math.round(event.target.x() / GRID_SIZE)
@@ -430,6 +529,7 @@ export function PersonNode({
               : event.target.y() / GRID_SIZE,
           })
         }}
+        onDragStart={onInteractionStart}
         onTap={onSelect}
         opacity={0.85}
       />

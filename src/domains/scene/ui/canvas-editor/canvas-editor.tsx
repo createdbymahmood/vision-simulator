@@ -31,7 +31,7 @@ export function CanvasEditor() {
   const [boardRef, boardSize] = useElementSize<HTMLDivElement>()
   const [offset, setOffset] = useState<CanvasPoint>({x: 0, y: 0})
   const [scale, setScale] = useState(1)
-  const [snapEnabled, setSnapEnabled] = useState(true)
+  const [snapEnabled] = useState(false)
   const [editMode, setEditMode] = useState(true)
   const [shapeTool, setShapeTool] = useState<SceneShapeKind>('rectangle')
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
@@ -153,7 +153,6 @@ export function CanvasEditor() {
   return (
     <div className='relative flex flex-col size-full'>
       <CanvasTopPanel
-        snapEnabled={snapEnabled}
         autosaveLabel={autosaveLabel}
         canRedo={Boolean(historyFuture.length)}
         canUndo={Boolean(historyPast.length)}
@@ -163,7 +162,6 @@ export function CanvasEditor() {
         onLivePreview={handleLivePreview}
         onRedo={handleRedo}
         onToggleEditMode={setEditMode}
-        onToggleSnap={setSnapEnabled}
         onUndo={handleUndo}
       />
       <div className='relative flex-1 min-h-0 overflow-hidden' ref={boardRef}>
@@ -184,10 +182,10 @@ export function CanvasEditor() {
           onOffsetChange={setOffset}
           onScaleChange={setScale}
           onSelectEntity={handleSelectEntity}
-          onUpdateWall={updateWall}
           onUpdateCamera={updateCamera}
           onUpdatePerson={updatePerson}
           onUpdateShape={updateShape}
+          onUpdateWall={updateWall}
           selection={selection}
           shapeTool={shapeTool}
         />

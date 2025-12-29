@@ -22,6 +22,7 @@ export function PropertiesSidebar({
 }: PropertiesSidebarProps) {
   return (
     <Sheet
+      modal={false}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {
           onClose()
@@ -29,7 +30,15 @@ export function PropertiesSidebar({
       }}
       open={open}
     >
-      <SheetContent side='right'>
+      <SheetContent
+        side='right'
+        onPointerDownOutside={(event) => {
+          const target = event.target as HTMLElement | null
+          if (target?.closest('[data-canvas-surface]')) {
+            event.preventDefault()
+          }
+        }}
+      >
         <SheetHeader>
           <SheetTitle>Properties</SheetTitle>
           <SheetDescription>

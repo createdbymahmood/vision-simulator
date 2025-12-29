@@ -5,6 +5,8 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {Layer, Stage} from 'react-konva'
 
+import {cn} from '@/lib/utils'
+
 import type {
   Scene,
   SceneCamera,
@@ -75,7 +77,7 @@ interface CanvasStageProps {
   onCloseOverlays: () => void
 }
 
-type WallDragSession = {
+interface WallDragSession {
   ids: string[]
   initial: Record<string, SceneWall['coordinates']>
   start: CanvasPoint
@@ -106,6 +108,7 @@ export function CanvasStage({
   onSelectEntity,
   onCloseOverlays,
 }: CanvasStageProps) {
+  const canEdit = editMode
   const stageRef = useRef<Konva.Stage | null>(null)
   const [drawingWall, setDrawingWall] = useState<DrawingWallState | null>(null)
   const [drawingShape, setDrawingShape] = useState<DrawingShapeState | null>(
@@ -114,6 +117,8 @@ export function CanvasStage({
   const [measurement, setMeasurement] = useState<CanvasMeasurement | null>(null)
   const [isPanning, setIsPanning] = useState(false)
   const wallDragSession = useRef<WallDragSession | null>(null)
+  const [isManipulating, setIsManipulating] = useState(false)
+  const interactionCapturedRef = useRef(false)
 
   useEffect(() => {
     if (size.width && size.height) {
@@ -266,6 +271,9 @@ export function CanvasStage({
   const handleStagePointerDown = useCallbackRef(
     (event: KonvaEventObject<PointerEvent>) => {
       if (isPanning) {
+        return
+      }
+      if (isManipulating || !canEdit) {
         return
       }
       if (!editMode) {
@@ -494,7 +502,12 @@ export function CanvasStage({
     if (!pointer) {
       return
     }
+    if (!interactionCapturedRef.current) {
+      onCaptureSnapshot(scene)
+      interactionCapturedRef.current = true
+    }
     wallDragSession.current = computeWallSession(wallId, pointer)
+    setIsManipulating(true)
   })
 
   const updateWallDrag = useCallbackRef((wallId: string) => {
@@ -516,6 +529,8 @@ export function CanvasStage({
     const pointer = getPointerScenePoint()
     if (!pointer) {
       wallDragSession.current = null
+      interactionCapturedRef.current = false
+      setIsManipulating(false)
       return
     }
     const session =
@@ -526,12 +541,17 @@ export function CanvasStage({
     }
     applyWallDelta(deltaFromStart)
     wallDragSession.current = null
+    interactionCapturedRef.current = false
+    setIsManipulating(false)
   })
 
   return (
     <div
-      className='relative flex flex-1 overflow-hidden bg-white shadow-sm'
+      data-canvas-surface
       style={{cursor}}
+      className={cn('relative flex flex-1 overflow-hidden bg-white shadow-sm', {
+        'pointer-events-none': !canEdit,
+      })}
     >
       {scene.background?.type === 'image' && (
         <div
@@ -562,9 +582,20 @@ export function CanvasStage({
               key={wall.id}
               scale={scale}
               wall={wall}
-              onDragStart={() => beginWallDrag(wall.id)}
-              onDragMove={() => updateWallDrag(wall.id)}
               onDragEnd={() => finishWallDrag(wall.id)}
+              onDragMove={() => updateWallDrag(wall.id)}
+              onDragStart={() => beginWallDrag(wall.id)}
+              onInteractionEnd={() => {
+                interactionCapturedRef.current = false
+                setIsManipulating(false)
+              }}
+              onInteractionStart={() => {
+                if (!interactionCapturedRef.current) {
+                  onCaptureSnapshot(scene)
+                  interactionCapturedRef.current = true
+                }
+                setIsManipulating(true)
+              }}
               onSelect={() => onSelectEntity({id: wall.id, kind: 'wall'})}
               isSelected={
                 selection.selectedEntityId === wall.id &&
@@ -584,9 +615,20 @@ export function CanvasStage({
               key={shape.id}
               scale={scale}
               shape={shape}
+              snapEnabled={snapEnabled}
+              onInteractionEnd={() => {
+                interactionCapturedRef.current = false
+                setIsManipulating(false)
+              }}
+              onInteractionStart={() => {
+                if (!interactionCapturedRef.current) {
+                  onCaptureSnapshot(scene)
+                  interactionCapturedRef.current = true
+                }
+                setIsManipulating(true)
+              }}
               onSelect={() => onSelectEntity({id: shape.id, kind: 'shape'})}
               onTransform={(next) => onUpdateShape(shape.id, next)}
-              snapEnabled={snapEnabled}
               isSelected={
                 selection.selectedEntityId === shape.id &&
                 selection.selectedEntityKind === 'shape'
@@ -597,6 +639,7 @@ export function CanvasStage({
             <ShapeNode
               isSelected={false}
               scale={scale}
+              snapEnabled={snapEnabled}
               onSelect={() => {}}
               onTransform={() => {}}
               shape={{
@@ -612,7 +655,6 @@ export function CanvasStage({
                 opacity: 0.4,
                 lineThickness: 0.05,
               }}
-              snapEnabled={snapEnabled}
             />
           )}
           {scene.cameras.map((camera) => (
@@ -620,6 +662,18 @@ export function CanvasStage({
               camera={camera}
               key={camera.id}
               scale={scale}
+              snapEnabled={snapEnabled}
+              onInteractionEnd={() => {
+                interactionCapturedRef.current = false
+                setIsManipulating(false)
+              }}
+              onInteractionStart={() => {
+                if (!interactionCapturedRef.current) {
+                  onCaptureSnapshot(scene)
+                  interactionCapturedRef.current = true
+                }
+                setIsManipulating(true)
+              }}
               onMove={(point) =>
                 onUpdateCamera(camera.id, {x: point.x, y: point.y})
               }
@@ -628,13 +682,24 @@ export function CanvasStage({
                 selection.selectedEntityId === camera.id &&
                 selection.selectedEntityKind === 'camera'
               }
-              snapEnabled={snapEnabled}
             />
           ))}
           {scene.people.map((person) => (
             <PersonNode
               key={person.id}
               scale={scale}
+              snapEnabled={snapEnabled}
+              onInteractionEnd={() => {
+                interactionCapturedRef.current = false
+                setIsManipulating(false)
+              }}
+              onInteractionStart={() => {
+                if (!interactionCapturedRef.current) {
+                  onCaptureSnapshot(scene)
+                  interactionCapturedRef.current = true
+                }
+                setIsManipulating(true)
+              }}
               onMove={(point) =>
                 onUpdatePerson(person.id, {x: point.x, y: point.y})
               }
@@ -644,7 +709,6 @@ export function CanvasStage({
                 selection.selectedEntityId === person.id &&
                 selection.selectedEntityKind === 'person'
               }
-              snapEnabled={snapEnabled}
             />
           ))}
           {scene.areas.map((area) => (

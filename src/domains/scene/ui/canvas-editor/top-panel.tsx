@@ -13,9 +13,7 @@ import {Switch} from '@/components/ui/switch'
 export function CanvasTopPanel({
   autosaveLabel,
   editMode,
-  snapEnabled,
   onToggleEditMode,
-  onToggleSnap,
   onClearBoard,
   onUndo,
   onRedo,
@@ -26,11 +24,9 @@ export function CanvasTopPanel({
 }: {
   autosaveLabel: string
   editMode: boolean
-  snapEnabled: boolean
   canUndo: boolean
   canRedo: boolean
   onToggleEditMode: (next: boolean) => void
-  onToggleSnap: (next: boolean) => void
   onClearBoard: () => void
   onUndo: () => void
   onRedo: () => void
@@ -57,7 +53,7 @@ export function CanvasTopPanel({
           Edit mode
         </label>
       </div>
-      <div className='flex items-center gap-2'>
+      {/* <div className='flex items-center gap-2'>
         <Switch
           checked={snapEnabled}
           id='snap-grid'
@@ -66,7 +62,7 @@ export function CanvasTopPanel({
         <label className='text-sm' htmlFor='snap-grid'>
           Snap to grid
         </label>
-      </div>
+      </div> */}
       <div className='flex flex-wrap items-center gap-2'>
         <Button size='sm' variant='outline' onClick={onClearBoard}>
           <EraserIcon className='mr-2 size-4' />
