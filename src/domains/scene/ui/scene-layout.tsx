@@ -38,7 +38,11 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type {
   Scene,
   SceneEntity,
@@ -57,21 +61,17 @@ function createId(): string {
 
 function SceneTopBar({
   mode,
-  activeTool,
   selectionMode,
   autosaveLabel,
   onModeChange,
-  onToolChange,
   onToggleSelectionMode,
   onOpenCommandPalette,
   onResetScene,
 }: {
   mode: SceneMode;
-  activeTool: SceneTool;
   selectionMode: "single" | "multi";
   autosaveLabel: string;
   onModeChange: (mode: SceneMode) => void;
-  onToolChange: (tool: SceneTool) => void;
   onToggleSelectionMode: () => void;
   onOpenCommandPalette: () => void;
   onResetScene: () => void;
@@ -87,7 +87,10 @@ function SceneTopBar({
         <div className="flex h-6 items-center">
           <Separator orientation="vertical" />
         </div>
-        <Tabs value={mode} onValueChange={(value) => onModeChange(value as SceneMode)}>
+        <Tabs
+          value={mode}
+          onValueChange={(value) => onModeChange(value as SceneMode)}
+        >
           <TabsList>
             <TabsTrigger value="canvas">
               <SquareStackIcon className="mr-2 size-4" />
@@ -99,40 +102,6 @@ function SceneTopBar({
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        <div className="flex h-6 items-center">
-          <Separator orientation="vertical" />
-        </div>
-        <ToggleGroup
-          type="single"
-          value={activeTool}
-          onValueChange={(value) => {
-            if (value) {
-              onToolChange(value as SceneTool);
-            }
-          }}
-          spacing={4}
-        >
-          <ToggleGroupItem value="select" aria-label="Select tool">
-            <MousePointer2Icon className="size-4" />
-            Select
-          </ToggleGroupItem>
-          <ToggleGroupItem value="camera" aria-label="Camera tool">
-            <CameraIcon className="size-4" />
-            Camera
-          </ToggleGroupItem>
-          <ToggleGroupItem value="shape" aria-label="Shape tool">
-            <ShapesIcon className="size-4" />
-            Shape
-          </ToggleGroupItem>
-          <ToggleGroupItem value="person" aria-label="Person tool">
-            <PersonStandingIcon className="size-4" />
-            Person
-          </ToggleGroupItem>
-          <ToggleGroupItem value="area" aria-label="Area tool">
-            <MapIcon className="size-4" />
-            Area
-          </ToggleGroupItem>
-        </ToggleGroup>
         <div className="flex h-6 items-center">
           <Separator orientation="vertical" />
         </div>
@@ -203,19 +172,39 @@ function SceneWorkspace({
           >
             <div className="pointer-events-none absolute inset-0 rounded-xl" />
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => onQuickAdd("wall")}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onQuickAdd("wall")}
+              >
                 Add wall
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onQuickAdd("shape")}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onQuickAdd("shape")}
+              >
                 Add shape
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onQuickAdd("camera")}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onQuickAdd("camera")}
+              >
                 Add camera
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onQuickAdd("person")}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onQuickAdd("person")}
+              >
                 Add person
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onQuickAdd("area")}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onQuickAdd("area")}
+              >
                 Add area
               </Button>
             </div>
@@ -249,7 +238,9 @@ function SceneWorkspace({
                             key={wall.id}
                             size="sm"
                             variant="secondary"
-                            onClick={() => onSelectEntity({ id: wall.id, kind: "wall" })}
+                            onClick={() =>
+                              onSelectEntity({ id: wall.id, kind: "wall" })
+                            }
                           >
                             Wall {wall.id.slice(0, 4)}
                           </Button>
@@ -295,7 +286,9 @@ function SceneWorkspace({
                             key={area.id}
                             size="sm"
                             variant="secondary"
-                            onClick={() => onSelectEntity({ id: area.id, kind: "area" })}
+                            onClick={() =>
+                              onSelectEntity({ id: area.id, kind: "area" })
+                            }
                           >
                             Area {area.name}
                           </Button>
@@ -318,24 +311,79 @@ function SceneWorkspace({
 function SceneBottomBar({
   scene,
   activeTool,
+  onToolChange,
 }: {
   scene: Scene;
   activeTool: SceneTool;
+  onToolChange: (tool: SceneTool) => void;
 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 border-t bg-background/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <div className="flex items-center gap-2">
+    <div className="fixed inset-x-0 bottom-6 z-30 flex justify-center px-4">
+      <div className="flex h-16 w-fit items-center gap-6 rounded-full border bg-background/95 px-6 shadow-md backdrop-blur">
+        {/* <div className="flex min-w-0 flex-1 items-center gap-2">
           <Badge variant="outline">Active tool</Badge>
           <span className="text-sm font-medium capitalize">{activeTool}</span>
+        </div> */}
+        <div className="flex flex-1 items-center justify-center">
+          <ToggleGroup
+            type="single"
+            value={activeTool}
+            onValueChange={(value) => {
+              if (value) {
+                onToolChange(value as SceneTool);
+              }
+            }}
+            spacing={4}
+          >
+            <ToggleGroupItem
+              value="select"
+              aria-label="Select tool"
+              className="rounded-full"
+            >
+              <MousePointer2Icon className="size-4" />
+              Select
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="camera"
+              aria-label="Camera tool"
+              className="rounded-full"
+            >
+              <CameraIcon className="size-4" />
+              Camera
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="shape"
+              aria-label="Shape tool"
+              className="rounded-full"
+            >
+              <ShapesIcon className="size-4" />
+              Shape
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="person"
+              aria-label="Person tool"
+              className="rounded-full"
+            >
+              <PersonStandingIcon className="size-4" />
+              Person
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="area"
+              aria-label="Area tool"
+              className="rounded-full"
+            >
+              <MapIcon className="size-4" />
+              Area
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
-        <div className="flex items-center gap-3 text-sm">
+        {/* <div className="hidden flex-1 items-center justify-end gap-3 text-sm md:flex">
           <Badge variant="secondary">Walls: {scene.walls.length}</Badge>
           <Badge variant="secondary">Shapes: {scene.shapes.length}</Badge>
           <Badge variant="secondary">Cameras: {scene.cameras.length}</Badge>
           <Badge variant="secondary">People: {scene.people.length}</Badge>
           <Badge variant="secondary">Areas: {scene.areas.length}</Badge>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -404,14 +452,26 @@ function SceneCommandPalette({
       <CommandInput placeholder="Jump to a command" />
       <CommandList>
         <CommandGroup heading="Modes">
-          <CommandItem onSelect={() => onSelectMode("canvas")}>Canvas mode</CommandItem>
-          <CommandItem onSelect={() => onSelectMode("map")}>Map mode</CommandItem>
+          <CommandItem onSelect={() => onSelectMode("canvas")}>
+            Canvas mode
+          </CommandItem>
+          <CommandItem onSelect={() => onSelectMode("map")}>
+            Map mode
+          </CommandItem>
         </CommandGroup>
         <CommandGroup heading="Tools">
-          <CommandItem onSelect={() => onSelectTool("select")}>Select</CommandItem>
-          <CommandItem onSelect={() => onSelectTool("camera")}>Camera</CommandItem>
-          <CommandItem onSelect={() => onSelectTool("shape")}>Shape</CommandItem>
-          <CommandItem onSelect={() => onSelectTool("person")}>Person</CommandItem>
+          <CommandItem onSelect={() => onSelectTool("select")}>
+            Select
+          </CommandItem>
+          <CommandItem onSelect={() => onSelectTool("camera")}>
+            Camera
+          </CommandItem>
+          <CommandItem onSelect={() => onSelectTool("shape")}>
+            Shape
+          </CommandItem>
+          <CommandItem onSelect={() => onSelectTool("person")}>
+            Person
+          </CommandItem>
           <CommandItem onSelect={() => onSelectTool("area")}>Area</CommandItem>
         </CommandGroup>
         <CommandGroup heading="Scene">
@@ -431,7 +491,9 @@ export function SceneLayout() {
 
   const setActiveTool = useSceneStore((state) => state.setActiveTool);
   const setSceneMode = useSceneStore((state) => state.setSceneMode);
-  const toggleSelectionMode = useSceneStore((state) => state.toggleSelectionMode);
+  const toggleSelectionMode = useSceneStore(
+    (state) => state.toggleSelectionMode
+  );
   const setCommandPaletteOpen = useSceneStore(
     (state) => state.setCommandPaletteOpen
   );
@@ -588,11 +650,9 @@ export function SceneLayout() {
     <div className="relative min-h-screen w-full bg-background text-foreground pt-16 pb-16">
       <SceneTopBar
         mode={scene.mode}
-        activeTool={activeTool}
         selectionMode={selection.mode}
         autosaveLabel={autosaveLabel}
         onModeChange={setSceneMode}
-        onToolChange={setActiveTool}
         onToggleSelectionMode={toggleSelectionMode}
         onOpenCommandPalette={onOpenCommandPalette}
         onResetScene={resetScene}
@@ -605,7 +665,11 @@ export function SceneLayout() {
           onSelectEntity={onSelectEntity}
         />
       </main>
-      <SceneBottomBar scene={scene} activeTool={activeTool} />
+      <SceneBottomBar
+        scene={scene}
+        activeTool={activeTool}
+        onToolChange={setActiveTool}
+      />
       <PropertiesSidebar
         open={overlays.isPropertiesOpen && Boolean(selectedEntity)}
         selected={selectedEntity}
