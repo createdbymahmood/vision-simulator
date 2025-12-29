@@ -122,9 +122,11 @@ function computeVisionPolygon(
     const t = rayCount === 1 ? 0.5 : i / (rayCount - 1);
     const angle = startAngle + t * camera.fov;
     const dir = normalize(rotate({ x: 1, y: 0 }, angle));
-    const hit = closestObstacleIntersection(origin, dir, camera.depth, obstacles);
-    const point = hit.height >= camera.height ? hit.point : add(origin, scale(dir, camera.depth));
-    points.push(point);
+    const hit = closestObstacleIntersection(origin, dir, camera.depth, obstacles, {
+      minHeight: camera.height,
+      requireBlocksVision: true,
+    });
+    points.push(hit.point);
   }
   return points;
 }

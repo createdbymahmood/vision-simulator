@@ -7,7 +7,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useToast } from "@/components/ui/toast";
 import { Camera } from "lucide-react";
 import Map from "react-map-gl/mapbox";
@@ -136,7 +140,13 @@ export function MapEditor() {
     if (handMode) return;
     if (live.selectionMode && live.activeTool === "select") {
       const hit = map.queryRenderedFeatures(event.point, {
-        layers: ["people", "cameras", "walls-line", "shapes-fill", "areas-fill"],
+        layers: [
+          "people",
+          "cameras",
+          "walls-line",
+          "shapes-fill",
+          "areas-fill",
+        ],
       }) as MapboxGeoJSONFeature[];
       const prioritized =
         hit.find((feature) => feature.layer?.id === "people") ??
@@ -237,7 +247,9 @@ export function MapEditor() {
       <PopoverTrigger asChild>
         <button
           className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-            state.activeTool === "camera" ? "border-primary bg-primary/10 text-primary" : "border-border bg-card"
+            state.activeTool === "camera"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border bg-card"
           }`}
           onClick={() => {
             state.setActiveTool("camera");
@@ -273,6 +285,8 @@ export function MapEditor() {
     </Popover>
   );
 
+  const defaultLat = 37.769;
+  const defaultLong = -122.418;
   return (
     <div className="flex h-full gap-3">
       <div className="flex w-full flex-col gap-3">
@@ -295,10 +309,19 @@ export function MapEditor() {
         <div className="relative min-h-[70vh] overflow-hidden rounded-3xl border border-border/70">
           <Map
             ref={mapRef}
+            /* place somwherein LA  */
+            initialViewState={{
+              longitude: defaultLong,
+              latitude: defaultLat,
+              zoom: 12,
+            }}
+            minZoom={5}
             mapboxAccessToken={mapboxToken}
             style={{ width: "100%", height: "100%" }}
             mapStyle={styles[mapStyle]}
-            onLoad={(event: MapEvent) => installLayers(event.target as MapBoxInstance)}
+            onLoad={(event: MapEvent) =>
+              installLayers(event.target as MapBoxInstance)
+            }
             onStyleData={() => {
               const map = mapRef.current?.getMap();
               if (map) installLayers(map);

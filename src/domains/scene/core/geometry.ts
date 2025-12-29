@@ -89,20 +89,26 @@ export function closestObstacleIntersection(
   origin: Vector2,
   direction: Vector2,
   maxDistance: number,
-  obstacles: { start: Vector2; end: Vector2; height?: number }[]
+  obstacles: { start: Vector2; end: Vector2; height?: number; blocksVision?: boolean }[],
+  options?: { minHeight?: number; requireBlocksVision?: boolean }
 ): { point: Vector2; distance: number; height: number } {
+  const { minHeight, requireBlocksVision } = options ?? {};
   let hitPoint = add(origin, scale(direction, maxDistance));
   let hitDistance = maxDistance;
   let hitHeight = 0;
 
   for (const obstacle of obstacles) {
+    if (requireBlocksVision && obstacle.blocksVision === false) continue;
+    const obstacleHeight = obstacle.height ?? 0;
+    if (typeof minHeight === "number" && obstacleHeight < minHeight) continue;
+
     const intersection = segmentIntersection(origin, add(origin, scale(direction, maxDistance)), obstacle.start, obstacle.end);
     if (!intersection) continue;
     const dist = length(sub(intersection, origin));
     if (dist < hitDistance) {
       hitPoint = intersection;
       hitDistance = dist;
-      hitHeight = obstacle.height ?? 0;
+      hitHeight = obstacleHeight;
     }
   }
 

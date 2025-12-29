@@ -35,16 +35,20 @@ const cameraPresetDefaults: Record<CameraPreset, Pick<CameraEntity, "fov" | "dep
   custom: { fov: 90, depth: 25, height: 2.5, zoom: 1 },
 };
 
+export const DEFAULT_WALL_COLOR = "#0f172a";
+export const DEFAULT_WALL_THICKNESS = 0.25;
+export const DEFAULT_WALL_HEIGHT = 3;
+
 export function createWallSegment(start: WallSegment["start"], end: WallSegment["end"]): WallSegment {
   return {
     id: makeId(),
     kind: "wall",
     start,
     end,
-    height: 3,
-    thickness: 0.25,
+    height: DEFAULT_WALL_HEIGHT,
+    thickness: DEFAULT_WALL_THICKNESS,
     material: "concrete",
-    color: "#0f172a",
+    color: DEFAULT_WALL_COLOR,
     opacity: 0.8,
   };
 }

@@ -7,9 +7,10 @@ interface DrawingOverlayProps {
   hover: Vector2 | null;
   showMeasurements: boolean;
   toCanvas: (point: Vector2) => { x: number; y: number };
+  wallPreview?: { start: Vector2; end: Vector2; thickness: number; color: string };
 }
 
-export function DrawingOverlay({ drawingWall, drawingShape, hover, showMeasurements, toCanvas }: DrawingOverlayProps) {
+export function DrawingOverlay({ drawingWall, drawingShape, hover, showMeasurements, toCanvas, wallPreview }: DrawingOverlayProps) {
   return (
     <Layer listening={false}>
       {drawingWall.length ? (
@@ -21,6 +22,23 @@ export function DrawingOverlay({ drawingWall, drawingShape, hover, showMeasureme
           stroke="#38bdf8"
           strokeWidth={2}
           dash={[8, 6]}
+          lineCap="round"
+          lineJoin="round"
+        />
+      ) : null}
+      {wallPreview ? (
+        <Line
+          points={[
+            toCanvas(wallPreview.start).x,
+            toCanvas(wallPreview.start).y,
+            toCanvas(wallPreview.end).x,
+            toCanvas(wallPreview.end).y,
+          ]}
+          stroke={wallPreview.color}
+          strokeWidth={wallPreview.thickness}
+          opacity={0.55}
+          lineCap="round"
+          lineJoin="round"
         />
       ) : null}
       {drawingShape ? renderDrawingShape(drawingShape, toCanvas) : null}

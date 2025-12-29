@@ -1,6 +1,6 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { CameraEntity, PersonEntity, ShapeEntity, Vector2, WallSegment } from "@/domains/scene/core/types";
 import { useSceneStore } from "../../state/scene-store";
 import { TopDownPreview } from "./topdown-preview";
@@ -15,6 +15,34 @@ interface PreviewViewportProps {
   focus: Vector2;
   showMap: boolean;
   onCreated: (canvas: HTMLCanvasElement | null) => void;
+}
+
+function SimulationTicker() {
+  const tick = useSceneStore((state) => state.tick);
+  useFrame((_, delta) => tick(delta * 1000));
+  return null;
+}
+
+function useSimulationLoop(enabled: boolean) {
+  const tick = useSceneStore((state) => state.tick);
+  const last = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let frame: number;
+    const step = (time: number) => {
+      if (last.current !== null) {
+        tick(time - last.current);
+      }
+      last.current = time;
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(frame);
+      last.current = null;
+    };
+  }, [enabled, tick]);
 }
 
 function Floor({ show }: { show: boolean }) {
@@ -129,9 +157,8 @@ function CamerasMesh({ cameras }: { cameras: CameraEntity[] }) {
 }
 
 export function PreviewViewport({ walls, shapes, cameras, people, selectedId, onPersonSelect, focus, showMap, onCreated }: PreviewViewportProps) {
-  const tick = useSceneStore((state) => state.tick);
   const previewMode = useSceneStore((state) => state.simulation.previewMode);
-  useFrame((_, delta) => tick(delta * 1000));
+  useSimulationLoop(previewMode === "2d");
 
   const scene = useMemo(
     () => (
@@ -164,6 +191,7 @@ export function PreviewViewport({ walls, shapes, cameras, people, selectedId, on
       onCreated={({ gl }) => onCreated(gl.domElement as HTMLCanvasElement)}
       className="h-full w-full"
     >
+      <SimulationTicker />
       {scene}
     </Canvas>
   );

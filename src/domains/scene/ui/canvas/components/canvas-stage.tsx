@@ -1,8 +1,15 @@
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { Stage } from "react-konva";
-import { snapToGrid } from "@/domains/scene/core/geometry";
+import { length, snapToGrid, sub } from "@/domains/scene/core/geometry";
 import type {
   BackgroundLayer,
   CameraEntity,
@@ -21,6 +28,10 @@ import { EntitiesLayer } from "./stage/entities-layer";
 import { GridLayer } from "./stage/grid-layer";
 import { hitTest, isBlocked } from "./stage/hit-testing";
 import { GRID_MINOR, PX_PER_METER } from "./stage/stage-constants";
+import {
+  DEFAULT_WALL_COLOR,
+  DEFAULT_WALL_THICKNESS,
+} from "../../../core/defaults";
 
 export interface CanvasStageHandle {
   exportImage: () => string | null;
@@ -39,12 +50,19 @@ interface CanvasStageProps {
   activeTool: ToolId;
   onSelect: (selection: SelectionKind | null) => void;
   onAddWall: (start: Vector2, end: Vector2) => void;
-  onAddShape: (kind: ShapeKind, position: Vector2, overrides?: Partial<ShapeEntity>) => void;
+  onAddShape: (
+    kind: ShapeKind,
+    position: Vector2,
+    overrides?: Partial<ShapeEntity>
+  ) => void;
   onAddCamera: (position: Vector2) => void;
   onAddPerson: (position: Vector2) => void;
+  onMoveCamera: (id: string, position: Vector2) => void;
   onBackgroundSelect: () => void;
   onInvalid: (message: string | null) => void;
 }
+
+const WALL_PREVIEW_THICKNESS = 0.25;
 
 export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
   (
@@ -64,17 +82,33 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
       onAddShape,
       onAddCamera,
       onAddPerson,
+      onMoveCamera,
       onBackgroundSelect,
       onInvalid,
     },
     ref
   ) => {
     const stageRef = useRef<Konva.Stage | null>(null);
-    const [zoom, setZoom] = useState(1);
-    const [stageOffset, setStageOffset] = useState({ x: size.width / 2, y: size.height / 2 });
+    const initialized = useRef(false);
+    const [zoom, setZoom] = useState(0.2);
+    const [stageOffset, setStageOffset] = useState({
+      x: size.width / 2,
+      y: size.height / 2,
+    });
     const [drawingWall, setDrawingWall] = useState<Vector2[]>([]);
-    const [drawingShape, setDrawingShape] = useState<{ kind: ShapeKind; start: Vector2; current: Vector2 } | null>(null);
+    const [drawingShape, setDrawingShape] = useState<{
+      kind: ShapeKind;
+      start: Vector2;
+      current: Vector2;
+    } | null>(null);
     const [hover, setHover] = useState<Vector2 | null>(null);
+    const [hoverTarget, setHoverTarget] = useState<SelectionKind | null>(null);
+    const [draggingCamera, setDraggingCamera] = useState<{
+      id: string;
+      offset: Vector2;
+      initial: Vector2;
+      position: Vector2;
+    } | null>(null);
     const [isPanning, setIsPanning] = useState(false);
     const panStart = useRef<{ x: number; y: number } | null>(null);
 
@@ -84,6 +118,13 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
     useImperativeHandle(ref, () => ({
       exportImage: () => stageRef.current?.toDataURL({ pixelRatio: 2 }) ?? null,
     }));
+
+    useEffect(() => {
+      if (initialized.current) return;
+      if (!size.width || !size.height) return;
+      initialized.current = true;
+      setStageOffset({ x: size.width / 2, y: size.height / 2 });
+    }, [size.height, size.width]);
 
     const imageDataUrl = background?.imageDataUrl;
     const backgroundImage = useMemo(() => {
@@ -108,10 +149,26 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
       y: point.y * PX_PER_METER * zoom + stageOffset.y,
     });
 
+    const pointerWorldPoint = () => {
+      const point = worldPoint();
+      if (!point) return { raw: { x: 0, y: 0 }, snapped: { x: 0, y: 0 } };
+      const snapped = grid.snapToGrid ? snapToGrid(point, GRID_MINOR) : point;
+      return { raw: point, snapped };
+    };
+
+    const camerasWithDrag = useMemo(() => {
+      if (!draggingCamera) return cameras;
+      return cameras.map((camera) =>
+        camera.id === draggingCamera.id
+          ? { ...camera, position: draggingCamera.position }
+          : camera
+      );
+    }, [cameras, draggingCamera]);
+
     const handleWheel = (evt: KonvaEventObject<WheelEvent>) => {
       evt.evt.preventDefault();
       const delta = evt.evt.deltaY > 0 ? -0.1 : 0.1;
-      setZoom((prev) => Math.min(3, Math.max(0.5, prev + delta)));
+      setZoom((prev) => Math.min(3, Math.max(0.1, prev + delta)));
     };
 
     const startPan = (clientX: number, clientY: number) => {
@@ -141,8 +198,13 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
     const placeShape = (kind: ShapeKind, start: Vector2, current: Vector2) => {
       const width = Math.abs(current.x - start.x);
       const height = Math.abs(current.y - start.y);
-      const center: Vector2 = { x: (start.x + current.x) / 2, y: (start.y + current.y) / 2 };
-      const position = grid.snapToGrid ? snapToGrid(center, GRID_MINOR) : center;
+      const center: Vector2 = {
+        x: (start.x + current.x) / 2,
+        y: (start.y + current.y) / 2,
+      };
+      const position = grid.snapToGrid
+        ? snapToGrid(center, GRID_MINOR)
+        : center;
       const overrides: Partial<ShapeEntity> = {};
       if (kind === "rectangle" || kind === "triangle") {
         overrides.width = Math.max(0.1, width);
@@ -153,16 +215,16 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
       }
       if (kind === "line") {
         overrides.length = Math.max(width, height) || 1;
-        overrides.rotation = (Math.atan2(current.y - start.y, current.x - start.x) * 180) / Math.PI;
+        overrides.rotation =
+          (Math.atan2(current.y - start.y, current.x - start.x) * 180) /
+          Math.PI;
       }
       onAddShape(kind, position, overrides);
       setDrawingShape(null);
     };
 
-    const onStageClick = () => {
+    const processStageAction = (_pointRaw: Vector2, point: Vector2) => {
       if (isPanning) return;
-      const pointRaw = worldPoint();
-      const point = grid.snapToGrid ? snapToGrid(pointRaw, GRID_MINOR) : pointRaw;
 
       if (!selectionMode && activeTool === "select") return;
 
@@ -172,7 +234,11 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
       }
 
       if (activeTool.startsWith("shape-")) {
-        setDrawingShape({ kind: activeTool.replace("shape-", "") as ShapeKind, start: point, current: point });
+        setDrawingShape({
+          kind: activeTool.replace("shape-", "") as ShapeKind,
+          start: point,
+          current: point,
+        });
         return;
       }
 
@@ -186,7 +252,14 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
       }
 
       if (activeTool === "person") {
-        const colliding = people.some((person) => Math.hypot(person.position.x - point.x, person.position.y - point.y) < person.radius * 2);
+        const colliding = people.some(
+          (person) =>
+            Math.hypot(
+              person.position.x - point.x,
+              person.position.y - point.y
+            ) <
+            person.radius * 2
+        );
         const blocked = isBlocked(point, shapes, walls);
         if (colliding || blocked) {
           onInvalid("Cannot place person overlapping another person");
@@ -211,8 +284,29 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
         return;
       }
       const point = worldPoint();
+      if (draggingCamera && point) {
+        const nextPosition = {
+          x: point.x - draggingCamera.offset.x,
+          y: point.y - draggingCamera.offset.y,
+        };
+        const snapped = grid.snapToGrid
+          ? snapToGrid(nextPosition, GRID_MINOR)
+          : nextPosition;
+        setDraggingCamera((prev) =>
+          prev ? { ...prev, position: snapped } : prev
+        );
+        return;
+      }
+
+      if (activeTool === "select" && selectionMode && point) {
+        const hit = hitTest(point, shapes, walls, cameras, people, background);
+        setHoverTarget(hit);
+      } else {
+        setHoverTarget(null);
+      }
+
       setHover(point);
-      if (drawingShape) {
+      if (point && drawingShape) {
         setDrawingShape({ ...drawingShape, current: point });
       }
     };
@@ -220,6 +314,15 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
     const onStageDblClick = () => {
       if (activeTool === "wall") handleWallFinish();
     };
+
+    const cursorClass =
+      isPanning || draggingCamera
+        ? "cursor-grabbing"
+        : activeTool === "select"
+        ? hoverTarget
+          ? "cursor-pointer"
+          : "cursor-default"
+        : "cursor-crosshair";
 
     return (
       <div className="relative min-h-[70vh] flex-1 overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-b from-card via-card/60 to-card">
@@ -235,20 +338,64 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
               startPan(evt.evt.clientX, evt.evt.clientY);
               return;
             }
-            onStageClick();
+            const { raw, snapped } = pointerWorldPoint();
+            if (selectionMode && activeTool === "select") {
+              const hit = hitTest(
+                snapped,
+                shapes,
+                walls,
+                cameras,
+                people,
+                background
+              );
+              if (hit?.kind === "camera") {
+                const camera = cameras.find((item) => item.id === hit.id);
+                if (camera) {
+                  const offset = sub(raw, camera.position);
+                  setDraggingCamera({
+                    id: camera.id,
+                    offset,
+                    initial: camera.position,
+                    position: camera.position,
+                  });
+                  onSelect(hit);
+                  return;
+                }
+              }
+            }
+            processStageAction(raw, snapped);
           }}
           onMouseMove={onStageMouseMove}
           onDblClick={onStageDblClick}
-          className={activeTool === "select" ? "cursor-default" : "cursor-crosshair"}
+          className={cursorClass}
           onMouseUp={() => {
-            if (drawingShape) placeShape(drawingShape.kind, drawingShape.start, drawingShape.current);
+            if (draggingCamera) {
+              const delta = length(
+                sub(draggingCamera.position, draggingCamera.initial)
+              );
+              if (delta > 0.001) {
+                onMoveCamera(draggingCamera.id, draggingCamera.position);
+              }
+              setDraggingCamera(null);
+            }
+            if (drawingShape)
+              placeShape(
+                drawingShape.kind,
+                drawingShape.start,
+                drawingShape.current
+              );
             if (isPanning) {
               setIsPanning(false);
               panStart.current = null;
             }
           }}
         >
-          <GridLayer width={stageWidth} height={stageHeight} offset={stageOffset} zoom={zoom} />
+          <GridLayer
+            width={stageWidth}
+            height={stageHeight}
+            offset={stageOffset}
+            zoom={zoom}
+          />
           <BackgroundImageLayer
             background={background}
             image={backgroundImage}
@@ -259,7 +406,7 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
           <EntitiesLayer
             shapes={shapes}
             walls={walls}
-            cameras={cameras}
+            cameras={camerasWithDrag}
             people={people}
             toCanvas={toCanvas}
             showTrails={showTrails}
@@ -271,6 +418,23 @@ export const CanvasStage = forwardRef<CanvasStageHandle, CanvasStageProps>(
             hover={hover}
             showMeasurements={grid.measurementOverlay}
             toCanvas={toCanvas}
+            wallPreview={
+              drawingWall.length && hover
+                ? {
+                    start: drawingWall[drawingWall.length - 1],
+                    end: grid.snapToGrid
+                      ? snapToGrid(hover, GRID_MINOR)
+                      : hover,
+                    thickness:
+                      (grid.measurementOverlay
+                        ? WALL_PREVIEW_THICKNESS
+                        : DEFAULT_WALL_THICKNESS) *
+                      PX_PER_METER *
+                      zoom,
+                    color: DEFAULT_WALL_COLOR,
+                  }
+                : undefined
+            }
           />
         </Stage>
       </div>

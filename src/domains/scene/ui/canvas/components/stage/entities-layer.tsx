@@ -29,7 +29,14 @@ function renderWall(wall: WallSegment, toCanvas: (point: Vector2) => { x: number
   const end = toCanvas(wall.end);
   return (
     <Group key={wall.id}>
-      <Line points={[start.x, start.y, end.x, end.y]} stroke={wall.color} strokeWidth={wall.thickness * PX_PER_METER} opacity={wall.opacity} />
+      <Line
+        points={[start.x, start.y, end.x, end.y]}
+        stroke={wall.color}
+        strokeWidth={wall.thickness * PX_PER_METER}
+        opacity={wall.opacity}
+        lineCap="round"
+        lineJoin="round"
+      />
     </Group>
   );
 }

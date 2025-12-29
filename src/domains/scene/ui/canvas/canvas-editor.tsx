@@ -99,6 +99,7 @@ export function CanvasEditor({ onPreview, onExport }: CanvasEditorProps) {
           onAddShape={state.addShape}
           onAddCamera={(point) => state.addCamera(point, "basic")}
           onAddPerson={(point) => state.addPerson(point)}
+          onMoveCamera={(id, position) => state.updateCamera(id, { position })}
           onBackgroundSelect={() => state.setSelection({ kind: "background" })}
           onInvalid={(msg) => {
             setInvalidAction(msg);
