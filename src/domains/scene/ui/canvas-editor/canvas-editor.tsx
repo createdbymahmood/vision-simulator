@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useCallbackRef } from "@radix-ui/react-use-callback-ref";
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import {useEffect, useMemo, useState} from 'react'
 
 import {
   AlertDialog,
@@ -9,191 +9,191 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { CanvasBottomToolbar } from "./bottom-toolbar";
-import { CanvasStage } from "./stage-canvas";
-import { CanvasTopPanel } from "./top-panel";
-import { useElementSize } from "./hooks";
-import type { CanvasPoint } from "./types";
+} from '@/components/ui/alert-dialog'
+import {Button} from '@/components/ui/button'
+
 import type {
   SceneBackground,
   SceneEntityKind,
   SceneShapeKind,
   SceneTool,
-} from "../../core/scene-types";
-import { useSceneHistoryStore } from "../scene-history-store";
-import { useSceneStore } from "../scene-store";
+} from '../../core/scene-types'
+import type {CanvasPoint} from './types'
+
+import {useSceneHistoryStore} from '../scene-history-store'
+import {useSceneStore} from '../scene-store'
+import {CanvasBottomToolbar} from './bottom-toolbar'
+import {useElementSize} from './hooks'
+import {CanvasStage} from './stage-canvas'
+import {CanvasTopPanel} from './top-panel'
 
 export function CanvasEditor() {
-  const [boardRef, boardSize] = useElementSize<HTMLDivElement>();
-  const [offset, setOffset] = useState<CanvasPoint>({ x: 0, y: 0 });
-  const [scale, setScale] = useState(1);
-  const [snapEnabled, setSnapEnabled] = useState(true);
-  const [editMode, setEditMode] = useState(true);
-  const [shapeTool, setShapeTool] = useState<SceneShapeKind>("rectangle");
-  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [boardRef, boardSize] = useElementSize<HTMLDivElement>()
+  const [offset, setOffset] = useState<CanvasPoint>({x: 0, y: 0})
+  const [scale, setScale] = useState(1)
+  const [snapEnabled, setSnapEnabled] = useState(true)
+  const [editMode, setEditMode] = useState(true)
+  const [shapeTool, setShapeTool] = useState<SceneShapeKind>('rectangle')
+  const [clearDialogOpen, setClearDialogOpen] = useState(false)
 
-  const scene = useSceneStore((state) => state.scene);
-  const selection = useSceneStore((state) => state.selection);
-  const activeTool = useSceneStore((state) => state.activeTool);
-  const setActiveTool = useSceneStore((state) => state.setActiveTool);
-  const setSceneMode = useSceneStore((state) => state.setSceneMode);
-  const setSceneBackground = useSceneStore((state) => state.setSceneBackground);
-  const setActivePopover = useSceneStore((state) => state.setActivePopover);
-  const selectEntity = useSceneStore((state) => state.selectEntity);
-  const closeOverlays = useSceneStore((state) => state.closeOverlays);
-  const addWall = useSceneStore((state) => state.addWall);
-  const addShape = useSceneStore((state) => state.addShape);
-  const updateShape = useSceneStore((state) => state.updateShape);
-  const addCamera = useSceneStore((state) => state.addCamera);
-  const addPerson = useSceneStore((state) => state.addPerson);
-  const resetScene = useSceneStore((state) => state.resetScene);
-  const hydrateScene = useSceneStore((state) => state.hydrateScene);
-  const autosave = useSceneStore((state) => state.autosave);
+  const scene = useSceneStore((state) => state.scene)
+  const selection = useSceneStore((state) => state.selection)
+  const activeTool = useSceneStore((state) => state.activeTool)
+  const setActiveTool = useSceneStore((state) => state.setActiveTool)
+  const setSceneMode = useSceneStore((state) => state.setSceneMode)
+  const setSceneBackground = useSceneStore((state) => state.setSceneBackground)
+  const setActivePopover = useSceneStore((state) => state.setActivePopover)
+  const selectEntity = useSceneStore((state) => state.selectEntity)
+  const closeOverlays = useSceneStore((state) => state.closeOverlays)
+  const addWall = useSceneStore((state) => state.addWall)
+  const addShape = useSceneStore((state) => state.addShape)
+  const updateShape = useSceneStore((state) => state.updateShape)
+  const addCamera = useSceneStore((state) => state.addCamera)
+  const addPerson = useSceneStore((state) => state.addPerson)
+  const resetScene = useSceneStore((state) => state.resetScene)
+  const hydrateScene = useSceneStore((state) => state.hydrateScene)
+  const autosave = useSceneStore((state) => state.autosave)
 
-  const captureSnapshot = useSceneHistoryStore(
-    (state) => state.captureSnapshot
-  );
-  const undoSnapshot = useSceneHistoryStore((state) => state.undo);
-  const redoSnapshot = useSceneHistoryStore((state) => state.redo);
-  const clearHistory = useSceneHistoryStore((state) => state.clearHistory);
-  const historyPast = useSceneHistoryStore((state) => state.past);
-  const historyFuture = useSceneHistoryStore((state) => state.future);
+  const captureSnapshot = useSceneHistoryStore((state) => state.captureSnapshot)
+  const undoSnapshot = useSceneHistoryStore((state) => state.undo)
+  const redoSnapshot = useSceneHistoryStore((state) => state.redo)
+  const clearHistory = useSceneHistoryStore((state) => state.clearHistory)
+  const historyPast = useSceneHistoryStore((state) => state.past)
+  const historyFuture = useSceneHistoryStore((state) => state.future)
 
   useEffect(() => {
-    setSceneMode("canvas");
-  }, [setSceneMode]);
+    setSceneMode('canvas')
+  }, [setSceneMode])
 
   const autosaveLabel = useMemo(() => {
-    if (autosave.status === "saving") {
-      return "Autosaving…";
+    if (autosave.status === 'saving') {
+      return 'Autosaving…'
     }
     if (autosave.lastSavedAt) {
-      return `Saved ${new Date(autosave.lastSavedAt).toLocaleTimeString()}`;
+      return `Saved ${new Date(autosave.lastSavedAt).toLocaleTimeString()}`
     }
-    return "Autosave ready";
-  }, [autosave.lastSavedAt, autosave.status]);
+    return 'Autosave ready'
+  }, [autosave.lastSavedAt, autosave.status])
 
   const activeShapeKindLabel = useMemo(() => {
-    if (shapeTool === "rectangle") return "Rectangle";
-    if (shapeTool === "circle") return "Circle";
-    if (shapeTool === "triangle") return "Triangle";
-    return "Line";
-  }, [shapeTool]);
+    if (shapeTool === 'rectangle') return 'Rectangle'
+    if (shapeTool === 'circle') return 'Circle'
+    if (shapeTool === 'triangle') return 'Triangle'
+    return 'Line'
+  }, [shapeTool])
 
   const handleClearBoard = useCallbackRef(() => {
-    clearHistory();
-    resetScene();
-    setClearDialogOpen(false);
-  });
+    clearHistory()
+    resetScene()
+    setClearDialogOpen(false)
+  })
 
   const handleUndo = useCallbackRef(() => {
-    const previous = undoSnapshot(scene);
+    const previous = undoSnapshot(scene)
     if (previous) {
-      hydrateScene(previous);
+      hydrateScene(previous)
     }
-  });
+  })
 
   const handleRedo = useCallbackRef(() => {
-    const next = redoSnapshot(scene);
+    const next = redoSnapshot(scene)
     if (next) {
-      hydrateScene(next);
+      hydrateScene(next)
     }
-  });
+  })
 
   const handleExport = useCallbackRef(() => {
     const blob = new Blob([JSON.stringify(scene, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `scene-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  });
+      type: 'application/json',
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `scene-${Date.now()}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  })
 
   const handleBackgroundImage = useCallbackRef(() => {
-    const url = window.prompt("Enter background image URL");
+    const url = window.prompt('Enter background image URL')
     if (!url) {
-      return;
+      return
     }
-    captureSnapshot(scene);
+    captureSnapshot(scene)
     setSceneBackground({
-      type: "image",
+      type: 'image',
       value: url,
       opacity: 0.4,
-    } as SceneBackground);
-  });
+    } as SceneBackground)
+  })
 
   const handleLivePreview = useCallbackRef(() => {
-    alert("Live preview not implemented yet");
-  });
+    alert('Live preview not implemented yet')
+  })
 
   const handleSelectEntity = useCallbackRef(
-    (payload: { id: string; kind: SceneEntityKind } | null) => {
-      selectEntity(payload);
-    }
-  );
+    (payload: {id: string; kind: SceneEntityKind} | null) => {
+      selectEntity(payload)
+    },
+  )
 
   const handleToolChange = useCallbackRef((tool: SceneTool) => {
-    setActiveTool(tool);
-    setActivePopover(null);
-  });
+    setActiveTool(tool)
+    setActivePopover(null)
+  })
 
   const handleShapeSelect = useCallbackRef((kind: SceneShapeKind) => {
-    setShapeTool(kind);
-    setActiveTool("shape");
-  });
+    setShapeTool(kind)
+    setActiveTool('shape')
+  })
 
   return (
-    <div className="relative flex flex-col size-full">
+    <div className='relative flex flex-col size-full'>
       <CanvasTopPanel
-        autosaveLabel={autosaveLabel}
-        editMode={editMode}
         snapEnabled={snapEnabled}
-        canUndo={Boolean(historyPast.length)}
+        autosaveLabel={autosaveLabel}
         canRedo={Boolean(historyFuture.length)}
-        onToggleEditMode={setEditMode}
-        onToggleSnap={setSnapEnabled}
+        canUndo={Boolean(historyPast.length)}
+        editMode={editMode}
         onClearBoard={() => setClearDialogOpen(true)}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
         onExport={handleExport}
         onLivePreview={handleLivePreview}
+        onRedo={handleRedo}
+        onToggleEditMode={setEditMode}
+        onToggleSnap={setSnapEnabled}
+        onUndo={handleUndo}
       />
-      <div ref={boardRef} className="relative size-full overflow-hidden ">
+      <div className='relative size-full overflow-hidden ' ref={boardRef}>
         <CanvasStage
           size={boardSize}
-          offset={offset}
           scale={scale}
-          snapEnabled={snapEnabled}
-          editMode={editMode}
-          shapeTool={shapeTool}
           scene={scene}
-          selection={selection}
+          snapEnabled={snapEnabled}
           activeTool={activeTool}
-          onOffsetChange={setOffset}
-          onScaleChange={setScale}
-          onCaptureSnapshot={captureSnapshot}
-          onAddWall={addWall}
-          onAddShape={addShape}
-          onUpdateShape={updateShape}
+          editMode={editMode}
+          offset={offset}
           onAddCamera={addCamera}
           onAddPerson={addPerson}
-          onSelectEntity={handleSelectEntity}
+          onAddShape={addShape}
+          onAddWall={addWall}
+          onCaptureSnapshot={captureSnapshot}
           onCloseOverlays={closeOverlays}
+          onOffsetChange={setOffset}
+          onScaleChange={setScale}
+          onSelectEntity={handleSelectEntity}
+          onUpdateShape={updateShape}
+          selection={selection}
+          shapeTool={shapeTool}
         />
       </div>
       <CanvasBottomToolbar
-        activeTool={activeTool}
         activeShapeLabel={activeShapeKindLabel}
-        onToolChange={handleToolChange}
-        onShapeSelect={handleShapeSelect}
+        activeTool={activeTool}
         onBackgroundClick={handleBackgroundImage}
+        onShapeSelect={handleShapeSelect}
+        onToolChange={handleToolChange}
       />
-      <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+      <AlertDialog onOpenChange={setClearDialogOpen} open={clearDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Clear board?</AlertDialogTitle>
@@ -204,14 +204,14 @@ export function CanvasEditor() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button variant="destructive" onClick={handleClearBoard}>
+            <Button variant='destructive' onClick={handleClearBoard}>
               Clear
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
+  )
 }
 
-CanvasEditor.displayName = "canvas-editor";
+CanvasEditor.displayName = 'canvas-editor'

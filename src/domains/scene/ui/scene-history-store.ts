@@ -1,29 +1,29 @@
-import type { StateCreator } from "zustand";
+import type {StateCreator} from 'zustand'
 
-import { createZustandContextStore } from "@/components/shared/zustand";
-import type { Scene } from "../core/scene-types";
+import {createZustandContextStore} from '@/components/shared/zustand'
+
+import type {Scene} from '../core/scene-types'
 
 interface SceneHistoryState {
-  past: Scene[];
-  future: Scene[];
+  past: Scene[]
+  future: Scene[]
 }
 
 interface SceneHistoryActions {
-  captureSnapshot: (scene: Scene) => void;
-  undo: (currentScene: Scene) => Scene | null;
-  redo: (currentScene: Scene) => Scene | null;
-  clearHistory: () => void;
+  captureSnapshot: (scene: Scene) => void
+  undo: (currentScene: Scene) => Scene | null
+  redo: (currentScene: Scene) => Scene | null
+  clearHistory: () => void
 }
 
-export type SceneHistoryStore = SceneHistoryState & SceneHistoryActions;
+export type SceneHistoryStore = SceneHistoryActions & SceneHistoryState
 
 function cloneScene(scene: Scene): Scene {
-  return JSON.parse(JSON.stringify(scene)) as Scene;
+  return JSON.parse(JSON.stringify(scene)) as Scene
 }
 
 const createHistoryStore: (initial: {}) => StateCreator<SceneHistoryStore> =
-  () =>
-  (set, get) => ({
+  () => (set, get) => ({
     past: [],
     future: [],
     captureSnapshot: (scene) =>
@@ -32,43 +32,43 @@ const createHistoryStore: (initial: {}) => StateCreator<SceneHistoryStore> =
         future: [],
       })),
     undo: (currentScene) => {
-      const state = get();
+      const state = get()
       if (!state.past.length) {
-        return null;
+        return null
       }
-      const previousScene = state.past[state.past.length - 1];
+      const previousScene = state.past[state.past.length - 1]
       set({
         past: state.past.slice(0, -1),
         future: [...state.future, cloneScene(currentScene)],
-      });
-      return previousScene;
+      })
+      return previousScene
     },
     redo: (currentScene) => {
-      const state = get();
+      const state = get()
       if (!state.future.length) {
-        return null;
+        return null
       }
-      const nextScene = state.future[state.future.length - 1];
+      const nextScene = state.future[state.future.length - 1]
       set({
         future: state.future.slice(0, -1),
         past: [...state.past, cloneScene(currentScene)],
-      });
-      return nextScene;
+      })
+      return nextScene
     },
     clearHistory: () =>
       set({
         past: [],
         future: [],
       }),
-  });
+  })
 
 export const sceneHistoryStore = createZustandContextStore<
   SceneHistoryStore,
   {}
->(createHistoryStore);
+>(createHistoryStore)
 
-export const useSceneHistoryStore = sceneHistoryStore.useStore;
+export const useSceneHistoryStore = sceneHistoryStore.useStore
 
-export const SceneHistoryProvider = sceneHistoryStore.Provider;
+export const SceneHistoryProvider = sceneHistoryStore.Provider
 
-SceneHistoryProvider.displayName = "scene-history-provider";
+SceneHistoryProvider.displayName = 'scene-history-provider'

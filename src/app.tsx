@@ -1,8 +1,4 @@
-import {
-  SceneHistoryProvider,
-  SceneLayout,
-  SceneProvider,
-} from "@/domains/scene";
+import {SceneHistoryProvider, SceneLayout, SceneProvider} from '@/domains/scene'
 
 export default function App() {
   return (
@@ -11,7 +7,7 @@ export default function App() {
         <SceneLayout />
       </SceneHistoryProvider>
     </SceneProvider>
-  );
+  )
 }
 
-App.displayName = "app";
+App.displayName = 'app'

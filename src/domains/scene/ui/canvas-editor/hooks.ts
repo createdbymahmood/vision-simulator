@@ -1,31 +1,32 @@
-import type { MutableRefObject } from "react";
-import { useLayoutEffect, useRef, useState } from "react";
+import type {MutableRefObject} from 'react'
 
-import type { CanvasSize } from "./types";
+import {useLayoutEffect, useRef, useState} from 'react'
+
+import type {CanvasSize} from './types'
 
 export function useElementSize<T extends HTMLElement>(): [
   MutableRefObject<T | null>,
-  CanvasSize
+  CanvasSize,
 ] {
-  const ref = useRef<T | null>(null);
-  const [size, setSize] = useState<CanvasSize>({ width: 0, height: 0 });
+  const ref = useRef<T | null>(null)
+  const [size, setSize] = useState<CanvasSize>({width: 0, height: 0})
 
   useLayoutEffect(() => {
     if (!ref.current) {
-      return;
+      return
     }
     const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
+      const entry = entries[0]
       if (entry?.contentRect) {
         setSize({
           width: entry.contentRect.width,
           height: entry.contentRect.height,
-        });
+        })
       }
-    });
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
+    })
+    observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [])
 
-  return [ref, size];
+  return [ref, size]
 }

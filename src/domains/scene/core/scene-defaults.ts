@@ -1,16 +1,16 @@
-import type { Scene, SceneSelection } from "./scene-types";
+import type {Scene, SceneSelection} from './scene-types'
 
-export const SCENE_VERSION = 1;
+export const SCENE_VERSION = 1
 
 export function createDefaultScene(): Scene {
-  const now = Date.now();
+  const now = Date.now()
   return {
     version: SCENE_VERSION,
-    mode: "canvas",
-    units: "meters",
+    mode: 'canvas',
+    units: 'meters',
     background: {
-      type: "solid",
-      value: "#f7f7f7",
+      type: 'solid',
+      value: '#f7f7f7',
       opacity: 1,
     },
     areas: [],
@@ -19,17 +19,17 @@ export function createDefaultScene(): Scene {
     cameras: [],
     people: [],
     meta: {
-      name: "Untitled Scene",
+      name: 'Untitled Scene',
       createdAt: now,
       updatedAt: now,
     },
-  };
+  }
 }
 
 export function createInitialSelection(): SceneSelection {
   return {
     selectedEntityId: null,
     selectedEntityKind: null,
-    mode: "single",
-  };
+    mode: 'single',
+  }
 }
