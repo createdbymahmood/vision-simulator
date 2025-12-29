@@ -165,7 +165,10 @@ export function CanvasEditor() {
         onLivePreview={handleLivePreview}
       />
 
-      <div ref={boardRef} className="flex-1">
+      <div
+        ref={boardRef}
+        className="relative h-[calc(100vh-18rem)] min-h-[640px] w-full overflow-hidden"
+      >
         <CanvasStage
           size={boardSize}
           offset={offset}
