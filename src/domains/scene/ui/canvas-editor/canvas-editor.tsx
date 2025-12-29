@@ -1,15 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCallbackRef } from "@radix-ui/react-use-callback-ref";
 
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { CanvasBottomToolbar } from "./bottom-toolbar";
 import { CanvasStage } from "./stage-canvas";
 import { CanvasTopPanel } from "./top-panel";
 import { useElementSize } from "./hooks";
 import type { CanvasPoint } from "./types";
-import type { SceneBackground, SceneEntityKind, SceneShapeKind, SceneTool } from "../../core/scene-types";
+import type {
+  SceneBackground,
+  SceneEntityKind,
+  SceneShapeKind,
+  SceneTool,
+} from "../../core/scene-types";
 import { useSceneHistoryStore } from "../scene-history-store";
 import { useSceneStore } from "../scene-store";
 
@@ -28,7 +40,6 @@ export function CanvasEditor() {
   const setActiveTool = useSceneStore((state) => state.setActiveTool);
   const setSceneMode = useSceneStore((state) => state.setSceneMode);
   const setSceneBackground = useSceneStore((state) => state.setSceneBackground);
-  const toggleSelectionMode = useSceneStore((state) => state.toggleSelectionMode);
   const setActivePopover = useSceneStore((state) => state.setActivePopover);
   const selectEntity = useSceneStore((state) => state.selectEntity);
   const closeOverlays = useSceneStore((state) => state.closeOverlays);
@@ -41,7 +52,9 @@ export function CanvasEditor() {
   const hydrateScene = useSceneStore((state) => state.hydrateScene);
   const autosave = useSceneStore((state) => state.autosave);
 
-  const captureSnapshot = useSceneHistoryStore((state) => state.captureSnapshot);
+  const captureSnapshot = useSceneHistoryStore(
+    (state) => state.captureSnapshot
+  );
   const undoSnapshot = useSceneHistoryStore((state) => state.undo);
   const redoSnapshot = useSceneHistoryStore((state) => state.redo);
   const clearHistory = useSceneHistoryStore((state) => state.clearHistory);
@@ -134,22 +147,8 @@ export function CanvasEditor() {
     setActiveTool("shape");
   });
 
-  const activeToolLabel = useMemo(() => {
-    if (activeTool === "select") return "Selection";
-    if (activeTool === "wall") return "Draw wall";
-    if (activeTool === "shape") return `Draw ${activeShapeKindLabel}`;
-    if (activeTool === "camera") return "Place camera";
-    if (activeTool === "person") return "Place person";
-    return "Tool";
-  }, [activeShapeKindLabel, activeTool]);
-
   return (
-    <div className="relative flex min-h-[calc(100vh-8rem)] flex-col gap-4">
-      <div className="flex items-center gap-2 px-6 pt-2">
-        <Badge variant="outline">Active tool</Badge>
-        <Badge variant="secondary">{activeToolLabel}</Badge>
-      </div>
-
+    <div className="relative flex flex-col size-full">
       <CanvasTopPanel
         autosaveLabel={autosaveLabel}
         editMode={editMode}
@@ -164,11 +163,7 @@ export function CanvasEditor() {
         onExport={handleExport}
         onLivePreview={handleLivePreview}
       />
-
-      <div
-        ref={boardRef}
-        className="relative h-[calc(100vh-18rem)] min-h-[640px] w-full overflow-hidden"
-      >
+      <div ref={boardRef} className="relative size-full overflow-hidden ">
         <CanvasStage
           size={boardSize}
           offset={offset}
@@ -184,26 +179,20 @@ export function CanvasEditor() {
           onCaptureSnapshot={captureSnapshot}
           onAddWall={addWall}
           onAddShape={addShape}
-        onUpdateShape={updateShape}
-        onAddCamera={addCamera}
-        onAddPerson={addPerson}
-        onSelectEntity={handleSelectEntity}
-        onCloseOverlays={closeOverlays}
-      />
+          onUpdateShape={updateShape}
+          onAddCamera={addCamera}
+          onAddPerson={addPerson}
+          onSelectEntity={handleSelectEntity}
+          onCloseOverlays={closeOverlays}
+        />
       </div>
-
       <CanvasBottomToolbar
         activeTool={activeTool}
         activeShapeLabel={activeShapeKindLabel}
-        selectionMode={selection.mode}
-        onToggleSelectionMode={toggleSelectionMode}
         onToolChange={handleToolChange}
         onShapeSelect={handleShapeSelect}
         onBackgroundClick={handleBackgroundImage}
-        wallCount={scene.walls.length}
-        shapeCount={scene.shapes.length}
       />
-
       <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

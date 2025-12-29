@@ -12,8 +12,20 @@ import {
   MAX_SCALE,
   MIN_SCALE,
 } from "./constants";
-import type { CanvasMeasurement, CanvasPoint, CanvasSize, DrawingShapeState, DrawingWallState } from "./types";
-import { lengthBetween, angleBetween, pointFromStage, snapPoint, toCanvas } from "./utils";
+import type {
+  CanvasMeasurement,
+  CanvasPoint,
+  CanvasSize,
+  DrawingShapeState,
+  DrawingWallState,
+} from "./types";
+import {
+  lengthBetween,
+  angleBetween,
+  pointFromStage,
+  snapPoint,
+  toCanvas,
+} from "./utils";
 import {
   AreaNode,
   CameraNode,
@@ -41,7 +53,10 @@ interface CanvasStageProps {
   editMode: boolean;
   shapeTool: SceneShapeKind;
   scene: Scene;
-  selection: { selectedEntityId: string | null; selectedEntityKind: SceneEntityKind | null };
+  selection: {
+    selectedEntityId: string | null;
+    selectedEntityKind: SceneEntityKind | null;
+  };
   activeTool: SceneTool;
   onOffsetChange: (point: CanvasPoint) => void;
   onScaleChange: (scale: number) => void;
@@ -51,7 +66,9 @@ interface CanvasStageProps {
   onUpdateShape: (id: string, patch: Partial<SceneShape>) => void;
   onAddCamera: (camera: SceneCamera) => void;
   onAddPerson: (person: ScenePerson) => void;
-  onSelectEntity: (payload: { id: string; kind: SceneEntityKind } | null) => void;
+  onSelectEntity: (
+    payload: { id: string; kind: SceneEntityKind } | null
+  ) => void;
   onCloseOverlays: () => void;
 }
 
@@ -78,8 +95,12 @@ export function CanvasStage({
 }: CanvasStageProps) {
   const stageRef = useRef<Konva.Stage | null>(null);
   const [drawingWall, setDrawingWall] = useState<DrawingWallState | null>(null);
-  const [drawingShape, setDrawingShape] = useState<DrawingShapeState | null>(null);
-  const [measurement, setMeasurement] = useState<CanvasMeasurement | null>(null);
+  const [drawingShape, setDrawingShape] = useState<DrawingShapeState | null>(
+    null
+  );
+  const [measurement, setMeasurement] = useState<CanvasMeasurement | null>(
+    null
+  );
 
   useEffect(() => {
     if (size.width && size.height) {
@@ -109,7 +130,10 @@ export function CanvasStage({
 
     const direction = event.evt.deltaY > 0 ? -1 : 1;
     const zoomAmount = 0.1 * direction;
-    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale + zoomAmount));
+    const newScale = Math.min(
+      MAX_SCALE,
+      Math.max(MIN_SCALE, scale + zoomAmount)
+    );
 
     const pointer = stage.getPointerPosition();
     if (!pointer) {
@@ -129,12 +153,14 @@ export function CanvasStage({
     });
   });
 
-  const handleDragMove = useCallbackRef((event: KonvaEventObject<DragEvent>) => {
-    onOffsetChange({
-      x: event.target.x(),
-      y: event.target.y(),
-    });
-  });
+  const handleDragMove = useCallbackRef(
+    (event: KonvaEventObject<DragEvent>) => {
+      onOffsetChange({
+        x: event.target.x(),
+        y: event.target.y(),
+      });
+    }
+  );
 
   const finishWall = useCallbackRef((anchors: CanvasPoint[]) => {
     if (anchors.length < 2) {
@@ -220,7 +246,8 @@ export function CanvasStage({
         if (!drawingWall) {
           setDrawingWall({ anchors: [snapped], preview: snapped });
         } else {
-          const lastAnchor = drawingWall.anchors[drawingWall.anchors.length - 1];
+          const lastAnchor =
+            drawingWall.anchors[drawingWall.anchors.length - 1];
           if (lengthBetween(lastAnchor, snapped) < 0.05) {
             return;
           }
@@ -330,7 +357,7 @@ export function CanvasStage({
 
   return (
     <div
-      className="relative flex min-h-[640px] flex-1 overflow-hidden rounded-xl border bg-white shadow-sm"
+      className="relative flex min-h-[640px] flex-1 overflow-hidden  bg-white shadow-sm"
       style={{ cursor }}
     >
       {scene.background?.type === "image" && (

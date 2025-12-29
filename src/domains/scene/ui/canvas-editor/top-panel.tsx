@@ -39,7 +39,7 @@ export function CanvasTopPanel({
   onLivePreview: () => void;
 }) {
   return (
-    <div className="sticky top-16 z-20 flex items-center gap-3 border-b bg-background/95 px-6 py-3 backdrop-blur">
+    <div className="z-20 flex items-center gap-3 border-b bg-background/95 px-6 py-3 backdrop-blur">
       <div className="flex items-center gap-2">
         <Badge variant="outline">Canvas Editor</Badge>
         <Badge>Top Panel</Badge>
@@ -71,11 +71,21 @@ export function CanvasTopPanel({
           <EraserIcon className="mr-2 size-4" />
           Clear board
         </Button>
-        <Button size="sm" variant="outline" onClick={onUndo} disabled={!canUndo}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onUndo}
+          disabled={!canUndo}
+        >
           <UndoIcon className="mr-2 size-4" />
           Undo
         </Button>
-        <Button size="sm" variant="outline" onClick={onRedo} disabled={!canRedo}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onRedo}
+          disabled={!canRedo}
+        >
           <RedoIcon className="mr-2 size-4" />
           Redo
         </Button>

@@ -6,30 +6,20 @@ import { CanvasEditor } from "../canvas-editor";
 import { MapPlaceholder } from "./map-placeholder";
 import { PropertiesSidebar } from "./properties-sidebar";
 import { SceneCommandPalette } from "./scene-command-palette";
-import { SceneTopBar } from "./scene-top-bar";
 import { useSceneStore } from "../scene-store";
 
 export function SceneLayout() {
   const scene = useSceneStore((state) => state.scene);
   const selection = useSceneStore((state) => state.selection);
   const overlays = useSceneStore((state) => state.overlays);
-  const autosave = useSceneStore((state) => state.autosave);
   const setActiveTool = useSceneStore((state) => state.setActiveTool);
   const setSceneMode = useSceneStore((state) => state.setSceneMode);
-  const setCommandPaletteOpen = useSceneStore((state) => state.setCommandPaletteOpen);
+  const setCommandPaletteOpen = useSceneStore(
+    (state) => state.setCommandPaletteOpen
+  );
   const selectEntity = useSceneStore((state) => state.selectEntity);
   const closeOverlays = useSceneStore((state) => state.closeOverlays);
   const resetScene = useSceneStore((state) => state.resetScene);
-
-  const autosaveLabel = useMemo(() => {
-    if (autosave.status === "saving") {
-      return "Autosaving…";
-    }
-    if (autosave.lastSavedAt) {
-      return `Saved ${new Date(autosave.lastSavedAt).toLocaleTimeString()}`;
-    }
-    return "Autosave ready";
-  }, [autosave.lastSavedAt, autosave.status]);
 
   const selectedEntity = useMemo<SceneEntity | null>(() => {
     if (!selection.selectedEntityId || !selection.selectedEntityKind) {
@@ -51,10 +41,6 @@ export function SceneLayout() {
     );
   }, [scene, selection.selectedEntityId, selection.selectedEntityKind]);
 
-  const onOpenCommandPalette = useCallbackRef(() => {
-    setCommandPaletteOpen(true);
-  });
-
   const onCommandToggle = useCallbackRef((next: boolean) => {
     setCommandPaletteOpen(next);
     if (!next) {
@@ -75,17 +61,11 @@ export function SceneLayout() {
   }, [closeOverlays, selectEntity]);
 
   return (
-    <div className="relative min-h-screen w-full bg-background text-foreground pt-16 pb-16">
-      <SceneTopBar
-        mode={scene.mode}
-        autosaveLabel={autosaveLabel}
-        onModeChange={setSceneMode}
-        onOpenCommandPalette={onOpenCommandPalette}
-        onResetScene={resetScene}
-      />
-      <main className="flex min-h-[calc(100vh-8rem)] flex-col pt-8">
+    <div className="relative h-screen w-full bg-background text-foreground flex">
+      <main className="flex size-full flex-col">
         {scene.mode === "canvas" ? <CanvasEditor /> : <MapPlaceholder />}
       </main>
+
       <PropertiesSidebar
         open={overlays.isPropertiesOpen && Boolean(selectedEntity)}
         selected={selectedEntity}

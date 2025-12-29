@@ -11,53 +11,31 @@ import {
   WallpaperIcon,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { SceneTool } from "../../core/scene-types";
 
 export function CanvasBottomToolbar({
   activeTool,
   activeShapeLabel,
-  selectionMode,
-  onToggleSelectionMode,
   onToolChange,
   onShapeSelect,
   onBackgroundClick,
-  wallCount,
-  shapeCount,
 }: {
   activeTool: SceneTool;
   activeShapeLabel: string;
-  selectionMode: "single" | "multi";
-  onToggleSelectionMode: () => void;
   onToolChange: (tool: SceneTool) => void;
   onShapeSelect: (shape: "rectangle" | "circle" | "triangle" | "line") => void;
   onBackgroundClick: () => void;
-  wallCount: number;
-  shapeCount: number;
 }) {
   return (
     <div className="fixed inset-x-0 bottom-6 z-30 flex justify-center px-4">
-      <div className="flex w-full max-w-5xl items-center gap-4 rounded-full border bg-background/95 px-4 py-3 shadow-md backdrop-blur justify-between">
-        <div className="flex items-center gap-2">
-          <Switch
-            checked={selectionMode === "multi"}
-            onCheckedChange={() => onToggleSelectionMode()}
-            id="selection-mode"
-          />
-          <label htmlFor="selection-mode" className="text-sm">
-            Selection mode
-          </label>
-        </div>
-
+      <div className="flex w-full max-w-fit items-center gap-4 rounded-full border bg-background/95 px-4 py-3 shadow-md backdrop-blur justify-center">
         <div className="flex flex-row gap-2 items-center">
           <ToggleGroup
             type="single"
@@ -140,11 +118,6 @@ export function CanvasBottomToolbar({
           <Button variant="secondary" size="icon" onClick={onBackgroundClick}>
             <WallpaperIcon className="size-4" />
           </Button>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Badge variant="outline">{activeShapeLabel}</Badge>
-          <Badge variant="secondary">Walls {wallCount}</Badge>
-          <Badge variant="secondary">Shapes {shapeCount}</Badge>
         </div>
       </div>
     </div>

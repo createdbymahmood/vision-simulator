@@ -1,6 +1,6 @@
 import { Line, Layer } from "react-konva";
 
-import { GRID_SIZE } from "./constants";
+import { GRID_SIZE, GRID_STROKE_COLOR } from "./constants";
 import type { CanvasPoint, CanvasSize } from "./types";
 
 export function CanvasGrid({
@@ -34,7 +34,7 @@ export function CanvasGrid({
         <Line
           key={`v-${x}`}
           points={[x, top * cell, x, bottom * cell]}
-          stroke="#e2e8f0"
+          stroke={GRID_STROKE_COLOR}
           strokeWidth={1 / scale}
         />
       ))}
@@ -42,19 +42,19 @@ export function CanvasGrid({
         <Line
           key={`h-${y}`}
           points={[left * cell, y, right * cell, y]}
-          stroke="#e2e8f0"
+          stroke={GRID_STROKE_COLOR}
           strokeWidth={1 / scale}
         />
       ))}
       <Line
         points={[0, top * cell, 0, bottom * cell]}
-        stroke="#cbd5e1"
-        strokeWidth={1.5 / scale}
+        stroke={GRID_STROKE_COLOR}
+        strokeWidth={1 / scale}
       />
       <Line
         points={[left * cell, 0, right * cell, 0]}
-        stroke="#cbd5e1"
-        strokeWidth={1.5 / scale}
+        stroke={GRID_STROKE_COLOR}
+        strokeWidth={1 / scale}
       />
     </Layer>
   );
