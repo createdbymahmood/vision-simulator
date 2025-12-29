@@ -48,6 +48,8 @@ export function CanvasEditor() {
   const addWall = useSceneStore((state) => state.addWall)
   const addShape = useSceneStore((state) => state.addShape)
   const updateShape = useSceneStore((state) => state.updateShape)
+  const updateCamera = useSceneStore((state) => state.updateCamera)
+  const updatePerson = useSceneStore((state) => state.updatePerson)
   const addCamera = useSceneStore((state) => state.addCamera)
   const addPerson = useSceneStore((state) => state.addPerson)
   const resetScene = useSceneStore((state) => state.resetScene)
@@ -163,7 +165,7 @@ export function CanvasEditor() {
         onToggleSnap={setSnapEnabled}
         onUndo={handleUndo}
       />
-      <div className='relative size-full overflow-hidden ' ref={boardRef}>
+      <div className='relative flex-1 min-h-0 overflow-hidden' ref={boardRef}>
         <CanvasStage
           size={boardSize}
           scale={scale}
@@ -181,6 +183,8 @@ export function CanvasEditor() {
           onOffsetChange={setOffset}
           onScaleChange={setScale}
           onSelectEntity={handleSelectEntity}
+          onUpdateCamera={updateCamera}
+          onUpdatePerson={updatePerson}
           onUpdateShape={updateShape}
           selection={selection}
           shapeTool={shapeTool}

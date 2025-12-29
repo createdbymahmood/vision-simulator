@@ -294,29 +294,96 @@ export function ShapeNode({
   )
 }
 
-export function CameraNode({camera}: {camera: SceneCamera}) {
+export function CameraNode({
+  camera,
+  scale,
+  isSelected,
+  onSelect,
+  onMove,
+}: {
+  camera: SceneCamera
+  scale: number
+  isSelected: boolean
+  onSelect: () => void
+  onMove: (point: CanvasPoint) => void
+}) {
   return (
-    <RegularPolygon
-      fill={DEFAULT_SHAPE_COLOR}
-      radius={12}
-      sides={3}
-      x={camera.x * GRID_SIZE}
-      y={camera.y * GRID_SIZE}
-      opacity={0.8}
-      rotation={camera.direction}
-    />
+    <>
+      <RegularPolygon
+        draggable
+        fill={DEFAULT_SHAPE_COLOR}
+        radius={12}
+        sides={3}
+        x={camera.x * GRID_SIZE}
+        y={camera.y * GRID_SIZE}
+        opacity={0.8}
+        rotation={camera.direction}
+        onClick={onSelect}
+        onTap={onSelect}
+        onDragEnd={(event) => {
+          onMove({
+            x: event.target.x() / GRID_SIZE,
+            y: event.target.y() / GRID_SIZE,
+          })
+        }}
+      />
+      {isSelected && (
+        <RegularPolygon
+          x={camera.x * GRID_SIZE}
+          y={camera.y * GRID_SIZE}
+          sides={3}
+          radius={16}
+          stroke={DEFAULT_PREVIEW_COLOR}
+          strokeWidth={1.5 / scale}
+          opacity={0.7}
+        />
+      )}
+    </>
   )
 }
 
-export function PersonNode({person}: {person: ScenePerson}) {
+export function PersonNode({
+  person,
+  scale,
+  isSelected,
+  onSelect,
+  onMove,
+}: {
+  person: ScenePerson
+  scale: number
+  isSelected: boolean
+  onSelect: () => void
+  onMove: (point: CanvasPoint) => void
+}) {
   return (
-    <Circle
-      fill='#22c55e'
-      radius={person.radius * GRID_SIZE}
-      x={person.x * GRID_SIZE}
-      y={person.y * GRID_SIZE}
-      opacity={0.85}
-    />
+    <>
+      <Circle
+        draggable
+        fill='#22c55e'
+        radius={person.radius * GRID_SIZE}
+        x={person.x * GRID_SIZE}
+        y={person.y * GRID_SIZE}
+        opacity={0.85}
+        onClick={onSelect}
+        onTap={onSelect}
+        onDragEnd={(event) => {
+          onMove({
+            x: event.target.x() / GRID_SIZE,
+            y: event.target.y() / GRID_SIZE,
+          })
+        }}
+      />
+      {isSelected && (
+        <Circle
+          x={person.x * GRID_SIZE}
+          y={person.y * GRID_SIZE}
+          radius={person.radius * GRID_SIZE + 4}
+          stroke={DEFAULT_PREVIEW_COLOR}
+          strokeWidth={1.5 / scale}
+          opacity={0.7}
+        />
+      )}
+    </>
   )
 }
 

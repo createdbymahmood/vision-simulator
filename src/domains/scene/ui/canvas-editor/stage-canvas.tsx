@@ -66,12 +66,15 @@ interface CanvasStageProps {
   onAddWall: (wall: SceneWall) => void
   onAddShape: (shape: SceneShape) => void
   onUpdateShape: (id: string, patch: Partial<SceneShape>) => void
+  onUpdateCamera: (id: string, patch: Partial<SceneCamera>) => void
+  onUpdatePerson: (id: string, patch: Partial<ScenePerson>) => void
   onAddCamera: (camera: SceneCamera) => void
   onAddPerson: (person: ScenePerson) => void
   onSelectEntity: (payload: {id: string; kind: SceneEntityKind} | null) => void
   onCloseOverlays: () => void
 }
 
+// eslint-disable-next-line max-lines-per-function
 export function CanvasStage({
   size,
   offset,
@@ -88,6 +91,8 @@ export function CanvasStage({
   onAddWall,
   onAddShape,
   onUpdateShape,
+  onUpdateCamera,
+  onUpdatePerson,
   onAddCamera,
   onAddPerson,
   onSelectEntity,
@@ -173,6 +178,10 @@ export function CanvasStage({
 
   const handleDragMove = useCallbackRef(
     (event: KonvaEventObject<DragEvent>) => {
+      const stage = stageRef.current
+      if (!stage || event.target !== stage) {
+        return
+      }
       onOffsetChange({
         x: event.target.x(),
         y: event.target.y(),
@@ -247,6 +256,9 @@ export function CanvasStage({
 
   const handleStagePointerDown = useCallbackRef(
     (event: KonvaEventObject<PointerEvent>) => {
+      if (isPanning) {
+        return
+      }
       if (!editMode) {
         return
       }
@@ -326,6 +338,9 @@ export function CanvasStage({
   )
 
   const handleStagePointerMove = useCallbackRef(() => {
+    if (isPanning) {
+      return
+    }
     if (!drawingWall && !drawingShape) {
       return
     }
@@ -374,7 +389,7 @@ export function CanvasStage({
 
   return (
     <div
-      className='relative flex min-h-[640px] flex-1 overflow-hidden  bg-white shadow-sm'
+      className='relative flex flex-1 overflow-hidden bg-white shadow-sm'
       style={{cursor}}
     >
       {scene.background?.type === 'image' && (
@@ -455,10 +470,34 @@ export function CanvasStage({
             />
           )}
           {scene.cameras.map((camera) => (
-            <CameraNode camera={camera} key={camera.id} />
+            <CameraNode
+              camera={camera}
+              key={camera.id}
+              scale={scale}
+              onMove={(point) =>
+                onUpdateCamera(camera.id, {x: point.x, y: point.y})
+              }
+              onSelect={() => onSelectEntity({id: camera.id, kind: 'camera'})}
+              isSelected={
+                selection.selectedEntityId === camera.id &&
+                selection.selectedEntityKind === 'camera'
+              }
+            />
           ))}
           {scene.people.map((person) => (
-            <PersonNode key={person.id} person={person} />
+            <PersonNode
+              key={person.id}
+              scale={scale}
+              onMove={(point) =>
+                onUpdatePerson(person.id, {x: point.x, y: point.y})
+              }
+              onSelect={() => onSelectEntity({id: person.id, kind: 'person'})}
+              person={person}
+              isSelected={
+                selection.selectedEntityId === person.id &&
+                selection.selectedEntityKind === 'person'
+              }
+            />
           ))}
           {scene.areas.map((area) => (
             <AreaNode area={area} key={area.id} />
