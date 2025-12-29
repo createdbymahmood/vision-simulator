@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useCallbackRef } from "@radix-ui/react-use-callback-ref";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { Layer, Rect, Stage } from "react-konva";
+import { Layer, Stage } from "react-konva";
 
 import { CanvasGrid } from "./grid";
 import { MeasurementOverlay } from "./measurement-overlay";
@@ -356,15 +356,6 @@ export function CanvasStage({
         onDblClick={handleStageDoubleClick}
       >
         <CanvasGrid size={size} offset={offset} scale={scale} />
-        <Layer listening={false}>
-          <Rect
-            x={(size.width / 2 - offset.x) / scale}
-            y={(size.height / 2 - offset.y) / scale}
-            width={8}
-            height={8}
-            fill={DEFAULT_PREVIEW_COLOR}
-          />
-        </Layer>
         <Layer>
           {scene.walls.map((wall) => (
             <WallSegment
