@@ -1,3 +1,11 @@
+import { SceneLayout, SceneProvider } from "@/domains/scene";
+
 export default function App() {
-  return null;
+  return (
+    <SceneProvider>
+      <SceneLayout />
+    </SceneProvider>
+  );
 }
+
+App.displayName = "app";
