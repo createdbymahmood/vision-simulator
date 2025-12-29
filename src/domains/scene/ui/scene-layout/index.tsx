@@ -1,5 +1,5 @@
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
-import {useEffect, useMemo} from 'react'
+import React, {useEffect, useMemo} from 'react'
 
 import type {SceneEntity, SceneEntityKind} from '../../core/scene-types'
 
@@ -9,7 +9,7 @@ import {MapPlaceholder} from './map-placeholder'
 import {PropertiesSidebar} from './properties-sidebar'
 import {SceneCommandPalette} from './scene-command-palette'
 
-export function SceneLayout() {
+export const SceneLayout: React.FC = () => {
   const scene = useSceneStore((state) => state.scene)
   const selection = useSceneStore((state) => state.selection)
   const overlays = useSceneStore((state) => state.overlays)
@@ -48,6 +48,10 @@ export function SceneLayout() {
       closeOverlays()
     }
   })
+  const handleCloseProperties = useCallbackRef(() => {
+    closeOverlays()
+    selectEntity(null)
+  })
 
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
@@ -69,10 +73,7 @@ export function SceneLayout() {
 
       <PropertiesSidebar
         selected={selectedEntity}
-        onClose={() => {
-          closeOverlays()
-          selectEntity(null)
-        }}
+        onClose={handleCloseProperties}
         open={overlays.isPropertiesOpen && Boolean(selectedEntity)}
       />
       <SceneCommandPalette

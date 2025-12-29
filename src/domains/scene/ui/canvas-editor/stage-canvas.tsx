@@ -572,6 +572,56 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     setIsManipulating(false)
   })
 
+  const beginInteraction = useCallbackRef(() => {
+    if (!interactionCapturedRef.current) {
+      onCaptureSnapshot(scene)
+      interactionCapturedRef.current = true
+    }
+    setIsManipulating(true)
+  })
+
+  const endInteraction = useCallbackRef(() => {
+    interactionCapturedRef.current = false
+    setIsManipulating(false)
+  })
+
+  const getSelectHandler = useCallbackRef(
+    (id: string, kind: SceneEntityKind) => () => {
+      if (isManipulating) return
+      onSelectEntity({id, kind})
+    },
+  )
+
+  const getWallDragStartHandler = useCallbackRef(
+    (wallId: string) => () => beginWallDrag(wallId),
+  )
+  const getWallDragMoveHandler = useCallbackRef(
+    (wallId: string) => (_delta?: CanvasPoint) => updateWallDrag(wallId),
+  )
+  const getWallDragEndHandler = useCallbackRef(
+    (wallId: string) => (_delta?: CanvasPoint) => finishWallDrag(wallId),
+  )
+
+  const getShapeTransformHandler = useCallbackRef(
+    (shapeId: string) => (next: Partial<SceneShape>) =>
+      onUpdateShape(shapeId, next),
+  )
+
+  const getCameraMoveHandler = useCallbackRef(
+    (cameraId: string) => (point: CanvasPoint) =>
+      onUpdateCamera(cameraId, {x: point.x, y: point.y}),
+  )
+
+  const getPersonMoveHandler = useCallbackRef(
+    (personId: string) => (point: CanvasPoint) =>
+      onUpdatePerson(personId, {x: point.x, y: point.y}),
+  )
+
+  const noopSelect = useCallbackRef(() => {})
+  const noopTransform = useCallbackRef((next?: Partial<SceneShape>) => {
+    return next
+  })
+
   return (
     <div
       data-canvas-surface
@@ -613,24 +663,12 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               key={wall.id}
               scale={scale}
               wall={wall}
-              onDragEnd={() => finishWallDrag(wall.id)}
-              onDragMove={() => updateWallDrag(wall.id)}
-              onDragStart={() => beginWallDrag(wall.id)}
-              onInteractionEnd={() => {
-                interactionCapturedRef.current = false
-                setIsManipulating(false)
-              }}
-              onInteractionStart={() => {
-                if (!interactionCapturedRef.current) {
-                  onCaptureSnapshot(scene)
-                  interactionCapturedRef.current = true
-                }
-                setIsManipulating(true)
-              }}
-              onSelect={() => {
-                if (isManipulating) return
-                onSelectEntity({id: wall.id, kind: 'wall'})
-              }}
+              onDragEnd={getWallDragEndHandler(wall.id)}
+              onDragMove={getWallDragMoveHandler(wall.id)}
+              onDragStart={getWallDragStartHandler(wall.id)}
+              onInteractionEnd={endInteraction}
+              onInteractionStart={beginInteraction}
+              onSelect={getSelectHandler(wall.id, 'wall')}
               isSelected={
                 selection.selectedEntityId === wall.id &&
                 selection.selectedEntityKind === 'wall'
@@ -650,22 +688,10 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               scale={scale}
               shape={shape}
               snapEnabled={snapEnabled}
-              onInteractionEnd={() => {
-                interactionCapturedRef.current = false
-                setIsManipulating(false)
-              }}
-              onInteractionStart={() => {
-                if (!interactionCapturedRef.current) {
-                  onCaptureSnapshot(scene)
-                  interactionCapturedRef.current = true
-                }
-                setIsManipulating(true)
-              }}
-              onSelect={() => {
-                if (isManipulating) return
-                onSelectEntity({id: shape.id, kind: 'shape'})
-              }}
-              onTransform={(next) => onUpdateShape(shape.id, next)}
+              onInteractionEnd={endInteraction}
+              onInteractionStart={beginInteraction}
+              onSelect={getSelectHandler(shape.id, 'shape')}
+              onTransform={getShapeTransformHandler(shape.id)}
               isSelected={
                 selection.selectedEntityId === shape.id &&
                 selection.selectedEntityKind === 'shape'
@@ -677,8 +703,8 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               isSelected={false}
               scale={scale}
               snapEnabled={snapEnabled}
-              onSelect={() => {}}
-              onTransform={() => {}}
+              onSelect={noopSelect}
+              onTransform={noopTransform}
               shape={{
                 id: 'preview',
                 type: shapeTool,
@@ -700,24 +726,10 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               key={camera.id}
               scale={scale}
               snapEnabled={snapEnabled}
-              onInteractionEnd={() => {
-                interactionCapturedRef.current = false
-                setIsManipulating(false)
-              }}
-              onInteractionStart={() => {
-                if (!interactionCapturedRef.current) {
-                  onCaptureSnapshot(scene)
-                  interactionCapturedRef.current = true
-                }
-                setIsManipulating(true)
-              }}
-              onMove={(point) =>
-                onUpdateCamera(camera.id, {x: point.x, y: point.y})
-              }
-              onSelect={() => {
-                if (isManipulating) return
-                onSelectEntity({id: camera.id, kind: 'camera'})
-              }}
+              onInteractionEnd={endInteraction}
+              onInteractionStart={beginInteraction}
+              onMove={getCameraMoveHandler(camera.id)}
+              onSelect={getSelectHandler(camera.id, 'camera')}
               isSelected={
                 selection.selectedEntityId === camera.id &&
                 selection.selectedEntityKind === 'camera'
@@ -729,24 +741,10 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               key={person.id}
               scale={scale}
               snapEnabled={snapEnabled}
-              onInteractionEnd={() => {
-                interactionCapturedRef.current = false
-                setIsManipulating(false)
-              }}
-              onInteractionStart={() => {
-                if (!interactionCapturedRef.current) {
-                  onCaptureSnapshot(scene)
-                  interactionCapturedRef.current = true
-                }
-                setIsManipulating(true)
-              }}
-              onMove={(point) =>
-                onUpdatePerson(person.id, {x: point.x, y: point.y})
-              }
-              onSelect={() => {
-                if (isManipulating) return
-                onSelectEntity({id: person.id, kind: 'person'})
-              }}
+              onInteractionEnd={endInteraction}
+              onInteractionStart={beginInteraction}
+              onMove={getPersonMoveHandler(person.id)}
+              onSelect={getSelectHandler(person.id, 'person')}
               person={person}
               isSelected={
                 selection.selectedEntityId === person.id &&

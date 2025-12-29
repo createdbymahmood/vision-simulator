@@ -1,3 +1,8 @@
+import type {PointerDownOutsideEvent} from '@radix-ui/react-dismissable-layer'
+
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import React from 'react'
+
 import {Separator} from '@/components/ui/separator'
 import {
   Sheet,
@@ -15,29 +20,31 @@ interface PropertiesSidebarProps {
   onClose: () => void
 }
 
-export function PropertiesSidebar({
+export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   open,
   selected,
   onClose,
-}: PropertiesSidebarProps) {
+}) => {
+  const handleOpenChange = useCallbackRef((nextOpen: boolean) => {
+    if (!nextOpen) {
+      onClose()
+    }
+  })
+
+  const handlePointerDownOutside = useCallbackRef(
+    (event: PointerDownOutsideEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target?.closest('[data-canvas-surface]')) {
+        event.preventDefault()
+      }
+    },
+  )
+
   return (
-    <Sheet
-      modal={false}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) {
-          onClose()
-        }
-      }}
-      open={open}
-    >
+    <Sheet modal={false} onOpenChange={handleOpenChange} open={open}>
       <SheetContent
         side='right'
-        onPointerDownOutside={(event) => {
-          const target = event.target as HTMLElement | null
-          if (target?.closest('[data-canvas-surface]')) {
-            event.preventDefault()
-          }
-        }}
+        onPointerDownOutside={handlePointerDownOutside}
       >
         <SheetHeader>
           <SheetTitle>Properties</SheetTitle>

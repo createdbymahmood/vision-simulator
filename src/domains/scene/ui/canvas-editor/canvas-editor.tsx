@@ -5,17 +5,6 @@ import type React from 'react'
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {useEffect, useMemo, useState} from 'react'
 
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import {Button} from '@/components/ui/button'
-
 import type {
   SceneBackground,
   SceneEntityKind,
@@ -27,6 +16,7 @@ import type {CanvasPoint} from './types'
 import {useSceneHistoryStore} from '../scene-history-store'
 import {useSceneStore} from '../scene-store'
 import {CanvasBottomToolbar} from './bottom-toolbar'
+import {ClearBoardDialog} from './clear-board-dialog'
 import {useElementSize} from './hooks'
 import {CanvasStage} from './stage-canvas'
 import {CanvasTopPanel} from './top-panel'
@@ -143,6 +133,14 @@ export const CanvasEditor: React.FC = () => {
     setActiveTool('shape')
   })
 
+  const handleOpenClearDialog = useCallbackRef(() => {
+    setClearDialogOpen(true)
+  })
+
+  const handleClearDialogChange = useCallbackRef((open: boolean) => {
+    setClearDialogOpen(open)
+  })
+
   return (
     <div className='relative flex flex-col size-full'>
       <CanvasTopPanel
@@ -150,7 +148,7 @@ export const CanvasEditor: React.FC = () => {
         canRedo={Boolean(historyFuture.length)}
         canUndo={Boolean(historyPast.length)}
         editMode={editMode}
-        onClearBoard={() => setClearDialogOpen(true)}
+        onClearBoard={handleOpenClearDialog}
         onExport={handleExport}
         onLivePreview={handleLivePreview}
         onRedo={handleRedo}
@@ -190,23 +188,11 @@ export const CanvasEditor: React.FC = () => {
         onShapeSelect={handleShapeSelect}
         onToolChange={handleToolChange}
       />
-      <AlertDialog onOpenChange={setClearDialogOpen} open={clearDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clear board?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove all objects, reset history, and clear the canvas
-              background.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button variant='destructive' onClick={handleClearBoard}>
-              Clear
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ClearBoardDialog
+        onConfirm={handleClearBoard}
+        onOpenChange={handleClearDialogChange}
+        open={clearDialogOpen}
+      />
     </div>
   )
 }

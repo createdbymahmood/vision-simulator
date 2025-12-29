@@ -1,18 +1,22 @@
+import type React from 'react'
+
 import {Layer, Line} from 'react-konva'
 
 import type {CanvasPoint, CanvasSize} from './types'
 
 import {GRID_SIZE, GRID_STROKE_COLOR} from './constants'
 
-export function CanvasGrid({
-  size,
-  offset,
-  scale,
-}: {
+interface CanvasGridProps {
   size: CanvasSize
   offset: CanvasPoint
   scale: number
-}) {
+}
+
+export const CanvasGrid: React.FC<CanvasGridProps> = ({
+  size,
+  offset,
+  scale,
+}) => {
   const cell = GRID_SIZE
   const left = (0 - offset.x) / (cell * scale)
   const right = (size.width - offset.x) / (cell * scale)

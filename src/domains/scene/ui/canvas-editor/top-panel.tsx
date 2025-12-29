@@ -39,7 +39,7 @@ export const CanvasTopPanel: React.FC<CanvasTopPanelProps> = ({
   return (
     <div className='z-20 flex items-center gap-3 border-b bg-background/95 px-6 py-3 backdrop-blur'>
       <div className='flex items-center gap-2 text-sm'>
-        <span className='text-muted-foreground'>Active tool:</span>
+        <span className='text-muted-foreground'>Active tool</span>
         <span className='font-medium capitalize'>{activeTool}</span>
       </div>
       <div className='flex items-center gap-2 mr-auto'>

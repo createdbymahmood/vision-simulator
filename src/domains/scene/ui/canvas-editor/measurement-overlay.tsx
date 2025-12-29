@@ -1,12 +1,16 @@
+import type React from 'react'
+
 import {ArrowLeftRightIcon, RulerIcon} from 'lucide-react'
 
 import type {CanvasMeasurement} from './types'
 
-export function MeasurementOverlay({
-  measurement,
-}: {
+interface MeasurementOverlayProps {
   measurement: CanvasMeasurement
-}) {
+}
+
+export const MeasurementOverlay: React.FC<MeasurementOverlayProps> = ({
+  measurement,
+}) => {
   return (
     <div
       className='pointer-events-none absolute rounded-md border bg-white/90 px-3 py-2 text-xs shadow-sm'

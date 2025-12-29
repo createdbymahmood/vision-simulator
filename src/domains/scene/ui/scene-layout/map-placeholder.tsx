@@ -1,3 +1,5 @@
+import React from 'react'
+
 import {
   Card,
   CardContent,
@@ -6,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-export function MapPlaceholder() {
+export const MapPlaceholder: React.FC = () => {
   return (
     <div className='mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-6'>
       <Card>

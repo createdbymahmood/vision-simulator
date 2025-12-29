@@ -15,17 +15,17 @@ import {
   WallpaperIcon,
 } from 'lucide-react'
 
+import type {SceneShapeKind, SceneTool} from '@/domains/scene/core/scene-types'
+
 import {Button} from '@/components/ui/button'
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover'
 import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
-
-import type {SceneTool} from '../../core/scene-types'
 
 interface CanvasBottomToolbarProps {
   activeTool: SceneTool
   activeShapeLabel: string
   onToolChange: (tool: SceneTool) => void
-  onShapeSelect: (shape: 'circle' | 'line' | 'rectangle' | 'triangle') => void
+  onShapeSelect: (shape: SceneShapeKind) => void
   onBackgroundClick: () => void
 }
 

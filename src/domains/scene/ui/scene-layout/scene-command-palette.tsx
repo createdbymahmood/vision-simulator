@@ -1,3 +1,8 @@
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import React from 'react'
+
+import type {SceneMode, SceneTool} from '@/domains/scene/core/scene-types'
+
 import {
   CommandDialog,
   CommandGroup,
@@ -5,8 +10,6 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-
-import type {SceneMode, SceneTool} from '../../core/scene-types'
 
 interface SceneCommandPaletteProps {
   open: boolean
@@ -16,43 +19,45 @@ interface SceneCommandPaletteProps {
   onResetScene: () => void
 }
 
-export function SceneCommandPalette({
+export const SceneCommandPalette: React.FC<SceneCommandPaletteProps> = ({
   open,
   onOpenChange,
   onSelectMode,
   onSelectTool,
   onResetScene,
-}: SceneCommandPaletteProps) {
+}) => {
+  const handleSelectCanvasMode = useCallbackRef(() => onSelectMode('canvas'))
+  const handleSelectMapMode = useCallbackRef(() => onSelectMode('map'))
+
+  const handleSelectToolSelect = useCallbackRef(() => onSelectTool('select'))
+  const handleSelectToolWall = useCallbackRef(() => onSelectTool('wall'))
+  const handleSelectToolCamera = useCallbackRef(() => onSelectTool('camera'))
+  const handleSelectToolShape = useCallbackRef(() => onSelectTool('shape'))
+  const handleSelectToolPerson = useCallbackRef(() => onSelectTool('person'))
+  const handleSelectToolArea = useCallbackRef(() => onSelectTool('area'))
+
+  const handleResetScene = useCallbackRef(() => onResetScene())
+
   return (
     <CommandDialog onOpenChange={onOpenChange} open={open}>
       <CommandInput placeholder='Jump to a command' />
       <CommandList>
         <CommandGroup heading='Modes'>
-          <CommandItem onSelect={() => onSelectMode('canvas')}>
+          <CommandItem onSelect={handleSelectCanvasMode}>
             Canvas mode
           </CommandItem>
-          <CommandItem onSelect={() => onSelectMode('map')}>
-            Map mode
-          </CommandItem>
+          <CommandItem onSelect={handleSelectMapMode}>Map mode</CommandItem>
         </CommandGroup>
         <CommandGroup heading='Tools'>
-          <CommandItem onSelect={() => onSelectTool('select')}>
-            Select
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectTool('wall')}>Wall</CommandItem>
-          <CommandItem onSelect={() => onSelectTool('camera')}>
-            Camera
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectTool('shape')}>
-            Shape
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectTool('person')}>
-            Person
-          </CommandItem>
-          <CommandItem onSelect={() => onSelectTool('area')}>Area</CommandItem>
+          <CommandItem onSelect={handleSelectToolSelect}>Select</CommandItem>
+          <CommandItem onSelect={handleSelectToolWall}>Wall</CommandItem>
+          <CommandItem onSelect={handleSelectToolCamera}>Camera</CommandItem>
+          <CommandItem onSelect={handleSelectToolShape}>Shape</CommandItem>
+          <CommandItem onSelect={handleSelectToolPerson}>Person</CommandItem>
+          <CommandItem onSelect={handleSelectToolArea}>Area</CommandItem>
         </CommandGroup>
         <CommandGroup heading='Scene'>
-          <CommandItem onSelect={onResetScene}>Reset scene</CommandItem>
+          <CommandItem onSelect={handleResetScene}>Reset scene</CommandItem>
         </CommandGroup>
       </CommandList>
     </CommandDialog>

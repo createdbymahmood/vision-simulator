@@ -1,7 +1,7 @@
 import type {PropsWithChildren} from 'react'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
-import {useEffect, useMemo} from 'react'
+import React, {useEffect, useMemo} from 'react'
 
 import type {Scene} from '../core/scene-types'
 import type {ScenePersistencePort} from '../ports/scene-persistence-port'
@@ -13,7 +13,13 @@ type SceneProviderProps = PropsWithChildren<{
   persistence?: ScenePersistencePort
 }>
 
-function ScenePersistenceBootstrap({adapter}: {adapter: ScenePersistencePort}) {
+interface ScenePersistenceBootstrapProps {
+  adapter: ScenePersistencePort
+}
+
+const ScenePersistenceBootstrap: React.FC<ScenePersistenceBootstrapProps> = ({
+  adapter,
+}) => {
   const hydrateScene = sceneStore.useStore((state) => state.hydrateScene)
   const markSceneSaved = sceneStore.useStore((state) => state.markSceneSaved)
   const setAutosaveStatus = sceneStore.useStore(
@@ -79,7 +85,10 @@ function ScenePersistenceBootstrap({adapter}: {adapter: ScenePersistencePort}) {
   return null
 }
 
-export function SceneProvider({children, persistence}: SceneProviderProps) {
+export const SceneProvider: React.FC<SceneProviderProps> = ({
+  children,
+  persistence,
+}) => {
   const adapter = useMemo(
     () => persistence ?? createLocalStorageSceneAdapter(),
     [persistence],

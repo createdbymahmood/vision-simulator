@@ -1,6 +1,8 @@
 import type {KonvaEventObject} from 'konva/lib/Node'
+import type {Vector2d} from 'konva/lib/types'
 
-import {useEffect, useRef} from 'react'
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import React, {useEffect, useMemo, useRef} from 'react'
 import {
   Circle,
   Group,
@@ -26,17 +28,7 @@ import {
 } from './constants'
 /* eslint-disable max-lines-per-function */
 
-export function WallSegment({
-  wall,
-  scale,
-  isSelected,
-  onSelect,
-  onDragStart,
-  onDragMove,
-  onDragEnd,
-  onInteractionStart,
-  onInteractionEnd,
-}: {
+interface WallSegmentProps {
   wall: SceneWall
   scale: number
   isSelected?: boolean
@@ -46,7 +38,88 @@ export function WallSegment({
   onDragEnd?: (delta: CanvasPoint) => void
   onInteractionStart?: () => void
   onInteractionEnd?: () => void
-}) {
+}
+
+interface ShapeNodeProps {
+  shape: SceneShape
+  isSelected: boolean
+  scale: number
+  onSelect: () => void
+  onTransform: (next: Partial<SceneShape>) => void
+  snapEnabled: boolean
+  onInteractionStart?: () => void
+  onInteractionEnd?: () => void
+}
+
+interface CameraNodeProps {
+  camera: SceneCamera
+  scale: number
+  isSelected: boolean
+  onSelect: () => void
+  onMove: (point: CanvasPoint) => void
+  snapEnabled: boolean
+  onInteractionStart?: () => void
+  onInteractionEnd?: () => void
+}
+
+interface PersonNodeProps {
+  person: ScenePerson
+  scale: number
+  isSelected: boolean
+  onSelect: () => void
+  onMove: (point: CanvasPoint) => void
+  snapEnabled: boolean
+  onInteractionStart?: () => void
+  onInteractionEnd?: () => void
+}
+
+interface AreaNodeProps {
+  area: SceneArea
+}
+
+interface DrawingPreviewLineProps {
+  anchors: CanvasPoint[]
+  preview: CanvasPoint | null
+  scale: number
+}
+
+export const WallSegment: React.FC<WallSegmentProps> = ({
+  wall,
+  scale,
+  isSelected,
+  onSelect,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+  onInteractionStart,
+  onInteractionEnd,
+}) => {
+  const handleDragEnd = useCallbackRef((event: KonvaEventObject<DragEvent>) => {
+    if (!onDragEnd) {
+      return
+    }
+    onDragEnd({
+      x: event.target.x() / GRID_SIZE,
+      y: event.target.y() / GRID_SIZE,
+    })
+    event.target.position({x: 0, y: 0})
+    onInteractionEnd?.()
+  })
+
+  const handleDragMove = useCallbackRef(
+    (event: KonvaEventObject<DragEvent>) => {
+      if (!onDragMove) {
+        return
+      }
+      onInteractionStart?.()
+      onDragMove({
+        x: event.target.x() / GRID_SIZE,
+        y: event.target.y() / GRID_SIZE,
+      })
+      event.target.position({x: 0, y: 0})
+    },
+  )
+
   return (
     <Line
       listening
@@ -55,28 +128,8 @@ export function WallSegment({
       lineCap='round'
       lineJoin='round'
       onClick={onSelect}
-      onDragEnd={(event: KonvaEventObject<DragEvent>) => {
-        if (!onDragEnd) {
-          return
-        }
-        onDragEnd({
-          x: event.target.x() / GRID_SIZE,
-          y: event.target.y() / GRID_SIZE,
-        })
-        event.target.position({x: 0, y: 0})
-        onInteractionEnd?.()
-      }}
-      onDragMove={(event: KonvaEventObject<DragEvent>) => {
-        if (!onDragMove) {
-          return
-        }
-        onInteractionStart?.()
-        onDragMove({
-          x: event.target.x() / GRID_SIZE,
-          y: event.target.y() / GRID_SIZE,
-        })
-        event.target.position({x: 0, y: 0})
-      }}
+      onDragEnd={handleDragEnd}
+      onDragMove={handleDragMove}
       onDragStart={onDragStart}
       onTap={onSelect}
       opacity={wall.opacity}
@@ -92,7 +145,7 @@ export function WallSegment({
   )
 }
 
-export function ShapeNode({
+export const ShapeNode: React.FC<ShapeNodeProps> = ({
   shape,
   isSelected,
   scale,
@@ -101,16 +154,7 @@ export function ShapeNode({
   snapEnabled,
   onInteractionStart,
   onInteractionEnd,
-}: {
-  shape: SceneShape
-  isSelected: boolean
-  scale: number
-  onSelect: () => void
-  onTransform: (next: Partial<SceneShape>) => void
-  snapEnabled: boolean
-  onInteractionStart?: () => void
-  onInteractionEnd?: () => void
-}) {
+}) => {
   const shapeRef = useRef<any>(null)
   const transformerRef = useRef<any>(null)
 
@@ -145,22 +189,118 @@ export function ShapeNode({
 
   const strokeWidth = Math.max(1.5, shape.lineThickness * GRID_SIZE) / scale
   const fill = shape.color || DEFAULT_SHAPE_COLOR
-  const snapValue = (value: number) => (snapEnabled ? Math.round(value) : value)
+  const snapValue = useCallbackRef((value: number) =>
+    snapEnabled ? Math.round(value) : value,
+  )
 
-  const transformer = isSelected ? (
-    <Transformer
-      resizeEnabled
-      ref={transformerRef}
-      borderDash={[6, 4]}
-      boundBoxFunc={(oldBox, newBox) => {
-        if (newBox.width < GRID_SIZE * 0.2 || newBox.height < GRID_SIZE * 0.2) {
-          return oldBox
-        }
-        return newBox
-      }}
-      rotateEnabled
-    />
-  ) : null
+  const transformerBoundBox = useCallbackRef((oldBox: any, newBox: any) => {
+    if (newBox.width < GRID_SIZE * 0.2 || newBox.height < GRID_SIZE * 0.2) {
+      return oldBox
+    }
+    return newBox
+  })
+
+  const dragBoundPosition = useCallbackRef((pos: Vector2d) => {
+    if (!snapEnabled) return pos
+    return {
+      x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+      y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+    }
+  })
+
+  const handleDragStart = useCallbackRef(() => {
+    onInteractionStart?.()
+  })
+
+  const handleTransformStart = useCallbackRef(() => {
+    onInteractionStart?.()
+  })
+
+  const handleDragEnd = useCallbackRef((event: KonvaEventObject<DragEvent>) => {
+    onTransform({
+      x: snapValue(event.target.x() / GRID_SIZE),
+      y: snapValue(event.target.y() / GRID_SIZE),
+    })
+    onInteractionEnd?.()
+  })
+
+  const handleRectangleTransformEnd = useCallbackRef(
+    (event: KonvaEventObject<Event>) => {
+      const node = event.target as any
+      const scaleX = node.scaleX()
+      const scaleY = node.scaleY()
+      node.scaleX(1)
+      node.scaleY(1)
+      onTransform({
+        width: snapValue(shape.width * scaleX),
+        length: snapValue(shape.length * scaleY),
+        rotation: (node.rotation() * Math.PI) / 180,
+      })
+      onInteractionEnd?.()
+      transformerRef.current?.forceUpdate?.()
+    },
+  )
+
+  const handleCircleTransformEnd = useCallbackRef(
+    (event: KonvaEventObject<Event>) => {
+      const node = event.target as any
+      const scaleX = node.scaleX()
+      node.scaleX(1)
+      node.scaleY(1)
+      onTransform({
+        width: snapValue(shape.width * scaleX),
+        length: snapValue(shape.length * scaleX),
+        rotation: 0,
+      })
+      onInteractionEnd?.()
+      transformerRef.current?.forceUpdate?.()
+    },
+  )
+
+  const handleLineTransformEnd = useCallbackRef(
+    (event: KonvaEventObject<Event>) => {
+      const node = event.target as any
+      const scaleX = node.scaleX()
+      const scaleY = node.scaleY()
+      node.scaleX(1)
+      node.scaleY(1)
+      onTransform({
+        width: snapValue(shape.width * scaleX),
+        length: snapValue(shape.length * scaleY),
+        rotation: (node.rotation() * Math.PI) / 180,
+      })
+      transformerRef.current?.forceUpdate?.()
+    },
+  )
+
+  const handleLineDragEnd = useCallbackRef(
+    (event: KonvaEventObject<DragEvent>) => {
+      const target = event.target as any
+      onTransform({
+        x: snapEnabled
+          ? Math.round(target.points()[0] / GRID_SIZE)
+          : target.points()[0] / GRID_SIZE,
+        y: snapEnabled
+          ? Math.round(target.points()[1] / GRID_SIZE)
+          : target.points()[1] / GRID_SIZE,
+      })
+      onInteractionEnd?.()
+    },
+  )
+
+  const transformer = useMemo(
+    () =>
+      isSelected ? (
+        <Transformer
+          resizeEnabled
+          ref={transformerRef}
+          borderDash={[6, 4]}
+          boundBoxFunc={transformerBoundBox}
+          rotateEnabled
+        />
+      ) : null,
+    [isSelected, transformerBoundBox],
+  )
 
   if (shape.type === 'rectangle') {
     return (
@@ -170,40 +310,11 @@ export function ShapeNode({
           y={shape.y * GRID_SIZE}
           rotation={(shape.rotation * 180) / Math.PI}
           {...commonProps}
-          dragBoundFunc={(pos) => {
-            if (!snapEnabled) return pos
-            return {
-              x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
-              y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
-            }
-          }}
-          onDragEnd={(event) => {
-            onTransform({
-              x: snapValue(event.target.x() / GRID_SIZE),
-              y: snapValue(event.target.y() / GRID_SIZE),
-            })
-            onInteractionEnd?.()
-          }}
-          onDragStart={() => {
-            onInteractionStart?.()
-          }}
-          onTransformEnd={(event) => {
-            const node = event.target
-            const scaleX = node.scaleX()
-            const scaleY = node.scaleY()
-            node.scaleX(1)
-            node.scaleY(1)
-            onTransform({
-              width: snapValue(shape.width * scaleX),
-              length: snapValue(shape.length * scaleY),
-              rotation: (node.rotation() * Math.PI) / 180,
-            })
-            onInteractionEnd?.()
-            transformerRef.current?.forceUpdate?.()
-          }}
-          onTransformStart={() => {
-            onInteractionStart?.()
-          }}
+          dragBoundFunc={dragBoundPosition}
+          onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
+          onTransformEnd={handleRectangleTransformEnd}
+          onTransformStart={handleTransformStart}
         >
           <Rect
             height={shape.length * GRID_SIZE}
@@ -234,39 +345,11 @@ export function ShapeNode({
           x={shape.x * GRID_SIZE}
           y={shape.y * GRID_SIZE}
           {...commonProps}
-          dragBoundFunc={(pos) => {
-            if (!snapEnabled) return pos
-            return {
-              x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
-              y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
-            }
-          }}
-          onDragEnd={(event) => {
-            onTransform({
-              x: snapValue(event.target.x() / GRID_SIZE),
-              y: snapValue(event.target.y() / GRID_SIZE),
-            })
-            onInteractionEnd?.()
-          }}
-          onDragStart={() => {
-            onInteractionStart?.()
-          }}
-          onTransformEnd={(event) => {
-            const node = event.target
-            const scaleX = node.scaleX()
-            node.scaleX(1)
-            node.scaleY(1)
-            onTransform({
-              width: snapValue(shape.width * scaleX),
-              length: snapValue(shape.length * scaleX),
-              rotation: 0,
-            })
-            onInteractionEnd?.()
-            transformerRef.current?.forceUpdate?.()
-          }}
-          onTransformStart={() => {
-            onInteractionStart?.()
-          }}
+          dragBoundFunc={dragBoundPosition}
+          onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
+          onTransformEnd={handleCircleTransformEnd}
+          onTransformStart={handleTransformStart}
         >
           <Circle
             fill={fill}
@@ -296,39 +379,11 @@ export function ShapeNode({
           y={shape.y * GRID_SIZE}
           rotation={(shape.rotation * 180) / Math.PI}
           {...commonProps}
-          dragBoundFunc={(pos) => {
-            if (!snapEnabled) return pos
-            return {
-              x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
-              y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
-            }
-          }}
-          onDragEnd={(event) => {
-            onTransform({
-              x: snapValue(event.target.x() / GRID_SIZE),
-              y: snapValue(event.target.y() / GRID_SIZE),
-            })
-            onInteractionEnd?.()
-          }}
-          onDragStart={() => {
-            onInteractionStart?.()
-          }}
-          onTransformEnd={(event) => {
-            const node = event.target
-            const scaleX = node.scaleX()
-            node.scaleX(1)
-            node.scaleY(1)
-            onTransform({
-              width: snapValue(shape.width * scaleX),
-              length: snapValue(shape.length * scaleX),
-              rotation: (node.rotation() * Math.PI) / 180,
-            })
-            onInteractionEnd?.()
-            transformerRef.current?.forceUpdate?.()
-          }}
-          onTransformStart={() => {
-            onInteractionStart?.()
-          }}
+          dragBoundFunc={dragBoundPosition}
+          onDragEnd={handleDragEnd}
+          onDragStart={handleDragStart}
+          onTransformEnd={handleRectangleTransformEnd}
+          onTransformStart={handleTransformStart}
         >
           <RegularPolygon
             fill={fill}
@@ -358,43 +413,12 @@ export function ShapeNode({
         draggable
         lineCap='round'
         ref={shapeRef}
-        dragBoundFunc={(pos) => {
-          if (!snapEnabled) return pos
-          return {
-            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
-            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
-          }
-        }}
+        dragBoundFunc={dragBoundPosition}
         onClick={onSelect}
-        onDragEnd={(event) => {
-          const target = event.target as any
-          onTransform({
-            x: snapEnabled
-              ? Math.round(target.points()[0] / GRID_SIZE)
-              : target.points()[0] / GRID_SIZE,
-            y: snapEnabled
-              ? Math.round(target.points()[1] / GRID_SIZE)
-              : target.points()[1] / GRID_SIZE,
-          })
-          onInteractionEnd?.()
-        }}
-        onDragStart={() => {
-          onInteractionStart?.()
-        }}
+        onDragEnd={handleLineDragEnd}
+        onDragStart={handleDragStart}
         onTap={onSelect}
-        onTransformEnd={(event) => {
-          const node = event.target as any
-          const scaleX = node.scaleX()
-          const scaleY = node.scaleY()
-          node.scaleX(1)
-          node.scaleY(1)
-          onTransform({
-            width: snapValue(shape.width * scaleX),
-            length: snapValue(shape.length * scaleY),
-            rotation: (node.rotation() * Math.PI) / 180,
-          })
-          transformerRef.current?.forceUpdate?.()
-        }}
+        onTransformEnd={handleLineTransformEnd}
         opacity={shape.opacity}
         points={[
           shape.x * GRID_SIZE,
@@ -410,7 +434,7 @@ export function ShapeNode({
   )
 }
 
-export function CameraNode({
+export const CameraNode: React.FC<CameraNodeProps> = ({
   camera,
   scale,
   isSelected,
@@ -419,16 +443,31 @@ export function CameraNode({
   snapEnabled,
   onInteractionStart,
   onInteractionEnd,
-}: {
-  camera: SceneCamera
-  scale: number
-  isSelected: boolean
-  onSelect: () => void
-  onMove: (point: CanvasPoint) => void
-  snapEnabled: boolean
-  onInteractionStart?: () => void
-  onInteractionEnd?: () => void
-}) {
+}) => {
+  const handleDragBound = useCallbackRef((pos: Vector2d) => {
+    if (!snapEnabled) return pos
+    return {
+      x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+      y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+    }
+  })
+
+  const handleDragEnd = useCallbackRef((event: KonvaEventObject<DragEvent>) => {
+    onInteractionEnd?.()
+    onMove({
+      x: snapEnabled
+        ? Math.round(event.target.x() / GRID_SIZE)
+        : event.target.x() / GRID_SIZE,
+      y: snapEnabled
+        ? Math.round(event.target.y() / GRID_SIZE)
+        : event.target.y() / GRID_SIZE,
+    })
+  })
+
+  const handleDragStart = useCallbackRef(() => {
+    onInteractionStart?.()
+  })
+
   return (
     <>
       <RegularPolygon
@@ -438,26 +477,10 @@ export function CameraNode({
         sides={3}
         x={camera.x * GRID_SIZE}
         y={camera.y * GRID_SIZE}
-        dragBoundFunc={(pos) => {
-          if (!snapEnabled) return pos
-          return {
-            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
-            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
-          }
-        }}
+        dragBoundFunc={handleDragBound}
         onClick={onSelect}
-        onDragEnd={(event) => {
-          onInteractionEnd?.()
-          onMove({
-            x: snapEnabled
-              ? Math.round(event.target.x() / GRID_SIZE)
-              : event.target.x() / GRID_SIZE,
-            y: snapEnabled
-              ? Math.round(event.target.y() / GRID_SIZE)
-              : event.target.y() / GRID_SIZE,
-          })
-        }}
-        onDragStart={onInteractionStart}
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
         onTap={onSelect}
         opacity={0.8}
         rotation={camera.direction}
@@ -477,7 +500,7 @@ export function CameraNode({
   )
 }
 
-export function PersonNode({
+export const PersonNode: React.FC<PersonNodeProps> = ({
   person,
   scale,
   isSelected,
@@ -486,16 +509,31 @@ export function PersonNode({
   snapEnabled,
   onInteractionStart,
   onInteractionEnd,
-}: {
-  person: ScenePerson
-  scale: number
-  isSelected: boolean
-  onSelect: () => void
-  onMove: (point: CanvasPoint) => void
-  snapEnabled: boolean
-  onInteractionStart?: () => void
-  onInteractionEnd?: () => void
-}) {
+}) => {
+  const handleDragBound = useCallbackRef((pos: Vector2d) => {
+    if (!snapEnabled) return pos
+    return {
+      x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
+      y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
+    }
+  })
+
+  const handleDragEnd = useCallbackRef((event: KonvaEventObject<DragEvent>) => {
+    onInteractionEnd?.()
+    onMove({
+      x: snapEnabled
+        ? Math.round(event.target.x() / GRID_SIZE)
+        : event.target.x() / GRID_SIZE,
+      y: snapEnabled
+        ? Math.round(event.target.y() / GRID_SIZE)
+        : event.target.y() / GRID_SIZE,
+    })
+  })
+
+  const handleDragStart = useCallbackRef(() => {
+    onInteractionStart?.()
+  })
+
   return (
     <>
       <Circle
@@ -504,26 +542,10 @@ export function PersonNode({
         radius={person.radius * GRID_SIZE}
         x={person.x * GRID_SIZE}
         y={person.y * GRID_SIZE}
-        dragBoundFunc={(pos) => {
-          if (!snapEnabled) return pos
-          return {
-            x: Math.round(pos.x / GRID_SIZE) * GRID_SIZE,
-            y: Math.round(pos.y / GRID_SIZE) * GRID_SIZE,
-          }
-        }}
+        dragBoundFunc={handleDragBound}
         onClick={onSelect}
-        onDragEnd={(event) => {
-          onInteractionEnd?.()
-          onMove({
-            x: snapEnabled
-              ? Math.round(event.target.x() / GRID_SIZE)
-              : event.target.x() / GRID_SIZE,
-            y: snapEnabled
-              ? Math.round(event.target.y() / GRID_SIZE)
-              : event.target.y() / GRID_SIZE,
-          })
-        }}
-        onDragStart={onInteractionStart}
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
         onTap={onSelect}
         opacity={0.85}
       />
@@ -541,7 +563,7 @@ export function PersonNode({
   )
 }
 
-export function AreaNode({area}: {area: SceneArea}) {
+export const AreaNode: React.FC<AreaNodeProps> = ({area}) => {
   const first = area.geometry[0]
   if (!first) {
     return null
@@ -562,15 +584,11 @@ export function AreaNode({area}: {area: SceneArea}) {
   )
 }
 
-export function DrawingPreviewLine({
+export const DrawingPreviewLine: React.FC<DrawingPreviewLineProps> = ({
   anchors,
   preview,
   scale,
-}: {
-  anchors: CanvasPoint[]
-  preview: CanvasPoint | null
-  scale: number
-}) {
+}) => {
   const pointsArray = [...anchors]
   if (preview) {
     pointsArray.push(preview)
