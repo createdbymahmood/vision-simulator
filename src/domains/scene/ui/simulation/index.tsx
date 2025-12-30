@@ -13,6 +13,7 @@ import type {
 } from '../../core/scene-types'
 
 import {CameraTiles} from './camera-tiles'
+import {Simulation2DView} from './simulation-2d-view'
 import {SimulationMiniMap} from './simulation-mini-map'
 import {SimulationTopBar} from './simulation-top-bar'
 import {SimulationWorld} from './simulation-world'
@@ -109,11 +110,11 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
           <ToggleGroupItem value='2d'>2D</ToggleGroupItem>
         </ToggleGroup>
       </div>
-      <div className='flex flex-1 gap-4'>
-        <Card className='flex-1 overflow-hidden shadow-none rounded-none p-0'>
-          <CardContent className='p-0 h-full'>
+      <div className='flex flex-1 gap-4 overflow-hidden'>
+        <Card className='flex-1 overflow-hidden shadow-none rounded-none p-0 '>
+          <CardContent className='p-0 h-full size-full overflow-hidden flex'>
             {mode === '3d' ? (
-              <div className='h-full w-full'>
+              <div className='flex-1'>
                 <SimulationWorld
                   scene={scene}
                   onReadySnapshot={handleSnapshotReady}
@@ -122,8 +123,8 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
                 />
               </div>
             ) : (
-              <div className='flex h-full flex-col justify-center p-6'>
-                <SimulationMiniMap
+              <div className='flex-1'>
+                <Simulation2DView
                   cameras={scene.cameras}
                   shapes={scene.shapes}
                   walls={scene.walls}
