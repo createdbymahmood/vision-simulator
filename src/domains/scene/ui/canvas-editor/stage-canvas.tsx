@@ -1,6 +1,7 @@
 import type Konva from 'konva'
 import type {KonvaEventObject} from 'konva/lib/Node'
 import type React from 'react'
+import type {MutableRefObject} from 'react'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {useEffect, useMemo, useRef, useState} from 'react'
@@ -68,6 +69,7 @@ interface CanvasStageProps {
     selectedEntityKind: SceneEntityKind | null
   }
   activeTool: SceneTool
+  stageRef?: MutableRefObject<Konva.Stage | null>
   onOffsetChange: (point: CanvasPoint) => void
   onScaleChange: (scale: number) => void
   onCaptureSnapshot: (scene: Scene) => void
@@ -113,9 +115,11 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   onAddPerson,
   onSelectEntity,
   onCloseOverlays,
+  stageRef: stageRefProp,
 }: CanvasStageProps) => {
   const canEdit = editMode
-  const stageRef = useRef<Konva.Stage | null>(null)
+  const localStageRef = useRef<Konva.Stage | null>(null)
+  const stageRef = stageRefProp ?? localStageRef
   const [drawingWall, setDrawingWall] = useState<DrawingWallState | null>(null)
   const [drawingShape, setDrawingShape] = useState<DrawingShapeState | null>(
     null,

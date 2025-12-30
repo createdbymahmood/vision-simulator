@@ -1,8 +1,6 @@
-import type {PointerDownOutsideEvent} from '@radix-ui/react-dismissable-layer'
-
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 /* eslint-disable max-lines-per-function */
-import React, {useMemo} from 'react'
+import React, {useEffect, useMemo, useRef} from 'react'
 
 import {Separator} from '@/components/ui/separator'
 import {
@@ -53,6 +51,8 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
   const setBackground = useSceneStore((state) => state.setSceneBackground)
   const scene = useSceneStore((state) => state.scene)
   const captureSnapshot = useSceneHistoryStore((state) => state.captureSnapshot)
+  const debounceTimerRef = useRef<number | null>(null)
+  const pendingSnapshotRef = useRef(false)
 
   const handleOpenChange = useCallbackRef((nextOpen: boolean) => {
     if (!nextOpen) {
@@ -60,18 +60,35 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
     }
   })
 
-  const handlePointerDownOutside = useCallbackRef(
-    (event: PointerDownOutsideEvent) => {
-      const target = event.target as HTMLElement | null
-      if (target?.closest('[data-canvas-surface]')) {
-        event.preventDefault()
-      }
-    },
-  )
+  const handlePointerDownOutside = useCallbackRef((event: Event) => {
+    const target = event.target as HTMLElement | null
+    if (target?.closest('[data-canvas-surface]')) {
+      event.preventDefault()
+    }
+  })
 
   const ensureSnapshot = useCallbackRef(() => {
-    captureSnapshot(scene)
+    if (!pendingSnapshotRef.current) {
+      captureSnapshot(scene)
+      pendingSnapshotRef.current = true
+    }
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current)
+    }
+    debounceTimerRef.current = window.setTimeout(() => {
+      pendingSnapshotRef.current = false
+      debounceTimerRef.current = null
+    }, 300)
   })
+
+  useEffect(
+    () => () => {
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current)
+      }
+    },
+    [],
+  )
 
   const handleWallChange = useCallbackRef(
     (wallId: string, patch: Partial<SceneWall>) => {

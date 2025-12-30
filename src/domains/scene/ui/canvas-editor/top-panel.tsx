@@ -7,6 +7,12 @@ import {
 } from 'lucide-react'
 
 import {Button} from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {Switch} from '@/components/ui/switch'
 
 import type {SceneTool} from '../../core/scene-types'
@@ -20,7 +26,8 @@ interface CanvasTopPanelProps {
   onClearBoard: () => void
   onUndo: () => void
   onRedo: () => void
-  onExport: () => void
+  onExportScene: () => void
+  onExportImage: () => void
   onLivePreview: () => void
 }
 
@@ -31,7 +38,8 @@ export const CanvasTopPanel: React.FC<CanvasTopPanelProps> = ({
   onClearBoard,
   onUndo,
   onRedo,
-  onExport,
+  onExportScene,
+  onExportImage,
   canUndo,
   canRedo,
   onLivePreview,
@@ -85,10 +93,22 @@ export const CanvasTopPanel: React.FC<CanvasTopPanelProps> = ({
           <RedoIcon className='mr-2 size-4' />
           Redo
         </Button>
-        <Button size='sm' variant='outline' onClick={onExport}>
-          <DownloadIcon className='mr-2 size-4' />
-          Export
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size='sm' variant='outline'>
+              <DownloadIcon className='mr-2 size-4' />
+              Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='end'>
+            <DropdownMenuItem onSelect={onExportScene}>
+              Export Scene (JSON)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onExportImage}>
+              Export Image (PNG)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button size='sm' variant='default' onClick={onLivePreview}>
           <PlayIcon className='mr-2 size-4' />
           Live Preview

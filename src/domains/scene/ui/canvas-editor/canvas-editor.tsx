@@ -1,5 +1,6 @@
 /* eslint-disable no-alert, max-lines-per-function, max-statements */
 
+import type Konva from 'konva'
 import type React from 'react'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
@@ -17,7 +18,7 @@ import {useSceneHistoryStore} from '../scene-history-store'
 import {useSceneStore} from '../scene-store'
 import {CanvasBottomToolbar} from './bottom-toolbar'
 import {ClearBoardDialog} from './clear-board-dialog'
-import {useElementSize} from './hooks'
+import {useElementSize, useUndoRedoShortcuts} from './hooks'
 import {CanvasStage} from './stage-canvas'
 import {CanvasTopPanel} from './top-panel'
 
@@ -30,6 +31,7 @@ export const CanvasEditor: React.FC = () => {
   const [shapeTool, setShapeTool] = useState<SceneShapeKind>('rectangle')
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const stageRef = useRef<Konva.Stage | null>(null)
 
   const scene = useSceneStore((state) => state.scene)
   const selection = useSceneStore((state) => state.selection)
@@ -89,7 +91,7 @@ export const CanvasEditor: React.FC = () => {
     }
   })
 
-  const handleExport = useCallbackRef(() => {
+  const handleExportScene = useCallbackRef(() => {
     const blob = new Blob([JSON.stringify(scene, null, 2)], {
       type: 'application/json',
     })
@@ -99,6 +101,18 @@ export const CanvasEditor: React.FC = () => {
     link.download = `scene-${Date.now()}.json`
     link.click()
     URL.revokeObjectURL(url)
+  })
+
+  const handleExportImage = useCallbackRef(() => {
+    const stage = stageRef.current
+    if (!stage) {
+      return
+    }
+    const dataUrl = stage.toDataURL({pixelRatio: 2})
+    const link = document.createElement('a')
+    link.href = dataUrl
+    link.download = `scene-${Date.now()}.png`
+    link.click()
   })
 
   const handleSelectEntity = useCallbackRef(
@@ -166,6 +180,8 @@ export const CanvasEditor: React.FC = () => {
     setClearDialogOpen(open)
   })
 
+  useUndoRedoShortcuts(handleUndo, handleRedo)
+
   return (
     <div className='relative flex flex-col size-full'>
       <CanvasTopPanel
@@ -174,7 +190,8 @@ export const CanvasEditor: React.FC = () => {
         canUndo={Boolean(historyPast.length)}
         editMode={editMode}
         onClearBoard={handleOpenClearDialog}
-        onExport={handleExport}
+        onExportImage={handleExportImage}
+        onExportScene={handleExportScene}
         onLivePreview={handleLivePreview}
         onRedo={handleRedo}
         onToggleEditMode={setEditMode}
@@ -186,6 +203,7 @@ export const CanvasEditor: React.FC = () => {
           scale={scale}
           scene={scene}
           snapEnabled={snapEnabled}
+          stageRef={stageRef}
           activeTool={activeTool}
           editMode={editMode}
           offset={offset}
