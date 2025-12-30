@@ -21,6 +21,7 @@ type PersonState = ScenePerson & {velocity: [number, number]; trail: number[][]}
 
 const floorSize = 200
 const gridDivisions = 40
+const PERSON_SPEED = 0.8
 
 const Walls: React.FC<{walls: SceneWall[]}> = ({walls}) => (
   <>
@@ -170,92 +171,84 @@ const PeopleSimulation: React.FC<{
     })),
   )
 
-  const speed = 0.8
+  const normalizeVelocity = (vx: number, vy: number) => {
+    const magnitude = Math.hypot(vx, vy) || 1
+    return [(vx / magnitude) * PERSON_SPEED, (vy / magnitude) * PERSON_SPEED] as [
+      number,
+      number,
+    ]
+  }
 
-  const findAvoidingVelocity = (
-    vx: number,
-    vy: number,
-    position: {x: number; y: number},
-    radius: number,
-  ) => {
-    const candidates = [0, Math.PI / 2, -Math.PI / 2, Math.PI].map((delta) => {
-      const angle = Math.atan2(vy, vx) + delta
-      return {
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-      }
-    })
-
-    const collides = (x: number, y: number) =>
-      obstacles.some((obstacle) => {
-        const minX = obstacle.x - radius
-        const maxX = obstacle.x + obstacle.width + radius
-        const minY = obstacle.y - radius
-        const maxY = obstacle.y + obstacle.length + radius
-        return x >= minX && x <= maxX && y >= minY && y <= maxY
-      })
-
-    const safe = candidates.find(
-      (candidate) =>
-        !collides(
-          position.x + candidate.vx * 0.1,
-          position.y + candidate.vy * 0.1,
-        ),
-    )
-    return safe ?? {vx: -vx, vy: -vy}
+  const updateTrail = (trail: number[][], x: number, y: number) => {
+    const now = performance.now()
+    const nextTrail = [...trail, [x, y, now]]
+    const cutoff = now - 20000
+    return nextTrail.filter(([, , timestamp]) => timestamp >= cutoff)
   }
 
   useFrame((_, delta) => {
+    if (delta <= 0) return
     setState((current) =>
       current.map((person, idx) => {
-        const [vx, vy] = person.velocity
+        const [vx, vy] = normalizeVelocity(
+          person.velocity[0] || PERSON_SPEED,
+          person.velocity[1] || PERSON_SPEED,
+        )
         const radius = person.radius || 0.3
-        let nextVx = vx || speed
-        let nextVy = vy || speed
-
-        let nextX = person.x + nextVx * delta
-        let nextY = person.y + nextVy * delta
-
-        const colliding = obstacles.some((obstacle) => {
-          const minX = obstacle.x - radius
-          const maxX = obstacle.x + obstacle.width + radius
-          const minY = obstacle.y - radius
-          const maxY = obstacle.y + obstacle.length + radius
-          return (
-            nextX >= minX && nextX <= maxX && nextY >= minY && nextY <= maxY
-          )
+        const nextPosition = (nextVx: number, nextVy: number) => ({
+          x: person.x + nextVx * delta,
+          y: person.y + nextVy * delta,
         })
 
-        if (colliding) {
-          const avoidance = findAvoidingVelocity(
-            nextVx,
-            nextVy,
-            {x: person.x, y: person.y},
-            radius,
-          )
-          nextVx = avoidance.vx
-          nextVy = avoidance.vy
-          nextX = person.x + nextVx * delta
-          nextY = person.y + nextVy * delta
+        const collides = (x: number, y: number) => {
+          const hitsObstacle = obstacles.some((obstacle) => {
+            const minX = obstacle.x - radius
+            const maxX = obstacle.x + obstacle.width + radius
+            const minY = obstacle.y - radius
+            const maxY = obstacle.y + obstacle.length + radius
+            return x >= minX && x <= maxX && y >= minY && y <= maxY
+          })
+          if (hitsObstacle) return true
+
+          return current.some((other, otherIdx) => {
+            if (otherIdx === idx) return false
+            const dx = other.x - x
+            const dy = other.y - y
+            const distance = Math.hypot(dx, dy)
+            return distance < (other.radius || radius) + radius
+          })
         }
 
-        const newTrail = [...person.trail, [nextX, nextY, performance.now()]]
-        const cutoff = performance.now() - 20000
-        const trimmedTrail = newTrail.filter(([, , t]) => t >= cutoff)
+        let nextVx = vx
+        let nextVy = vy
+        let {x: nextX, y: nextY} = nextPosition(nextVx, nextVy)
 
-        let newVx = vx
-        let newVy = vy
-        if ((idx + Math.random()) % 50 < 0.5) {
-          newVx = nextVx
-          newVy = nextVy
+        if (collides(nextX, nextY)) {
+          const turnRight = (idx + Math.floor(performance.now())) % 2 === 0
+          const rotatedVx = turnRight ? -nextVy : nextVy
+          const rotatedVy = turnRight ? nextVx : -nextVx
+          nextVx = rotatedVx
+          nextVy = rotatedVy
+          const jitter = (idx * 0.13 + performance.now() * 0.001) * 0.05
+          const adjustedVx = nextVx + Math.cos(jitter) * 0.05
+          const adjustedVy = nextVy + Math.sin(jitter) * 0.05
+          const [normalizedVx, normalizedVy] = normalizeVelocity(
+            adjustedVx,
+            adjustedVy,
+          )
+          nextVx = normalizedVx
+          nextVy = normalizedVy
+          const reversed = nextPosition(nextVx, nextVy)
+          nextX = reversed.x
+          nextY = reversed.y
         }
 
         return {
           ...person,
           x: nextX,
           y: nextY,
-          velocity: [newVx || speed, newVy || speed] as [number, number],
-          trail: trimmedTrail,
+          velocity: [nextVx, nextVy],
+          trail: updateTrail(person.trail, nextX, nextY),
         }
       }),
     )

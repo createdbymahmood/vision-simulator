@@ -1,16 +1,9 @@
-import React, {useMemo, useRef, useState} from 'react'
+import React, {useRef, useState} from 'react'
 
-import {Button} from '@/components/ui/button'
 import {Card, CardContent} from '@/components/ui/card'
 import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
 
-import type {
-  Scene,
-  SceneCamera,
-  ScenePerson,
-  SceneShape,
-  SceneWall,
-} from '../../core/scene-types'
+import type {Scene} from '../../core/scene-types'
 
 import {CameraTiles} from './camera-tiles'
 import {Simulation2DView} from './simulation-2d-view'
@@ -61,32 +54,6 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
     snapshotRef.current = fn
   }
 
-  const boundsLabel = useMemo(() => {
-    const walls: SceneWall[] = scene.walls
-    const shapes: SceneShape[] = scene.shapes
-    const people: ScenePerson[] = scene.people
-    const cameras: SceneCamera[] = scene.cameras
-    const xs = [
-      ...walls.flatMap((w) => [w.coordinates.x1, w.coordinates.x2]),
-      ...shapes.flatMap((s) => [s.x, s.x + s.width]),
-      ...people.map((p) => p.x),
-      ...cameras.map((c) => c.x),
-    ]
-    const ys = [
-      ...walls.flatMap((w) => [w.coordinates.y1, w.coordinates.y2]),
-      ...shapes.flatMap((s) => [s.y, s.y + s.length]),
-      ...people.map((p) => p.y),
-      ...cameras.map((c) => c.y),
-    ]
-    const minX = Math.min(...xs, 0)
-    const maxX = Math.max(...xs, 0)
-    const minY = Math.min(...ys, 0)
-    const maxY = Math.max(...ys, 0)
-    return `Bounds: ${minX.toFixed(1)}, ${minY.toFixed(
-      1,
-    )} — ${maxX.toFixed(1)}, ${maxY.toFixed(1)}`
-  }, [scene.cameras, scene.people, scene.shapes, scene.walls])
-
   return (
     <div className='flex h-full flex-col bg-background'>
       <SimulationTopBar
@@ -135,7 +102,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
           </CardContent>
         </Card>
 
-        <div className='w-[360px] space-y-3 h-full overflow-auto pb-2 pr-4'>
+        <div className='w-[320px] space-y-3 h-full overflow-auto pb-2 pr-4'>
           <SimulationMiniMap
             cameras={scene.cameras}
             shapes={scene.shapes}
