@@ -1,3 +1,4 @@
+import type Konva from 'konva'
 import type React from 'react'
 
 import {Layer, Line} from 'react-konva'
@@ -10,12 +11,16 @@ interface CanvasGridProps {
   size: CanvasSize
   offset: CanvasPoint
   scale: number
+  innerRef?: React.MutableRefObject<Konva.Layer | null>
+  id?: string
 }
 
 export const CanvasGrid: React.FC<CanvasGridProps> = ({
   size,
   offset,
   scale,
+  innerRef,
+  id = 'canvas-grid',
 }) => {
   const cell = GRID_SIZE
   const left = (0 - offset.x) / (cell * scale)
@@ -34,7 +39,7 @@ export const CanvasGrid: React.FC<CanvasGridProps> = ({
   }
 
   return (
-    <Layer listening={false}>
+    <Layer id={id} listening={false} ref={innerRef}>
       {verticalLines.map((x) => (
         <Line
           key={`v-${x}`}

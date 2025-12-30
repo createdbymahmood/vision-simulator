@@ -110,7 +110,15 @@ export const CanvasEditor: React.FC = () => {
     if (!stage) {
       return
     }
-    const dataUrl = stage.toDataURL({pixelRatio: 2})
+    const gridLayer = stage.findOne('#canvas-grid')
+    const wasVisible = gridLayer ? gridLayer.visible() : null
+    if (gridLayer) {
+      gridLayer.visible(false)
+    }
+    const dataUrl = stage.toDataURL({pixelRatio: 2, mimeType: 'image/png'})
+    if (gridLayer && wasVisible !== null) {
+      gridLayer.visible(wasVisible)
+    }
     const link = document.createElement('a')
     link.href = dataUrl
     link.download = `scene-${Date.now()}.png`

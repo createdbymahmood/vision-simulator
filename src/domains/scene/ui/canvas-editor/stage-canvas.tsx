@@ -72,7 +72,7 @@ interface CanvasStageProps {
   stageRef?: MutableRefObject<Konva.Stage | null>
   onOffsetChange: (point: CanvasPoint) => void
   onScaleChange: (scale: number) => void
-  onCaptureSnapshot: (scene: Scene) => void
+  onCaptureSnapshot: (scene: Scene, pngData?: string) => void
   onAddWall: (wall: SceneWall) => void
   onAddShape: (shape: SceneShape) => void
   onUpdateShape: (id: string, patch: Partial<SceneShape>) => void
@@ -104,7 +104,6 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   activeTool,
   onOffsetChange,
   onScaleChange,
-  onCaptureSnapshot,
   onAddWall,
   onAddShape,
   onUpdateShape,
@@ -115,11 +114,13 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   onAddPerson,
   onSelectEntity,
   onCloseOverlays,
+  onCaptureSnapshot,
   stageRef: stageRefProp,
 }: CanvasStageProps) => {
   const canEdit = editMode
   const localStageRef = useRef<Konva.Stage | null>(null)
   const stageRef = stageRefProp ?? localStageRef
+  const gridLayerRef = useRef<Konva.Layer | null>(null)
   const [drawingWall, setDrawingWall] = useState<DrawingWallState | null>(null)
   const [drawingShape, setDrawingShape] = useState<DrawingShapeState | null>(
     null,
@@ -134,6 +135,17 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     id: camera.id,
     points: computeVisionPolygon(camera, scene),
   }))
+  const captureGridlessSnapshot = useCallbackRef((snapshotScene: Scene) => {
+    const layer = gridLayerRef.current
+    if (!stageRef.current || !layer) {
+      return onCaptureSnapshot(snapshotScene)
+    }
+    const wasVisible = layer.visible()
+    layer.visible(false)
+    const data = stageRef.current.toDataURL({mimeType: 'image/png'})
+    layer.visible(wasVisible)
+    onCaptureSnapshot(snapshotScene, data)
+  })
 
   useEffect(() => {
     if (size.width && size.height) {
@@ -725,7 +737,14 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         }
       >
         <BackgroundLayer background={scene.background} />
-        <CanvasGrid size={size} scale={scale} offset={offset} />
+        <CanvasGrid
+          size={size}
+          scale={scale}
+          offset={offset}
+          innerRef={
+            gridLayerRef as unknown as MutableRefObject<Konva.Layer | null>
+          }
+        />
         <Layer listening={false}>
           {cameraVisions.map((vision) => (
             <CameraVision
