@@ -17,8 +17,8 @@ export const CameraTiles: React.FC<CameraTilesProps> = ({cameras}) => {
 
       <div className='flex flex-col gap-2'>
         {cameras.map((camera) => (
-          <Card key={camera.id}>
-            <CardHeader className='py-2'>
+          <Card className='flex flex-col gap-2' key={camera.id}>
+            <CardHeader className='mb-0'>
               <CardTitle className='text-sm font-semibold'>
                 Camera {camera.id.slice(0, 4)}
               </CardTitle>

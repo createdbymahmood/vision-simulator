@@ -134,23 +134,16 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
             )}
           </CardContent>
         </Card>
-        <div className='w-[360px] space-y-3'>
+
+        <div className='w-[360px] space-y-3 h-full overflow-auto pb-2 pr-4'>
           <SimulationMiniMap
             cameras={scene.cameras}
             shapes={scene.shapes}
             walls={scene.walls}
             people={scene.people}
           />
+
           <CameraTiles cameras={scene.cameras} />
-          <div className='text-xs text-muted-foreground'>{boundsLabel}</div>
-          <Button
-            size='sm'
-            className='w-full'
-            variant='outline'
-            onClick={onClose}
-          >
-            Back to Editor
-          </Button>
         </div>
       </div>
     </div>

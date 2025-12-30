@@ -170,28 +170,74 @@ const PeopleSimulation: React.FC<{
     })),
   )
 
+  const speed = 0.8
+
+  const findAvoidingVelocity = (
+    vx: number,
+    vy: number,
+    position: {x: number; y: number},
+    radius: number,
+  ) => {
+    const candidates = [0, Math.PI / 2, -Math.PI / 2, Math.PI].map((delta) => {
+      const angle = Math.atan2(vy, vx) + delta
+      return {
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+      }
+    })
+
+    const collides = (x: number, y: number) =>
+      obstacles.some((obstacle) => {
+        const minX = obstacle.x - radius
+        const maxX = obstacle.x + obstacle.width + radius
+        const minY = obstacle.y - radius
+        const maxY = obstacle.y + obstacle.length + radius
+        return x >= minX && x <= maxX && y >= minY && y <= maxY
+      })
+
+    const safe = candidates.find(
+      (candidate) =>
+        !collides(
+          position.x + candidate.vx * 0.1,
+          position.y + candidate.vy * 0.1,
+        ),
+    )
+    return safe ?? {vx: -vx, vy: -vy}
+  }
+
   useFrame((_, delta) => {
     setState((current) =>
       current.map((person, idx) => {
         const [vx, vy] = person.velocity
-        let nextX = person.x + vx * delta
-        let nextY = person.y + vy * delta
         const radius = person.radius || 0.3
-        obstacles.forEach((obstacle) => {
+        let nextVx = vx || speed
+        let nextVy = vy || speed
+
+        let nextX = person.x + nextVx * delta
+        let nextY = person.y + nextVy * delta
+
+        const colliding = obstacles.some((obstacle) => {
           const minX = obstacle.x - radius
           const maxX = obstacle.x + obstacle.width + radius
           const minY = obstacle.y - radius
           const maxY = obstacle.y + obstacle.length + radius
-          if (
-            nextX >= minX &&
-            nextX <= maxX &&
-            nextY >= minY &&
-            nextY <= maxY
-          ) {
-            nextX = person.x - vx * 0.5
-            nextY = person.y - vy * 0.5
-          }
+          return (
+            nextX >= minX && nextX <= maxX && nextY >= minY && nextY <= maxY
+          )
         })
+
+        if (colliding) {
+          const avoidance = findAvoidingVelocity(
+            nextVx,
+            nextVy,
+            {x: person.x, y: person.y},
+            radius,
+          )
+          nextVx = avoidance.vx
+          nextVy = avoidance.vy
+          nextX = person.x + nextVx * delta
+          nextY = person.y + nextVy * delta
+        }
 
         const newTrail = [...person.trail, [nextX, nextY, performance.now()]]
         const cutoff = performance.now() - 20000
@@ -200,15 +246,15 @@ const PeopleSimulation: React.FC<{
         let newVx = vx
         let newVy = vy
         if ((idx + Math.random()) % 50 < 0.5) {
-          newVx = vx * -1
-          newVy = vy * -1
+          newVx = nextVx
+          newVy = nextVy
         }
 
         return {
           ...person,
           x: nextX,
           y: nextY,
-          velocity: [newVx, newVy] as [number, number],
+          velocity: [newVx || speed, newVy || speed] as [number, number],
           trail: trimmedTrail,
         }
       }),
