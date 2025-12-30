@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react'
+import React, {useMemo, useRef, useState} from 'react'
 
 import {Card, CardContent} from '@/components/ui/card'
 import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
@@ -11,6 +11,8 @@ import {Simulation2DView} from './simulation-2d-view'
 import {SimulationMiniMap} from './simulation-mini-map'
 import {SimulationTopBar} from './simulation-top-bar'
 import {SimulationWorld} from './simulation-world'
+import {computeVisionPolygon} from '../canvas-editor/vision'
+import type {CameraVision} from './types'
 
 type SimulationMode = '2d' | '3d'
 
@@ -29,6 +31,15 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
   const snapshotRef = useRef<(() => string) | null>(null)
   const obstacles = buildObstacles(scene.shapes, scene.walls)
   const movingPeople = usePeopleMovement(scene.people, obstacles)
+  const cameraVisions = useMemo<CameraVision[]>(
+    () =>
+      scene.cameras.map((camera) => ({
+        id: camera.id,
+        height: camera.height,
+        points: computeVisionPolygon(camera, scene),
+      })),
+    [scene.cameras, scene.shapes, scene.walls, scene.people, scene.meta],
+  )
 
   const handleExportSnapshot = () => {
     const snapshot = snapshotRef.current?.()
@@ -86,6 +97,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
             {mode === '3d' ? (
               <div className='flex-1'>
                 <SimulationWorld
+                  cameraVisions={cameraVisions}
                   people={movingPeople}
                   scene={scene}
                   onReadySnapshot={handleSnapshotReady}
@@ -97,6 +109,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
               <div className='flex-1'>
                 <Simulation2DView
                   cameras={scene.cameras}
+                  cameraVisions={cameraVisions}
                   people={movingPeople}
                   shapes={scene.shapes}
                   walls={scene.walls}
@@ -109,6 +122,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
         <div className='w-[320px] space-y-3 h-full overflow-auto pb-2 pr-4'>
           <SimulationMiniMap
             cameras={scene.cameras}
+            cameraVisions={cameraVisions}
             people={movingPeople}
             shapes={scene.shapes}
             walls={scene.walls}

@@ -1,6 +1,7 @@
 import {OrbitControls, PerspectiveCamera} from '@react-three/drei'
 import {Canvas} from '@react-three/fiber'
 import React from 'react'
+import {ExtrudeGeometry, Shape} from 'three'
 
 import type {
   Scene,
@@ -9,9 +10,12 @@ import type {
   SceneWall,
 } from '../../core/scene-types'
 import type {MovingPerson} from './people-movement'
+import type {CanvasPoint} from '../canvas-editor/types'
+import type {CameraVision} from './types'
 
 interface SimulationWorldProps {
   scene: Scene
+  cameraVisions: CameraVision[]
   people: MovingPerson[]
   onSelectPerson: (id: string) => void
   selectedPersonId: string | null
@@ -20,6 +24,17 @@ interface SimulationWorldProps {
 
 const floorSize = 200
 const gridDivisions = 40
+
+const buildShapeFromPoints = (points: CanvasPoint[]) => {
+  if (!points.length) {
+    return null
+  }
+  const shape = new Shape()
+  shape.moveTo(points[0].x, -points[0].y)
+  points.slice(1).forEach((point) => shape.lineTo(point.x, -point.y))
+  shape.closePath()
+  return shape
+}
 
 const Walls: React.FC<{walls: SceneWall[]}> = ({walls}) => (
   <>
@@ -105,6 +120,40 @@ const Cameras: React.FC<{cameras: SceneCamera[]}> = ({cameras}) => (
   </>
 )
 
+const CameraFovs: React.FC<{visions: CameraVision[]}> = ({visions}) => (
+  <>
+    {visions.map((vision) => {
+      const shape = buildShapeFromPoints(vision.points)
+      if (!shape) {
+        return null
+      }
+      const depth = Math.max(vision.height, 0.2)
+      return (
+        <mesh key={vision.id} position={[0, 0, 0]}>
+          <extrudeGeometry
+            args={[shape, {depth, bevelEnabled: false}]}
+            attach='geometry'
+            onUpdate={(geometry: ExtrudeGeometry) => {
+              if (!geometry.userData.rotated) {
+                geometry.rotateX(-Math.PI / 2)
+                geometry.userData.rotated = true
+              }
+              geometry.computeVertexNormals()
+            }}
+          />
+          <meshStandardMaterial
+            color='#38bdf8'
+            opacity={0.18}
+            transparent
+            depthWrite={false}
+            side={2}
+          />
+        </mesh>
+      )
+    })}
+  </>
+)
+
 const People: React.FC<{
   people: MovingPerson[]
   selectedPersonId: string | null
@@ -169,6 +218,7 @@ const PeopleSimulation: React.FC<{
 
 export const SimulationWorld: React.FC<SimulationWorldProps> = ({
   scene,
+  cameraVisions,
   people,
   onSelectPerson,
   selectedPersonId,
@@ -205,6 +255,7 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
 
       <Walls walls={scene.walls} />
       <Shapes shapes={scene.shapes} />
+      <CameraFovs visions={cameraVisions} />
       <Cameras cameras={scene.cameras} />
       <PeopleSimulation
         onSelect={handleSelectPerson}

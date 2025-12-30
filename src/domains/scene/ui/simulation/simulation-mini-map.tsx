@@ -2,6 +2,7 @@ import React from 'react'
 
 import type {SceneCamera, SceneShape, SceneWall} from '../../core/scene-types'
 import type {MovingPerson} from './people-movement'
+import type {CameraVision} from './types'
 
 import {Simulation2DView} from './simulation-2d-view'
 
@@ -10,6 +11,7 @@ interface SimulationMiniMapProps {
   shapes: SceneShape[]
   people: MovingPerson[]
   cameras: SceneCamera[]
+  cameraVisions: CameraVision[]
 }
 
 export const SimulationMiniMap: React.FC<SimulationMiniMapProps> = ({
@@ -17,6 +19,7 @@ export const SimulationMiniMap: React.FC<SimulationMiniMapProps> = ({
   shapes,
   people,
   cameras,
+  cameraVisions,
 }) => {
   return (
     <div className='rounded-lg border bg-muted p-3'>
@@ -27,6 +30,7 @@ export const SimulationMiniMap: React.FC<SimulationMiniMapProps> = ({
       <div className='h-56'>
         <Simulation2DView
           cameras={cameras}
+          cameraVisions={cameraVisions}
           shapes={shapes}
           walls={walls}
           people={people}

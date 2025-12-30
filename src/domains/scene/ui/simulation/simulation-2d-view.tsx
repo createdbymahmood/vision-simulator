@@ -2,12 +2,14 @@ import React, {useMemo} from 'react'
 
 import type {SceneCamera, SceneShape, SceneWall} from '../../core/scene-types'
 import type {MovingPerson} from './people-movement'
+import type {CameraVision} from './types'
 
 interface Simulation2DViewProps {
   walls: SceneWall[]
   shapes: SceneShape[]
   people: MovingPerson[]
   cameras: SceneCamera[]
+  cameraVisions: CameraVision[]
 }
 
 export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
@@ -15,6 +17,7 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
   shapes,
   people,
   cameras,
+  cameraVisions,
 }) => {
   const bounds = useMemo(() => {
     const xs: number[] = []
@@ -55,7 +58,8 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
       x2={wall.coordinates.x2}
       y1={wall.coordinates.y1}
       y2={wall.coordinates.y2}
-      stroke='#0f172a'
+      stroke={wall.color}
+      strokeOpacity={wall.opacity}
       strokeWidth={wall.thickness * 1.5}
     />
   ))
@@ -64,11 +68,22 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
     <rect
       height={shape.length}
       width={shape.width}
-      fill='#94a3b8'
+      fill={shape.color}
       key={shape.id}
       x={shape.x}
       y={shape.y}
-      opacity={0.7}
+      opacity={shape.opacity}
+    />
+  ))
+
+  const renderFov = cameraVisions.map((vision) => (
+    <polygon
+      key={vision.id}
+      fill='#38bdf8'
+      fillOpacity={0.18}
+      points={vision.points.map((point) => `${point.x},${point.y}`).join(' ')}
+      stroke='#38bdf8'
+      strokeWidth={0.05}
     />
   ))
 
@@ -111,6 +126,7 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
       />
       {renderWalls}
       {renderShapes}
+      {renderFov}
       {renderPeople}
       {renderCameras}
     </svg>
