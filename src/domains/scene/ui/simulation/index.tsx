@@ -6,6 +6,7 @@ import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
 import type {Scene} from '../../core/scene-types'
 
 import {CameraTiles} from './camera-tiles'
+import {buildObstacles, usePeopleMovement} from './people-movement'
 import {Simulation2DView} from './simulation-2d-view'
 import {SimulationMiniMap} from './simulation-mini-map'
 import {SimulationTopBar} from './simulation-top-bar'
@@ -26,6 +27,8 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
   const [recording, setRecording] = useState(false)
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
   const snapshotRef = useRef<(() => string) | null>(null)
+  const obstacles = buildObstacles(scene.shapes, scene.walls)
+  const movingPeople = usePeopleMovement(scene.people, obstacles)
 
   const handleExportSnapshot = () => {
     const snapshot = snapshotRef.current?.()
@@ -83,6 +86,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
             {mode === '3d' ? (
               <div className='flex-1'>
                 <SimulationWorld
+                  people={movingPeople}
                   scene={scene}
                   onReadySnapshot={handleSnapshotReady}
                   onSelectPerson={handleSelectPerson}
@@ -93,9 +97,9 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
               <div className='flex-1'>
                 <Simulation2DView
                   cameras={scene.cameras}
+                  people={movingPeople}
                   shapes={scene.shapes}
                   walls={scene.walls}
-                  people={scene.people}
                 />
               </div>
             )}
@@ -105,9 +109,9 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
         <div className='w-[320px] space-y-3 h-full overflow-auto pb-2 pr-4'>
           <SimulationMiniMap
             cameras={scene.cameras}
+            people={movingPeople}
             shapes={scene.shapes}
             walls={scene.walls}
-            people={scene.people}
           />
 
           <CameraTiles cameras={scene.cameras} />

@@ -1,27 +1,25 @@
 import {OrbitControls, PerspectiveCamera} from '@react-three/drei'
-import {Canvas, useFrame} from '@react-three/fiber'
-import React, {useMemo, useState} from 'react'
+import {Canvas} from '@react-three/fiber'
+import React from 'react'
 
 import type {
   Scene,
   SceneCamera,
-  ScenePerson,
   SceneShape,
   SceneWall,
 } from '../../core/scene-types'
+import type {MovingPerson} from './people-movement'
 
 interface SimulationWorldProps {
   scene: Scene
+  people: MovingPerson[]
   onSelectPerson: (id: string) => void
   selectedPersonId: string | null
   onReadySnapshot: (fn: () => string) => void
 }
 
-type PersonState = ScenePerson & {velocity: [number, number]; trail: number[][]}
-
 const floorSize = 200
 const gridDivisions = 40
-const PERSON_SPEED = 0.8
 
 const Walls: React.FC<{walls: SceneWall[]}> = ({walls}) => (
   <>
@@ -108,7 +106,7 @@ const Cameras: React.FC<{cameras: SceneCamera[]}> = ({cameras}) => (
 )
 
 const People: React.FC<{
-  people: PersonState[]
+  people: MovingPerson[]
   selectedPersonId: string | null
   onSelect: (id: string) => void
 }> = ({people, selectedPersonId, onSelect}) => (
@@ -158,136 +156,20 @@ const People: React.FC<{
 )
 
 const PeopleSimulation: React.FC<{
-  people: ScenePerson[]
-  obstacles: {x: number; y: number; width: number; length: number}[]
+  people: MovingPerson[]
   selectedPersonId: string | null
   onSelect: (id: string) => void
-}> = ({people, obstacles, selectedPersonId, onSelect}) => {
-  const [state, setState] = useState<PersonState[]>(() =>
-    people.map((person, index) => ({
-      ...person,
-      velocity: [Math.sin(index) * 0.5, Math.cos(index) * 0.5],
-      trail: [],
-    })),
-  )
-
-  const normalizeVelocity = (vx: number, vy: number) => {
-    const magnitude = Math.hypot(vx, vy) || 1
-    return [(vx / magnitude) * PERSON_SPEED, (vy / magnitude) * PERSON_SPEED] as [
-      number,
-      number,
-    ]
-  }
-
-  const updateTrail = (trail: number[][], x: number, y: number) => {
-    const now = performance.now()
-    const nextTrail = [...trail, [x, y, now]]
-    const cutoff = now - 20000
-    return nextTrail.filter(([, , timestamp]) => timestamp >= cutoff)
-  }
-
-  useFrame((_, delta) => {
-    if (delta <= 0) return
-    setState((current) =>
-      current.map((person, idx) => {
-        const [vx, vy] = normalizeVelocity(
-          person.velocity[0] || PERSON_SPEED,
-          person.velocity[1] || PERSON_SPEED,
-        )
-        const radius = person.radius || 0.3
-        const nextPosition = (nextVx: number, nextVy: number) => ({
-          x: person.x + nextVx * delta,
-          y: person.y + nextVy * delta,
-        })
-
-        const collides = (x: number, y: number) => {
-          const hitsObstacle = obstacles.some((obstacle) => {
-            const minX = obstacle.x - radius
-            const maxX = obstacle.x + obstacle.width + radius
-            const minY = obstacle.y - radius
-            const maxY = obstacle.y + obstacle.length + radius
-            return x >= minX && x <= maxX && y >= minY && y <= maxY
-          })
-          if (hitsObstacle) return true
-
-          return current.some((other, otherIdx) => {
-            if (otherIdx === idx) return false
-            const dx = other.x - x
-            const dy = other.y - y
-            const distance = Math.hypot(dx, dy)
-            return distance < (other.radius || radius) + radius
-          })
-        }
-
-        let nextVx = vx
-        let nextVy = vy
-        let {x: nextX, y: nextY} = nextPosition(nextVx, nextVy)
-
-        if (collides(nextX, nextY)) {
-          const turnRight = (idx + Math.floor(performance.now())) % 2 === 0
-          const rotatedVx = turnRight ? -nextVy : nextVy
-          const rotatedVy = turnRight ? nextVx : -nextVx
-          nextVx = rotatedVx
-          nextVy = rotatedVy
-          const jitter = (idx * 0.13 + performance.now() * 0.001) * 0.05
-          const adjustedVx = nextVx + Math.cos(jitter) * 0.05
-          const adjustedVy = nextVy + Math.sin(jitter) * 0.05
-          const [normalizedVx, normalizedVy] = normalizeVelocity(
-            adjustedVx,
-            adjustedVy,
-          )
-          nextVx = normalizedVx
-          nextVy = normalizedVy
-          const reversed = nextPosition(nextVx, nextVy)
-          nextX = reversed.x
-          nextY = reversed.y
-        }
-
-        return {
-          ...person,
-          x: nextX,
-          y: nextY,
-          velocity: [nextVx, nextVy],
-          trail: updateTrail(person.trail, nextX, nextY),
-        }
-      }),
-    )
-  })
-
-  return (
-    <People
-      onSelect={onSelect}
-      people={state}
-      selectedPersonId={selectedPersonId}
-    />
-  )
-}
+}> = ({people, selectedPersonId, onSelect}) => (
+  <People onSelect={onSelect} people={people} selectedPersonId={selectedPersonId} />
+)
 
 export const SimulationWorld: React.FC<SimulationWorldProps> = ({
   scene,
+  people,
   onSelectPerson,
   selectedPersonId,
   onReadySnapshot,
 }) => {
-  const obstacles = useMemo(
-    () =>
-      [
-        ...scene.shapes.map((shape) => ({
-          x: shape.x,
-          y: shape.y,
-          width: shape.width,
-          length: shape.length,
-        })),
-        ...scene.walls.map((wall) => ({
-          x: Math.min(wall.coordinates.x1, wall.coordinates.x2),
-          y: Math.min(wall.coordinates.y1, wall.coordinates.y2),
-          width: Math.abs(wall.coordinates.x2 - wall.coordinates.x1),
-          length: Math.abs(wall.coordinates.y2 - wall.coordinates.y1),
-        })),
-      ] as {x: number; y: number; width: number; length: number}[],
-    [scene.shapes, scene.walls],
-  )
-
   const handleSelectPerson = (id: string) => onSelectPerson(id)
 
   const handleCreated = (state: any) => {
@@ -314,9 +196,8 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
       <Shapes shapes={scene.shapes} />
       <Cameras cameras={scene.cameras} />
       <PeopleSimulation
-        obstacles={obstacles}
         onSelect={handleSelectPerson}
-        people={scene.people}
+        people={people}
         selectedPersonId={selectedPersonId}
       />
       <OrbitControls

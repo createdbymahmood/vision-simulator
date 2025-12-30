@@ -1,18 +1,14 @@
 import React from 'react'
 
-import type {
-  SceneCamera,
-  ScenePerson,
-  SceneShape,
-  SceneWall,
-} from '../../core/scene-types'
+import type {SceneCamera, SceneShape, SceneWall} from '../../core/scene-types'
+import type {MovingPerson} from './people-movement'
 
 import {Simulation2DView} from './simulation-2d-view'
 
 interface SimulationMiniMapProps {
   walls: SceneWall[]
   shapes: SceneShape[]
-  people: ScenePerson[]
+  people: MovingPerson[]
   cameras: SceneCamera[]
 }
 
