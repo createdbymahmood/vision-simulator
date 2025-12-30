@@ -15,6 +15,7 @@ export type MovingPerson = ScenePerson & {
 }
 
 const PERSON_SPEED = 0.8
+const COLLISION_PADDING = 0.2
 
 const normalizeVelocity = (vx: number, vy: number) => {
   const magnitude = Math.hypot(vx, vy) || 1
@@ -33,10 +34,10 @@ const collides = (
   idx: number,
 ) => {
   const hitsObstacle = obstacles.some((obstacle) => {
-    const minX = obstacle.x - radius
-    const maxX = obstacle.x + obstacle.width + radius
-    const minY = obstacle.y - radius
-    const maxY = obstacle.y + obstacle.length + radius
+    const minX = obstacle.x - radius - COLLISION_PADDING
+    const maxX = obstacle.x + obstacle.width + radius + COLLISION_PADDING
+    const minY = obstacle.y - radius - COLLISION_PADDING
+    const maxY = obstacle.y + obstacle.length + radius + COLLISION_PADDING
     return x >= minX && x <= maxX && y >= minY && y <= maxY
   })
   if (hitsObstacle) {
@@ -49,7 +50,7 @@ const collides = (
     const dx = other.x - x
     const dy = other.y - y
     const distance = Math.hypot(dx, dy)
-    return distance < (other.radius || radius) + radius
+    return distance < (other.radius || radius) + radius + COLLISION_PADDING
   })
 }
 

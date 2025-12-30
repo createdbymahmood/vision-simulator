@@ -160,7 +160,11 @@ const PeopleSimulation: React.FC<{
   selectedPersonId: string | null
   onSelect: (id: string) => void
 }> = ({people, selectedPersonId, onSelect}) => (
-  <People onSelect={onSelect} people={people} selectedPersonId={selectedPersonId} />
+  <People
+    onSelect={onSelect}
+    people={people}
+    selectedPersonId={selectedPersonId}
+  />
 )
 
 export const SimulationWorld: React.FC<SimulationWorldProps> = ({
@@ -186,8 +190,15 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
       <ambientLight intensity={0.3} />
       <directionalLight intensity={0.8} position={[10, 15, 10]} />
       <PerspectiveCamera makeDefault position={[10, 10, 10]} />
-      <gridHelper args={[floorSize, gridDivisions]} />
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+      <gridHelper
+        args={[floorSize, gridDivisions, '#e2e8f0', '#e2e8f0']}
+        position={[0, 0.01, 0]}
+      />
+      <mesh
+        position={[0, -0.01, 0]}
+        receiveShadow
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <planeGeometry args={[floorSize, floorSize]} />
         <meshStandardMaterial color='#e2e8f0' />
       </mesh>
