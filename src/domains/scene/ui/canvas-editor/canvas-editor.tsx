@@ -1,4 +1,4 @@
-/* eslint-disable no-alert, max-lines-per-function, max-statements */
+/* eslint-disable max-lines-per-function, max-statements */
 
 import type Konva from 'konva'
 import type React from 'react'
@@ -16,6 +16,7 @@ import type {CanvasPoint} from './types'
 
 import {useSceneHistoryStore} from '../scene-history-store'
 import {useSceneStore} from '../scene-store'
+import {SimulationView} from '../simulation'
 import {CanvasBottomToolbar} from './bottom-toolbar'
 import {ClearBoardDialog} from './clear-board-dialog'
 import {useElementSize, useUndoRedoShortcuts} from './hooks'
@@ -30,6 +31,7 @@ export const CanvasEditor: React.FC = () => {
   const [editMode, setEditMode] = useState(true)
   const [shapeTool, setShapeTool] = useState<SceneShapeKind>('rectangle')
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
+  const [showSimulation, setShowSimulation] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const stageRef = useRef<Konva.Stage | null>(null)
 
@@ -159,7 +161,7 @@ export const CanvasEditor: React.FC = () => {
   )
 
   const handleLivePreview = useCallbackRef(() => {
-    alert('Live preview not implemented yet')
+    setShowSimulation(true)
   })
 
   const handleToolChange = useCallbackRef((tool: SceneTool) => {
@@ -182,67 +184,80 @@ export const CanvasEditor: React.FC = () => {
 
   useUndoRedoShortcuts(handleUndo, handleRedo)
 
+  const handleCloseSimulation = useCallbackRef(() => {
+    setShowSimulation(false)
+  })
+
   return (
     <div className='relative flex flex-col size-full'>
-      <CanvasTopPanel
-        activeTool={activeTool}
-        canRedo={Boolean(historyFuture.length)}
-        canUndo={Boolean(historyPast.length)}
-        editMode={editMode}
-        onClearBoard={handleOpenClearDialog}
-        onExportImage={handleExportImage}
-        onExportScene={handleExportScene}
-        onLivePreview={handleLivePreview}
-        onRedo={handleRedo}
-        onToggleEditMode={setEditMode}
-        onUndo={handleUndo}
-      />
-      <div className='relative flex-1 min-h-0 overflow-hidden' ref={boardRef}>
-        <CanvasStage
-          size={boardSize}
-          scale={scale}
-          scene={scene}
-          snapEnabled={snapEnabled}
-          stageRef={stageRef}
-          activeTool={activeTool}
-          editMode={editMode}
-          offset={offset}
-          onAddCamera={addCamera}
-          onAddPerson={addPerson}
-          onAddShape={addShape}
-          onAddWall={addWall}
-          onCaptureSnapshot={captureSnapshot}
-          onCloseOverlays={closeOverlays}
-          onOffsetChange={setOffset}
-          onScaleChange={setScale}
-          onSelectEntity={handleSelectEntity}
-          onUpdateCamera={updateCamera}
-          onUpdatePerson={updatePerson}
-          onUpdateShape={updateShape}
-          onUpdateWall={updateWall}
-          selection={selection}
-          shapeTool={shapeTool}
-        />
-      </div>
-      <CanvasBottomToolbar
-        activeShapeLabel={activeShapeKindLabel}
-        activeTool={activeTool}
-        onBackgroundClick={handleBackgroundImage}
-        onShapeSelect={handleShapeSelect}
-        onToolChange={handleToolChange}
-      />
-      <input
-        accept='image/*'
-        className='hidden'
-        ref={fileInputRef}
-        type='file'
-        onChange={handleBackgroundFileChange}
-      />
-      <ClearBoardDialog
-        onConfirm={handleClearBoard}
-        onOpenChange={handleClearDialogChange}
-        open={clearDialogOpen}
-      />
+      {showSimulation ? (
+        <SimulationView scene={scene} onClose={handleCloseSimulation} />
+      ) : (
+        <>
+          <CanvasTopPanel
+            activeTool={activeTool}
+            canRedo={Boolean(historyFuture.length)}
+            canUndo={Boolean(historyPast.length)}
+            editMode={editMode}
+            onClearBoard={handleOpenClearDialog}
+            onExportImage={handleExportImage}
+            onExportScene={handleExportScene}
+            onLivePreview={handleLivePreview}
+            onRedo={handleRedo}
+            onToggleEditMode={setEditMode}
+            onUndo={handleUndo}
+          />
+          <div
+            className='relative flex-1 min-h-0 overflow-hidden'
+            ref={boardRef}
+          >
+            <CanvasStage
+              size={boardSize}
+              scale={scale}
+              scene={scene}
+              snapEnabled={snapEnabled}
+              stageRef={stageRef}
+              activeTool={activeTool}
+              editMode={editMode}
+              offset={offset}
+              onAddCamera={addCamera}
+              onAddPerson={addPerson}
+              onAddShape={addShape}
+              onAddWall={addWall}
+              onCaptureSnapshot={captureSnapshot}
+              onCloseOverlays={closeOverlays}
+              onOffsetChange={setOffset}
+              onScaleChange={setScale}
+              onSelectEntity={handleSelectEntity}
+              onUpdateCamera={updateCamera}
+              onUpdatePerson={updatePerson}
+              onUpdateShape={updateShape}
+              onUpdateWall={updateWall}
+              selection={selection}
+              shapeTool={shapeTool}
+            />
+          </div>
+          <CanvasBottomToolbar
+            activeShapeLabel={activeShapeKindLabel}
+            activeTool={activeTool}
+            onBackgroundClick={handleBackgroundImage}
+            onShapeSelect={handleShapeSelect}
+            onToolChange={handleToolChange}
+          />
+          <input
+            accept='image/*'
+            className='hidden'
+            ref={fileInputRef}
+            type='file'
+            onChange={handleBackgroundFileChange}
+          />
+          <ClearBoardDialog
+            onConfirm={handleClearBoard}
+            onOpenChange={handleClearDialogChange}
+            open={clearDialogOpen}
+          />
+        </>
+      )}
     </div>
   )
 }
