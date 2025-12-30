@@ -316,11 +316,6 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         lineThickness: 0.05,
       }
 
-      if (kind === 'line') {
-        defaultShape.length = current.y - start.y
-        defaultShape.width = current.x - start.x
-      }
-
       onAddShape(defaultShape)
       onSelectEntity({id: defaultShape.id, kind: 'shape'})
       setDrawingShape(null)
