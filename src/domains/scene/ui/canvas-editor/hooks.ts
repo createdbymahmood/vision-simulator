@@ -1,18 +1,22 @@
-import type {MutableRefObject} from 'react'
-
-import {useEffect, useLayoutEffect, useRef, useState} from 'react'
+import {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react'
 
 import type {CanvasSize} from './types'
 
 export function useElementSize<T extends HTMLElement>(): [
-  MutableRefObject<T | null>,
+  (node: T | null) => void,
   CanvasSize,
 ] {
   const ref = useRef<T | null>(null)
   const [size, setSize] = useState<CanvasSize>({width: 0, height: 0})
+  const [element, setElement] = useState<T | null>(null)
+
+  const callbackRef = useCallback((node: T | null) => {
+    ref.current = node
+    setElement(node)
+  }, [])
 
   useLayoutEffect(() => {
-    if (!ref.current) {
+    if (!element) {
       return
     }
     const observer = new ResizeObserver((entries) => {
@@ -24,11 +28,15 @@ export function useElementSize<T extends HTMLElement>(): [
         })
       }
     })
-    observer.observe(ref.current)
+    observer.observe(element)
+    setSize({
+      width: element.clientWidth,
+      height: element.clientHeight,
+    })
     return () => observer.disconnect()
-  }, [])
+  }, [element])
 
-  return [ref, size]
+  return [callbackRef, size]
 }
 
 export const useUndoRedoShortcuts = (
