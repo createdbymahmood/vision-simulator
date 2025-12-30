@@ -28,7 +28,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
   const [mode, setMode] = useState<SimulationMode>('3d')
   const [recording, setRecording] = useState(false)
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
-  const snapshotRef = useRef<(() => string) | null>(null)
+  const snapshotRef = useRef<(() => Promise<string>) | null>(null)
   const obstacles = buildObstacles(scene.shapes, scene.walls)
   const movingPeople = usePeopleMovement(scene.people, obstacles)
   const cameraVisions = useMemo<CameraVision[]>(
@@ -41,8 +41,12 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
     [scene.cameras, scene.shapes, scene.walls, scene.people, scene.meta],
   )
 
-  const handleExportSnapshot = () => {
-    const snapshot = snapshotRef.current?.()
+  const handleExportSnapshot = async () => {
+    const snapshotFn = snapshotRef.current
+    if (!snapshotFn) {
+      return
+    }
+    const snapshot = await snapshotFn()
     if (!snapshot) {
       return
     }
@@ -50,6 +54,9 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
     link.href = snapshot
     link.download = `simulation-${Date.now()}.png`
     link.click()
+    if (snapshot.startsWith('blob:')) {
+      setTimeout(() => URL.revokeObjectURL(snapshot), 5000)
+    }
   }
 
   const handleToggleRecording = (next: boolean) => {
@@ -64,7 +71,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
     setSelectedPersonId(id)
   }
 
-  const handleSnapshotReady = (fn: () => string) => {
+  const handleSnapshotReady = (fn: () => Promise<string>) => {
     snapshotRef.current = fn
   }
 
@@ -110,6 +117,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
                 <Simulation2DView
                   cameras={scene.cameras}
                   cameraVisions={cameraVisions}
+                  onReadySnapshot={handleSnapshotReady}
                   people={movingPeople}
                   shapes={scene.shapes}
                   walls={scene.walls}

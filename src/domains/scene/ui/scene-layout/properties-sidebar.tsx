@@ -67,13 +67,6 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
     }
   })
 
-  const handlePointerDownOutside = useCallbackRef((event: Event) => {
-    const target = event.target as HTMLElement | null
-    if (target?.closest('[data-canvas-surface]')) {
-      event.preventDefault()
-    }
-  })
-
   const ensureSnapshot = useCallbackRef(() => {
     if (!pendingSnapshotRef.current) {
       captureSnapshot(scene)
@@ -96,6 +89,27 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
     },
     [],
   )
+
+  useEffect(() => {
+    if (!open) {
+      return
+    }
+    const overlays = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-slot="sheet-overlay"]'),
+    )
+    overlays.forEach((overlay) => {
+      overlay.dataset.allowPointer = 'true'
+      overlay.style.pointerEvents = 'none'
+    })
+    return () => {
+      overlays.forEach((overlay) => {
+        if (overlay.dataset.allowPointer) {
+          overlay.style.removeProperty('pointer-events')
+          delete overlay.dataset.allowPointer
+        }
+      })
+    }
+  }, [open])
 
   const handleWallChange = useCallbackRef(
     (wallId: string, patch: Partial<SceneWall>) => {
@@ -250,7 +264,6 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
       <SheetContent
         className='w-[420px]'
         side='right'
-        onPointerDownOutside={handlePointerDownOutside}
       >
         <SheetHeader className='pb-0'>
           <div className='flex items-start justify-between gap-3'>

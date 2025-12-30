@@ -30,9 +30,10 @@ export const SimulationMiniMap: React.FC<SimulationMiniMapProps> = ({
       <div className='h-56'>
         <Simulation2DView
           cameras={cameras}
-          cameraVisions={cameraVisions}
           shapes={shapes}
           walls={walls}
+          cameraVisions={cameraVisions}
+          onReadySnapshot={undefined}
           people={people}
         />
       </div>

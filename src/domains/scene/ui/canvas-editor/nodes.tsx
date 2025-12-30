@@ -3,14 +3,7 @@ import type {Vector2d} from 'konva/lib/types'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React, {useEffect, useMemo, useRef} from 'react'
-import {
-  Circle,
-  Group,
-  Line,
-  Rect,
-  RegularPolygon,
-  Transformer,
-} from 'react-konva'
+import {Circle, Group, Line, Rect, Transformer} from 'react-konva'
 
 import type {
   SceneArea,
@@ -572,11 +565,10 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
 
   return (
     <>
-      <RegularPolygon
+      <Circle
         draggable
         fill={DEFAULT_SHAPE_COLOR}
         radius={12}
-        sides={3}
         x={camera.x * GRID_SIZE}
         y={camera.y * GRID_SIZE}
         dragBoundFunc={handleDragBound}
@@ -586,12 +578,10 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
         onDragStart={handleDragStart}
         onTap={onSelect}
         opacity={0.8}
-        rotation={camera.direction}
       />
       {isSelected && (
-        <RegularPolygon
+        <Circle
           radius={16}
-          sides={3}
           x={camera.x * GRID_SIZE}
           y={camera.y * GRID_SIZE}
           opacity={0.7}

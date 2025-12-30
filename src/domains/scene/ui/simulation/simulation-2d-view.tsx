@@ -1,4 +1,5 @@
-import React, {useMemo} from 'react'
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import React, {useEffect, useMemo, useRef} from 'react'
 
 import type {SceneCamera, SceneShape, SceneWall} from '../../core/scene-types'
 import type {MovingPerson} from './people-movement'
@@ -10,6 +11,7 @@ interface Simulation2DViewProps {
   people: MovingPerson[]
   cameras: SceneCamera[]
   cameraVisions: CameraVision[]
+  onReadySnapshot?: (fn: () => Promise<string>) => void
 }
 
 export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
@@ -18,7 +20,68 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
   people,
   cameras,
   cameraVisions,
+  onReadySnapshot,
 }) => {
+  const svgRef = useRef<SVGSVGElement | null>(null)
+
+  const captureSnapshot = useCallbackRef(async () => {
+    const svg = svgRef.current
+    if (!svg) return ''
+    const serializer = new XMLSerializer()
+    const rect = svg.getBoundingClientRect()
+    const width = rect.width
+    const height = rect.height
+    const dpr = window.devicePixelRatio || 1
+    const cloned = svg.cloneNode(true) as SVGSVGElement
+    cloned.setAttribute('width', `${width}`)
+    cloned.setAttribute('height', `${height}`)
+    const source = serializer.serializeToString(cloned)
+    const svgData = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(source)}`
+    const image = new Image()
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(width * dpr))
+    canvas.height = Math.max(1, Math.round(height * dpr))
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      return ''
+    }
+    const pngDataUrl = await new Promise<string>((resolve) => {
+      image.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/png'))
+      }
+      image.onerror = () => resolve('')
+      image.src = svgData
+    })
+    return pngDataUrl
+  })
+
+  useEffect(() => {
+    if (onReadySnapshot) {
+      onReadySnapshot(captureSnapshot)
+    }
+  }, [captureSnapshot, onReadySnapshot])
+
+  const fovGradients = useMemo(
+    () =>
+      cameraVisions.map((vision) => {
+        const origin = vision.points[0]
+        const radius = vision.points.reduce((max, point) => {
+          const dx = point.x - origin.x
+          const dy = point.y - origin.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+          return Math.max(max, distance)
+        }, 0)
+        return {
+          id: `fov-${vision.id}`,
+          origin,
+          radius,
+        }
+      }),
+    [cameraVisions],
+  )
+
   const bounds = useMemo(() => {
     const xs: number[] = []
     const ys: number[] = []
@@ -76,17 +139,6 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
     />
   ))
 
-  const renderFov = cameraVisions.map((vision) => (
-    <polygon
-      key={vision.id}
-      fill='#38bdf8'
-      fillOpacity={0.18}
-      points={vision.points.map((point) => `${point.x},${point.y}`).join(' ')}
-      stroke='#38bdf8'
-      strokeWidth={0.05}
-    />
-  ))
-
   const renderPeople = people.map((person) => (
     <circle
       cx={person.x}
@@ -99,22 +151,39 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
   ))
 
   const renderCameras = cameras.map((camera) => (
-    <polygon
+    <circle
+      cx={camera.x}
+      cy={camera.y}
       fill='#0ea5e9'
       key={camera.id}
+      r={0.45}
       opacity={0.85}
-      points={`${camera.x},${camera.y - 0.5} ${camera.x - 0.4},${
-        camera.y + 0.6
-      } ${camera.x + 0.4},${camera.y + 0.6}`}
     />
   ))
 
   return (
     <svg
       className='size-full'
+      ref={svgRef}
       preserveAspectRatio='xMidYMid meet'
       viewBox={viewBox}
     >
+      <defs>
+        {fovGradients.map((gradient) => (
+          <radialGradient
+            cx={gradient.origin.x}
+            cy={gradient.origin.y}
+            gradientUnits='userSpaceOnUse'
+            id={gradient.id}
+            key={gradient.id}
+            r={gradient.radius}
+          >
+            <stop offset='0%' stopColor='#38bdf8' stopOpacity='0.7' />
+            <stop offset='50%' stopColor='#38bdf8' stopOpacity='0.6' />
+            <stop offset='100%' stopColor='#38bdf8' stopOpacity='0' />
+          </radialGradient>
+        ))}
+      </defs>
       <rect
         height='100%'
         width='100%'
@@ -126,7 +195,15 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
       />
       {renderWalls}
       {renderShapes}
-      {renderFov}
+      {cameraVisions.map((vision) => (
+        <polygon
+          fill={`url(#fov-${vision.id})`}
+          key={vision.id}
+          points={vision.points
+            .map((point) => `${point.x},${point.y}`)
+            .join(' ')}
+        />
+      ))}
       {renderPeople}
       {renderCameras}
     </svg>

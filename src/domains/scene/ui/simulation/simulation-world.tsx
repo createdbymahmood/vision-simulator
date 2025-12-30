@@ -1,7 +1,9 @@
+import type {ExtrudeGeometry} from 'three'
+
 import {OrbitControls, PerspectiveCamera} from '@react-three/drei'
 import {Canvas} from '@react-three/fiber'
-import React from 'react'
-import {ExtrudeGeometry, Shape} from 'three'
+import React, {useMemo, useRef} from 'react'
+import {Color, DoubleSide, Shape} from 'three'
 
 import type {
   Scene,
@@ -9,8 +11,8 @@ import type {
   SceneShape,
   SceneWall,
 } from '../../core/scene-types'
-import type {MovingPerson} from './people-movement'
 import type {CanvasPoint} from '../canvas-editor/types'
+import type {MovingPerson} from './people-movement'
 import type {CameraVision} from './types'
 
 interface SimulationWorldProps {
@@ -19,7 +21,7 @@ interface SimulationWorldProps {
   people: MovingPerson[]
   onSelectPerson: (id: string) => void
   selectedPersonId: string | null
-  onReadySnapshot: (fn: () => string) => void
+  onReadySnapshot: (fn: () => Promise<string>) => void
 }
 
 const floorSize = 200
@@ -108,49 +110,55 @@ const Cameras: React.FC<{cameras: SceneCamera[]}> = ({cameras}) => (
         rotation={[0, (camera.direction * Math.PI) / 180, 0]}
       >
         <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[0.3, 0.2, 0.3]} />
+          <cylinderGeometry args={[0.18, 0.18, 0.25, 24]} />
           <meshStandardMaterial color='#0ea5e9' />
-        </mesh>
-        <mesh position={[0, 0, 0.45]}>
-          <coneGeometry args={[0.12, 0.3, 12]} />
-          <meshStandardMaterial color='#38bdf8' opacity={0.8} />
         </mesh>
       </group>
     ))}
   </>
 )
 
+const CameraFovMesh: React.FC<{vision: CameraVision}> = ({vision}) => {
+  const shape = useMemo(
+    () => buildShapeFromPoints(vision.points),
+    [vision.points],
+  )
+
+  if (!shape) {
+    return null
+  }
+
+  const depth = Math.max(vision.height, 0.2)
+
+  return (
+    <mesh key={vision.id} position={[0, 0, 0]}>
+      <extrudeGeometry
+        args={[shape, {depth, bevelEnabled: false}]}
+        attach='geometry'
+        onUpdate={(geometry: ExtrudeGeometry) => {
+          if (!geometry.userData.rotated) {
+            geometry.rotateX(-Math.PI / 2)
+            geometry.userData.rotated = true
+          }
+          geometry.computeVertexNormals()
+        }}
+      />
+      <meshStandardMaterial
+        transparent
+        depthWrite={false}
+        side={DoubleSide}
+        color='#38bdf8'
+        opacity={0.18}
+      />
+    </mesh>
+  )
+}
+
 const CameraFovs: React.FC<{visions: CameraVision[]}> = ({visions}) => (
   <>
-    {visions.map((vision) => {
-      const shape = buildShapeFromPoints(vision.points)
-      if (!shape) {
-        return null
-      }
-      const depth = Math.max(vision.height, 0.2)
-      return (
-        <mesh key={vision.id} position={[0, 0, 0]}>
-          <extrudeGeometry
-            args={[shape, {depth, bevelEnabled: false}]}
-            attach='geometry'
-            onUpdate={(geometry: ExtrudeGeometry) => {
-              if (!geometry.userData.rotated) {
-                geometry.rotateX(-Math.PI / 2)
-                geometry.userData.rotated = true
-              }
-              geometry.computeVertexNormals()
-            }}
-          />
-          <meshStandardMaterial
-            color='#38bdf8'
-            opacity={0.18}
-            transparent
-            depthWrite={false}
-            side={2}
-          />
-        </mesh>
-      )
-    })}
+    {visions.map((vision) => (
+      <CameraFovMesh key={vision.id} vision={vision} />
+    ))}
   </>
 )
 
@@ -225,14 +233,37 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
   onReadySnapshot,
 }) => {
   const handleSelectPerson = (id: string) => onSelectPerson(id)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const gridVisibleRef = useRef(true)
 
   const handleCreated = (state: any) => {
-    onReadySnapshot(() => state.gl.domElement.toDataURL('image/png'))
+    canvasRef.current = state.gl.domElement
+    const gridHelper = state.scene.children.find(
+      (child: any) => child.type === 'GridHelper',
+    )
+    const prevAlpha = state.gl.getClearAlpha()
+    const prevColor = state.gl.getClearColor(new Color())
+    onReadySnapshot(async () => {
+      if (gridHelper && gridVisibleRef.current) {
+        gridHelper.visible = false
+      }
+      state.gl.setClearAlpha(0)
+      state.gl.setClearColor('#000000', 0)
+      state.gl.render(state.scene, state.camera)
+      const dataUrl = state.gl.domElement.toDataURL('image/png')
+      if (gridHelper && gridVisibleRef.current) {
+        gridHelper.visible = true
+      }
+      state.gl.setClearAlpha(prevAlpha)
+      state.gl.setClearColor(prevColor, prevAlpha)
+      return dataUrl
+    })
   }
 
   return (
     <Canvas
       dpr={[1, 2]}
+      ref={canvasRef}
       style={{width: '100%', height: '100%'}}
       onCreated={handleCreated}
       shadows
