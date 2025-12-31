@@ -25,26 +25,9 @@ const computePolygonArea = (polygon: CanvasPoint[]): number =>
     }, 0) / 2,
   )
 
-const createPointInPolygon =
-  () => (point: CanvasPoint, polygon: CanvasPoint[]) => {
-    let inside = false
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i += 1) {
-      const xi = polygon[i]?.x ?? 0
-      const yi = polygon[i]?.y ?? 0
-      const xj = polygon[j]?.x ?? 0
-      const yj = polygon[j]?.y ?? 0
-      const intersect =
-        yi > point.y !== yj > point.y &&
-        point.x < ((xj - xi) * (point.y - yi)) / (yj - yi + Number.EPSILON) + xi
-      if (intersect) inside = !inside
-    }
-    return inside
-  }
-
 const buildCameraVisions = (
   scene: Scene,
   normalizedPeople: ReturnType<typeof normalizePeople>,
-  pointInPolygon: (point: CanvasPoint, polygon: CanvasPoint[]) => boolean,
 ): CameraVision[] =>
   scene.cameras.map((camera) => {
     if (camera.depth <= 0) {
@@ -91,8 +74,7 @@ const buildCameraVisions = (
         Math.min(person.radius / Math.max(distance, person.radius), 1),
       )
       const inFov = Math.abs(delta) <= halfFov + angleAllowance + 0.0001
-      const inPoly = pointInPolygon({x: person.x, y: person.y}, polygon)
-      const visible = inRange && inFov && inPoly
+      const visible = inRange && inFov
       return {
         id: person.id,
         center: {x: person.x, y: person.y},
@@ -136,10 +118,9 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
     () => normalizePeople(movingPeople),
     [movingPeople],
   )
-  const pointInPolygon = useMemo(() => createPointInPolygon(), [])
   const cameraVisions = useMemo<CameraVision[]>(
-    () => buildCameraVisions(scene, normalizedPeople, pointInPolygon),
-    [normalizedPeople, pointInPolygon, scene],
+    () => buildCameraVisions(scene, normalizedPeople),
+    [normalizedPeople, scene],
   )
 
   const handleExportSnapshot = async () => {
