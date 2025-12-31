@@ -127,7 +127,9 @@ export const advancePeopleState = (
       x: nextX,
       y: nextY,
       velocity: [nextVx, nextVy],
-      trail: updateTrail(person.trail, nextX, nextY, timeNow, collided),
+      trail: person.trailEnabled
+        ? updateTrail(person.trail, nextX, nextY, timeNow, collided)
+        : [],
     }
   })
 

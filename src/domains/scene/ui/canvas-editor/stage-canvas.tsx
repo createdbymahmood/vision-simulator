@@ -135,17 +135,6 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     id: camera.id,
     points: computeVisionPolygon(camera, scene),
   }))
-  const captureGridlessSnapshot = useCallbackRef((snapshotScene: Scene) => {
-    const layer = gridLayerRef.current
-    if (!stageRef.current || !layer) {
-      return onCaptureSnapshot(snapshotScene)
-    }
-    const wasVisible = layer.visible()
-    layer.visible(false)
-    const data = stageRef.current.toDataURL({mimeType: 'image/png'})
-    layer.visible(wasVisible)
-    onCaptureSnapshot(snapshotScene, data)
-  })
 
   useEffect(() => {
     if (size.width && size.height) {

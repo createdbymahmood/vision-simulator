@@ -98,14 +98,6 @@ const shapeToSegments = (shape: SceneShape): Segment[] => {
     }))
   }
 
-  if (shape.type === 'triangle') {
-    const points = trianglePoints(shape)
-    return points.map((point, index) => ({
-      a: point,
-      b: points[(index + 1) % points.length],
-    }))
-  }
-
   if (shape.type === 'line') {
     const start: CanvasPoint = {x: shape.x, y: shape.y}
     const end: CanvasPoint = {
@@ -136,8 +128,15 @@ const shapeToSegments = (shape: SceneShape): Segment[] => {
     }))
   }
 
-  const points =
-    shape.type === 'triangle' ? trianglePoints(shape) : rectanglePoints(shape)
+  if (shape.type === 'triangle') {
+    const points = trianglePoints(shape)
+    return points.map((point, index) => ({
+      a: point,
+      b: points[(index + 1) % points.length],
+    }))
+  }
+
+  const points = rectanglePoints(shape)
   return points.map((point, index) => ({
     a: point,
     b: points[(index + 1) % points.length],

@@ -261,10 +261,7 @@ export const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({
 
   return (
     <Sheet modal={false} onOpenChange={handleOpenChange} open={open}>
-      <SheetContent
-        className='w-[420px]'
-        side='right'
-      >
+      <SheetContent className='w-[420px]' side='right'>
         <SheetHeader className='pb-0'>
           <div className='flex items-start justify-between gap-3'>
             <div>

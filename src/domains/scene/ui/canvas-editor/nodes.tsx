@@ -3,7 +3,14 @@ import type {Vector2d} from 'konva/lib/types'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React, {useEffect, useMemo, useRef} from 'react'
-import {Circle, Group, Line, Rect, Transformer} from 'react-konva'
+import {
+  Circle,
+  Group,
+  Line,
+  Rect,
+  RegularPolygon,
+  Transformer,
+} from 'react-konva'
 
 import type {
   SceneArea,

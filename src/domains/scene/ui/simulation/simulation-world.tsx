@@ -28,12 +28,18 @@ const floorSize = 200
 const gridDivisions = 40
 
 const buildShapeFromPoints = (points: CanvasPoint[]) => {
-  if (!points.length) {
+  const sanitized = points.filter(
+    (point) =>
+      point &&
+      Number.isFinite(point.x) &&
+      Number.isFinite(point.y),
+  )
+  if (sanitized.length < 3) {
     return null
   }
   const shape = new Shape()
-  shape.moveTo(points[0].x, -points[0].y)
-  points.slice(1).forEach((point) => shape.lineTo(point.x, -point.y))
+  shape.moveTo(sanitized[0]!.x, -sanitized[0]!.y)
+  sanitized.slice(1).forEach((point) => shape.lineTo(point.x, -point.y))
   shape.closePath()
   return shape
 }
@@ -148,7 +154,7 @@ const CameraFovMesh: React.FC<{vision: CameraVision}> = ({vision}) => {
         depthWrite={false}
         side={DoubleSide}
         color='#38bdf8'
-        opacity={0.18}
+        opacity={0.28}
       />
     </mesh>
   )
@@ -193,14 +199,12 @@ const People: React.FC<{
             <sphereGeometry args={[person.radius * 0.75, 12, 12]} />
             <meshStandardMaterial color='#16a34a' />
           </mesh>
-          {person.trail.length > 1 && (
+          {person.trail.length > 1 && person.trailEnabled && (
             <line>
               <bufferGeometry>
                 <bufferAttribute
-                  array={positions}
+                  args={[positions, 3]}
                   attach='attributes-position'
-                  itemSize={3}
-                  count={person.trail.length}
                 />
               </bufferGeometry>
               <lineBasicMaterial color='#22c55e' />
