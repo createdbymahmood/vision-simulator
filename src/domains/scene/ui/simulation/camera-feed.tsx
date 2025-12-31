@@ -305,8 +305,8 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
   const [boxes, setBoxes] = useState<BoundingBox2d[]>([])
 
   return (
-    <div className='relative w-full' ref={containerRef}>
-      <div className='aspect-video w-full overflow-hidden rounded-md border bg-muted'>
+    <div className='relative h-full w-full' ref={containerRef}>
+      <div className='h-full w-full overflow-hidden bg-muted'>
         <Canvas
           dpr={[1, 1.5]}
           gl={{antialias: false}}
