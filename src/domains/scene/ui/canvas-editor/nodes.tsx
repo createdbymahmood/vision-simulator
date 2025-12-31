@@ -38,6 +38,7 @@ interface WallSegmentProps {
   onDragEnd?: (delta: CanvasPoint) => void
   onInteractionStart?: () => void
   onInteractionEnd?: () => void
+  draggableEnabled?: boolean
 }
 
 interface ShapeNodeProps {
@@ -49,6 +50,7 @@ interface ShapeNodeProps {
   snapEnabled: boolean
   onInteractionStart?: () => void
   onInteractionEnd?: () => void
+  draggableEnabled?: boolean
 }
 
 interface CameraNodeProps {
@@ -60,6 +62,7 @@ interface CameraNodeProps {
   snapEnabled: boolean
   onInteractionStart?: () => void
   onInteractionEnd?: () => void
+  draggableEnabled?: boolean
 }
 
 interface PersonNodeProps {
@@ -71,6 +74,7 @@ interface PersonNodeProps {
   snapEnabled: boolean
   onInteractionStart?: () => void
   onInteractionEnd?: () => void
+  draggableEnabled?: boolean
 }
 
 interface AreaNodeProps {
@@ -91,13 +95,13 @@ interface CameraVisionProps {
 export const WallSegment: React.FC<WallSegmentProps> = ({
   wall,
   scale,
-  isSelected,
   onSelect,
   onDragStart,
   onDragMove,
   onDragEnd,
   onInteractionStart,
   onInteractionEnd,
+  draggableEnabled = true,
 }) => {
   const handleDragEnd = useCallbackRef((event: KonvaEventObject<DragEvent>) => {
     if (!onDragEnd) {
@@ -126,27 +130,28 @@ export const WallSegment: React.FC<WallSegmentProps> = ({
   )
 
   return (
-    <Line
-      listening
-      dash={isSelected ? [6, 4] : undefined}
-      draggable={Boolean(onDragEnd)}
-      lineCap='round'
-      lineJoin='round'
-      onClick={onSelect}
-      onDragEnd={handleDragEnd}
-      onDragMove={handleDragMove}
-      onDragStart={onDragStart}
-      onTap={onSelect}
-      opacity={wall.opacity}
-      points={[
-        wall.coordinates.x1 * GRID_SIZE,
-        wall.coordinates.y1 * GRID_SIZE,
-        wall.coordinates.x2 * GRID_SIZE,
-        wall.coordinates.y2 * GRID_SIZE,
-      ]}
-      stroke={wall.color}
-      strokeWidth={Math.max(2, wall.thickness * GRID_SIZE) / scale}
-    />
+    <>
+      <Line
+        listening
+        draggable={Boolean(onDragEnd) && draggableEnabled}
+        lineCap='round'
+        lineJoin='round'
+        onClick={onSelect}
+        onDragEnd={handleDragEnd}
+        onDragMove={handleDragMove}
+        onDragStart={onDragStart}
+        onTap={onSelect}
+        opacity={wall.opacity}
+        points={[
+          wall.coordinates.x1 * GRID_SIZE,
+          wall.coordinates.y1 * GRID_SIZE,
+          wall.coordinates.x2 * GRID_SIZE,
+          wall.coordinates.y2 * GRID_SIZE,
+        ]}
+        stroke={wall.color}
+        strokeWidth={Math.max(2, wall.thickness * GRID_SIZE) / scale}
+      />
+    </>
   )
 }
 
@@ -159,6 +164,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
   snapEnabled,
   onInteractionStart,
   onInteractionEnd,
+  draggableEnabled = true,
 }) => {
   const shapeRef = useRef<any>(null)
   const transformerRef = useRef<any>(null)
@@ -185,7 +191,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
   ])
 
   const commonProps = {
-    draggable: true,
+    draggable: draggableEnabled,
     onClick: onSelect,
     onTap: onSelect,
     opacity: shape.opacity,
@@ -397,15 +403,6 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
             stroke={fill}
             strokeWidth={strokeWidth}
           />
-          {isSelected && (
-            <Rect
-              height={shape.length * GRID_SIZE}
-              width={shape.width * GRID_SIZE}
-              dash={[6, 4]}
-              stroke='#38bdf8'
-              strokeWidth={1.5 / scale}
-            />
-          )}
         </Group>
         {transformer}
       </>
@@ -436,16 +433,6 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
             stroke={fill}
             strokeWidth={strokeWidth}
           />
-          {isSelected && (
-            <Circle
-              dash={[6, 4]}
-              radius={(shape.width * GRID_SIZE) / 2 + 4}
-              x={(shape.width * GRID_SIZE) / 2}
-              y={(shape.length * GRID_SIZE) / 2}
-              stroke='#38bdf8'
-              strokeWidth={1.5 / scale}
-            />
-          )}
         </Group>
         {transformer}
       </>
@@ -478,17 +465,6 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
             stroke={fill}
             strokeWidth={strokeWidth}
           />
-          {isSelected && (
-            <RegularPolygon
-              dash={[6, 4]}
-              radius={triangleRadius + 6}
-              sides={3}
-              x={(shape.width * GRID_SIZE) / 2}
-              y={(shape.length * GRID_SIZE) / 2}
-              stroke='#38bdf8'
-              strokeWidth={1.5 / scale}
-            />
-          )}
         </Group>
         {transformer}
       </>
@@ -498,7 +474,7 @@ export const ShapeNode: React.FC<ShapeNodeProps> = ({
   return (
     <>
       <Line
-        draggable
+        draggable={draggableEnabled}
         lineCap='round'
         ref={shapeRef}
         x={shape.x * GRID_SIZE}
@@ -532,7 +508,10 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
   snapEnabled,
   onInteractionStart,
   onInteractionEnd,
+  draggableEnabled = true,
 }) => {
+  void scale
+  void isSelected
   const handleDragBound = useCallbackRef((pos: Vector2d) => {
     if (!snapEnabled) return pos
     return {
@@ -573,7 +552,7 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
   return (
     <>
       <Rect
-        draggable
+        draggable={draggableEnabled}
         height={24}
         width={24}
         fill={DEFAULT_SHAPE_COLOR}
@@ -599,9 +578,8 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
           cornerRadius={4}
           offsetX={16}
           offsetY={16}
-          opacity={0.7}
-          stroke={DEFAULT_PREVIEW_COLOR}
-          strokeWidth={1.5 / scale}
+          opacity={0}
+          listening={false}
         />
       )}
     </>
@@ -617,7 +595,10 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
   snapEnabled,
   onInteractionStart,
   onInteractionEnd,
+  draggableEnabled = true,
 }) => {
+  void scale
+  void isSelected
   const handleDragBound = useCallbackRef((pos: Vector2d) => {
     if (!snapEnabled) return pos
     return {
@@ -645,7 +626,7 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
   return (
     <>
       <Circle
-        draggable
+        draggable={draggableEnabled}
         fill='#22c55e'
         radius={person.radius * GRID_SIZE}
         x={person.x * GRID_SIZE}
@@ -662,9 +643,8 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
           radius={person.radius * GRID_SIZE + 4}
           x={person.x * GRID_SIZE}
           y={person.y * GRID_SIZE}
-          opacity={0.7}
-          stroke={DEFAULT_PREVIEW_COLOR}
-          strokeWidth={1.5 / scale}
+          opacity={0}
+          listening={false}
         />
       )}
     </>

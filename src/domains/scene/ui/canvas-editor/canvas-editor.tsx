@@ -50,8 +50,10 @@ export const CanvasEditor: React.FC = () => {
   const updateShape = useSceneStore((state) => state.updateShape)
   const updateCamera = useSceneStore((state) => state.updateCamera)
   const updatePerson = useSceneStore((state) => state.updatePerson)
+  const updateArea = useSceneStore((state) => state.updateArea)
   const addCamera = useSceneStore((state) => state.addCamera)
   const addPerson = useSceneStore((state) => state.addPerson)
+  const selectEntities = useSceneStore((state) => state.selectEntities)
   const resetScene = useSceneStore((state) => state.resetScene)
   const hydrateScene = useSceneStore((state) => state.hydrateScene)
 
@@ -237,7 +239,9 @@ export const CanvasEditor: React.FC = () => {
               onOffsetChange={setOffset}
               onScaleChange={setScale}
               onSelectEntity={handleSelectEntity}
+              onSelectEntities={selectEntities}
               onUpdateCamera={updateCamera}
+              onUpdateArea={updateArea}
               onUpdatePerson={updatePerson}
               onUpdateShape={updateShape}
               onUpdateWall={updateWall}

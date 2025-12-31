@@ -130,4 +130,5 @@ export interface SceneSelection {
   selectedEntityId: string | null
   selectedEntityKind: SceneEntityKind | null
   mode: SceneSelectionMode
+  selectedEntities: {id: string; kind: SceneEntityKind}[]
 }

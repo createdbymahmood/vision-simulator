@@ -44,6 +44,9 @@ export interface SceneStoreState {
 export interface SceneStoreActions {
   setActiveTool: (tool: SceneTool) => void
   selectEntity: (payload: {id: string; kind: SceneEntityKind} | null) => void
+  selectEntities: (
+    payload: {id: string; kind: SceneEntityKind}[] | null,
+  ) => void
   toggleSelectionMode: () => void
   closeOverlays: () => void
   setCommandPaletteOpen: (open: boolean) => void
@@ -118,6 +121,17 @@ const createSceneStore: (
 ) => StateCreator<SceneStore> = (initial) => (set) => {
   const mutate = createMutator(set)
 
+  const setSelectionState = (
+    state: SceneStore,
+    items: {id: string; kind: SceneEntityKind}[] | null,
+  ) => {
+    const next = items ?? []
+    state.selection.selectedEntities = next
+    state.selection.selectedEntityId = next[0]?.id ?? null
+    state.selection.selectedEntityKind = next[0]?.kind ?? null
+    state.overlays.isPropertiesOpen = next.length === 1
+  }
+
   return {
     scene: initial.scene ?? createDefaultScene(),
     selection: initial.selection ?? createInitialSelection(),
@@ -134,16 +148,19 @@ const createSceneStore: (
     setActiveTool: (tool) =>
       mutate((state) => {
         state.activeTool = tool
-        state.selection = createInitialSelection()
+        const baseSelection = createInitialSelection()
+        state.selection = baseSelection
         state.overlays.isPropertiesOpen = false
         state.overlays.activePopover = null
         state.overlays.isCommandPaletteOpen = false
       }),
     selectEntity: (payload) =>
       mutate((state) => {
-        state.selection.selectedEntityId = payload?.id ?? null
-        state.selection.selectedEntityKind = payload?.kind ?? null
-        state.overlays.isPropertiesOpen = Boolean(payload)
+        setSelectionState(state, payload ? [payload] : null)
+      }),
+    selectEntities: (payload) =>
+      mutate((state) => {
+        setSelectionState(state, payload ?? [])
       }),
     toggleSelectionMode: () =>
       mutate((state) => {

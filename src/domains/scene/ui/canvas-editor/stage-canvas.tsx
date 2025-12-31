@@ -5,13 +5,14 @@ import type {MutableRefObject} from 'react'
 
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {Layer, Stage} from 'react-konva'
+import {Layer, Rect, Stage} from 'react-konva'
 
 import {cn} from '@/lib/utils'
 
 import type {
   Scene,
   SceneCamera,
+  SceneArea,
   SceneEntityKind,
   ScenePerson,
   SceneShape,
@@ -68,6 +69,7 @@ interface CanvasStageProps {
   selection: {
     selectedEntityId: string | null
     selectedEntityKind: SceneEntityKind | null
+    selectedEntities: {id: string; kind: SceneEntityKind}[]
   }
   activeTool: SceneTool
   stageRef?: MutableRefObject<Konva.Stage | null>
@@ -80,9 +82,13 @@ interface CanvasStageProps {
   onUpdateWall: (id: string, patch: Partial<SceneWall>) => void
   onUpdateCamera: (id: string, patch: Partial<SceneCamera>) => void
   onUpdatePerson: (id: string, patch: Partial<ScenePerson>) => void
+  onUpdateArea: (id: string, patch: Partial<SceneArea>) => void
   onAddCamera: (camera: SceneCamera) => void
   onAddPerson: (person: ScenePerson) => void
   onSelectEntity: (payload: {id: string; kind: SceneEntityKind} | null) => void
+  onSelectEntities: (
+    payload: {id: string; kind: SceneEntityKind}[] | null,
+  ) => void
   onCloseOverlays: () => void
 }
 
@@ -147,9 +153,11 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   onUpdateWall,
   onUpdateCamera,
   onUpdatePerson,
+  onUpdateArea,
   onAddCamera,
   onAddPerson,
   onSelectEntity,
+  onSelectEntities,
   onCloseOverlays,
   onCaptureSnapshot,
   stageRef: stageRefProp,
@@ -168,6 +176,18 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   const [isManipulating, setIsManipulating] = useState(false)
   const interactionCapturedRef = useRef(false)
   const hasCenteredRef = useRef(false)
+  const [selectionBox, setSelectionBox] = useState<{
+    start: CanvasPoint
+    end: CanvasPoint
+  } | null>(null)
+  const multiDragSession = useRef<{
+    start: CanvasPoint
+    items: (
+      | {id: string; kind: 'wall'; initial: SceneWall['coordinates']}
+      | {id: string; kind: 'shape' | 'camera' | 'person'; initial: CanvasPoint}
+      | {id: string; kind: 'area'; initial: {lat: number; lng: number}[]}
+    )[]
+  } | null>(null)
   const isPanTool = activeTool === 'pan'
   const cameraVisions = scene.cameras.map((camera) => ({
     id: camera.id,
@@ -264,6 +284,31 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       y: pointer.y - mousePointTo.y * newScale,
     })
   })
+
+  const selectionBoxPixels = useMemo(() => {
+    if (!selectionBox) {
+      return null
+    }
+    const start = toCanvas(selectionBox.start, offset, scale)
+    const end = toCanvas(selectionBox.end, offset, scale)
+    const left = Math.min(start.x, end.x)
+    const top = Math.min(start.y, end.y)
+    const width = Math.abs(end.x - start.x)
+    const height = Math.abs(end.y - start.y)
+    return {left, top, width, height}
+  }, [offset, scale, selectionBox])
+
+  const isEntitySelected = useCallbackRef(
+    (id: string, kind: SceneEntityKind) =>
+      selection.selectedEntityId === id ||
+      (selection.selectedEntityKind === kind &&
+        selection.selectedEntityId === id) ||
+      selection.selectedEntities.some(
+        (entity) => entity.id === id && entity.kind === kind,
+      ),
+  )
+
+  const allowIndividualDrag = selection.selectedEntities.length <= 1
 
   const handleDragMove = useCallbackRef(
     (event: KonvaEventObject<DragEvent>) => {
@@ -389,6 +434,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       if (isPanTool && event.target === stage) {
         setIsPanning(true)
         onSelectEntity(null)
+        onSelectEntities(null)
         onCloseOverlays()
         return
       }
@@ -466,18 +512,62 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         return
       }
 
+      if (activeTool === 'select') {
+        const hasMultiSelection = selection.selectedEntities.length > 1
+        const hasSingleSelection =
+          selection.selectedEntities.length === 0 &&
+          selection.selectedEntityId &&
+          selection.selectedEntityKind
+        const withinSelection =
+          selectionBounds &&
+          point.x >= selectionBounds.minX &&
+          point.x <= selectionBounds.maxX &&
+          point.y >= selectionBounds.minY &&
+          point.y <= selectionBounds.maxY
+
+        if (withinSelection && (hasMultiSelection || hasSingleSelection)) {
+          beginMultiDrag(point)
+          return
+        }
+        if (event.target === stage) {
+          setSelectionBox({start: point, end: point})
+          onSelectEntities(null)
+          onCloseOverlays()
+          return
+        }
+      }
+
       if (event.target === stage) {
         if (scene.background && !scene.background.locked) {
           onSelectEntity({id: 'background', kind: 'background'})
         } else {
           onSelectEntity(null)
         }
+        onSelectEntities(null)
         onCloseOverlays()
       }
     },
   )
 
   const handleStagePointerMove = useCallbackRef(() => {
+    if (multiDragSession.current) {
+      const pointer = getPointerScenePoint()
+      if (pointer) {
+        const delta = {
+          x: pointer.x - multiDragSession.current.start.x,
+          y: pointer.y - multiDragSession.current.start.y,
+        }
+        applyMultiDragDelta(delta)
+      }
+      return
+    }
+    if (selectionBox) {
+      const pointer = getPointerScenePoint()
+      if (pointer) {
+        setSelectionBox({...selectionBox, end: pointer})
+      }
+      return
+    }
     if (isPanning || activeTool === 'pan') {
       return
     }
@@ -523,6 +613,24 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   })
 
   const handleStagePointerUp = useCallbackRef(() => {
+    if (multiDragSession.current) {
+      finishMultiDrag()
+      return
+    }
+    if (selectionBox) {
+      const rect = {
+        minX: Math.min(selectionBox.start.x, selectionBox.end.x),
+        maxX: Math.max(selectionBox.start.x, selectionBox.end.x),
+        minY: Math.min(selectionBox.start.y, selectionBox.end.y),
+        maxY: Math.max(selectionBox.start.y, selectionBox.end.y),
+      }
+      const selected = getSelectionCandidates(scene)
+        .filter((candidate) => rectIntersects(rect, candidate.bounds))
+        .map((candidate) => ({id: candidate.id, kind: candidate.kind}))
+      onSelectEntities(selected.length ? selected : null)
+      setSelectionBox(null)
+      return
+    }
     if (drawingShape) {
       finishShape(drawingShape.start, drawingShape.current, shapeTool)
     }
@@ -630,6 +738,119 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
     return pointFromStage(stageRef.current, offset, scale)
   })
 
+  const getSelectionCandidates = useCallbackRef(
+    (
+      currentScene: Scene,
+    ): {id: string; kind: SceneEntityKind; bounds: {minX: number; maxX: number; minY: number; maxY: number}}[] => {
+      const candidates: {
+        id: string
+        kind: SceneEntityKind
+        bounds: {minX: number; maxX: number; minY: number; maxY: number}
+      }[] = []
+
+      currentScene.walls.forEach((wall) => {
+        const minX = Math.min(wall.coordinates.x1, wall.coordinates.x2)
+        const maxX = Math.max(wall.coordinates.x1, wall.coordinates.x2)
+        const minY = Math.min(wall.coordinates.y1, wall.coordinates.y2)
+        const maxY = Math.max(wall.coordinates.y1, wall.coordinates.y2)
+        candidates.push({id: wall.id, kind: 'wall', bounds: {minX, maxX, minY, maxY}})
+      })
+
+      currentScene.shapes.forEach((shape) => {
+        candidates.push({
+          id: shape.id,
+          kind: 'shape',
+          bounds: {
+            minX: shape.x,
+            maxX: shape.x + shape.width,
+            minY: shape.y,
+            maxY: shape.y + shape.length,
+          },
+        })
+      })
+
+      currentScene.cameras.forEach((camera) => {
+        const half = 0.45
+        candidates.push({
+          id: camera.id,
+          kind: 'camera',
+          bounds: {
+            minX: camera.x - half,
+            maxX: camera.x + half,
+            minY: camera.y - half,
+            maxY: camera.y + half,
+          },
+        })
+      })
+
+      currentScene.people.forEach((person) => {
+        const r = Math.max(person.radius, 0.3)
+        candidates.push({
+          id: person.id,
+          kind: 'person',
+          bounds: {
+            minX: person.x - r,
+            maxX: person.x + r,
+            minY: person.y - r,
+            maxY: person.y + r,
+          },
+        })
+      })
+
+      currentScene.areas.forEach((area) => {
+        if (!area.geometry.length) return
+        const xs = area.geometry.map((p) => p.lng)
+        const ys = area.geometry.map((p) => p.lat)
+        candidates.push({
+          id: area.id,
+          kind: 'area',
+          bounds: {
+            minX: Math.min(...xs),
+            maxX: Math.max(...xs),
+            minY: Math.min(...ys),
+            maxY: Math.max(...ys),
+          },
+        })
+      })
+
+      return candidates
+    },
+  )
+
+  const rectIntersects = (
+    a: {minX: number; maxX: number; minY: number; maxY: number},
+    b: {minX: number; maxX: number; minY: number; maxY: number},
+  ) =>
+    a.minX <= b.maxX &&
+    a.maxX >= b.minX &&
+    a.minY <= b.maxY &&
+    a.maxY >= b.minY
+
+const selectionBounds = useMemo(() => {
+  const candidates = getSelectionCandidates(scene)
+  const selected = selection.selectedEntities.length
+    ? selection.selectedEntities
+    : selection.selectedEntityId && selection.selectedEntityKind
+        ? [{id: selection.selectedEntityId, kind: selection.selectedEntityKind}]
+        : []
+    const bounds = selected
+      .map((entry) =>
+        candidates.find(
+          (candidate) =>
+            candidate.id === entry.id && candidate.kind === entry.kind,
+        ),
+      )
+      .filter(Boolean)
+  if (!bounds.length) {
+    return null
+  }
+  const minX = Math.min(...bounds.map((b) => b!.bounds.minX))
+  const maxX = Math.max(...bounds.map((b) => b!.bounds.maxX))
+  const minY = Math.min(...bounds.map((b) => b!.bounds.minY))
+  const maxY = Math.max(...bounds.map((b) => b!.bounds.maxY))
+  return {minX, maxX, minY, maxY}
+}, [getSelectionCandidates, scene, selection.selectedEntities, selection.selectedEntityId, selection.selectedEntityKind])
+
   const beginWallDrag = useCallbackRef((wallId: string) => {
     const pointer = getPointerScenePoint()
     if (!pointer) {
@@ -699,6 +920,122 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   })
 
   const endInteraction = useCallbackRef(() => {
+    interactionCapturedRef.current = false
+    setIsManipulating(false)
+  })
+
+  const beginMultiDrag = useCallbackRef((start: CanvasPoint) => {
+    const selected = selection.selectedEntities.length
+      ? selection.selectedEntities
+      : selection.selectedEntityId && selection.selectedEntityKind
+        ? [{id: selection.selectedEntityId, kind: selection.selectedEntityKind}]
+        : []
+    if (!selected.length) {
+      return
+    }
+    if (!interactionCapturedRef.current) {
+      onCaptureSnapshot(scene)
+      interactionCapturedRef.current = true
+    }
+    const items = selected
+      .map((entry) => {
+        switch (entry.kind) {
+          case 'wall': {
+            const wall = scene.walls.find((w) => w.id === entry.id)
+            if (!wall) return null
+            return {id: entry.id, kind: 'wall', initial: wall.coordinates}
+          }
+          case 'shape': {
+            const shape = scene.shapes.find((s) => s.id === entry.id)
+            if (!shape) return null
+            return {id: entry.id, kind: 'shape', initial: {x: shape.x, y: shape.y}}
+          }
+          case 'camera': {
+            const camera = scene.cameras.find((c) => c.id === entry.id)
+            if (!camera) return null
+            return {id: entry.id, kind: 'camera', initial: {x: camera.x, y: camera.y}}
+          }
+          case 'person': {
+            const person = scene.people.find((p) => p.id === entry.id)
+            if (!person) return null
+            return {id: entry.id, kind: 'person', initial: {x: person.x, y: person.y}}
+          }
+          case 'area': {
+            const area = scene.areas.find((a) => a.id === entry.id)
+            if (!area) return null
+            return {id: entry.id, kind: 'area', initial: area.geometry}
+          }
+          default:
+            return null
+        }
+      })
+      .filter(Boolean) as (
+      | {id: string; kind: 'wall'; initial: SceneWall['coordinates']}
+      | {id: string; kind: 'shape' | 'camera' | 'person'; initial: CanvasPoint}
+      | {id: string; kind: 'area'; initial: {lat: number; lng: number}[]}
+    )[]
+
+    if (!items.length) {
+      return
+    }
+
+    multiDragSession.current = {start, items}
+    setIsManipulating(true)
+  })
+
+  const applyMultiDragDelta = useCallbackRef((delta: CanvasPoint) => {
+    const session = multiDragSession.current
+    if (!session) return
+
+    session.items.forEach((item) => {
+      switch (item.kind) {
+        case 'wall': {
+          const nextCoords = {
+            x1: snapValue(item.initial.x1 + delta.x),
+            y1: snapValue(item.initial.y1 + delta.y),
+            x2: snapValue(item.initial.x2 + delta.x),
+            y2: snapValue(item.initial.y2 + delta.y),
+          }
+          onUpdateWall(item.id, {coordinates: nextCoords})
+          break
+        }
+        case 'shape': {
+          onUpdateShape(item.id, {
+            x: snapValue(item.initial.x + delta.x),
+            y: snapValue(item.initial.y + delta.y),
+          })
+          break
+        }
+        case 'camera': {
+          onUpdateCamera(item.id, {
+            x: snapValue(item.initial.x + delta.x),
+            y: snapValue(item.initial.y + delta.y),
+          })
+          break
+        }
+        case 'person': {
+          onUpdatePerson(item.id, {
+            x: snapValue(item.initial.x + delta.x),
+            y: snapValue(item.initial.y + delta.y),
+          })
+          break
+        }
+        case 'area': {
+          const geometry = item.initial.map((point) => ({
+            lat: snapValue(point.lat + delta.y),
+            lng: snapValue(point.lng + delta.x),
+          }))
+          onUpdateArea(item.id, {geometry})
+          break
+        }
+        default:
+          break
+      }
+    })
+  })
+
+  const finishMultiDrag = useCallbackRef(() => {
+    multiDragSession.current = null
     interactionCapturedRef.current = false
     setIsManipulating(false)
   })
@@ -798,10 +1135,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               onInteractionEnd={endInteraction}
               onInteractionStart={beginInteraction}
               onSelect={getSelectHandler(wall.id, 'wall')}
-              isSelected={
-                selection.selectedEntityId === wall.id &&
-                selection.selectedEntityKind === 'wall'
-              }
+              draggableEnabled={allowIndividualDrag}
             />
           ))}
           {drawingWall && (
@@ -815,16 +1149,14 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
             <ShapeNode
               key={shape.id}
               scale={scale}
+              isSelected={isEntitySelected(shape.id, 'shape')}
               shape={shape}
               snapEnabled={snapEnabled}
               onInteractionEnd={endInteraction}
               onInteractionStart={beginInteraction}
               onSelect={getSelectHandler(shape.id, 'shape')}
               onTransform={getShapeTransformHandler(shape.id)}
-              isSelected={
-                selection.selectedEntityId === shape.id &&
-                selection.selectedEntityKind === 'shape'
-              }
+              draggableEnabled={allowIndividualDrag}
             />
           ))}
           {drawingShape &&
@@ -865,38 +1197,67 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
               camera={camera}
               key={camera.id}
               scale={scale}
+              isSelected={isEntitySelected(camera.id, 'camera')}
               snapEnabled={snapEnabled}
               onInteractionEnd={endInteraction}
               onInteractionStart={beginInteraction}
               onMove={getCameraMoveHandler(camera.id)}
               onSelect={getSelectHandler(camera.id, 'camera')}
-              isSelected={
-                selection.selectedEntityId === camera.id &&
-                selection.selectedEntityKind === 'camera'
-              }
+              draggableEnabled={allowIndividualDrag}
             />
           ))}
           {scene.people.map((person) => (
             <PersonNode
               key={person.id}
               scale={scale}
+              isSelected={isEntitySelected(person.id, 'person')}
               snapEnabled={snapEnabled}
               onInteractionEnd={endInteraction}
               onInteractionStart={beginInteraction}
               onMove={getPersonMoveHandler(person.id)}
               onSelect={getSelectHandler(person.id, 'person')}
+              draggableEnabled={allowIndividualDrag}
               person={person}
-              isSelected={
-                selection.selectedEntityId === person.id &&
-                selection.selectedEntityKind === 'person'
-              }
             />
           ))}
           {scene.areas.map((area) => (
             <AreaNode area={area} key={area.id} />
           ))}
         </Layer>
+        {selectionBounds ? (
+          <Layer listening={false}>
+            <Rect
+              height={
+                (selectionBounds.maxY - selectionBounds.minY) * GRID_SIZE + 20
+              }
+              width={
+                (selectionBounds.maxX - selectionBounds.minX) * GRID_SIZE + 20
+              }
+              x={selectionBounds.minX * GRID_SIZE - 10}
+              y={selectionBounds.minY * GRID_SIZE - 10}
+              stroke='#3b82f6'
+              fill='rgba(59, 130, 246, 0.15)'
+              strokeWidth={2}
+              listening={false}
+            />
+          </Layer>
+        ) : null}
       </Stage>
+
+      {selectionBoxPixels ? (
+        <div className='pointer-events-none absolute inset-0'>
+          <div
+            className='border border-sky-400/70 bg-sky-200/30'
+            style={{
+              left: selectionBoxPixels.left,
+              top: selectionBoxPixels.top,
+              width: selectionBoxPixels.width,
+              height: selectionBoxPixels.height,
+              position: 'absolute',
+            }}
+          />
+        </div>
+      ) : null}
 
       {measurement && <MeasurementOverlay measurement={measurement} />}
     </div>

@@ -35,5 +35,6 @@ export function createInitialSelection(): SceneSelection {
     selectedEntityId: null,
     selectedEntityKind: null,
     mode: 'single',
+    selectedEntities: [],
   }
 }

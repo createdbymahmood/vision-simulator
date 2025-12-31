@@ -45,7 +45,6 @@ export const CanvasBottomToolbar: React.FC<CanvasBottomToolbarProps> = ({
   const handleSelectTriangle = useCallbackRef(() => onShapeSelect('triangle'))
   const handleSelectLine = useCallbackRef(() => onShapeSelect('line'))
   const handleBackgroundClick = useCallbackRef(onBackgroundClick)
-
   return (
     <div className='fixed inset-x-0 bottom-6 z-30 flex justify-center px-4'>
       <div className='flex w-full max-w-fit items-center gap-4 rounded-full border bg-background/95 px-4 py-3 shadow-md backdrop-blur justify-center'>
