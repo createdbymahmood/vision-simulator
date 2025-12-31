@@ -58,7 +58,11 @@ const Walls: React.FC<{walls: SceneWall[]}> = ({walls}) => (
           rotation={[0, -rotation, 0]}
         >
           <boxGeometry args={[length, wall.height, wall.thickness]} />
-          <meshStandardMaterial color={wall.color} opacity={wall.opacity} />
+          <meshStandardMaterial
+            transparent
+            color={wall.color}
+            opacity={Math.min(1, wall.opacity * 0.8)}
+          />
         </mesh>
       )
     })}
@@ -335,11 +339,12 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
       onCreated={handleCreated}
       shadows
     >
-      <ambientLight intensity={0.3} />
-      <directionalLight intensity={0.8} position={[10, 15, 10]} />
+      <color args={['#ffffff']} attach='background' />
+      <ambientLight intensity={0.45} />
+      <directionalLight intensity={1} position={[10, 15, 10]} />
       <PerspectiveCamera makeDefault position={[10, 10, 10]} />
       <gridHelper
-        args={[floorSize, gridDivisions, '#e2e8f0', '#e2e8f0']}
+        args={[floorSize, gridDivisions, '#f0f4f8', '#f0f4f8']}
         position={[0, 0.01, 0]}
       />
       <mesh
@@ -348,7 +353,7 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
         rotation={[-Math.PI / 2, 0, 0]}
       >
         <planeGeometry args={[floorSize, floorSize]} />
-        <meshStandardMaterial color='#e2e8f0' />
+        <meshStandardMaterial color='#ffffff' />
       </mesh>
 
       <Walls walls={scene.walls} />

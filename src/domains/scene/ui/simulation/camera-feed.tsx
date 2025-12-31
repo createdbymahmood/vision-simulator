@@ -222,7 +222,7 @@ const CameraFeedScene: React.FC<SceneProps> = ({
   const invalidate = useThree((state) => state.invalidate)
 
   useEffect(() => {
-    const interval = window.setInterval(() => invalidate(), 120)
+    const interval = window.setInterval(() => invalidate(), 33)
     return () => window.clearInterval(interval)
   }, [invalidate])
 
@@ -308,8 +308,12 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
     <div className='relative h-full w-full' ref={containerRef}>
       <div className='h-full w-full overflow-hidden bg-muted'>
         <Canvas
-          dpr={[1, 1.5]}
-          gl={{antialias: false}}
+          dpr={[1.5, 2]}
+          gl={{
+            antialias: true,
+            alpha: false,
+            powerPreference: 'high-performance',
+          }}
           style={{width: '100%', height: '100%'}}
           frameloop='demand'
           shadows={false}
