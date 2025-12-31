@@ -64,6 +64,12 @@ export const useViewportRecorder = (): UseViewportRecorderResult => {
         return false
       }
 
+      try {
+        await track.applyConstraints({frameRate: {min: 30, ideal: 60}})
+      } catch {
+        // Ignore constraint failures; fallback to default track settings.
+      }
+
       const composedStream = new MediaStream()
       composedStream.addTrack(track)
       composedStreamRef.current = composedStream
@@ -72,9 +78,9 @@ export const useViewportRecorder = (): UseViewportRecorderResult => {
 
       try {
         const preferredOptions: MediaRecorderOptions[] = [
-          {mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 10_000_000},
-          {mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 8_000_000},
-          {mimeType: 'video/webm', videoBitsPerSecond: 8_000_000},
+          {mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 12_000_000},
+          {mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 10_000_000},
+          {mimeType: 'video/webm', videoBitsPerSecond: 10_000_000},
         ]
         const recorder =
           preferredOptions.reduce<MediaRecorder | null>((created, options) => {
@@ -120,6 +126,12 @@ export const useViewportRecorder = (): UseViewportRecorderResult => {
         return
       }
       const composedStream = composedStreamRef.current
+
+      nextTrack
+        .applyConstraints({frameRate: {min: 30, ideal: 60}})
+        .catch(() => {
+          // Non-fatal: keep existing constraints if the browser rejects new ones.
+        })
 
       composedStream.getVideoTracks().forEach((track) => {
         composedStream.removeTrack(track)

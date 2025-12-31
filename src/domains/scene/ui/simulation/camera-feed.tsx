@@ -308,15 +308,15 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
     <div className='relative h-full w-full' ref={containerRef}>
       <div className='h-full w-full overflow-hidden bg-muted'>
         <Canvas
-          dpr={[1.5, 2]}
+          dpr={[2, 3]}
+          style={{width: '100%', height: '100%'}}
+          frameloop='demand'
+          shadows={false}
           gl={{
             antialias: true,
             alpha: false,
             powerPreference: 'high-performance',
           }}
-          style={{width: '100%', height: '100%'}}
-          frameloop='demand'
-          shadows={false}
         >
           <CameraFeedScene
             shapes={shapes}

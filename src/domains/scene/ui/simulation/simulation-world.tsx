@@ -60,8 +60,10 @@ const Walls: React.FC<{walls: SceneWall[]}> = ({walls}) => (
           <boxGeometry args={[length, wall.height, wall.thickness]} />
           <meshStandardMaterial
             transparent
+            metalness={0.08}
             color={wall.color}
-            opacity={Math.min(1, wall.opacity * 0.8)}
+            opacity={Math.min(0.8, wall.opacity ?? 1)}
+            roughness={0.2}
           />
         </mesh>
       )
@@ -332,16 +334,17 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
 
   return (
     <Canvas
-      dpr={[1, 2]}
+      dpr={[1.5, 2.5]}
       gl={{preserveDrawingBuffer: true}}
       ref={canvasRef}
       style={{width: '100%', height: '100%'}}
       onCreated={handleCreated}
       shadows
     >
-      <color args={['#ffffff']} attach='background' />
-      <ambientLight intensity={0.45} />
-      <directionalLight intensity={1} position={[10, 15, 10]} />
+      <color args={['#fefefe']} attach='background' />
+      <ambientLight intensity={0.65} />
+      <directionalLight intensity={1.2} position={[10, 15, 10]} />
+      <hemisphereLight args={['#ffffff', '#dfe7ef', 0.5]} />
       <PerspectiveCamera makeDefault position={[10, 10, 10]} />
       <gridHelper
         args={[floorSize, gridDivisions, '#f0f4f8', '#f0f4f8']}
@@ -353,7 +356,7 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
         rotation={[-Math.PI / 2, 0, 0]}
       >
         <planeGeometry args={[floorSize, floorSize]} />
-        <meshStandardMaterial color='#ffffff' />
+        <meshStandardMaterial color='#fefefe' />
       </mesh>
 
       <Walls walls={scene.walls} />

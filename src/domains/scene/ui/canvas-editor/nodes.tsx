@@ -130,28 +130,26 @@ export const WallSegment: React.FC<WallSegmentProps> = ({
   )
 
   return (
-    <>
-      <Line
-        listening
-        draggable={Boolean(onDragEnd) && draggableEnabled}
-        lineCap='round'
-        lineJoin='round'
-        onClick={onSelect}
-        onDragEnd={handleDragEnd}
-        onDragMove={handleDragMove}
-        onDragStart={onDragStart}
-        onTap={onSelect}
-        opacity={wall.opacity}
-        points={[
-          wall.coordinates.x1 * GRID_SIZE,
-          wall.coordinates.y1 * GRID_SIZE,
-          wall.coordinates.x2 * GRID_SIZE,
-          wall.coordinates.y2 * GRID_SIZE,
-        ]}
-        stroke={wall.color}
-        strokeWidth={Math.max(2, wall.thickness * GRID_SIZE) / scale}
-      />
-    </>
+    <Line
+      listening
+      draggable={Boolean(onDragEnd) && draggableEnabled}
+      lineCap='round'
+      lineJoin='round'
+      onClick={onSelect}
+      onDragEnd={handleDragEnd}
+      onDragMove={handleDragMove}
+      onDragStart={onDragStart}
+      onTap={onSelect}
+      opacity={wall.opacity}
+      points={[
+        wall.coordinates.x1 * GRID_SIZE,
+        wall.coordinates.y1 * GRID_SIZE,
+        wall.coordinates.x2 * GRID_SIZE,
+        wall.coordinates.y2 * GRID_SIZE,
+      ]}
+      stroke={wall.color}
+      strokeWidth={Math.max(2, wall.thickness * GRID_SIZE) / scale}
+    />
   )
 }
 
@@ -552,9 +550,9 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
   return (
     <>
       <Rect
-        draggable={draggableEnabled}
         height={24}
         width={24}
+        draggable={draggableEnabled}
         fill={DEFAULT_SHAPE_COLOR}
         x={camera.x * GRID_SIZE}
         y={camera.y * GRID_SIZE}
@@ -573,13 +571,13 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
         <Rect
           height={32}
           width={32}
+          listening={false}
           x={camera.x * GRID_SIZE}
           y={camera.y * GRID_SIZE}
           cornerRadius={4}
           offsetX={16}
           offsetY={16}
           opacity={0}
-          listening={false}
         />
       )}
     </>
@@ -640,11 +638,11 @@ export const PersonNode: React.FC<PersonNodeProps> = ({
       />
       {isSelected && (
         <Circle
+          listening={false}
           radius={person.radius * GRID_SIZE + 4}
           x={person.x * GRID_SIZE}
           y={person.y * GRID_SIZE}
           opacity={0}
-          listening={false}
         />
       )}
     </>

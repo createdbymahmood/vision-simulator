@@ -238,10 +238,10 @@ export const CanvasEditor: React.FC = () => {
               onCloseOverlays={closeOverlays}
               onOffsetChange={setOffset}
               onScaleChange={setScale}
-              onSelectEntity={handleSelectEntity}
               onSelectEntities={selectEntities}
-              onUpdateCamera={updateCamera}
+              onSelectEntity={handleSelectEntity}
               onUpdateArea={updateArea}
+              onUpdateCamera={updateCamera}
               onUpdatePerson={updatePerson}
               onUpdateShape={updateShape}
               onUpdateWall={updateWall}
