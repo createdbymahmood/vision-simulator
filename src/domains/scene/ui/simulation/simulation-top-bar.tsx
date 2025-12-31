@@ -2,12 +2,18 @@ import {DownloadIcon, RadioIcon, XIcon} from 'lucide-react'
 import React from 'react'
 
 import {Button} from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {Switch} from '@/components/ui/switch'
 
 interface SimulationTopBarProps {
   recording: boolean
   onToggleRecording: (next: boolean) => void
-  onExportSnapshot: () => void
+  onExportSnapshot: (scale: number) => void
   onClose: () => void
 }
 
@@ -19,6 +25,10 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
 }) => {
   const handleRecordingChange = (next: boolean) => {
     onToggleRecording(next)
+  }
+
+  const handleExportSnapshot = (scale: number) => {
+    onExportSnapshot(scale)
   }
 
   return (
@@ -33,12 +43,27 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
         <label className='text-sm' htmlFor='start-recording'>
           Start Recording
         </label>
+        {recording ? (
+          <span className='text-sm font-semibold text-red-500'>Recording…</span>
+        ) : null}
       </div>
       <div className='flex items-center gap-2'>
-        <Button size='sm' variant='outline' onClick={onExportSnapshot}>
-          <DownloadIcon className='mr-2 size-4' />
-          Export Snapshot
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size='sm' variant='outline'>
+              <DownloadIcon className='mr-2 size-4' />
+              Export Snapshot
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='start'>
+            <DropdownMenuItem onSelect={() => handleExportSnapshot(1)}>
+              PNG (1x)
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => handleExportSnapshot(2)}>
+              PNG (2x)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button size='sm' variant='ghost' onClick={onClose}>
           <XIcon className='mr-2 size-4' />
           Close

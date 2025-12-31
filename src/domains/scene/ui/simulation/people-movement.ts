@@ -79,10 +79,7 @@ const deflectVelocity = (vx: number, vy: number) => {
   const deflectionDeg = 50 + Math.random() * 130
   const direction = Math.random() > 0.5 ? 1 : -1
   const angle = baseAngle + direction * deflectionDeg * DEGREES
-  return [Math.cos(angle) * speed, Math.sin(angle) * speed] as [
-    number,
-    number,
-  ]
+  return [Math.cos(angle) * speed, Math.sin(angle) * speed] as [number, number]
 }
 
 export const initializePeopleState = (people: ScenePerson[]): MovingPerson[] =>

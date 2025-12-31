@@ -45,10 +45,7 @@ export const CameraTiles: React.FC<CameraTilesProps> = ({
             return null
           }
           return (
-            <Card
-              className='relative h-56 overflow-hidden p-0'
-              key={camera.id}
-            >
+            <Card className='relative h-56 overflow-hidden p-0' key={camera.id}>
               <CardHeader className='absolute left-0 top-0 z-10 m-0 w-full rounded-none bg-black/40 px-3 py-2'>
                 <CardTitle className='text-sm font-semibold text-white'>
                   Camera {camera.id.slice(0, 4)}

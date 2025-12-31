@@ -268,7 +268,7 @@ const CameraFeedScene: React.FC<SceneProps> = ({
 
   return (
     <>
-      <fog attach='fog' args={['#dce3ec', 40, 140]} />
+      <fog args={['#dce3ec', 40, 140]} attach='fog' />
       <color args={[background]} attach='background' />
       <PerspectiveCamera makeDefault ref={cameraRef} />
       <ambientLight intensity={0.35} />

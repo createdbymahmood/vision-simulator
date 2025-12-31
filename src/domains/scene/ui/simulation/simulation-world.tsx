@@ -1,5 +1,6 @@
 import type {ExtrudeGeometry} from 'three'
 
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {OrbitControls, PerspectiveCamera} from '@react-three/drei'
 import {Canvas} from '@react-three/fiber'
 import React, {useMemo, useRef} from 'react'
@@ -13,7 +14,7 @@ import type {
 } from '../../core/scene-types'
 import type {CanvasPoint} from '../canvas-editor/types'
 import type {MovingPerson} from './people-movement'
-import type {CameraVision} from './types'
+import type {CameraVision, SimulationViewportHandle} from './types'
 
 interface SimulationWorldProps {
   scene: Scene
@@ -21,7 +22,7 @@ interface SimulationWorldProps {
   people: MovingPerson[]
   onSelectPerson: (id: string) => void
   selectedPersonId: string | null
-  onReadySnapshot: (fn: () => Promise<string>) => void
+  onViewportReady: (handle: SimulationViewportHandle) => void
 }
 
 const floorSize = 200
@@ -29,10 +30,7 @@ const gridDivisions = 40
 
 const buildShapeFromPoints = (points: CanvasPoint[]) => {
   const sanitized = points.filter(
-    (point) =>
-      point &&
-      Number.isFinite(point.x) &&
-      Number.isFinite(point.y),
+    (point) => point && Number.isFinite(point.x) && Number.isFinite(point.y),
   )
   if (sanitized.length < 3) {
     return null
@@ -234,39 +232,104 @@ export const SimulationWorld: React.FC<SimulationWorldProps> = ({
   people,
   onSelectPerson,
   selectedPersonId,
-  onReadySnapshot,
+  onViewportReady,
 }) => {
   const handleSelectPerson = (id: string) => onSelectPerson(id)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const gridVisibleRef = useRef(true)
+  const rendererContextRef = useRef<{
+    gl: any
+    scene: any
+    camera: any
+    gridHelper: any
+  } | null>(null)
+
+  const captureSnapshot = useCallbackRef(
+    async (scale: number): Promise<string> => {
+      const context = rendererContextRef.current
+      const canvas = canvasRef.current
+      if (!context || !canvas) {
+        return ''
+      }
+      const {gl, scene, camera, gridHelper} = context
+      const prevAlpha = gl.getClearAlpha()
+      const prevColor = gl.getClearColor(new Color())
+
+      if (gridHelper && gridVisibleRef.current) {
+        gridHelper.visible = false
+      }
+      gl.setClearAlpha(0)
+      gl.setClearColor('#000000', 0)
+      gl.render(scene, camera)
+      const baseDataUrl = canvas.toDataURL('image/png')
+      if (gridHelper && gridVisibleRef.current) {
+        gridHelper.visible = true
+      }
+      gl.setClearAlpha(prevAlpha)
+      gl.setClearColor(prevColor, prevAlpha)
+
+      const normalizedScale = Math.max(1, Math.round(scale))
+      if (normalizedScale === 1) {
+        return baseDataUrl
+      }
+
+      const scaledCanvas = document.createElement('canvas')
+      scaledCanvas.width = Math.max(
+        1,
+        Math.round(canvas.width * normalizedScale),
+      )
+      scaledCanvas.height = Math.max(
+        1,
+        Math.round(canvas.height * normalizedScale),
+      )
+      const ctx = scaledCanvas.getContext('2d')
+      if (!ctx) {
+        return baseDataUrl
+      }
+      await new Promise<void>((resolve) => {
+        const image = new Image()
+        image.onload = () => {
+          ctx.drawImage(image, 0, 0, scaledCanvas.width, scaledCanvas.height)
+          resolve()
+        }
+        image.onerror = () => resolve()
+        image.src = baseDataUrl
+      })
+      return scaledCanvas.toDataURL('image/png')
+    },
+  )
+
+  const registerViewport = useCallbackRef(() => {
+    if (!onViewportReady) {
+      return
+    }
+    onViewportReady({
+      getSnapshot: captureSnapshot,
+      getStream: () => {
+        const canvas = canvasRef.current
+        return canvas ? canvas.captureStream(60) : null
+      },
+    })
+  })
 
   const handleCreated = (state: any) => {
     canvasRef.current = state.gl.domElement
     const gridHelper = state.scene.children.find(
       (child: any) => child.type === 'GridHelper',
     )
-    const prevAlpha = state.gl.getClearAlpha()
-    const prevColor = state.gl.getClearColor(new Color())
-    onReadySnapshot(async () => {
-      if (gridHelper && gridVisibleRef.current) {
-        gridHelper.visible = false
-      }
-      state.gl.setClearAlpha(0)
-      state.gl.setClearColor('#000000', 0)
-      state.gl.render(state.scene, state.camera)
-      const dataUrl = state.gl.domElement.toDataURL('image/png')
-      if (gridHelper && gridVisibleRef.current) {
-        gridHelper.visible = true
-      }
-      state.gl.setClearAlpha(prevAlpha)
-      state.gl.setClearColor(prevColor, prevAlpha)
-      return dataUrl
-    })
+    rendererContextRef.current = {
+      camera: state.camera,
+      gl: state.gl,
+      gridHelper,
+      scene: state.scene,
+    }
+    registerViewport()
   }
 
   return (
     <Canvas
       dpr={[1, 2]}
+      gl={{preserveDrawingBuffer: true}}
       ref={canvasRef}
       style={{width: '100%', height: '100%'}}
       onCreated={handleCreated}

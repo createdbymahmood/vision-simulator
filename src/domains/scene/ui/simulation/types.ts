@@ -8,3 +8,8 @@ export interface CameraVision {
   visiblePeople: PersonVisibility[]
   sampleCount: number
 }
+
+export interface SimulationViewportHandle {
+  getSnapshot: (scale: number) => Promise<string>
+  getStream: () => MediaStream | null
+}

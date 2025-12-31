@@ -1,11 +1,12 @@
-import React, {useMemo, useRef, useState} from 'react'
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 
 import {Card, CardContent} from '@/components/ui/card'
 import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
 
 import type {Scene} from '../../core/scene-types'
 import type {CanvasPoint} from '../canvas-editor/types'
-import type {CameraVision} from './types'
+import type {CameraVision, SimulationViewportHandle} from './types'
 
 import {normalizePeople} from '../../simulation/core/camera-vision'
 import {computeVisionPolygon as computeCanvasVisionPolygon} from '../canvas-editor/vision'
@@ -15,6 +16,7 @@ import {Simulation2DView} from './simulation-2d-view'
 import {SimulationMiniMap} from './simulation-mini-map'
 import {SimulationTopBar} from './simulation-top-bar'
 import {SimulationWorld} from './simulation-world'
+import {useViewportRecorder} from './use-viewport-recorder'
 
 const toRadians = (deg: number) => (deg * Math.PI) / 180
 const computePolygonArea = (polygon: CanvasPoint[]): number =>
@@ -109,9 +111,8 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
   onClose,
 }) => {
   const [mode, setMode] = useState<SimulationMode>('3d')
-  const [recording, setRecording] = useState(false)
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
-  const snapshotRef = useRef<(() => Promise<string>) | null>(null)
+  const viewportHandleRef = useRef<SimulationViewportHandle | null>(null)
   const obstacles = buildObstacles(scene.shapes, scene.walls)
   const movingPeople = usePeopleMovement(scene.people, obstacles)
   const normalizedPeople = useMemo(
@@ -122,40 +123,54 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
     () => buildCameraVisions(scene, normalizedPeople),
     [normalizedPeople, scene],
   )
+  const {recording, replaceSource, startRecording, stopRecording} =
+    useViewportRecorder()
 
-  const handleExportSnapshot = async () => {
-    const snapshotFn = snapshotRef.current
-    if (!snapshotFn) {
-      return
-    }
-    const snapshot = await snapshotFn()
-    if (!snapshot) {
-      return
-    }
+  const handleExportSnapshot = useCallbackRef(async (scale: number) => {
+    const handle = viewportHandleRef.current
+    if (!handle) return
+    const snapshot = await handle.getSnapshot(scale)
+    if (!snapshot) return
     const link = document.createElement('a')
     link.href = snapshot
-    link.download = `simulation-${Date.now()}.png`
+    link.download = `simulation-${Date.now()}@${Math.max(
+      1,
+      Math.round(scale),
+    )}x.png`
     link.click()
-    if (snapshot.startsWith('blob:')) {
-      setTimeout(() => URL.revokeObjectURL(snapshot), 5000)
+  })
+
+  const handleToggleRecording = useCallbackRef(async (next: boolean) => {
+    if (next) {
+      await startRecording(viewportHandleRef.current)
+      return
     }
-  }
+    stopRecording()
+  })
 
-  const handleToggleRecording = (next: boolean) => {
-    setRecording(next)
-  }
-
-  const handleModeChange = (value: string) => {
+  const handleModeChange = useCallbackRef((value: string) => {
     setMode((value as SimulationMode) || '3d')
-  }
+  })
 
-  const handleSelectPerson = (id: string) => {
+  const handleSelectPerson = useCallbackRef((id: string) => {
     setSelectedPersonId(id)
-  }
+  })
 
-  const handleSnapshotReady = (fn: () => Promise<string>) => {
-    snapshotRef.current = fn
-  }
+  const handleViewportReady = useCallbackRef(
+    (handle: SimulationViewportHandle) => {
+      viewportHandleRef.current = handle
+      if (recording) {
+        replaceSource(handle)
+      }
+    },
+  )
+
+  useEffect(
+    () => () => {
+      stopRecording()
+    },
+    [stopRecording],
+  )
 
   return (
     <div className='flex h-full flex-col bg-background'>
@@ -188,8 +203,8 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
                 <SimulationWorld
                   scene={scene}
                   cameraVisions={cameraVisions}
-                  onReadySnapshot={handleSnapshotReady}
                   onSelectPerson={handleSelectPerson}
+                  onViewportReady={handleViewportReady}
                   people={movingPeople}
                   selectedPersonId={selectedPersonId}
                 />
@@ -201,8 +216,10 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
                   shapes={scene.shapes}
                   walls={scene.walls}
                   cameraVisions={cameraVisions}
-                  onReadySnapshot={handleSnapshotReady}
+                  onSelectPerson={handleSelectPerson}
+                  onViewportReady={handleViewportReady}
                   people={movingPeople}
+                  selectedPersonId={selectedPersonId}
                 />
               </div>
             )}
