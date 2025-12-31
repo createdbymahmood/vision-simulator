@@ -15,6 +15,10 @@ import type {
 import type {CanvasPoint} from '../canvas-editor/types'
 import type {MovingPerson} from './people-movement'
 import type {CameraVision, SimulationViewportHandle} from './types'
+import {
+  PERSON_COLOR,
+  PERSON_SELECTED_COLOR,
+} from './constants'
 
 interface SimulationWorldProps {
   scene: Scene
@@ -196,12 +200,22 @@ const People: React.FC<{
               args={[person.radius, person.radius, person.height, 12]}
             />
             <meshStandardMaterial
-              color={selectedPersonId === person.id ? '#22c55e' : '#16a34a'}
+              color={
+                selectedPersonId === person.id
+                  ? PERSON_SELECTED_COLOR
+                  : PERSON_COLOR
+              }
             />
           </mesh>
           <mesh position={[0, person.height / 2, 0]}>
             <sphereGeometry args={[person.radius * 0.75, 12, 12]} />
-            <meshStandardMaterial color='#16a34a' />
+            <meshStandardMaterial
+              color={
+                selectedPersonId === person.id
+                  ? PERSON_SELECTED_COLOR
+                  : PERSON_COLOR
+              }
+            />
           </mesh>
           {person.trail.length > 1 && person.trailEnabled && (
             <line>

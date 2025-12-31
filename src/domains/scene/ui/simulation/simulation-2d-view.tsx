@@ -2,6 +2,11 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React, {useEffect, useMemo, useRef} from 'react'
 
 import type {SceneCamera, SceneShape, SceneWall} from '../../core/scene-types'
+import {
+  PERSON_COLOR,
+  PERSON_SELECTED_COLOR,
+  PERSON_SELECTED_STROKE,
+} from './constants'
 import type {MovingPerson} from './people-movement'
 import type {CameraVision, SimulationViewportHandle} from './types'
 
@@ -423,13 +428,18 @@ const drawPeople = (
     }
 
     ctx.save()
-    ctx.fillStyle = detected ? '#16a34a' : '#9ca3af'
+    const fillSelected = isSelected ? PERSON_SELECTED_COLOR : PERSON_COLOR
+    ctx.fillStyle = detected ? fillSelected : '#9ca3af'
     ctx.globalAlpha = detected ? 0.95 : 0.8
     ctx.beginPath()
     ctx.arc(position.x, position.y, radius, 0, Math.PI * 2)
     ctx.fill()
-    ctx.strokeStyle = isSelected ? '#a855f7' : detected ? '#22c55e' : '#cbd5e1'
-    ctx.lineWidth = isSelected ? 3 : 1.5
+    ctx.strokeStyle = isSelected
+      ? PERSON_SELECTED_STROKE
+      : detected
+        ? PERSON_SELECTED_STROKE
+        : '#cbd5e1'
+    ctx.lineWidth = isSelected ? 3.25 : 1.5
     ctx.stroke()
     ctx.restore()
   })
