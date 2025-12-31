@@ -16,6 +16,7 @@ export type MovingPerson = ScenePerson & {
 
 const PERSON_SPEED = 0.8
 const COLLISION_PADDING = 0.2
+const DEGREES = Math.PI / 180
 
 const normalizeVelocity = (vx: number, vy: number) => {
   const magnitude = Math.hypot(vx, vy) || 1
@@ -72,6 +73,18 @@ const updateTrail = (
   return nextTrail.filter(([, , timestamp]) => timestamp >= cutoff)
 }
 
+const deflectVelocity = (vx: number, vy: number) => {
+  const speed = Math.hypot(vx, vy) || PERSON_SPEED
+  const baseAngle = Math.atan2(vy, vx)
+  const deflectionDeg = 50 + Math.random() * 130
+  const direction = Math.random() > 0.5 ? 1 : -1
+  const angle = baseAngle + direction * deflectionDeg * DEGREES
+  return [Math.cos(angle) * speed, Math.sin(angle) * speed] as [
+    number,
+    number,
+  ]
+}
+
 export const initializePeopleState = (people: ScenePerson[]): MovingPerson[] =>
   people.map((person, index) => ({
     ...person,
@@ -100,26 +113,27 @@ export const advancePeopleState = (
     let nextVy = vy
     let {x: nextX, y: nextY} = nextPosition(nextVx, nextVy)
     let collided = false
+    let attempts = 0
+
+    while (
+      collides(nextX, nextY, radius, obstacles, current, idx) &&
+      attempts < 6
+    ) {
+      collided = true
+      const [deflectVx, deflectVy] = deflectVelocity(nextVx, nextVy)
+      nextVx = deflectVx
+      nextVy = deflectVy
+      const corrected = nextPosition(nextVx, nextVy)
+      nextX = corrected.x
+      nextY = corrected.y
+      attempts += 1
+    }
 
     if (collides(nextX, nextY, radius, obstacles, current, idx)) {
-      collided = true
-      const turnRight = (idx + Math.floor(timeNow)) % 2 === 0
-      const rotatedVx = turnRight ? -nextVy : nextVy
-      const rotatedVy = turnRight ? nextVx : -nextVx
-      nextVx = rotatedVx
-      nextVy = rotatedVy
-      const jitter = (idx * 0.13 + timeNow * 0.001) * 0.05
-      const adjustedVx = nextVx + Math.cos(jitter) * 0.05
-      const adjustedVy = nextVy + Math.sin(jitter) * 0.05
-      const [normalizedVx, normalizedVy] = normalizeVelocity(
-        adjustedVx,
-        adjustedVy,
-      )
-      nextVx = normalizedVx
-      nextVy = normalizedVy
-      const reversed = nextPosition(nextVx, nextVy)
-      nextX = reversed.x
-      nextY = reversed.y
+      nextX = person.x
+      nextY = person.y
+      nextVx = -nextVx
+      nextVy = -nextVy
     }
 
     return {
