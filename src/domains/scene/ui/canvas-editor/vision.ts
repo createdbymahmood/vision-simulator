@@ -265,6 +265,9 @@ export const computeVisionPolygon = (
   camera: Scene['cameras'][number],
   scene: Scene,
 ): CanvasPoint[] => {
+  if (camera.depth <= 0) {
+    return [{x: camera.x, y: camera.y}]
+  }
   if (cameraTouchesWall(camera, scene.walls)) {
     return [{x: camera.x, y: camera.y}]
   }
