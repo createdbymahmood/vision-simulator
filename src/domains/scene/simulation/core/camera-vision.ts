@@ -555,7 +555,14 @@ export const computeCameraVision = (params: {
 }): CameraVisionResult => {
   const {camera, context, people = [], options} = params
 
-  // If the camera is effectively on a wall line, block vision entirely.
+  if (camera.depth <= 0) {
+    return {
+      points: [{x: camera.x, y: camera.y}],
+      visiblePeople: [],
+      sampleCount: 0,
+    }
+  }
+
   const {points, sampleCount} = getCachedPolygon(camera, context, options)
   const origin: Point = {x: camera.x, y: camera.y}
   const clampedFov = Math.min(camera.fov, 179.9)
