@@ -4,13 +4,10 @@ import {Card, CardContent} from '@/components/ui/card'
 import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
 
 import type {Scene} from '../../core/scene-types'
+import type {CanvasPoint} from '../canvas-editor/types'
 import type {CameraVision} from './types'
 
-import {
-  computeCameraVision,
-  computeSceneVisionContext,
-  normalizePeople,
-} from '../../simulation/core/camera-vision'
+import {normalizePeople} from '../../simulation/core/camera-vision'
 import {computeVisionPolygon as computeCanvasVisionPolygon} from '../canvas-editor/vision'
 import {CameraTiles} from './camera-tiles'
 import {buildObstacles, usePeopleMovement} from './people-movement'
@@ -36,14 +33,46 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
   const snapshotRef = useRef<(() => Promise<string>) | null>(null)
   const obstacles = buildObstacles(scene.shapes, scene.walls)
   const movingPeople = usePeopleMovement(scene.people, obstacles)
-  const visionContext = useMemo(() => computeSceneVisionContext(scene), [scene])
   const normalizedPeople = useMemo(
     () => normalizePeople(movingPeople),
     [movingPeople],
   )
+  const pointInPolygon = useMemo(
+    () =>
+      (point: CanvasPoint, polygon: CanvasPoint[]): boolean => {
+        let inside = false
+        for (
+          let i = 0, j = polygon.length - 1;
+          i < polygon.length;
+          j = i += 1
+        ) {
+          const xi = polygon[i]?.x ?? 0
+          const yi = polygon[i]?.y ?? 0
+          const xj = polygon[j]?.x ?? 0
+          const yj = polygon[j]?.y ?? 0
+          const intersect =
+            yi > point.y !== yj > point.y &&
+            point.x <
+              ((xj - xi) * (point.y - yi)) / (yj - yi + Number.EPSILON) + xi
+          if (intersect) inside = !inside
+        }
+        return inside
+      },
+    [],
+  )
   const cameraVisions = useMemo<CameraVision[]>(
     () =>
       scene.cameras.map((camera) => {
+        if (camera.depth <= 0) {
+          return {
+            id: camera.id,
+            height: camera.height,
+            points: [{x: camera.x, y: camera.y}],
+            sampleCount: 0,
+            visiblePeople: [],
+          }
+        }
+
         const polygon = computeCanvasVisionPolygon(camera, scene)
         const area = Math.abs(
           polygon.reduce((sum, point, index) => {
@@ -62,22 +91,52 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
           }
         }
 
-        const visionData = computeCameraVision({
-          camera,
-          context: visionContext,
-          people: normalizedPeople,
-          options: {baseSamples: 400, maxSamples: 1200},
+        const toRadians = (deg: number) => (deg * Math.PI) / 180
+        const direction = toRadians(camera.direction)
+        const halfFov = toRadians(Math.min(camera.fov, 179.9)) / 2
+        const near = Math.max(camera.nearPlane ?? 0, 0)
+        const maxDistance = camera.depth
+
+        const visiblePeople = normalizedPeople.map((person) => {
+          const dx = person.x - camera.x
+          const dy = person.y - camera.y
+          const distance = Math.hypot(dx, dy)
+          const angleToPerson = Math.atan2(dy, dx)
+          const delta = Math.atan2(
+            Math.sin(angleToPerson - direction),
+            Math.cos(angleToPerson - direction),
+          )
+          const rangeAllowance = person.radius
+          const inRange =
+            distance - rangeAllowance <= maxDistance &&
+            distance + rangeAllowance >= near
+          const angleAllowance = Math.asin(
+            Math.min(person.radius / Math.max(distance, person.radius), 1),
+          )
+          const inFov = Math.abs(delta) <= halfFov + angleAllowance + 0.0001
+          const visible = inRange && inFov
+          return {
+            id: person.id,
+            center: {x: person.x, y: person.y},
+            height: person.height,
+            radius: person.radius,
+            distance,
+            occludedBy: null,
+            inRange,
+            inFov,
+            visible,
+          }
         })
 
         return {
-          ...visionData,
           id: camera.id,
           height: camera.height,
           points: polygon,
           sampleCount: polygon.length,
+          visiblePeople,
         }
       }),
-    [scene, normalizedPeople, visionContext],
+    [normalizedPeople, pointInPolygon, scene],
   )
 
   const handleExportSnapshot = async () => {

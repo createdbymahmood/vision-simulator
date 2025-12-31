@@ -3,7 +3,7 @@ import type {PerspectiveCamera as ThreePerspectiveCamera} from 'three'
 import {PerspectiveCamera} from '@react-three/drei'
 import {Canvas, useFrame, useThree} from '@react-three/fiber'
 import React, {useEffect, useMemo, useRef, useState} from 'react'
-import {Color, DoubleSide, Shape, Vector3} from 'three'
+import {Color, Vector3} from 'three'
 
 import type {SceneCamera, SceneShape, SceneWall} from '../../core/scene-types'
 import type {MovingPerson} from './people-movement'
@@ -206,44 +206,6 @@ interface SceneProps {
   onSelectPerson?: (id: string) => void
 }
 
-const CameraFovOverlay: React.FC<{vision: CameraVision}> = ({vision}) => {
-  const shape = useMemo(() => {
-    const sanitized = vision.points.filter(
-      (point) =>
-        point &&
-        Number.isFinite(point.x) &&
-        Number.isFinite(point.y),
-    )
-    if (sanitized.length < 3) {
-      return null
-    }
-    const s = new Shape()
-    s.moveTo(sanitized[0]!.x, sanitized[0]!.y * -1)
-    sanitized.slice(1).forEach((point) => {
-      s.lineTo(point.x, point.y * -1)
-    })
-    s.closePath()
-    return s
-  }, [vision.points])
-
-  if (!shape) {
-    return null
-  }
-
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]}>
-      <shapeGeometry args={[shape]} />
-      <meshStandardMaterial
-        transparent
-        color='#38bdf8'
-        opacity={0.24}
-        side={DoubleSide}
-        depthWrite={false}
-      />
-    </mesh>
-  )
-}
-
 const CameraFeedScene: React.FC<SceneProps> = ({
   cameraConfig,
   walls,
@@ -317,7 +279,6 @@ const CameraFeedScene: React.FC<SceneProps> = ({
         <planeGeometry args={[200, 200]} />
         <meshStandardMaterial color='#d7dce3' />
       </mesh>
-      <CameraFovOverlay vision={vision} />
       <Walls walls={walls} />
       <Shapes shapes={shapes} />
       <PeopleMeshes
@@ -367,6 +328,7 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
       <svg className='pointer-events-none absolute left-0 top-0 h-full w-full'>
         {boxes.map((box) => {
           const isSelected = selectedPersonId === box.id
+          const strokeColor = isSelected ? '#a855f7' : '#22c55e'
           return (
             <rect
               height={box.height}
@@ -375,8 +337,8 @@ export const CameraFeed: React.FC<CameraFeedProps> = ({
               key={box.id}
               x={box.x}
               y={box.y}
-              stroke={isSelected ? '#22c55e' : '#38bdf8'}
-              strokeWidth={isSelected ? 2 : 1.5}
+              stroke={strokeColor}
+              strokeWidth={isSelected ? 2.25 : 1.5}
             />
           )
         })}
