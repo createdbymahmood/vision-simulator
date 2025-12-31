@@ -151,13 +151,16 @@ export const Simulation2DView: React.FC<Simulation2DViewProps> = ({
   ))
 
   const renderCameras = cameras.map((camera) => (
-    <circle
-      cx={camera.x}
-      cy={camera.y}
+    <rect
+      height={0.9}
+      width={0.9}
       fill='#0ea5e9'
       key={camera.id}
-      r={0.45}
       opacity={0.85}
+      x={camera.x - 0.45}
+      y={camera.y - 0.45}
+      rx={0.08}
+      ry={0.08}
     />
   ))
 

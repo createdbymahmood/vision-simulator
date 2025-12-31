@@ -116,7 +116,7 @@ const Cameras: React.FC<{cameras: SceneCamera[]}> = ({cameras}) => (
         rotation={[0, (camera.direction * Math.PI) / 180, 0]}
       >
         <mesh position={[0, 0, 0]}>
-          <cylinderGeometry args={[0.18, 0.18, 0.25, 24]} />
+          <boxGeometry args={[0.35, 0.25, 0.35]} />
           <meshStandardMaterial color='#0ea5e9' />
         </mesh>
       </group>

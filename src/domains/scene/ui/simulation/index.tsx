@@ -11,6 +11,7 @@ import {
   computeSceneVisionContext,
   normalizePeople,
 } from '../../simulation/core/camera-vision'
+import {computeVisionPolygon as computeCanvasVisionPolygon} from '../canvas-editor/vision'
 import {CameraTiles} from './camera-tiles'
 import {buildObstacles, usePeopleMovement} from './people-movement'
 import {Simulation2DView} from './simulation-2d-view'
@@ -42,17 +43,41 @@ export const SimulationView: React.FC<SimulationViewProps> = ({
   )
   const cameraVisions = useMemo<CameraVision[]>(
     () =>
-      scene.cameras.map((camera) => ({
-        id: camera.id,
-        height: camera.height,
-        ...computeCameraVision({
+      scene.cameras.map((camera) => {
+        const polygon = computeCanvasVisionPolygon(camera, scene)
+        const area = Math.abs(
+          polygon.reduce((sum, point, index) => {
+            const next = polygon[(index + 1) % polygon.length]
+            return sum + point.x * next.y - next.x * point.y
+          }, 0) / 2,
+        )
+
+        if (polygon.length < 3 || area < 0.0001) {
+          return {
+            id: camera.id,
+            height: camera.height,
+            points: [{x: camera.x, y: camera.y}],
+            sampleCount: polygon.length,
+            visiblePeople: [],
+          }
+        }
+
+        const visionData = computeCameraVision({
           camera,
           context: visionContext,
           people: normalizedPeople,
           options: {baseSamples: 400, maxSamples: 1200},
-        }),
-      })),
-    [scene.cameras, normalizedPeople, visionContext],
+        })
+
+        return {
+          ...visionData,
+          id: camera.id,
+          height: camera.height,
+          points: polygon,
+          sampleCount: polygon.length,
+        }
+      }),
+    [scene, normalizedPeople, visionContext],
   )
 
   const handleExportSnapshot = async () => {

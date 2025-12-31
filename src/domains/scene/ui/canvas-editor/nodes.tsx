@@ -572,12 +572,16 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
 
   return (
     <>
-      <Circle
+      <Rect
         draggable
         fill={DEFAULT_SHAPE_COLOR}
-        radius={12}
+        height={24}
+        width={24}
         x={camera.x * GRID_SIZE}
         y={camera.y * GRID_SIZE}
+        offsetX={12}
+        offsetY={12}
+        cornerRadius={3}
         dragBoundFunc={handleDragBound}
         onClick={onSelect}
         onDragEnd={handleDragEnd}
@@ -587,13 +591,17 @@ export const CameraNode: React.FC<CameraNodeProps> = ({
         opacity={0.8}
       />
       {isSelected && (
-        <Circle
-          radius={16}
+        <Rect
+          height={32}
+          width={32}
           x={camera.x * GRID_SIZE}
           y={camera.y * GRID_SIZE}
+          offsetX={16}
+          offsetY={16}
           opacity={0.7}
           stroke={DEFAULT_PREVIEW_COLOR}
           strokeWidth={1.5 / scale}
+          cornerRadius={4}
         />
       )}
     </>

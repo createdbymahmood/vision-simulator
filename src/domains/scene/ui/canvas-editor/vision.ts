@@ -197,6 +197,43 @@ const getVertices = (segments: Segment[]): CanvasPoint[] => {
 
 const maxDepthFallback = 50
 
+const distanceBetween = (a: CanvasPoint, b: CanvasPoint) =>
+  Math.hypot(a.x - b.x, a.y - b.y)
+
+const distancePointToSegment = (
+  point: CanvasPoint,
+  a: CanvasPoint,
+  b: CanvasPoint,
+) => {
+  const dx = b.x - a.x
+  const dy = b.y - a.y
+  if (dx === 0 && dy === 0) {
+    return distanceBetween(point, a)
+  }
+  const t =
+    ((point.x - a.x) * dx + (point.y - a.y) * dy) /
+    Math.max(dx * dx + dy * dy, Number.EPSILON)
+  const clamped = Math.max(0, Math.min(1, t))
+  const proj = {x: a.x + clamped * dx, y: a.y + clamped * dy}
+  return distanceBetween(point, proj)
+}
+
+const cameraTouchesWall = (
+  camera: Scene['cameras'][number],
+  walls: SceneWall[],
+): boolean => {
+  const EPS = 0.02
+  return walls.some((wall) => {
+    const thickness = Math.max(wall.thickness / 2, EPS)
+    const distance = distancePointToSegment(
+      {x: camera.x, y: camera.y},
+      {x: wall.coordinates.x1, y: wall.coordinates.y1},
+      {x: wall.coordinates.x2, y: wall.coordinates.y2},
+    )
+    return distance <= thickness + EPS * 1.25
+  })
+}
+
 const findRayHit = (
   origin: CanvasPoint,
   angle: number,
@@ -228,6 +265,10 @@ export const computeVisionPolygon = (
   camera: Scene['cameras'][number],
   scene: Scene,
 ): CanvasPoint[] => {
+  if (cameraTouchesWall(camera, scene.walls)) {
+    return [{x: camera.x, y: camera.y}]
+  }
+
   const heightCutoff = (obstacleHeight?: number) =>
     (obstacleHeight ?? camera.height) >= camera.height - 0.01
 
@@ -281,5 +322,22 @@ export const computeVisionPolygon = (
     return hit
   })
 
-  return [origin, ...points]
+  const polygon = [origin, ...points]
+
+  if (polygon.length < 3) {
+    return [origin]
+  }
+
+  const area = Math.abs(
+    polygon.reduce((sum, point, index) => {
+      const next = polygon[(index + 1) % polygon.length]
+      return sum + point.x * next.y - next.x * point.y
+    }, 0) / 2,
+  )
+
+  if (area < 0.001) {
+    return [origin]
+  }
+
+  return polygon
 }

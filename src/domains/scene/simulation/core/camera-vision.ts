@@ -31,6 +31,7 @@ export interface VisionContext {
   index: RBush<IndexedSegment>
   signature: string
   segments: IndexedSegment[]
+  walls: SceneWall[]
 }
 
 export interface VisionPerson {
@@ -107,9 +108,7 @@ const rectanglePoints = (shape: SceneShape): Point[] => {
 }
 
 const circlePoints = (shape: SceneShape, segments = 48): Point[] => {
-  const radiusBase = Math.max(Math.min(shape.width, shape.length) / 2, 0.01)
-  const strokeAllowance = Math.max(shape.lineThickness ?? 0, 0) / 2
-  const radius = Math.max(radiusBase - strokeAllowance, 0.01)
+  const radius = Math.max(Math.min(shape.width, shape.length) / 2, 0.01)
   const origin = {x: shape.x, y: shape.y}
   const center = {
     x: shape.x + shape.width / 2,
@@ -129,9 +128,7 @@ const circlePoints = (shape: SceneShape, segments = 48): Point[] => {
 }
 
 const trianglePoints = (shape: SceneShape): Point[] => {
-  const baseRadius = Math.max(Math.min(shape.width, shape.length), 0.01) / 2
-  const strokeAllowance = Math.max(shape.lineThickness ?? 0, 0) / 2
-  const radius = Math.max(baseRadius - strokeAllowance, 0.01)
+  const radius = Math.max(Math.min(shape.width, shape.length), 0.01) / 2
   const center: Point = {
     x: shape.x + shape.width / 2,
     y: shape.y + shape.length / 2,
@@ -262,6 +259,7 @@ export const buildVisionContext = (
     index,
     signature: createObstacleSignature(walls, shapes),
     segments: indexed,
+    walls,
   }
 }
 
@@ -328,7 +326,9 @@ const findRayHit = (
   length: number,
   index: VisionContext['index'],
   segments: IndexedSegment[],
+  minDistance: number,
 ): Point => {
+  const nearThreshold = Math.max(minDistance, 0.001)
   const rayEnd = projectRay(origin, angle, length)
   const bounds = getRayBounds(origin, angle, length)
   const candidates = index.search({
@@ -342,17 +342,22 @@ const findRayHit = (
 
   const testSegments = candidates.length ? candidates : segments
 
-  testSegments.forEach((segment) => {
+  for (const segment of testSegments) {
     const hit = segmentIntersection(origin, rayEnd, segment.a, segment.b)
     if (!hit) {
-      return
+      continue
     }
     const distance = distanceBetween(hit, origin)
+    if (distance <= nearThreshold) {
+      closestPoint = origin
+      closestDistance = 0
+      break
+    }
     if (distance < closestDistance) {
       closestDistance = distance
       closestPoint = hit
     }
-  })
+  }
 
   return closestPoint
 }
@@ -420,6 +425,7 @@ const castCameraPolygon = (
         maxDistance,
         context.index,
         context.segments,
+        minDistance,
       )
       const distance = distanceBetween(hit, origin)
       const near = Math.max(minDistance, 0.01)
@@ -518,7 +524,7 @@ const isOccludedByHeight = (
       continue
     }
     const hitDistance = distanceBetween(origin, hit)
-    if (hitDistance <= 0.0001 || hitDistance >= totalDistance) {
+    if (hitDistance <= 0.05 || hitDistance >= totalDistance) {
       continue
     }
     const heightAtHit =
@@ -548,6 +554,8 @@ export const computeCameraVision = (params: {
   options?: VisionOptions
 }): CameraVisionResult => {
   const {camera, context, people = [], options} = params
+
+  // If the camera is effectively on a wall line, block vision entirely.
   const {points, sampleCount} = getCachedPolygon(camera, context, options)
   const origin: Point = {x: camera.x, y: camera.y}
   const clampedFov = Math.min(camera.fov, 179.9)
