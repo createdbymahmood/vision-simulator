@@ -68,7 +68,6 @@ export interface SceneCamera {
   depth: number
   zoom: number
   resolution: string
-  nearPlane: number
 }
 
 export interface ScenePerson {

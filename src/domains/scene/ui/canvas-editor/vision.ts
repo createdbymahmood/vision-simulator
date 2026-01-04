@@ -287,9 +287,8 @@ export const computeVisionPolygon = (
   const fovRadians = toRadians(clampedFov)
   const direction = toRadians(camera.direction)
   const halfFov = fovRadians / 2
-  const minDistance = camera.nearPlane ?? 0
-  const maxDistance =
-    camera.depth > 0 ? Math.max(camera.depth, minDistance) : maxDepthFallback
+  const minDistance = 0.01
+  const maxDistance = camera.depth > 0 ? camera.depth : maxDepthFallback
 
   const normalizeDelta = (angle: number) =>
     Math.atan2(Math.sin(angle - direction), Math.cos(angle - direction))
@@ -318,9 +317,8 @@ export const computeVisionPolygon = (
     const dx = hit.x - origin.x
     const dy = hit.y - origin.y
     const distance = Math.sqrt(dx * dx + dy * dy)
-    const near = Math.max(minDistance, 0.01)
-    if (distance < near) {
-      return projectRay(origin, angle, near)
+    if (distance < minDistance) {
+      return projectRay(origin, angle, minDistance)
     }
     return hit
   })

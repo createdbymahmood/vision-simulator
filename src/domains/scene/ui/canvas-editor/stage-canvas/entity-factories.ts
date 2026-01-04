@@ -19,7 +19,6 @@ export const buildCamera = (point: CanvasPoint): SceneCamera => ({
   depth: 15,
   zoom: 1,
   resolution: '1080p',
-  nearPlane: 0.1,
 })
 
 export const buildPerson = (point: CanvasPoint): ScenePerson => ({

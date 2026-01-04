@@ -195,7 +195,6 @@ interface Camera extends BaseEntity {
   fov: number; // degrees
   depth: number; // meters
   zoom: number;
-  nearPlane: number;
   resolution: [number, number];
 }
 

@@ -932,7 +932,6 @@ Examples:
 - depth
 - zoom
 - resolution (e.g., 1280x720 for POV)
-- nearPlane
 
 #### Person
 

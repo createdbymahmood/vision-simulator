@@ -235,7 +235,7 @@ const CameraFeedScene: React.FC<SceneProps> = ({
     // Limit preview FOV to avoid extreme distortion/blank frames at ultra-wide angles.
     const displayFov = Math.min(cameraConfig.fov, 130)
     camera.fov = displayFov
-    camera.near = Math.max(cameraConfig.nearPlane ?? 0.1, 0.05)
+    camera.near = 0.05
     camera.far = Math.max(cameraConfig.depth + 10, 120)
     camera.aspect =
       viewportSize.width && viewportSize.height

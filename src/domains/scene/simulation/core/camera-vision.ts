@@ -76,6 +76,7 @@ const normalizeAngle = (angle: number) => {
 }
 
 const defaultMaxDistance = 80
+const minRayDistance = 0.01
 
 const polygonCache = new Map<
   string,
@@ -328,7 +329,7 @@ const findRayHit = (
   segments: IndexedSegment[],
   minDistance: number,
 ): Point => {
-  const nearThreshold = Math.max(minDistance, 0.001)
+  const nearThreshold = Math.max(minDistance, minRayDistance)
   const rayEnd = projectRay(origin, angle, length)
   const bounds = getRayBounds(origin, angle, length)
   const candidates = index.search({
@@ -392,9 +393,8 @@ const castCameraPolygon = (
   const fovRadians = toRadians(clampedFov)
   const direction = toRadians(camera.direction)
   const halfFov = fovRadians / 2
-  const minDistance = camera.nearPlane ?? 0
-  const maxDistance =
-    camera.depth > 0 ? Math.max(camera.depth, minDistance) : defaultMaxDistance
+  const minDistance = minRayDistance
+  const maxDistance = camera.depth > 0 ? camera.depth : defaultMaxDistance
 
   const baseSamples = options?.baseSamples ?? 400
   const maxSamples = options?.maxSamples ?? 2000
@@ -475,7 +475,6 @@ const createCameraSignature = (camera: SceneCamera, context: VisionContext) =>
     camera.fov.toFixed(2),
     camera.depth.toFixed(2),
     camera.zoom.toFixed(2),
-    (camera.nearPlane ?? 0).toFixed(3),
   ].join('|')
 
 const getCachedPolygon = (
@@ -568,7 +567,6 @@ export const computeCameraVision = (params: {
   const clampedFov = Math.min(camera.fov, 179.9)
   const halfFov = toRadians(clampedFov) / 2
   const direction = toRadians(camera.direction)
-  const near = Math.max(camera.nearPlane ?? 0, 0)
   const maxDistance = camera.depth > 0 ? camera.depth : defaultMaxDistance
 
   const visiblePeople: PersonVisibility[] = people.map((person) => {
@@ -578,7 +576,7 @@ export const computeCameraVision = (params: {
       Math.cos(angleToPerson - direction),
     )
     const distance = distanceBetween(origin, {x: person.x, y: person.y})
-    const inRange = distance <= maxDistance && distance >= near
+    const inRange = distance <= maxDistance
     const inFov = isWithinFov(halfFov, delta)
     const inPolygon = points.length
       ? pointInPolygon({x: person.x, y: person.y}, points)

@@ -56,7 +56,6 @@ const buildCameraVisions = (
 
     const direction = toRadians(camera.direction)
     const halfFov = toRadians(Math.min(camera.fov, 179.9)) / 2
-    const near = Math.max(camera.nearPlane ?? 0, 0)
     const maxDistance = camera.depth
 
     const visiblePeople = normalizedPeople.map((person) => {
@@ -69,9 +68,7 @@ const buildCameraVisions = (
         Math.cos(angleToPerson - direction),
       )
       const rangeAllowance = person.radius
-      const inRange =
-        distance - rangeAllowance <= maxDistance &&
-        distance + rangeAllowance >= near
+      const inRange = distance - rangeAllowance <= maxDistance
       const angleAllowance = Math.asin(
         Math.min(person.radius / Math.max(distance, person.radius), 1),
       )

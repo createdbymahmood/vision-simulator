@@ -15,7 +15,7 @@ Define the canonical scene schema that both Canvas and Map editors will use:
 - **Scene Root**: version, mode (canvas|map), units (meters), background, areas, walls, shapes, cameras, people, meta
 - **Wall Entity**: id, type, coordinates (x1,y1,x2,y2), height, thickness, color, opacity
 - **Shape Entity**: id, type (rectangle|circle|triangle|line), x, y, rotation, width, length, height, color, opacity, lineThickness
-- **Camera Entity**: id, typePreset, x, y, height, direction, fov, depth, zoom, resolution, nearPlane
+- **Camera Entity**: id, typePreset, x, y, height, direction, fov, depth, zoom, resolution
 - **Person Entity**: id, x, y, radius, height, speed, behavior, trailEnabled
 - **Area Entity** (Map only): id, name, geometry, pointCount
 
@@ -59,4 +59,3 @@ Implement the global click-outside behavior:
 - [ ] Base layout renders with all fixed regions
 - [ ] Overlay closing behavior works globally
 - [ ] Local storage autosave functional
-

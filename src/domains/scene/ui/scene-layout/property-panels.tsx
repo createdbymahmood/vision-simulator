@@ -266,9 +266,6 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({camera, onChange}) => {
   const handleDepthChange = useCallbackRef((value: number) =>
     onChange({depth: clamp(value, 0)}),
   )
-  const handleNearPlaneChange = useCallbackRef((value: number) =>
-    onChange({nearPlane: clamp(value, 0)}),
-  )
   return (
     <div className='space-y-4'>
       <div className='grid grid-cols-2 gap-3'>
@@ -322,14 +319,6 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({camera, onChange}) => {
         step={1}
         value={camera.depth}
         onChange={handleDepthChange}
-      />
-      <SliderField
-        label='Near plane (m)'
-        max={5}
-        min={0}
-        step={0.1}
-        value={camera.nearPlane}
-        onChange={handleNearPlaneChange}
       />
       <SelectField
         label='Preset'
