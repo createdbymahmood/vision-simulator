@@ -1,4 +1,4 @@
-# PRD — Computer Vision Simulator Application
+# Updated PRD — Computer Vision Simulator Application
 
 ## Product Name: Computer Vision Simulator
 
@@ -6,7 +6,7 @@
 
 ## Platforms: Web (desktop-first)
 
-## View Types: **Canvas** and **Map**
+## View Modes: **Map Mode** (primary editor) with **Canvas Mode Toggle** (removes map styling)
 
 ## Primary Outputs: Real-time simulation + camera POV feeds + recording + snapshots + scene export
 
@@ -16,22 +16,24 @@
 
 We are building an interactive simulation tool that lets users:
 
-1. Design an environment (2D editor) in **Canvas** or **Map**
-2. Place **walls, shapes, cameras, people**
+1. Design an environment in **Map Mode** (Mapbox-based) with **Canvas Mode** as a simplified view (same editor, map styles removed)
+2. Place **areas, walls, shapes, cameras, people**
 3. Run a live simulation with:
-
-- **Real-time agent motion** with collision avoidance
-- **Realistic camera visibility** (occlusion, height, FOV, depth, zoom)
-- **3D world preview** (default) with optional 2D preview (Canvas required, Map has overlay)
-- Multi-camera **CCTV-like POV feeds**
+   - **Real-time agent motion** with collision avoidance
+   - **Realistic camera visibility** (occlusion, height, FOV, depth, zoom)
+   - **3D world preview** (default) with optional 2D preview overlays
+   - Multi-camera **CCTV-like POV feeds**
 
 4. Export:
+   - **Recording** (video capture of 3D view)
+   - **Snapshot** (screenshot of 3D)
+   - **Scene Export** (JSON)
 
-- **Recording** (video capture of 3D view)
-- **Snapshot** (screenshot of 3D)
-- **Scene Export** (JSON)
+**Key Architecture Decision**: Everything is built in Map Mode. Canvas Mode is simply Map Mode with map tiles/styling disabled, showing a neutral grid background instead. This unified approach means:
 
-This product must feel like a “real” security camera simulation rather than a diagram editor.
+- Single codebase for all editing features
+- Area constraints apply universally (areas become mandatory boundaries)
+- Switching between modes only toggles map visibility, not functionality
 
 ---
 
@@ -40,13 +42,13 @@ This product must feel like a “real” security camera simulation rather than 
 ### 1.1 Personas
 
 - **Security Designer**: Plans camera placement for coverage, blind spots, and obstructions.
-- **Operations Engineer**: Validates device constraints and coverage in real environments (Map).
+- **Operations Engineer**: Validates device constraints and coverage in real environments (Map Mode).
 - **Analyst / Stakeholder**: Reviews recorded simulation outputs and snapshots.
 - **Product/Integrator**: Uses exported scene JSON to integrate simulation results elsewhere.
 
 ### 1.2 Primary JTBD
 
-- “When I design an environment, I want to see which people each camera can detect, so I can validate camera placement and configuration before deployment.”
+- "When I design an environment, I want to see which people each camera can detect, so I can validate camera placement and configuration before deployment."
 
 ---
 
@@ -54,14 +56,16 @@ This product must feel like a “real” security camera simulation rather than 
 
 ### 2.1 In Scope (MVP+)
 
-- Canvas editor (grid board) + Map editor (Mapbox) with shared object model
-- Drawing tools: walls, shapes, areas (map), device placing, people placing
+- **Unified Map-based editor** with Canvas Mode toggle (removes map styling)
+- **Areas** as mandatory spatial boundaries (all objects must be inside areas)
+- Drawing tools: walls, shapes, device placing, people placing
 - Full selection + property editing (instant apply)
 - Undo/redo for _all_ edits
 - Live preview / simulation:
-
-  - Canvas: 3D (default) + 2D toggle + camera feeds
-  - Map: 3D (default) + map visibility toggle + camera feeds + 2D overlay
+  - **3D view** (default) with camera feeds
+  - **Map visibility toggle** (shows/hides map tiles)
+  - **2D overlay** showing camera cones + people movement
+  - Multi-camera POV feeds (CCTV tiles)
 
 - Recording + snapshot
 - Export JSON
@@ -69,9 +73,10 @@ This product must feel like a “real” security camera simulation rather than 
 ### 2.2 Explicit Non-Goals (for now)
 
 - Multiplayer collaboration
-- Photorealistic rendering (we want “realistic enough”, but not cinematic)
+- Photorealistic rendering (we want "realistic enough", but not cinematic)
 - ML inference (no actual CV models—only visibility simulation & bounding boxes)
 - Account system / backend (unless required later)
+- True "canvas-only" mode with infinite boundaries (areas are always required)
 
 ---
 
@@ -79,26 +84,28 @@ This product must feel like a “real” security camera simulation rather than 
 
 ### 3.1 Consistency Rules (Global)
 
-- **Selection mode** governs whether items are selectable.
-- Clicking “blank space” closes:
-
+- **Selection mode** governs whether items are selectable
+- **Areas are mandatory**: All objects (walls, shapes, cameras, people) must be placed inside defined areas
+- Clicking "blank space" closes:
   - Properties panels
   - Popovers
   - CMDK dialogs
   - Area management popovers
 
-- Bottom nav and top nav are **fixed** and always visible.
-- Entire app uses **100vh height, 100% width**.
+- Bottom nav and top nav are **fixed** and always visible
+- Entire app uses **100vh height, 100% width**
 
 ### 3.2 Object Categories
 
-- **Structural**: walls, shapes, areas
+- **Spatial Boundaries**: areas (mandatory first step)
+- **Structural**: walls, shapes
 - **Actors**: people
-- **Devices**: cameras (plus processors as placeholders in Map device picker)
+- **Devices**: cameras (plus processors as placeholders in device picker)
 
 ### 3.3 Interaction Categories
 
-- Create: draw/place objects
+- Define areas (required first)
+- Create: draw/place objects (within areas)
 - Select: pick object
 - Modify: drag/resize/rotate and edit properties
 - Simulate: run live preview
@@ -111,23 +118,25 @@ This product must feel like a “real” security camera simulation rather than 
 
 ### 4.1 Top-Level Routes
 
-- `/canvas` (Canvas Editor)
-- `/canvas/preview` (Simulation Analysis – Canvas)
-- `/map` (Map Editor)
-- `/map/preview` (Simulation Analysis – Map)
+- `/editor` (Unified Map Editor)
+- `/editor/preview` (Simulation Analysis)
 
 ### 4.2 Mode Switching
 
-- Canvas ↔ Map switch can exist in a main app header, or separate entry points. (Implementation choice; requirements don’t mandate a global switch UI.)
+- **Map/Canvas Toggle** in top panel:
+  - **Map Mode** (default): Shows Mapbox tiles with all editing features
+  - **Canvas Mode**: Same editor with map tiles hidden, neutral grid background shown
+  - Toggle is purely visual—all functionality remains identical
+  - Areas remain visible and enforced in both modes
 
 ---
 
-## 5) Canvas Editor PRD (Deep)
+## 5) Unified Editor PRD (Map-Based with Canvas Mode)
 
-### 5.1 Canvas Layout (UI Regions)
+### 5.1 Editor Layout (UI Regions)
 
 1. **Top Panel (fixed)**
-
+   - **Map/Canvas Mode Toggle** (new)
    - Edit Mode toggle
    - Clear Board
    - Undo
@@ -135,88 +144,170 @@ This product must feel like a “real” security camera simulation rather than 
    - Export
    - Live Preview
 
-2. **Main Board**
-
-   - Checkered grid
-   - Pan/zoom (editor camera)
+2. **Main Viewport**
+   - Mapbox map (Map Mode) OR neutral grid (Canvas Mode)
+   - Pan/zoom controls
    - Optional snap-to-grid (recommended)
    - Optional measurement overlay (recommended)
 
 3. **Bottom Navigation (fixed)**
+   1. Mode popover: Hand mode / Selector mode
+   2. **Create Area** tool (required first step)
+   3. Draw wall
+   4. Draw shapes (popover: rectangle/line/circle/triangle)
+   5. Place device (CMDK dialog)
+   6. Place person
 
-   1. Selection mode toggle
-   2. Draw wall
-   3. Draw shapes (popover: rectangle/line/circle/triangle)
-   4. Place camera
-   5. Place person
-   6. Add background image
+4. **Right Sidebar Vertical Buttons (fixed)**
+   1. Search location
+   2. Area management
+   3. Map view mode popover (Map Mode only)
+   4. Devices in use
 
-4. **Right Sidebar: Properties Panel (contextual)**
-
+5. **Properties Panel (contextual, right slide-over)**
    - Appears when selecting an object (selection mode on)
    - Applies changes instantly (no save)
 
 ---
 
-### 5.2 Coordinate System & Units
+### 5.2 Map/Canvas Mode Toggle Behavior
 
-- World coordinate system in meters (2D).
-- Origin may be at center of grid or top-left. Requirement: consistent and visible.
-- Property panel always shows:
+**Map Mode (Default)**
 
-  - X and Y in meters
-  - Rotation degrees (0–360)
+- Shows Mapbox tiles with selected style (satellite/street/traffic/OSM)
+- Areas drawn on real-world geography
+- Location search and geocoding active
+- Map style picker visible
 
-- Rendering scale factor (px per meter) internal; never leaks into UI.
+**Canvas Mode**
+
+- Map tiles hidden
+- Neutral grid background displayed (checkered or subtle grid)
+- Areas remain visible as boundary polygons
+- All editing tools function identically
+- Map style picker hidden (but setting preserved)
+- Location search hidden
+- Coordinates still geo-referenced but appear as abstract grid
+
+**Switching Behavior**
+
+- Toggle preserves all objects and their positions
+- No data transformation needed
+- Smooth visual transition
+- Mode preference saved in scene export
 
 ---
 
-### 5.3 Object Creation: Tools
+### 5.3 Coordinate System & Units
 
-#### 5.3.1 Selection Tool
+- World coordinate system in **meters** (2D)
+- Geo-referenced coordinates (lat/lng) stored internally but presented as meters in UI
+- Origin anchored to first area created or scene center
+- Property panel always shows:
+  - X and Y in meters (relative to scene origin)
+  - Rotation degrees (0–360)
 
-- Clicking selects topmost object under cursor (z-index rules below).
-- Multi-select optional (not required), but recommended for advanced usage.
-- Dragging selected objects moves them with collision constraints depending on object type:
+- Rendering scale factor (px per meter) internal; never leaks into UI
 
-  - Structural objects can overlap (allowed) or optionally constrained.
-  - People cannot overlap obstacles/people.
-  - Cameras cannot be inside walls/shapes (recommended constraint).
+---
 
-#### 5.3.2 Draw Wall Tool
+### 5.4 Areas — Mandatory Foundation (Unified)
+
+#### 5.4.1 Area Entity
+
+**Critical Rule**: At least one area must exist before any other objects can be placed.
+
+Each area has:
+
+- id, name (auto area-1, area-2...)
+- geometry: polygon (with optional curves → store as control points + baked polygon)
+- point count
+- style: fill color/opacity, border color/width
+- boundaryMode: "strict" (default - nothing can be placed outside)
+
+#### 5.4.2 Drawing Modes
+
+1. **Click-to-point polygon**
+   - Click adds vertex
+   - Ghost line previews closure
+   - Double-click closes polygon
+   - Minimum 3 vertices required
+
+2. **Pen tool (Photoshop-like)**
+   - Click to add anchor
+   - Drag to create Bezier handles
+   - Curves are sampled into polyline for rendering & physics
+   - Double-click closes polygon
+
+#### 5.4.3 Area Constraints
+
+- Areas must be closed polygons
+- Minimum vertices: 3
+- **Universal placement rule**: ALL objects (walls, shapes, cameras, people) must be fully inside an area
+- Cursor becomes `not-allowed` outside areas
+- Click outside areas produces "Invalid placement - create an area first" feedback
+- If multiple overlapping areas:
+  - Placement uses the topmost/active area
+  - Or user must explicitly select target area
+
+#### 5.4.4 First-Time User Experience
+
+- On empty scene: prominent prompt "Create an area to begin"
+- Create Area tool auto-activates or highlights
+- After first area created: other tools become enabled
+- Tutorial tooltip (dismissible): "Areas define where you can place objects"
+
+---
+
+### 5.5 Object Creation: Tools
+
+#### 5.5.1 Selection Tool
 
 **Workflow**
 
-- Click first point → start wall segment
+- Clicking selects topmost object under cursor (z-index rules below)
+- Multi-select optional (Shift+click recommended)
+- Dragging selected objects moves them with constraints:
+  - Must remain fully inside area boundaries
+  - People cannot overlap obstacles/people
+  - Cameras cannot be inside walls/shapes
+
+**Constraint Enforcement**
+
+- If drag would move object outside area: snap to area boundary or reject move
+- Visual feedback: object becomes red/highlighted when invalid position attempted
+
+#### 5.5.2 Draw Wall Tool
+
+**Workflow**
+
+- Click first point → start wall segment (must be inside area)
 - Mouse move previews segment
 - Click additional points continues wall polyline
 - Double-click ends drawing
-- Walls are stored as:
-
-  - Either separate segments, or a polyline entity that compiles into segments for physics/occlusion
+- Walls stored as segments or polyline entity
 
 **Properties**
 
 - Start (x1,y1), End (x2,y2) for segments
 - Height (m), Thickness (m)
-- Material preset (optional): “drywall”, “concrete” for visual differences
-- Color + opacity (2D editor)
+- Material preset (optional): "drywall", "concrete"
+- Color + opacity
 
 **Constraints**
 
+- Entire wall path must be inside an area
+- If wall would exit area: show warning and trim at boundary OR reject segment
 - Walls snap to grid (optional toggle)
-- Self-intersection handling:
-
-  - Allowed visually, but physics & occlusion must handle robustly
-
 - Zero-length segments prevented
 
-#### 5.3.3 Draw Shapes Tool
+#### 5.5.3 Draw Shapes Tool
 
 Popover choices: Rectangle, Circle, Triangle, Line
 
 **Shared Editor Behaviors**
 
+- Must be placed entirely inside an area
 - Click-and-drag to size (or click to place default size)
 - Handles for resize/rotate
 - Sidebar updates live
@@ -226,1064 +317,989 @@ Popover choices: Rectangle, Circle, Triangle, Line
 - Circle: x, y, rotation, width, length, color, opacity, height(m)
 - Rectangle: same
 - Triangle: same
-- Line: x, y, rotation, length, color, opacity, (optional thickness), height(m)
-
-**Collision**
-
-- Rectangle/triangle/circle treated as solid obstacles by default
-- Line: configurable whether it blocks movement; MUST block camera view by default (per your “preventing camera to see behind element” statement)
-
-#### 5.3.4 Place Camera Tool
-
-**Workflow**
-
-- Click on board to place camera at cursor
-- On placement, camera gets a default config (medium)
-- Immediately render:
-
-  - Camera icon
-  - Direction indicator
-  - Vision cone polygon in 2D (occlusion-aware)
-
-**Properties**
-
-- x, y
-- direction (deg)
-- FOV (deg)
-- depth (m)
-- height (m)
-- zoom (unitless or optical zoom factor)
-- near clipping (optional; default 0.1m)
-- camera type preset (optional in Canvas; required in Map)
-
-**Vision rendering**
-
-- Vision polygon is computed as a set of rays clipped by obstacles.
-- Must update:
-
-  - On camera property change
-  - On obstacle movement/creation/deletion
-  - On people movement (preview only impacts detections, not polygon)
-
-#### 5.3.5 Place Person Tool
-
-**Workflow**
-
-- Click to place person at cursor
-- Person appears as a circle/marker with collision radius
-
-**Properties**
-
-- x, y
-- radius
-- speed (m/s)
-- movement mode (preview): random roam within boundary constraints
+- Line: x, y, rotation, length, color, opacity, thickness, height(m)
 
 **Constraints**
 
-- Cannot place inside walls/shapes/lines (where line blocks movement)
-- Cannot overlap other people at placement time (resolve by nudging or reject)
+- Shape must fit fully within area boundary
+- If resize/rotate would exit area: clamp to boundary or reject
+- Shapes block camera vision by default
 
-#### 5.3.6 Background Image Tool
+#### 5.5.4 Place Camera Tool
 
 **Workflow**
 
-- Upload image
-- Set as canvas background layer aligned to world coordinates
-- Controls:
+- Open device picker CMDK
+- Select camera type (basic/wide/telephoto/panoramic/indoor/outdoor)
+- Cursor changes to placement mode
+- Click inside area to place camera
+- Cannot place outside area
+- On placement: camera gets default config based on type
+- Immediately render:
+  - Camera icon
+  - Direction indicator
+  - Vision cone polygon (occlusion-aware)
 
-  - opacity
-  - scale (m per px calibration)
-  - rotation
-  - position (x,y anchor)
-  - lock/unlock to prevent accidental moves
+**Properties**
+
+- x, y (in meters relative to origin)
+- direction (deg)
+- FOV (deg) - constrained by camera type
+- depth (m)
+- height (m)
+- zoom (unitless or optical zoom factor)
+- near clipping (default 0.1m)
+- camera type preset
+
+**Camera Type Presets**
+
+- Basic: FOV 60°, depth 20m, height 2.5m
+- Wide Angle: FOV 120°, depth 15m, height 2.5m
+- Telephoto: FOV 30°, depth 50m, height 3m
+- Panoramic: FOV 180°, depth 25m, height 3m
+- Indoor: FOV 90°, depth 15m, height 2.5m
+- Outdoor: FOV 75°, depth 40m, height 4m
+
+**Vision Rendering**
+
+- Vision polygon computed as set of rays clipped by obstacles
+- Must update on:
+  - Camera property change
+  - Obstacle movement/creation/deletion
+  - (In preview only: people movement impacts detections, not polygon)
+
+#### 5.5.5 Place Person Tool
+
+**Workflow**
+
+- Click inside area to place person
+- Person appears as circle/marker with collision radius
+- Cannot place outside areas
+- Cannot place on walls/shapes/lines or overlapping other people
+
+**Properties**
+
+- x, y (in meters)
+- radius (default 0.3m)
+- height (default 1.7m)
+- speed (m/s, default 1.2)
+- movement mode (preview): random roam within area constraints
+
+**Constraints**
+
+- Must be placed inside an area
+- Cannot place inside walls/shapes/solid lines
+- Cannot overlap other people at placement time
+- Resolve conflicts by nudging or rejecting placement
 
 ---
 
-### 5.4 Object Selection & Z-Ordering
+### 5.6 Object Selection & Z-Ordering
 
-When clicking:
+When clicking (Selector mode active):
 
 1. People (top priority)
 2. Cameras
 3. Walls (segments)
 4. Shapes
-5. Background
+5. Areas
+6. Background/map (no selection)
 
-Also provide a “selection cycle” shortcut (optional) to iterate stacked objects.
+Provide "selection cycle" shortcut (Tab) to iterate through stacked objects.
 
 ---
 
-### 5.5 Properties Panel (Canvas)
+### 5.7 Properties Panel (Unified)
 
 **General**
 
-- Title: object type + ID (e.g., “Camera • cam-3”)
+- Title: object type + ID (e.g., "Camera • cam-3")
 - Live-updating values; change triggers immediate render & history command
 - Close on outside click, nav click, or ESC
 
-**Field requirements**
+**Field Requirements**
 
 - Numeric fields: step increments, min/max
-- Angle: either slider + number input
+- Angle: slider + number input
 - Color: picker + opacity slider
 - Validate and clamp values
 
 **Examples**
 
-- Camera: direction 0–360, FOV 1–180, depth >=0, height >=0
-- Person speed: >=0
-- Shape width/length: >0
+- Camera: direction 0–360, FOV 1–180 (constrained by type), depth >=0, height >=0
+- Person: speed >=0, radius >0, height >0
+- Shape: width/length >0, height >=0
+- Area: name (text), point count (read-only), style controls
+
+**Area Properties**
+
+- Name (editable)
+- Point count (display)
+- Fill color + opacity
+- Border color + width
+- "Edit Geometry" button (re-enters area drawing mode for that area)
+- Delete button (with confirmation if contains objects)
 
 ---
 
-### 5.6 History System (Undo/Redo)
+### 5.8 History System (Undo/Redo)
 
-**Scope: everything**
+**Scope: Everything**
 
-- Creation, deletion
+- Area creation, deletion, editing
+- Object creation, deletion
 - Movement and transform changes
-- Property edits (including every keystroke?)
+- Property edits (debounced commits after 300ms idle)
 
-  - Must use debounced commits (e.g., commit after 300ms idle) to avoid history spam
+**Implementation Requirement**
 
-- Background changes
-
-**Implementation requirement**
-
-- Command-based operations:
-
-  - `do()` and `undo()`
-  - Serializable diffs recommended
-
-- History stack size default: 200 operations (configurable)
+- Command-based operations: `do()` and `undo()`
+- Serializable diffs recommended
+- History stack size: 200 operations (configurable)
+- History persists across Map/Canvas mode switches
 
 ---
 
-### 5.7 Clear Board
+### 5.9 Right Sidebar Vertical Buttons
 
-- Prompts confirm (recommended)
-- Clears:
+#### 1. Search Location (Map Mode only)
 
-  - all objects
-  - history resets
+- CMDK prompt: type city/country
+- Uses Mapbox geocoding
+- On selection: flyTo location
+- Hidden in Canvas Mode
 
-- Background removed
+#### 2. Area Management (Always visible)
 
----
+- List view:
+  - Area name
+  - Point count
+  - Object count inside area
+- Click area:
+  - Map/view flies to fit bounds of area
+  - Selects area for editing
+- "Add Area" quick button
+- Collapsible sections
 
-### 5.8 Export (Canvas Editor)
+#### 3. Map View Mode Popover (Map Mode only)
 
-Export options:
+- Satellite
+- Street
+- Traffic
+- OSM Mapnik
+- Hidden in Canvas Mode
 
-- **Scene JSON**
-- **Scene image** (top-down raster)
-- (Optional) bundle export with assets (background image)
+#### 4. Devices in Use (Always visible)
 
----
-
-## 6) Simulation Analysis — Canvas Live Preview (Deep)
-
-### 6.1 Page Header Requirements
-
-- Title: **Simulation Analysis**
-- Description text (under title): `• Click a person to select and show trail`
-
-### 6.2 Layout Regions
-
-1. **Top bar (fixed)**
-
-   - Start Recording (toggle)
-   - Export Snapshot
-
-2. **Under Top bar (top-left)**
-
-   - Toggle: **3D / 2D** (default 3D)
-
-3. **Main viewport**
-
-   - 3D world (default) OR 2D top-down
-
-4. **Right Sidebar (collapsible)**
-
-   - Top: 2D mini view of camera layouts + people (always shown in canvas preview)
-   - Bottom: camera-count list of camera POV tiles (CCTV feeds)
-
-5. **Bottom camera strip (optional if right panel already contains feeds)**
-   Requirement says: “on the bottom of this main preview in the sidebar, cameras-count-number of divs.”
-   Interpret as: camera feed grid inside the right sidebar lower area (collapsible). (We can also mirror to bottom if needed.)
+- Group by area (collapsible sections)
+- Each device item:
+  - Icon
+  - Name/type
+  - Click selects on map/canvas & opens properties
+- Shows count badges per area
+- Filter: cameras only / all devices
 
 ---
 
-### 6.3 3D Simulation Engine Requirements
+### 5.10 Device Picker (CMDK)
 
-**Engine**: Three.js
-**World generation**
-
-- Extrude 2D walls/shapes into 3D geometry using each object’s height.
-- Floor plane: grid textured
-- Lighting: directional + ambient (enough for depth cues)
-
-**Controls**
-
-- Orbit controls:
-
-  - rotate around focus point
-  - pan
-  - zoom in/out
-
-- Focus selection:
-
-  - selecting a person can center camera on them (recommended toggle)
-
----
-
-### 6.4 Physics & Movement Requirements
-
-**People movement**
-
-- People move continuously and avoid:
-
-  - walls
-  - shapes
-  - other people
-
-**Collision model**
-
-- People: circles (2D) with radius
-- Walls: segments with thickness → treat as capsules/rects
-- Shapes: polygon obstacles / circle obstacles
-
-**Motion planning**
-
-- Must avoid getting stuck in corners (use steering behaviors)
-- Recommended approach:
-
-  - Navigation mesh (advanced) OR
-  - Velocity obstacles / RVO-lite (practical) OR
-  - Grid-based A\* with smoothing (works if grid resolution ok)
-
-**Constraints**
-
-- People cannot “tunnel” through walls at high speed:
-
-  - Use continuous collision detection or small fixed timestep
-
-- Deterministic simulation option (seeded random) for reproducible recordings
-
-**Trail requirement**
-
-- When person clicked:
-
-  - highlight selected
-  - show trail (path history for last N seconds, e.g., 20s)
-
-- Trail must reflect actual movement path
-
----
-
-### 6.5 Camera Vision Requirements (Core)
-
-We simulate:
-
-- Camera frustum defined by:
-
-  - position (x,y,height)
-  - direction (yaw)
-  - FOV (horizontal)
-  - depth (max distance)
-  - zoom (affects effective FOV and projection)
-
-- Occlusion by obstacles
-- Person visibility: whether person’s body intersects visible region
-
-#### 6.5.1 2D Occlusion (Top-down)
-
-Compute visible polygon for each camera:
-
-- Cast `N` rays (e.g., 200–2000 depending on performance)
-- Ray angles span `direction ± FOV/2`
-- For each ray:
-
-  - find closest intersection with obstacles (walls/shapes/lines)
-  - clamp to depth if no intersection
-
-- Result is a polygon fan
-- Use polygon union or mesh fan for rendering
-
-**Accuracy**
-
-- More rays → smoother edges
-- Use adaptive sampling:
-
-  - extra rays near intersection discontinuities (advanced)
-
-#### 6.5.2 Height-aware Occlusion (3D)
-
-An obstacle blocks vision only if:
-
-- Obstacle height >= ray height at intersection OR
-- Person height is behind obstacle’s top relative to camera
-
-A practical approach:
-
-- For each person candidate in 2D visible polygon:
-
-  - test line-of-sight with segment intersections
-  - if intersection exists:
-
-    - compare obstacle height to “line from camera to target point on person” height
-
-- Person height defaults: 1.7m (configurable)
-
-#### 6.5.3 Person Detection & Bounding Boxes
-
-Requirement: “if any person clicked, rectangle/square on each camera’s POV if visible.”
-
-We must produce for each camera:
-
-- Per person: `isVisible` boolean
-- If visible: bounding box in camera image coordinates
-
-**Projection**
-
-- Represent camera POV as a render target (texture) or simulated 2D projection.
-- Bounding boxes:
-
-  - Compute person 3D bounds (capsule)
-  - Project bounds corners into camera view space
-  - Convert to 2D pixel coords
-
-- If you don’t want full 3D render targets initially:
-
-  - Approximate bounding box based on angle/distance
-  - But requirement says “exact same simulation like CCTV” → recommend real camera render targets.
-
-**POV feed**
-
-- Each camera produces a live “CCTV” view:
-
-  - Use per-camera Three.js camera rendering to texture
-  - Display textures in UI tiles
-
----
-
-### 6.6 2D Mode (Canvas Preview)
-
-When toggled to 2D:
-
-- Replace main view with top-down 2D simulation
-- Keep:
-
-  - people movement
-  - camera cones
-  - detection overlays
-
-- The right sidebar still shows camera POV feeds
-
----
-
-### 6.7 Recording
-
-**Start Recording toggle**
-
-- Records the **main 3D viewport** exactly as seen (not the camera POV tiles).
-- Implementation:
-
-  - `canvas.captureStream()` from WebGL canvas
-  - MediaRecorder API
-
-- File format:
-
-  - webm by default
-
-- Requirements:
-
-  - Recording continues until stop
-  - UI indicates “Recording…” state
-  - On stop: user downloads/saves output (or stored locally)
-
-Edge cases:
-
-- If user switches to 2D while recording, decide:
-
-  - Option A: keep recording current main viewport (changes included)
-  - Option B: lock recording mode to the starting view
-  - Recommend A (simple, intuitive)
-
----
-
-### 6.8 Snapshot Export
-
-- Captures current frame from main viewport at high resolution
-- Option:
-
-  - 1x or 2x scale
-
-- Output: png
-
----
-
-## 7) Map Editor PRD (Deep)
-
-### 7.1 Layout Regions
-
-- Main map (Mapbox)
-- Bottom navigation (fixed)
-- Right-side vertical grid buttons (fixed)
-- Properties panel (right slide-over)
-- CMDK dialogs & popovers
-
----
-
-### 7.2 Bottom Navigation (Map)
-
-1. Mode popover: Hand mode / Selector mode
-
-   - Hand mode: map drag/pan enabled, object selection disabled
-   - Selector mode: selection enabled, map drag limited unless clicking empty space
-
-2. Create Area tool
-
-   - Two types:
-
-     - Point-to-point polygon
-     - Pen mode (Bezier curves / curved segments)
-
-3. Shapes tool (same as Canvas)
-
-4. Device placement (CMDK dialog; search devices)
-
-People placement exists as part of shared toolset (you stated it explicitly in map requirements). If not in bottom nav, it must exist in device/panel or add a 5th tool. Because your spec includes people on map and strong constraints, we must provide a place tool. Recommended:
-
-- Add **Place Person** button in bottom nav for Map too (even if you didn’t list it in that section). If you strictly want only four items, then include “people” inside the CMDK as a category. But your spec says device picker is for devices, so best is to add a dedicated people tool.
-
-(If you want it strictly as-written, we can keep people placement accessible from properties panel or hotkey, but that’s risky UX.)
-
----
-
-### 7.3 Areas (Map) — Creation and Management
-
-#### 7.3.1 Area Entity
-
-- Each area has:
-
-  - id, name (auto area-1…)
-  - geometry: polygon (with optional curves -> store as control points + baked polygon)
-  - point count
-  - style: fill color/opacity, border color/width
-
-#### 7.3.2 Drawing Modes
-
-1. **Click-to-point polygon**
-
-   - Click adds vertex
-   - Ghost line previews closure
-   - Double-click closes polygon
-
-2. **Pen tool (Photoshop-like)**
-
-   - Click to add anchor
-   - Drag to create Bezier handles
-   - Curves are sampled into polyline for rendering & physics
-   - Double-click closes polygon
-
-#### 7.3.3 Area Constraints
-
-- Areas must be closed
-- Minimum vertices: 3
-- No placement outside areas:
-
-  - cursor becomes `not-allowed`
-  - click produces “invalid placement” feedback
-
-- If multiple areas overlap:
-
-  - placement uses the topmost/nearest area (rule must be defined)
-  - recommended: user must pick active area or use nearest centroid
-
----
-
-### 7.4 Shapes & Walls on Map
-
-Same as Canvas but constrained:
-
-- Must be created fully inside an area
-- If user draws such that part would go outside:
-
-  - Either clip to area boundary (advanced)
-  - Or block and show warning (simpler, recommended MVP)
-
----
-
-### 7.5 Device Picker (CMDK)
-
-Triggered from bottom nav “device tool”.
+Triggered from bottom nav "Place Device" tool.
 
 **CMDK Contents**
 
 - Search input
 - Sections:
-
-  - Cameras
-  - Processors
+  - Cameras (6 types)
+  - Processors (placeholder for future)
   - Recent
 
-**Camera types**
+**Camera Types** (as specified in 5.5.4)
 
-- Basic security
-- Wide angle
-- Telephoto
-- Panoramic
-- Indoor
-- Outdoor
+**Processor Types** (Future)
 
-Each type has:
+- Edge processor
+- Central processor
+- (These don't place anything yet, just appear in picker)
 
-- default FOV, depth, height, zoom
-- constraints:
-
-  - panoramic: FOV up to 180
-  - telephoto: FOV limited narrow
-  - basic: medium values
-
-When user selects a camera type:
+When user selects camera type:
 
 - CMDK closes
-- Cursor changes to placement mode
-- Click in area places camera
-- Cannot place outside area
+- Cursor changes to placement mode with camera icon
+- Click inside area places camera with type defaults
+- Click outside area shows "Invalid placement" feedback
 
 ---
 
-### 7.6 Right-side Vertical Grid Buttons (Map)
+### 5.11 Clear Board
 
-1. **Search location**
-
-   - CMDK prompt: type city/country
-   - Uses Mapbox geocoding
-   - On selection: flyTo location
-
-2. **Area management**
-
-   - List:
-
-     - area name
-     - point count
-
-   - Clicking area:
-
-     - map flies to fit bounds of area
-
-3. **Map view mode popover**
-
-   - Satellite
-   - Street
-   - Traffic
-   - OSM Mapnik
-
-4. **Devices in use**
-
-   - Group by area (collapsible sections)
-   - Each device item:
-
-     - icon
-     - name/type
-     - click selects it on map & opens properties
-
-   - Shows count badges per area
+- Prompts confirmation
+- Clears:
+  - All areas (and consequently all objects inside)
+  - History resets
+- Returns to "Create an area to begin" state
 
 ---
 
-## 8) Simulation Analysis — Map Live Preview (Deep)
+### 5.12 Export (Editor)
 
-### 8.1 Differences vs Canvas Preview
+Export options:
 
-- Default: **3D only** main view
-- Has **area dropdown** (top-left) + fly animation
-- Has **map visibility toggle** (default ON; label “Map view”)
-- Must have:
+1. **Scene JSON**
+   - Includes mode preference (map/canvas)
+   - All entities with geo-referenced coordinates
+   - Area definitions
+   - Version metadata
 
-  - Right sidebar: camera list + POV feeds (real-time)
-  - Top overlay: 2D top-down camera cones + people moving (you asked for it)
-  - Bottom: per-camera POV previews (CCTV)
+2. **Scene Image** (top-down raster)
+   - Current view (map tiles or grid depending on mode)
+   - All objects rendered
+   - High resolution option (2x)
 
-So Map preview actually contains:
+3. **Bundle Export** (future)
+   - JSON + any reference assets
 
-- Main 3D view
-- A 2D overlay mini-map/overlay (not a full 2D mode switch)
+---
 
-### 8.2 Area dropdown behavior
+## 6) Simulation Analysis — Live Preview (Unified)
 
-- Default value:
+### 6.1 Page Header Requirements
 
-  - “nearest area to the view when I clicked on live preview”
+- Title: **Simulation Analysis**
+- Description: `• Click a person to select and show trail`
+- **Mode badge**: Shows current mode (Map/Canvas)
 
+### 6.2 Layout Regions
+
+1. **Top bar (fixed)**
+   - **Map/Canvas Mode Toggle** (same as editor)
+   - **Map Visibility Toggle** (default ON)
+     - Label: "Map View"
+     - When OFF: map tiles hidden, neutral grid shown
+     - Independent of Map/Canvas mode setting
+   - **Area Dropdown** (when multiple areas exist)
+   - Start Recording (toggle)
+   - Export Snapshot
+
+2. **Main Viewport**
+   - **3D world view** (default, always primary)
+   - Orbit controls (rotate, pan, zoom)
+   - Person selection with trail highlighting
+
+3. **Top-Left Overlay (always visible)**
+   - **2D Mini-Map**: Shows camera layouts + FOV cones + people positions in real-time
+   - Synchronized with 3D view
+   - Click to focus camera on area
+
+4. **Right Sidebar (collapsible)**
+   - **Upper Section**: Camera list
+     - Grouped by area
+     - Shows visibility status
+     - Click to focus 3D view on camera
+   - **Lower Section**: Camera POV tiles grid
+     - Live CCTV feeds (N cameras = N tiles)
+     - Bounding boxes overlaid when person visible
+     - Tile shows camera name + detection count
+
+---
+
+### 6.3 Map/Canvas Mode in Preview
+
+**Map Mode**
+
+- 3D world rendered with map texture on ground plane
+- Area boundaries visible on ground
+- Map visibility toggle controls map texture
+
+**Canvas Mode**
+
+- 3D world rendered with neutral grid on ground plane
+- Area boundaries visible as subtle edge lines
+- Map visibility toggle has no effect (already neutral)
+
+**Unified Behavior**
+
+- All simulation logic identical
+- Camera feeds identical
+- 2D overlay mini-map works in both modes
+- Mode can be switched mid-simulation without disruption
+
+---
+
+### 6.4 Area Dropdown Behavior
+
+**When Multiple Areas Exist**
+
+- Dropdown appears in top bar
+- Lists all areas with object counts
+- Default: "All Areas" OR nearest area to view when preview opened
 - Changing selection:
+  - Smooth flyTo animation to area bounds
+  - Focuses 3D view on selected area
+  - Filters camera feeds to cameras in that area (optional)
+  - People movement respects area boundaries
 
-  - flyTo area bounds
-  - updates active simulation boundary for people if required
+**Single Area Scene**
 
-### 8.3 Map toggle
-
-- Switch: ON/OFF
-- When OFF:
-
-  - map texture disappears (ground becomes neutral plane)
-  - objects remain
+- Dropdown hidden
+- No selection needed
 
 ---
 
-## 9) Shared Rules & Interaction Contracts
+### 6.5 3D Simulation Engine Requirements
 
-### 9.1 Selection Mode Contract
+**Engine**: Three.js
 
-- If selection mode OFF:
+**World Generation**
 
-  - clicking objects does not open properties
-  - creation tools still work
+- Extrude 2D walls/shapes into 3D geometry using each object's height
+- Floor plane:
+  - Map Mode: textured with Mapbox tiles OR neutral when map visibility off
+  - Canvas Mode: neutral grid texture
+- Area boundaries rendered as:
+  - Subtle vertical planes (semi-transparent walls at area edges)
+  - OR ground-level outline highlighting
+- Lighting: directional + ambient for depth cues
 
-- If selection mode ON:
+**Controls**
 
-  - clicking object selects and opens panel
-
-### 9.2 Closing UI Overlays
-
-Any of these should close when clicking on:
-
-- empty canvas/map
-- bottom nav
-- top nav
-- switching tools
-
-Overlays:
-
-- properties panel
-- popovers
-- cmdk dialogs
-- area management popovers
-- map view picker popover
-
-### 9.3 Invalid Actions Feedback
-
-Must be explicit and immediate:
-
-- Cursor `not-allowed`
-- Toast/snackbar or small inline hint near cursor
-- Soft error sound optional
-
-Examples:
-
-- placing camera outside area
-- placing person on wall/shape/line
-- drawing shape outside area on map
-- trying to preview with zero cameras (still allowed, but warn)
+- Orbit controls:
+  - Rotate around focus point
+  - Pan
+  - Zoom in/out
+  - Min/max zoom limits
+- Focus selection:
+  - Selecting person centers camera on them
+  - Double-click to refocus
 
 ---
 
-## 10) Data Model (Canonical Scene Schema)
+### 6.6 Physics & Movement Requirements
 
-### 10.1 Scene Root
+**People Movement**
+
+- People move continuously within their area boundaries
+- Avoid:
+  - Area edges (cannot cross)
+  - Walls
+  - Shapes
+  - Other people
+
+**Collision Model**
+
+- People: circles (2D) with radius, capsule in 3D
+- Walls: segments with thickness → capsule/rect collision
+- Shapes: polygon obstacles / circle obstacles
+- Area boundaries: polygon edges (hard constraint)
+
+**Motion Planning**
+
+- Steering behaviors + velocity obstacle avoidance (recommended)
+- OR navigation mesh (advanced)
+- Must avoid getting stuck in corners
+- Smooth path following
+- Speed limits: configurable per person, default 1.2 m/s
+
+**Constraints**
+
+- People cannot tunnel through walls at high speed
+  - Use continuous collision detection or small timestep (0.016s)
+- Deterministic simulation (seeded random) for reproducible recordings
+- Area boundary is absolute constraint (highest priority)
+
+**Trail Requirement**
+
+- When person clicked:
+  - Highlight selected (distinct color/glow)
+  - Show trail (path history for last 20 seconds)
+  - Trail rendered as line strip on ground plane
+  - Trail color matches person highlight
+
+---
+
+### 6.7 Camera Vision Requirements (Core)
+
+**Vision Frustum**
+
+- Position (x, y, height)
+- Direction (yaw)
+- FOV (horizontal, in degrees)
+- Depth (max distance in meters)
+- Zoom (affects effective FOV and projection)
+- Near clipping (default 0.1m)
+
+**Occlusion System**
+
+#### 2D Occlusion (Top-Down)
+
+Compute visible polygon for each camera:
+
+- Cast N rays (400–2000 rays depending on performance)
+- Ray angles span `direction ± FOV/2`
+- For each ray:
+  - Find closest intersection with obstacles (walls/shapes/lines)
+  - Clamp to depth if no intersection
+  - Respect area boundaries (rays stop at area edges)
+- Result: polygon fan for visualization
+
+**Adaptive Ray Sampling**
+
+- More rays near intersection discontinuities
+- Fewer rays in open spaces
+
+#### Height-Aware Occlusion (3D)
+
+An obstacle blocks vision only if:
+
+- Obstacle height >= ray height at intersection point
+- OR person height is occluded by obstacle's top relative to camera elevation
+
+**Practical Implementation**
+
+- For each person candidate in 2D visible polygon:
+  - Test line-of-sight with segment intersections
+  - If intersection exists:
+    - Compare obstacle height to "line from camera to target point" height
+    - Person height default: 1.7m (configurable)
+    - If obstacle top > ray height at intersection: occluded
+
+#### Person Detection & Bounding Boxes
+
+**Requirements**
+
+- Each camera determines: `isVisible` boolean per person
+- If visible: compute bounding box in camera image coordinates
+
+**Projection Method**
+
+- Each camera has dedicated Three.js perspective camera
+- Render people to camera's view (render target texture)
+- Compute person 3D bounds (capsule: cylinder + sphere cap)
+- Project bounds corners into camera view space
+- Convert to 2D pixel coordinates for bounding box overlay
+
+**POV Feed**
+
+- Each camera produces live "CCTV" view:
+  - Three.js camera renders to texture (RenderTarget)
+  - Texture displayed in UI tile
+  - Bounding boxes overlaid in canvas/SVG layer
+  - Detection count badge on tile
+
+**Performance Optimization**
+
+- Render cameras at reduced resolution (720p default, down to 480p if needed)
+- Update frequency: 30 FPS per camera (reduce if >10 cameras)
+- Only render visible tiles (viewport culling)
+
+---
+
+### 6.8 2D Overlay Mini-Map
+
+**Always Visible** (top-left of main viewport)
+
+**Contents**
+
+- Top-down view of current area (or all areas if "All Areas" selected)
+- Camera positions with FOV cones
+- People positions (dots with color coding)
+- Real-time movement synchronized with 3D view
+
+**Interactions**
+
+- Click camera: focuses 3D view on that camera
+- Click person: selects and shows trail
+- Pan/zoom mini-map independent of 3D view
+- Resize/collapse controls
+
+**Styling**
+
+- Semi-transparent background
+- High contrast icons
+- Camera cones use same occlusion-aware polygons as editor
+
+---
+
+### 6.9 Recording
+
+**Start Recording Toggle**
+
+- Records **main 3D viewport only** (not camera POV tiles, not mini-map)
+- Exactly as seen by user
+
+**Implementation**
+
+- `canvas.captureStream()` from WebGL canvas
+- MediaRecorder API
+- Format: WebM (default), fallback MP4 if supported
+
+**Requirements**
+
+- Recording continues until stop
+- UI indicator: red dot + "Recording..." text + timer
+- On stop: automatic download OR save to local storage
+- Optionally include timestamp overlay (future)
+
+**Edge Cases**
+
+- Switching Map/Canvas mode while recording: continues recording new view
+- Switching area: continues recording new area
+- Map visibility toggle: records current state (with or without map)
+
+---
+
+### 6.10 Snapshot Export
+
+- Captures current frame from main 3D viewport
+- High resolution: 2x or 4x supersampling
+- Output: PNG
+- Includes current mode, map visibility state, selected area
+
+---
+
+## 7) Data Model (Canonical Scene Schema)
+
+### 7.1 Scene Root
 
 ```json
 {
   "version": "1.0",
-  "mode": "canvas|map",
+  "mode": "map|canvas",
+  "mapVisible": true,
   "units": "meters",
-  "background": { ... },
+  "origin": {
+    "lat": 0,
+    "lng": 0,
+    "description": "Geographic reference point"
+  },
   "areas": [ ... ],
   "walls": [ ... ],
   "shapes": [ ... ],
   "cameras": [ ... ],
   "people": [ ... ],
-  "meta": { "createdAt": "...", "updatedAt": "..." }
+  "meta": {
+    "createdAt": "ISO8601",
+    "updatedAt": "ISO8601",
+    "mapStyle": "satellite|street|traffic|osm"
+  }
 }
 ```
 
-### 10.2 Entities
+### 7.2 Entities
+
+#### Area (Mandatory)
+
+```json
+{
+  "id": "area-1",
+  "type": "area",
+  "name": "Area 1",
+  "geometry": {
+    "type": "polygon",
+    "coordinates": [[x1,y1], [x2,y2], ...],
+    "bezierControls": [ ... ] // optional for curved areas
+  },
+  "pointCount": 4,
+  "style": {
+    "fillColor": "#rgba",
+    "fillOpacity": 0.2,
+    "borderColor": "#rgba",
+    "borderWidth": 2
+  },
+  "boundaryMode": "strict"
+}
+```
 
 #### WallSegment
 
-- id
-- type: "wall"
-- x1,y1,x2,y2
-- height
-- thickness
-- color, opacity
+```json
+{
+  "id": "wall-1",
+  "type": "wall",
+  "areaId": "area-1",
+  "x1": 0,
+  "y1": 0,
+  "x2": 10,
+  "y2": 0,
+  "height": 3,
+  "thickness": 0.2,
+  "color": "#rgba",
+  "opacity": 1,
+  "material": "drywall"
+}
+```
 
 #### Shape
 
-- id
-- type: "rectangle|circle|triangle|line"
-- x,y
-- rotation
-- width,length (or radius representation internally)
-- height
-- color, opacity
-- lineThickness (for line)
+```json
+{
+  "id": "shape-1",
+  "type": "rectangle|circle|triangle|line",
+  "areaId": "area-1",
+  "x": 5,
+  "y": 5,
+  "rotation": 0,
+  "width": 2,
+  "length": 3,
+  "height": 1,
+  "color": "#rgba",
+  "opacity": 1,
+  "lineThickness": 0.1 // for line type
+}
+```
 
 #### Camera
 
-- id
-- typePreset: "basic|wide|telephoto|panoramic|indoor|outdoor|custom"
-- x,y,height
-- direction
-- fov
-- depth
-- zoom
-- resolution (e.g., 1280x720 for POV)
+```json
+{
+  "id": "camera-1",
+  "type": "camera",
+  "areaId": "area-1",
+  "typePreset": "basic|wide|telephoto|panoramic|indoor|outdoor",
+  "x": 10,
+  "y": 10,
+  "height": 2.5,
+  "direction": 90,
+  "fov": 60,
+  "depth": 20,
+  "zoom": 1,
+  "nearClipping": 0.1,
+  "resolution": {
+    "width": 1280,
+    "height": 720
+  }
+}
+```
 
 #### Person
 
-- id
-- x,y
-- radius
-- height
-- speed
-- behavior: "roam|path|script"
-- trailEnabled
-
-#### Area (Map only)
-
-- id, name
-- geometry:
-
-  - anchors + bezier handles OR baked polygon points
-
-- pointCount
-
-### 10.3 Derived Runtime Structures (Not in export)
-
-- Spatial index (R-tree / grid buckets)
-- Compiled obstacle polygons
-- Nav / avoidance mesh
-- Per-camera render targets & projection data
+```json
+{
+  "id": "person-1",
+  "type": "person",
+  "areaId": "area-1",
+  "x": 15,
+  "y": 15,
+  "radius": 0.3,
+  "height": 1.7,
+  "speed": 1.2,
+  "behavior": "roam",
+  "trailEnabled": false
+}
+```
 
 ---
 
-## 11) Vision & Occlusion: Detailed Algorithm Requirements
+## 8) Vision & Occlusion: Detailed Algorithm Requirements
 
-### 11.1 Real-time Constraints
+### 8.1 Real-time Constraints
 
-We may have:
+Expected load:
 
 - 10–50 cameras
 - 10–100 people
-- Obstacles up to hundreds of segments
+- 100–500 obstacle segments
+- 3–10 areas
 
-We must avoid O(Cameras _ Rays _ Obstacles) naive in worst case.
+Must avoid O(Cameras × Rays × Obstacles) naive worst case.
 
-### 11.2 Recommended Strategy
+### 8.2 Recommended Strategy
 
-**Two-phase pipeline**
+**Two-Phase Pipeline**
 
-1. **Broad phase (fast)**
+1. **Broad Phase (Fast)**
+   - Use spatial index (R-tree or grid) to query:
+     - Nearby obstacles within camera depth range
+     - Candidate people within camera depth and FOV wedge
+   - Area boundary check first (cheapest filter)
 
-- Use spatial index to query nearby obstacles within camera depth range.
-- Use spatial index to query candidate people within camera depth and FOV wedge.
+2. **Narrow Phase (Accurate)**
+   - For candidates:
+     - Line-of-sight segment intersection tests
+     - Height checks (3D occlusion)
+     - Bounding box projection
 
-2. **Narrow phase (accurate)**
+### 8.3 Camera Visible Polygon
 
-- For candidates:
+**Computation**
 
-  - line-of-sight segment intersection tests
-  - height checks
-  - bounding box projection
+- Ray casting with adaptive sampling
+- Cache results, recompute only when:
+  - Camera transforms change
+  - Obstacle geometry changes
+  - Area boundaries change
 
-### 11.3 Camera Visible Polygon
+**Optimization**
 
-Compute for visualization overlay:
+- Pre-compute static obstacle segments per area
+- Incremental updates for dynamic changes
 
-- Use ray casting with adaptive sampling
-- Cache results and recompute only when:
+### 8.4 Person Visibility Determination
 
-  - camera transforms change
-  - obstacle geometry changes
+A person is **visible** if:
 
-### 11.4 Person Visibility Determination
-
-A person is “visible” if:
-
-- Within depth
+- Inside camera's area OR in adjacent visible area (if multi-area support)
+- Within depth range
 - Within FOV angle
-- Not occluded by obstacles considering height
-- Optional: partial visibility allowed (if only part visible, still visible)
+- Not fully occluded by obstacles (considering height)
+- Partial visibility counts as visible
 
-### 11.5 Bounding Box Rendering (CCTV feeds)
+### 8.5 Bounding Box Rendering (CCTV Feeds)
 
-- Each camera has a Three.js camera
-- People are rendered in that camera’s view
-- Bounding boxes computed by projection
-- The camera tile overlays bounding boxes
+**Per-Camera Rendering**
 
-This achieves the “exact same CCTV simulation” feeling you want.
+- Each camera has Three.js PerspectiveCamera
+- Render to RenderTarget texture
+- People rendered as 3D meshes (capsules)
+- Post-process to detect visible people and compute bounding boxes
 
----
+**Bounding Box Computation**
 
-## 12) 3D Fidelity Requirements
-
-### 12.1 Geometry
-
-- Walls: extruded planes with thickness
-- Shapes: extruded meshes
-- People: capsule mesh or cylinder + sphere head
-- Cameras: simple model (cone + box)
-
-### 12.2 Materials
-
-- Not photorealistic but physically consistent:
-
-  - soft shadows optional
-  - neutral colors
-  - opacity respected for shapes if you want “glass-like” blockers (but note: if a shape is semi-transparent visually, it still blocks vision unless explicitly configured—define rule)
-
-**Rule recommendation**
-
-- Opacity affects visuals only; occlusion is binary unless we add “see-through” material types.
+- Project person's 3D bounding capsule corners to 2D
+- Find min/max x,y in camera view → rectangle
+- Overlay on camera tile with person ID
 
 ---
 
-## 13) Simulation Boundaries & Constraints
+## 9) UI/UX Details That Must Exist
 
-### 13.1 Canvas Boundary
-
-- Either infinite or a defined board extent.
-- People should roam within the “walkable region”:
-
-  - if no boundary defined: choose a bounding box around placed objects + margin
-
-### 13.2 Map Boundary
-
-- People must remain inside selected area polygon
-- If multiple areas:
-
-  - People belong to a specific area
-  - They cannot roam across areas unless user enables “multi-area roam” (future)
-
----
-
-## 14) UI/UX Details That Must Exist
-
-### 14.1 Tool State Indicators
+### 9.1 Tool State Indicators
 
 - Active tool highlighted in bottom nav
 - Cursor changes:
+  - Crosshair for area/wall draw
+  - Camera icon for camera placement
+  - Person icon for person placement
+  - Not-allowed outside areas (red circle-slash)
+- Mode badges visible in top panel
 
-  - crosshair for draw
-  - camera icon for camera placement
-  - person icon for person placement
-  - not-allowed outside area
+### 9.2 Inline Measurements
 
-### 14.2 Inline Measurements
+**While Drawing Walls**
 
-- While drawing walls:
+- Show length in meters near cursor
+- Show angle from previous segment
+- Snap indicators (if snap-to-grid enabled)
 
-  - show length in meters near cursor
-  - show angle
+**While Drawing Areas**
 
-### 14.3 Preview of camera cone in editor
+- Show total perimeter
+- Show area square meters (live calculation)
+- Ghost polygon preview before closure
+
+### 9.3 Preview of Camera Cone in Editor
 
 - Always visible when camera exists
-- Occlusion-aware wedge
+- Occlusion-aware wedge (computed polygon)
+- Updates in real-time as camera or obstacles change
+- Color-coded: green (good coverage), yellow (limited), red (blocked)
 
-### 14.4 Properties Panel Behavior
+### 9.4 Properties Panel Behavior
 
-- For numeric fields:
+**Numeric Fields**
 
-  - dragging on label to adjust (nice pro UX)
-  - immediate update
-
+- Drag-on-label to adjust (pro UX)
+- Mouse wheel to increment/decrement
+- Immediate update (debounced for history)
 - ESC closes panel
+- Enter commits and closes
+
+**Area-Specific Controls**
+
+- "Edit Geometry" button → re-enters area edit mode
+- "Duplicate Area" button
+- Delete with confirmation if contains objects
 
 ---
 
-## 15) Export Requirements (Advanced)
+## 10) Non-Functional Requirements
 
-### 15.1 Scene Export (JSON)
+### 10.1 Performance
 
-- Must include:
+**Editor**
 
-  - all entities
-  - units
-  - version
+- Smooth pan/zoom at 60 FPS with 500 objects
+- Area editing with 1000+ vertices smooth
+- Property updates: < 16ms latency
 
-- Must NOT include:
+**Preview**
 
-  - runtime caches
-
-### 15.2 Snapshot Export
-
-- PNG
-- Contains:
-
-  - what user sees in main 3D viewport
-
-### 15.3 Recording Export
-
-- WebM (default)
-- Records main viewport
-- Optionally include timestamp overlay (future)
-
----
-
-## 16) Non-Functional Requirements
-
-### 16.1 Performance
-
-- Editor: smooth pan/zoom at 60 FPS with 500 objects
-- Preview: target 60 FPS with:
-
+- Target 60 FPS with:
   - 20 cameras @ 720p render targets
   - 30 people
   - 200 obstacle segments
+  - 5 areas
 
-- Degrade gracefully:
+**Graceful Degradation**
 
-  - lower camera POV resolution dynamically
-  - lower ray count for visible polygon
-  - reduce shadow quality
+- Lower camera POV resolution (720p → 480p → 360p)
+- Reduce ray count for visibility polygons (2000 → 400 → 100)
+- Lowershadow quality
 
-### 16.2 Reliability
+- Reduce people movement update frequency
 
-- No crashes if geometry is messy:
+### 10.2 Reliability
 
-  - overlapping walls
-  - self-intersecting polygons
+**Geometry Robustness**
 
-- Autosave recommended (localStorage) to prevent loss
+- Handle overlapping walls gracefully
+- Self-intersecting area polygons: show warning, allow but mark invalid
+- Degenerate shapes (zero-area): prevent or auto-fix
 
-### 16.3 Compatibility
+**Autosave**
 
-- Chrome/Edge latest, Safari if possible (recording may vary)
-- WebGL2 required (fallback message if unsupported)
+- localStorage backup every 30 seconds
+- Restore on page reload after crash
+- "Unsaved changes" warning on close
 
----
+### 10.3 Compatibility
 
-## 17) Analytics & Debugging (Strongly Recommended)
-
-Provide developer overlays (toggle):
-
-- Show collision shapes
-- Show nav/avoidance vectors
-- Show camera rays
-- Show detection counts per camera
-- FPS meter
-
-Event telemetry (if productized):
-
-- tool usage frequency
-- time in preview mode
-- number of exports/recordings
+- Chrome/Edge latest (primary)
+- Firefox (secondary)
+- Safari (best effort, recording may vary)
+- WebGL 2 required
+  - Show friendly error message if unsupported
+  - Fallback: suggest supported browser
 
 ---
 
-## 18) QA: Acceptance Criteria (Detailed)
+## 11) QA: Acceptance Criteria (Detailed)
 
-### 18.1 Editor Core
+### 11.1 Editor Core
 
-- Walls show x/y and length in meters in sidebar
-- Shapes have correct properties and update live
-- Cameras show occlusion-aware FOV wedge
-- People placement prevented on obstacles and overlaps
-- Upload background applies to entire canvas
+**Area Management**
 
-### 18.2 Map Rules
+- [ ] Cannot place any object before creating area
+- [ ] Area creation (point mode) works with double-click close
+- [ ] Area creation (pen mode) works with Bezier curves
+- [ ] Area list shows all areas with counts
+- [ ] Clicking area in list flies to area bounds
+- [ ] Area properties panel shows name, style controls, point count
 
-- Nothing placeable outside areas
-- Cursor shows not-allowed outside areas
-- Area creation supports point mode + pen mode
-- Double click closes polygon/pen
-- Area management fly-to works
-- Location search fly-to works
-- Map style switch works
+**Object Placement**
 
-### 18.3 Simulation Analysis — Canvas
+- [ ] Walls show x/y, length in meters in sidebar
+- [ ] Walls must be fully inside area or show error
+- [ ] Shapes have correct properties and update live
+- [ ] Shapes cannot be placed/resized outside area
+- [ ] Cameras show occlusion-aware FOV wedge
+- [ ] Cameras cannot be placed outside area
+- [ ] People placement prevented on obstacles, overlaps, and outside areas
 
-- Default 3D view
-- 2D toggle works
-- People move and never pass through walls/shapes/people
-- Camera POV feeds update in real time
-- Clicking a person:
+**Mode Switching**
 
-  - shows trail
-  - shows bounding boxes on each camera feed where visible
+- [ ] Map/Canvas toggle works in editor
+- [ ] Canvas mode shows neutral grid, hides map tiles
+- [ ] Map mode shows selected map style
+- [ ] All objects preserved when switching modes
+- [ ] Area boundaries visible in both modes
 
-- Recording toggles start/stop and produces playable file
-- Snapshot exports correct image
+### 11.2 Map Features
 
-### 18.4 Simulation Analysis — Map
+- [ ] Location search geocodes and flies to location
+- [ ] Map style picker changes tiles (satellite/street/traffic/OSM)
+- [ ] Device picker CMDK shows camera types
+- [ ] Selecting camera type enables placement mode
+- [ ] Devices-in-use panel groups by area with counts
 
-- Default 3D view
-- Area dropdown selects and flies to area
-- Map visibility toggle works
-- Camera feeds update in real time
-- 2D overlay shows FOV cones + people moving
+### 11.3 Simulation Analysis
 
-### 18.5 Undo/Redo
+**3D View**
 
-- Undo/Redo works for:
+- [ ] Default 3D view loads
+- [ ] Map visibility toggle works
+- [ ] Area dropdown selects and flies to area (when multiple areas)
+- [ ] People move and never pass through walls/shapes/area boundaries
+- [ ] Camera POV feeds update in real-time (30 FPS)
 
-  - add/delete objects
-  - move/resize/rotate
-  - property edits (debounced)
-  - background changes
-  - area creation/editing
+**Person Interaction**
+
+- [ ] Clicking person selects and shows trail (20s history)
+- [ ] Trail renders on ground plane in 3D
+- [ ] Bounding boxes appear on camera feeds when person visible
+
+**2D Overlay Mini-Map**
+
+- [ ] Shows camera FOV cones
+- [ ] Shows people moving in real-time
+- [ ] Clicking camera focuses 3D view
+- [ ] Synchronized with 3D view
+
+**Recording & Export**
+
+- [ ] Recording toggles start/stop
+- [ ] Recording produces playable WebM file
+- [ ] Recording captures main 3D viewport only
+- [ ] Snapshot exports high-res PNG
+- [ ] Scene JSON export includes all entities, areas, mode
+
+### 11.4 Undo/Redo
+
+- [ ] Undo/Redo works for area creation/deletion/editing
+- [ ] Undo/Redo works for add/delete objects
+- [ ] Undo/Redo works for move/resize/rotate
+- [ ] Undo/Redo works for property edits (debounced)
+- [ ] History persists across mode switches
 
 ---
 
-## 19) Implementation Notes (Your Suggested Stack, Formalized)
+## 12) Implementation Notes
 
-### 19.1 Proposed Stack
+### 12.1 Proposed Stack
 
-- **React** UI
-- **React Flow** for Canvas editor graph/objects (or Konva/Fabric if better for drawing; but you asked React Flow)
-- **Three.js** for 3D simulation + camera POV render targets
-- **Mapbox GL JS** for Map editor + flyTo + styles
-- State: **Zustand** (recommended for performance) or Redux Toolkit
-- CMDK: cmdk library
+- **React** 18+ UI
+- **Mapbox GL JS** for map rendering
+- **Three.js** r150+ for 3D simulation + camera POV render targets
+- State: **Zustand** (recommended) or Redux Toolkit
+- **CMDK** library for command palette
+- **Turf.js** for geospatial calculations (point-in-polygon, intersections)
+- Optional: **React Flow** for visual debugging (not primary UI)
 
-### 19.2 Key Engineering Risks & Mitigations
+### 12.2 Key Engineering Risks & Mitigations
 
 1. **Multi-camera POV rendering cost**
+   - Mitigation: dynamic resolution scaling, render only visible tiles, 30 FPS limit per camera
 
-   - Mitigate with:
+2. **Area boundary enforcement complexity**
+   - Mitigation: use Turf.js booleanPointInPolygon, cache area boundaries as collision geometry
 
-     - per-camera resolution scaling
-     - render only visible tiles or rotate update frequency per camera
+3. **Occlusion correctness with areas**
+   - Mitigation: treat area edges as obstacles for ray casting, robust spatial indexing
 
-2. **Occlusion correctness**
-
-   - Use robust geometry ops, spatial indexing
-
-3. **Pathfinding complexity**
-
-   - Start with steering + obstacle avoidance; upgrade to navmesh if needed
+4. **Pathfinding with area constraints**
+   - Mitigation: navigation mesh clipped to area boundaries, or steering with area edge repulsion
 
 ---
 
-## 20) Open Decisions (Handled with Best Defaults)
+## 13) Open Decisions (Handled with Best Defaults)
 
-These are choices you didn’t specify; the PRD resolves them with defaults:
+These choices weren't specified; PRD resolves with defaults:
 
-- Person default height: **1.7m**
-- Wall default height: **3m**
-- Shape default height: **1m** (configurable)
-- Camera default height: **2.5m**
-- Default camera POV resolution: **1280×720** (reduce as needed)
-- Default ray count per camera for visible polygon: **400** (adaptive recommended)
+- **Person default height**: 1.7m
+- **Wall default height**: 3m
+- **Shape default height**: 1m (configurable)
+- **Camera default height**: 2.5m
+- **Default camera POV resolution**: 1280×720 (scalable)
+- **Default ray count per camera visibility**: 400 rays (adaptive)
+- **Area default fill opacity**: 0.2
+- **Area default border width**: 2px
+- **Default movement speed**: 1.2 m/s
 
 ---
 
-## 21) Deliverables Checklist
+## 14) Deliverables Checklist
 
-- [ ] Canvas Editor
-- [ ] Map Editor
-- [ ] Shared object schema + export
-- [ ] Properties panels (instant apply)
-- [ ] Full undo/redo
-- [ ] Canvas Simulation Analysis (3D + 2D toggle)
-- [ ] Map Simulation Analysis (3D + overlays)
+- [ ] Unified Map-based Editor with Canvas mode toggle
+- [ ] Area creation & management (mandatory foundation)
+- [ ] Walls, shapes, cameras, people placement (all area-constrained)
+- [ ] Device picker CMDK with camera types
+- [ ] Shared object schema + JSON export
+- [ ] Properties panels (instant apply, area-aware)
+- [ ] Full undo/redo (including area operations)
+- [ ] Simulation Analysis: 3D view + 2D overlay mini-map
 - [ ] Multi-camera CCTV feeds + bounding boxes
-- [ ] Recording (viewport)
-- [ ] Snapshot export
-- [ ] Polished UI closing rules & cursor rules
+- [ ] Person selection + trail visualization
+- [ ] Map visibility toggle
+- [ ] Area dropdown with flyTo
+- [ ] Recording (main viewport)
+- [ ] Snapshot export (high-res PNG)
+- [ ] Polished UI: closing rules, cursor feedback, mode indicators
