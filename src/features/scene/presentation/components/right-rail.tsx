@@ -29,8 +29,8 @@ export const RightRail: React.FC<RightRailProps> = ({
   onDevicesInUse,
 }) => {
   return (
-    <div className='fixed right-4 top-24 z-30 w-12 rounded-xl border border-white/50 bg-white/70 p-1 backdrop-blur shadow-lg dark:border-white/10 dark:bg-black/40'>
-      <div className='flex flex-col gap-2'>
+    <div className='fixed right-4 top-24 z-30 w-12 rounded-full border p-1 backdrop-blur shadow-lg'>
+      <div className='flex flex-col gap-2 items-center'>
         {isMapMode ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -45,7 +45,7 @@ export const RightRail: React.FC<RightRailProps> = ({
                 <Search className='h-5 w-5' />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Search location (⌘K)</TooltipContent>
+            <TooltipContent side='left'>Search location (⌘K)</TooltipContent>
           </Tooltip>
         ) : null}
 
@@ -60,12 +60,12 @@ export const RightRail: React.FC<RightRailProps> = ({
               onClick={onAreaManagement}
             >
               <Layers className='h-5 w-5' />
-              <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
+              {/*  <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
                 {areaCount}
-              </Badge>
+              </Badge> */}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Areas (⌘⇧A)</TooltipContent>
+          <TooltipContent side='left'>Areas (⌘⇧A)</TooltipContent>
         </Tooltip>
 
         {isMapMode ? (
@@ -82,7 +82,7 @@ export const RightRail: React.FC<RightRailProps> = ({
                 <Map className='h-5 w-5' />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Map style</TooltipContent>
+            <TooltipContent side='left'>Map style</TooltipContent>
           </Tooltip>
         ) : null}
 
@@ -97,12 +97,12 @@ export const RightRail: React.FC<RightRailProps> = ({
               onClick={onDevicesInUse}
             >
               <Video className='h-5 w-5' />
-              <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
+              {/*  <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
                 {deviceCount}
-              </Badge>
+              </Badge> */}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Devices (⌘⇧D)</TooltipContent>
+          <TooltipContent side='left'>Devices (⌘⇧D)</TooltipContent>
         </Tooltip>
       </div>
     </div>

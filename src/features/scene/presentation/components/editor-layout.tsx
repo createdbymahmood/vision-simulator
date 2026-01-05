@@ -7,7 +7,7 @@ import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {TopPanel} from '@/features/scene/presentation/components/top-panel'
 
 import type {SceneMode} from '../../domain/types'
-import type {AreaCreationMode, CursorPosition, ShapeDrawMode} from '../types'
+import type {AreaCreationMode, ShapeDrawMode} from '../types'
 
 import {createInitialScene} from '../../domain/services/scene-factory'
 import {useEditorShortcuts} from '../hooks/use-editor-shortcuts'
@@ -22,12 +22,12 @@ import {
 import {RightRail} from './right-rail'
 import {ViewportShell} from './viewport-shell'
 
+// eslint-disable-next-line max-lines-per-function, max-statements
 export const EditorLayout: React.FC = () => {
   const [areaMode, setAreaMode] = React.useState<AreaCreationMode>('point')
   const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
   const [snapToGrid, setSnapToGrid] = React.useState(true)
   const [measurementEnabled, setMeasurementEnabled] = React.useState(false)
-  const [cursor, setCursor] = React.useState<CursorPosition>({x: 0, y: 0})
 
   const [placeDeviceOpen, setPlaceDeviceOpen] = React.useState(false)
   const [searchOpen, setSearchOpen] = React.useState(false)
@@ -76,23 +76,6 @@ export const EditorLayout: React.FC = () => {
     closeAllPopovers()
   })
 
-  useEditorShortcuts({
-    isEditMode,
-    hasAreas,
-    isMapMode: sceneMode === 'map',
-    onSelectTool: setActiveTool,
-    onSelectAreaMode: setAreaMode,
-    onSelectShapeMode: setShapeMode,
-    onOpenPlaceDevice: () => setPlaceDeviceOpen(true),
-    onPlacePerson: () => {},
-    onSearchLocation: () => setSearchOpen(true),
-    onOpenAreasPanel: () => setAreaPanelOpen(true),
-    onOpenDevicesPanel: () => setDevicesPanelOpen(true),
-    onUndo: () => handleUndo(),
-    onRedo: () => handleRedo(),
-    onEscape: () => closeTransientUi(),
-  })
-
   const handleSceneModeChange = (mode: SceneMode) => {
     setSceneMode(mode)
     setMapVisibility(mode === 'map')
@@ -123,6 +106,25 @@ export const EditorLayout: React.FC = () => {
     closeTransientUi()
   }
 
+  useEditorShortcuts({
+    isEditMode,
+    hasAreas,
+    isMapMode: sceneMode === 'map',
+    onSelectTool: setActiveTool,
+    onSelectAreaMode: setAreaMode,
+    onSelectShapeMode: setShapeMode,
+    onOpenPlaceDevice: () => setPlaceDeviceOpen(true),
+    onPlacePerson: () => {
+      /*  */
+    },
+    onSearchLocation: () => setSearchOpen(true),
+    onOpenAreasPanel: () => setAreaPanelOpen(true),
+    onOpenDevicesPanel: () => setDevicesPanelOpen(true),
+    onUndo: () => handleUndo(),
+    onRedo: () => handleRedo(),
+    onEscape: () => closeTransientUi(),
+  })
+
   return (
     <div className='min-h-screen w-full flex flex-col'>
       <TopPanel
@@ -142,13 +144,11 @@ export const EditorLayout: React.FC = () => {
         viewMode={viewMode}
       />
 
-      <main className='mx-auto flex flex-col gap-4 size-full flex-1'>
+      <main className='mx-auto flex flex-col gap-4 size-full flex-1 pt-14'>
         <ViewportShell
           mapVisible={mapVisible}
           measurementEnabled={measurementEnabled}
-          cursor={cursor}
           onBlankClick={handleBlankClick}
-          onCursorMove={setCursor}
           onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
           onToggleSnap={() => setSnapToGrid((prev) => !prev)}
           sceneMode={sceneMode}
@@ -163,7 +163,9 @@ export const EditorLayout: React.FC = () => {
         areaMode={areaMode}
         isEditMode={isEditMode}
         onOpenPlaceDevice={() => setPlaceDeviceOpen(true)}
-        onPlacePerson={() => {}}
+        onPlacePerson={() => {
+          /*  */
+        }}
         onSelectAreaMode={setAreaMode}
         onSelectShapeMode={setShapeMode}
         onSelectTool={setActiveTool}

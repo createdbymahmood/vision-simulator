@@ -5,31 +5,24 @@ import {Button} from '@/components/ui/button'
 import {cn} from '@/lib/utils'
 
 import type {SceneMode, ViewMode} from '../../domain/types'
-import type {CursorPosition} from '../types'
 
 interface ViewportShellProps {
   sceneMode: SceneMode
   viewMode: ViewMode
   mapVisible: boolean
-  cursor: CursorPosition
   snapToGrid: boolean
   measurementEnabled: boolean
-  onCursorMove: (position: CursorPosition) => void
   onBlankClick: () => void
   onToggleSnap: () => void
   onToggleMeasurement: () => void
 }
 
-const metersFromPixels = (pixelDelta: number) => pixelDelta / 10
-
 export const ViewportShell: React.FC<ViewportShellProps> = ({
   sceneMode,
   viewMode,
   mapVisible,
-  cursor,
   snapToGrid,
   measurementEnabled,
-  onCursorMove,
   onBlankClick,
   onToggleSnap,
   onToggleMeasurement,
@@ -38,16 +31,6 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
     <div
       className='relative w-full overflow-hidden backdrop-blur-lg h-full flex-1'
       onMouseDown={onBlankClick}
-      onMouseMove={(event) => {
-        const rect = event.currentTarget.getBoundingClientRect()
-        const relativeX = metersFromPixels(
-          event.clientX - rect.left - rect.width / 2,
-        )
-        const relativeY = metersFromPixels(
-          rect.height / 2 - (event.clientY - rect.top),
-        )
-        onCursorMove({x: relativeX, y: relativeY})
-      }}
     >
       <div className={cn('absolute inset-0 transition-all duration-200')} />
 
@@ -72,13 +55,6 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
           Preview View
         </div>
       ) : null}
-
-      <div
-        className='absolute bottom-4 left-4 rounded-lg border border-white/50 bg-white/80 px-4 py-2 text-sm font-medium shadow-sm backdrop-blur dark:border-white/10 dark:bg-black/60'
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        X: {cursor.x.toFixed(1)} m | Y: {cursor.y.toFixed(1)} m
-      </div>
 
       <div
         className='absolute bottom-4 right-4 flex flex-col gap-2'

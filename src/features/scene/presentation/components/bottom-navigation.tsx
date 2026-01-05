@@ -51,7 +51,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <div className='pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center'>
-      <div className='pointer-events-auto flex h-16 w-full max-w-[800px] items-center justify-between rounded-2xl border border-white/50 px-1 backdrop-blur shadow-lg'>
+      <div className='pointer-events-auto flex py-1 w-full max-w-fit items-center justify-between rounded-full px-1 backdrop-blur shadow-lg gap-2'>
         <ModePopover
           disabled={!isEditMode}
           activeTool={activeTool}
@@ -75,7 +75,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           active={activeTool === 'draw-wall'}
           disabled={dependentDisabled}
           label='Draw Wall'
-          icon={<BrickWall className='h-5 w-5' />}
+          icon={<BrickWall className='h-6 w-6' />}
           onClick={() => onSelectTool('draw-wall')}
           tooltip={dependentDisabled ? disabledToolTooltip : undefined}
         />

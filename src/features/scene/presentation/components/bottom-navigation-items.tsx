@@ -12,7 +12,6 @@ import React from 'react'
 
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
-import {Badge} from '@/components/ui/badge'
 import {Button} from '@/components/ui/button'
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
@@ -20,7 +19,7 @@ import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import type {AreaCreationMode, ShapeDrawMode} from '../types'
 
 export const TOOL_ITEM_CLASS =
-  'h-16 w-20 flex flex-col items-center justify-center gap-1 rounded-lg'
+  'h-10 w-10 flex items-center justify-center rounded-full'
 
 interface ToolButtonProps {
   label: string
@@ -43,16 +42,16 @@ export const ToolButton: React.FC<ToolButtonProps> = ({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
+          aria-label={label}
           className={TOOL_ITEM_CLASS}
           disabled={disabled}
           variant={active ? 'default' : 'ghost'}
           onClick={onClick}
         >
           {icon}
-          <span className='text-xs'>{label}</span>
         </Button>
       </TooltipTrigger>
-      {disabled && tooltip ? <TooltipContent>{tooltip}</TooltipContent> : null}
+      <TooltipContent>{tooltip ?? label}</TooltipContent>
     </Tooltip>
   )
 }
@@ -83,11 +82,10 @@ export const ModePopover: React.FC<ModePopoverProps> = ({
           }
         >
           {activeTool === 'hand' ? (
-            <Hand className='h-5 w-5' />
+            <Hand className='h-6 w-6' />
           ) : (
-            <MousePointer2 className='h-5 w-5' />
+            <MousePointer2 className='h-6 w-6' />
           )}
-          <span className='text-xs'>Mode</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align='start' className='w-48' side='top'>
@@ -148,12 +146,8 @@ export const CreateAreaPopover: React.FC<CreateAreaPopoverProps> = ({
           variant={activeTool === 'draw-area' ? 'default' : 'ghost'}
         >
           <div className='relative'>
-            <Hexagon className='h-5 w-5' />
-            {!hasAreas ? (
-              <Badge className='absolute -right-2 -top-2'>Required</Badge>
-            ) : null}
+            <Hexagon className='h-6 w-6' />
           </div>
-          <span className='text-xs'>Create Area</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align='center' className='w-52' side='top'>
@@ -221,8 +215,7 @@ export const ShapePopover: React.FC<ShapePopoverProps> = ({
           disabled={disabled}
           variant={activeTool === 'draw-shape' ? 'default' : 'ghost'}
         >
-          <Shapes className='h-5 w-5' />
-          <span className='text-xs'>Draw Shapes</span>
+          <Shapes className='h-6 w-6' />
         </Button>
       </PopoverTrigger>
       <PopoverContent align='center' className='w-52' side='top'>
@@ -269,7 +262,7 @@ export const PlacementButtons: React.FC<PlacementButtonsProps> = ({
         active={activeTool === 'place-camera'}
         disabled={disabled}
         label='Place Device'
-        icon={<Camera className='h-5 w-5' />}
+        icon={<Camera className='h-6 w-6' />}
         onClick={() => {
           onSelectTool('place-camera')
           onOpenPlaceDevice()
@@ -280,7 +273,7 @@ export const PlacementButtons: React.FC<PlacementButtonsProps> = ({
         active={activeTool === 'place-person'}
         disabled={disabled}
         label='Place Person'
-        icon={<User className='h-5 w-5' />}
+        icon={<User className='h-6 w-6' />}
         onClick={() => {
           onSelectTool('place-person')
           onPlacePerson()
