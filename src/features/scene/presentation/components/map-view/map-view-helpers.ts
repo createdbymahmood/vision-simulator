@@ -73,6 +73,22 @@ export const computeSegmentLength = (points: GeoPoint[]) => {
   return turfLength(lineString(points.slice(-2)), {units: 'kilometers'}) * 1000
 }
 
+export const projectPoint = (
+  start: GeoPoint,
+  bearingDegrees: number,
+  distanceMeters: number,
+): GeoPoint => {
+  const dest = destination(
+    point(start),
+    distanceMeters / 1000,
+    bearingDegrees,
+    {
+      units: 'kilometers',
+    },
+  )
+  return dest.geometry.coordinates as GeoPoint
+}
+
 export const createPolygonGeometry = (points: GeoPoint[]): PolygonGeometry => ({
   type: 'polygon',
   coordinates: closeRing(points),
@@ -129,6 +145,16 @@ export const createLineGeometry = (start: GeoPoint, end: GeoPoint) => [
 
 export const createTriangleRing = (points: GeoPoint[]) =>
   points.length === 3 ? closeRing(points) : null
+
+export const createEquilateralTriangleRing = (
+  start: GeoPoint,
+  end: GeoPoint,
+): GeoPoint[] => {
+  const sideLength = computeSegmentLength([start, end])
+  const baseAngle = computeAngleDeg(start, end)
+  const thirdPoint = projectPoint(start, baseAngle + 60, sideLength)
+  return closeRing([start, end, thirdPoint])
+}
 
 export const createCircleRing = (
   center: GeoPoint,
