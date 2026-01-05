@@ -1,4 +1,10 @@
-import type {Feature} from 'geojson'
+import type {
+  Feature,
+  FeatureCollection,
+  GeoJsonProperties,
+  MultiPolygon,
+  Polygon,
+} from 'geojson'
 /* @ts-expect-error - MapLayerMouseEvent is not exported by react-map-gl/mapbox */
 import type {MapLayerMouseEvent, MapRef} from 'react-map-gl/mapbox'
 
@@ -19,6 +25,10 @@ import type {
   PolygonGeometry,
 } from '@/features/scene/domain/types'
 
+import {
+  AREA_COLORS,
+  DEFAULT_AREA_STYLE,
+} from '@/features/scene/domain/constants/area-style'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
@@ -33,8 +43,6 @@ interface TooltipState {
   y: number
   visible: boolean
 }
-
-const CURSOR_DOT_COLOR = '#4ECDC4'
 
 const closeRing = (points: GeoPoint[]) => {
   if (points.length === 0) {
@@ -72,6 +80,9 @@ const createPolygonGeometry = (points: GeoPoint[]): PolygonGeometry => ({
   coordinates: closeRing(points),
   bezierControls: [],
 })
+
+const getNextAreaColor = (areas: AreaEntity[]) =>
+  AREA_COLORS[areas.length % AREA_COLORS.length] ?? DEFAULT_AREA_STYLE.fillColor
 
 const buildAreaFeatureCollection = (
   areas: AreaEntity[],
@@ -123,6 +134,10 @@ export const MapView: React.FC = () => {
   } | null>(null)
   const [isNearStart, setIsNearStart] = React.useState(false)
   const [isDragging, setIsDragging] = React.useState(false)
+  const initialAreas = useSceneStore((s) => s.scene.areas)
+  const [drawingColor, setDrawingColor] = React.useState(
+    getNextAreaColor(initialAreas),
+  )
   const [previewPath, setPreviewPath] = React.useState<GeoPoint[]>([])
 
   const activeTool = useUiStore((state) => state.activeTool)
@@ -133,6 +148,12 @@ export const MapView: React.FC = () => {
   const activeAreaId = useSceneStore((state) => state.scene.activeAreaId)
   const addArea = useSceneStore((state) => state.addArea)
   const setActiveArea = useSceneStore((state) => state.setActiveArea)
+
+  React.useEffect(() => {
+    if (!drawing.isActive) {
+      setDrawingColor(getNextAreaColor(areas))
+    }
+  }, [areas, drawing.isActive])
 
   React.useEffect(() => {
     if (activeTool !== 'hand') {
@@ -158,6 +179,7 @@ export const MapView: React.FC = () => {
   }, [])
 
   const startPointMode = (point: GeoPoint) => {
+    setDrawingColor(getNextAreaColor(areas))
     setDrawing({isActive: true, points: [point]})
   }
 
@@ -328,14 +350,17 @@ export const MapView: React.FC = () => {
     [areas, activeAreaId],
   )
 
-  const overlapFeatures = React.useMemo(() => {
+  const overlapFeatures: FeatureCollection | null = React.useMemo(() => {
     const features: Feature[] = []
     areas.forEach((area, index) => {
       const baseRing = getSafeRing(area.geometry.coordinates)
       if (!baseRing) {
         return
       }
-      const base = polygon([baseRing])
+      const base = polygon([baseRing]) as unknown as FeatureCollection<
+        MultiPolygon | Polygon,
+        GeoJsonProperties
+      >
       for (let i = index + 1; i < areas.length; i += 1) {
         const otherRing = getSafeRing(areas[i].geometry.coordinates)
         if (!otherRing) {
@@ -360,7 +385,7 @@ export const MapView: React.FC = () => {
     return {type: 'FeatureCollection', features}
   }, [areas])
 
-  const drawingLine = React.useMemo(() => {
+  const drawingLine: FeatureCollection | null = React.useMemo(() => {
     if (!drawing.isActive || previewPath.length === 0) {
       return null
     }
@@ -376,7 +401,7 @@ export const MapView: React.FC = () => {
     }
   }, [drawing, previewPath])
 
-  const drawingPoints = React.useMemo(() => {
+  const drawingPoints: FeatureCollection | null = React.useMemo(() => {
     if (!drawing.isActive) {
       return null
     }
@@ -471,7 +496,7 @@ export const MapView: React.FC = () => {
               id='drawing-outline'
               type='line'
               paint={{
-                'line-color': CURSOR_DOT_COLOR,
+                'line-color': drawingColor,
                 'line-width': 2,
                 'line-opacity': 0.8,
               }}
@@ -492,7 +517,7 @@ export const MapView: React.FC = () => {
                   5,
                 ],
                 'circle-color': '#FFFFFF',
-                'circle-stroke-color': CURSOR_DOT_COLOR,
+                'circle-stroke-color': drawingColor,
                 'circle-stroke-width': 2,
                 'circle-blur': 0.2,
               }}
@@ -531,7 +556,7 @@ export const MapView: React.FC = () => {
               <div
                 className='size-3 rounded-full shadow-md'
                 style={{
-                  backgroundColor: CURSOR_DOT_COLOR,
+                  backgroundColor: drawingColor,
                   opacity: 0.8,
                   boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 }}
