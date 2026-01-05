@@ -1,4 +1,8 @@
-# React DDD + SOLID Development Skill
+---
+name: react-frontend-skill
+description: tells how to do react development in the app
+license: Complete terms in LICENSE.txt
+---
 
 ## Core Principles
 
