@@ -21,6 +21,35 @@ Implement the complete Camera placement system including the Device Picker CMDK,
 
 ---
 
+## Technical Implementation Requirements
+
+**Mapbox Integration**: All camera placement and visualization MUST use native Mapbox APIs:
+
+- **Mapbox Sources**: Use `GeoJSONSource` to store camera positions and FOV geometry
+- **Mapbox Layers**: Use Mapbox layers for camera rendering:
+  - `symbol` layer for camera icons (with custom camera SVG, colored per camera)
+  - `fill` layer for FOV wedge/cone (with camera color, low opacity)
+  - `line` layer for FOV cone borders (dashed, camera color)
+  - `line` layer for direction arrows extending from camera
+  - `circle` layer for range preview during placement
+- **Mapbox Events**: Use Mapbox event handlers for:
+  - Camera placement interactions
+  - FOV wedge dragging for direction adjustment
+  - Camera selection and focus
+- **GeoJSON Format**: Store camera positions and FOV geometry as GeoJSON features
+- **Mapbox Expressions**: Use Mapbox expressions for:
+  - Dynamic icon coloring based on camera color
+  - FOV opacity changes on hover
+  - Active camera highlighting (thicker borders)
+- **Mapbox Paint/Layout Properties**: Use for:
+  - Icon rotation based on camera direction
+  - FOV fill and line colors from camera palette
+  - Animated placement effects
+
+This ensures camera visualizations integrate seamlessly with the map and area system.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included

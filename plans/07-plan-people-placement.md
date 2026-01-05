@@ -21,6 +21,37 @@ Implement the complete Person placement system including real-time validation, c
 
 ---
 
+## Technical Implementation Requirements
+
+**Mapbox Integration**: All person placement and visualization MUST use native Mapbox APIs:
+
+- **Mapbox Sources**: Use `GeoJSONSource` to store person positions and collision radius data
+- **Mapbox Layers**: Use Mapbox layers for person rendering:
+  - `symbol` layer for person icons (using person silhouette SVG)
+  - `circle` layer for collision radius visualization
+  - Additional `circle` layer for placement preview with validation colors
+- **Mapbox Events**: Use Mapbox event handlers for:
+  - Real-time placement validation (mousemove for position checking)
+  - Person placement (click events)
+  - Person selection and dragging
+- **GeoJSON Format**: Store person positions as GeoJSON point features
+- **Mapbox Expressions**: Use Mapbox expressions for:
+  - Dynamic collision circle coloring (blue for valid, red for invalid)
+  - Selected person highlighting (yellow color, larger size)
+  - Hover states and animations
+- **Mapbox Feature State**: Use feature state for:
+  - Validation state during placement (valid/invalid)
+  - Selection state
+  - Hover state
+- **Collision Detection**: Perform geometry calculations using:
+  - Area boundary polygons from Mapbox sources
+  - Wall and shape geometries from Mapbox sources
+  - Other person positions from Mapbox sources
+
+This ensures person placement integrates with the collision detection system and provides real-time visual feedback through Mapbox's rendering pipeline.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included

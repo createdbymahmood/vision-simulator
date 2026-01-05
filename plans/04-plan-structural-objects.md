@@ -21,6 +21,27 @@ Implement the complete drawing system for structural objects: Walls and Shapes (
 
 ---
 
+## Technical Implementation Requirements
+
+**Mapbox Integration**: All structural object rendering and interaction MUST use native Mapbox APIs:
+
+- **Mapbox Sources**: Use `GeoJSONSource` to store wall and shape geometry data
+- **Mapbox Layers**: Use Mapbox layers for rendering:
+  - `line` layer for walls (with thickness, solid/dashed styles)
+  - `fill` and `line` layers for shapes (rectangles, circles, triangles)
+  - `circle` layer for vertices and control points
+- **Mapbox Events**: Use Mapbox event handlers for drawing interactions (click, mousemove, drag)
+- **GeoJSON Format**: Store all coordinates in GeoJSON format
+- **Mapbox Expressions**: Use Mapbox expressions for:
+  - Dynamic styling (hover states, preview states, invalid states)
+  - Angle snapping visualization
+  - Measurement overlays
+- **Mapbox Paint Properties**: Use paint properties for visual feedback (colors, opacity, dashed lines)
+
+This ensures optimal performance with the map renderer and maintains consistency with the area system.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -241,11 +262,11 @@ Implement the complete drawing system for structural objects: Walls and Shapes (
 
 ## Risks & Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Complex polyline rendering performance | Use canvas path optimization; batch draws |
-| Angle snapping interferes with precision drawing | Make snapping toggleable; show clear indicator |
-| Shape bounds calculation errors | Comprehensive unit tests for geometry utilities |
+| Risk                                             | Mitigation                                      |
+| ------------------------------------------------ | ----------------------------------------------- |
+| Complex polyline rendering performance           | Use canvas path optimization; batch draws       |
+| Angle snapping interferes with precision drawing | Make snapping toggleable; show clear indicator  |
+| Shape bounds calculation errors                  | Comprehensive unit tests for geometry utilities |
 
 ---
 
@@ -257,4 +278,3 @@ Implement the complete drawing system for structural objects: Walls and Shapes (
 - Section 5.8.3: Invalid/Error Cursors
 - Section 5.10.2: Draw Wall Tool (Enhanced)
 - Section 5.10.3: Draw Shapes Tool (Enhanced)
-

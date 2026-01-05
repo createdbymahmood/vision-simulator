@@ -21,6 +21,23 @@ Implement the complete editor layout structure including the Top Panel, Bottom N
 
 ---
 
+## Technical Implementation Requirements
+
+**Mapbox Integration**: The viewport infrastructure MUST be set up with Mapbox GL JS:
+
+- **Mapbox Map Instance**: Initialize Mapbox GL JS map in the main viewport
+- **Map Container**: Create a container div that fills the viewport area
+- **Map Configuration**:
+  - Set initial center and zoom level
+  - Configure map style URL (for Map Mode)
+  - Enable/disable layers for Canvas Mode
+- **Event Setup**: Wire up basic Mapbox event handlers for future tool implementations
+- **Map Controls**: Position Mapbox attribution and navigation controls appropriately
+
+This phase sets up the Mapbox foundation that Phases 3-7 will build upon for drawing and placing objects.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included

@@ -21,6 +21,32 @@ Implement the complete Selection Tool with multi-select, drag operations, transf
 
 ---
 
+## Technical Implementation Requirements
+
+**Mapbox Integration**: All selection and transform operations MUST use native Mapbox APIs:
+
+- **Mapbox Event Handlers**: Use Mapbox's pointer events for:
+  - Click/hover detection on map objects
+  - Drag operations (mousedown, mousemove, mouseup)
+  - Hit testing with proper z-index priority
+- **Mapbox Layers**: Update existing Mapbox layers for visual feedback:
+  - Selection outlines using additional `line` layers
+  - Transform handles using `circle` and `symbol` layers
+  - Bounding boxes using `line` layers with dashed styles
+- **Mapbox Sources**: Update GeoJSON sources in real-time during:
+  - Drag operations (update coordinates)
+  - Resize operations (update geometry)
+  - Rotation operations (recalculate coordinates)
+- **Mapbox Expressions**: Use expressions for:
+  - Hover states and selection highlights
+  - Cursor changes based on object/handle hover
+  - Dynamic styling based on selection state
+- **Mapbox Feature State**: Use feature state API for non-geometry state changes (hover, selection)
+
+This ensures smooth, performant interactions with map-based objects using Mapbox's optimized rendering pipeline.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -180,4 +206,3 @@ Implement the complete Selection Tool with multi-select, drag operations, transf
 - Section 5.8.1: Default Cursors
 - Section 5.8.4: Selection Cursors
 - Section 5.10.1: Selection Tool (Enhanced)
-
