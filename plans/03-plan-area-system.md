@@ -21,6 +21,24 @@ Implement the complete Area creation system, which is the mandatory foundation f
 
 ---
 
+## Technical Implementation Requirements
+
+**Mapbox Integration**: All area-related functionality MUST be implemented using native Mapbox APIs:
+
+- **Mapbox Sources**: Use `GeoJSONSource` to store area geometry data
+- **Mapbox Layers**: Use Mapbox layers (`fill`, `line`, `circle`) for rendering:
+  - `fill` layer for area polygons with fill color and opacity
+  - `line` layer for area borders, dashed lines, and drawing preview
+  - `circle` layer for vertices and control points
+- **Mapbox Events**: Use Mapbox event handlers (`onClick`, `onMouseMove`, etc.) for drawing interactions
+- **GeoJSON Format**: Store all area coordinates in GeoJSON format for compatibility
+- **Mapbox Drawing**: Leverage Mapbox's rendering pipeline for all visual feedback (dashed lines, animations, overlays)
+- **Mapbox Expressions**: Use Mapbox expressions for dynamic styling (hover states, active area highlighting, overlap patterns)
+
+This ensures optimal performance with the map renderer and maintains consistency with the map-based coordinate system.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -250,4 +268,3 @@ Implement the complete Area creation system, which is the mandatory foundation f
 - Section 5.7: Real-Time Measurement Tooltips
 - Section 5.8.2: Drawing Cursors (Area)
 - Section 5.9: Areas — Mandatory Foundation (entire section)
-
