@@ -1,4 +1,13 @@
-import {Camera, Hexagon, Shapes, User} from 'lucide-react'
+import {
+  Camera,
+  Circle,
+  Hexagon,
+  PenLine,
+  Shapes,
+  Square,
+  Triangle,
+  User,
+} from 'lucide-react'
 import React from 'react'
 
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
@@ -84,13 +93,17 @@ interface ShapePopoverProps {
   onSelectShape: (mode: ShapeDrawMode) => void
 }
 
-const SHAPE_OPTIONS: {label: string; mode: ShapeDrawMode; shortcut: string}[] =
-  [
-    {label: 'Rectangle', mode: 'rectangle', shortcut: 'R'},
-    {label: 'Circle', mode: 'circle', shortcut: 'C'},
-    {label: 'Triangle', mode: 'triangle', shortcut: 'T'},
-    {label: 'Line', mode: 'line', shortcut: 'L'},
-  ]
+const SHAPE_OPTIONS: {
+  label: string
+  mode: ShapeDrawMode
+  shortcut: string
+  icon: React.FC
+}[] = [
+  {label: 'Rectangle', mode: 'rectangle', shortcut: 'R', icon: Square},
+  {label: 'Circle', mode: 'circle', shortcut: 'C', icon: Circle},
+  {label: 'Triangle', mode: 'triangle', shortcut: 'T', icon: Triangle},
+  {label: 'Line', mode: 'line', shortcut: 'L', icon: PenLine},
+]
 
 export const ShapePopover: React.FC<ShapePopoverProps> = ({
   activeTool,
@@ -112,11 +125,13 @@ export const ShapePopover: React.FC<ShapePopoverProps> = ({
           <Shapes className='h-6 w-6' />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align='center' className='w-52' side='top'>
-        <div className='grid grid-cols-2 gap-2'>
+      <PopoverContent align='center' className='w-fit p-1' side='top'>
+        <div className='flex flex-col gap-2'>
           {SHAPE_OPTIONS.map((option) => (
             <Button
+              size='icon'
               key={option.mode}
+              title={`${option.label} (${option.shortcut})`}
               variant={shapeMode === option.mode ? 'default' : 'ghost'}
               onClick={() => {
                 onSelectTool()
@@ -124,7 +139,7 @@ export const ShapePopover: React.FC<ShapePopoverProps> = ({
                 onOpenChange(false)
               }}
             >
-              {option.label} ({option.shortcut})
+              <option.icon />
             </Button>
           ))}
         </div>
