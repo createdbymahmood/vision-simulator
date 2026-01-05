@@ -19,6 +19,7 @@ export const createInitialScene = (): SceneRoot => ({
   units: 'meters',
   origin: {lat: 0, lng: 0, description: 'Geographic reference point'},
   simulationSeed: Date.now(),
+  activeAreaId: undefined,
   areas: [],
   walls: [],
   shapes: [],

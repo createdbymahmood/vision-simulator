@@ -1,4 +1,4 @@
-export type AreaCreationMode = 'pen' | 'point'
+export type AreaCreationMode = 'point'
 
 export type ShapeDrawMode = 'circle' | 'line' | 'rectangle' | 'triangle'
 

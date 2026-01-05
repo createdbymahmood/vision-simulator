@@ -29,7 +29,7 @@ export const RightRail: React.FC<RightRailProps> = ({
   onDevicesInUse,
 }) => {
   return (
-    <div className='fixed right-4 top-24 z-30 w-12 rounded-full border p-1 backdrop-blur shadow-lg'>
+    <div className='fixed right-4 top-24 z-30 w-12 rounded-full border p-1 backdrop-blur shadow-lg bg-white/30'>
       <div className='flex flex-col gap-2 items-center'>
         {isMapMode ? (
           <Tooltip>

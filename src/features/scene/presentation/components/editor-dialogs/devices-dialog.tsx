@@ -20,7 +20,7 @@ export const DevicesDialog: React.FC<DevicesDialogProps> = ({
   deviceCount,
 }) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Devices in use</DialogTitle>

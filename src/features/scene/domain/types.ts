@@ -22,6 +22,8 @@ export interface SceneMeta {
   collisionVisualizationEnabled: boolean
 }
 
+export type GeoPoint = [number, number]
+
 export interface Point2D {
   x: number
   y: number
@@ -29,8 +31,8 @@ export interface Point2D {
 
 export interface PolygonGeometry {
   type: 'polygon'
-  coordinates: Point2D[]
-  bezierControls: Point2D[]
+  coordinates: GeoPoint[]
+  bezierControls: GeoPoint[]
 }
 
 export type BoundaryMode = 'strict'
@@ -181,6 +183,7 @@ export interface SceneRoot {
   units: Units
   origin: GeoOrigin
   simulationSeed: number
+  activeAreaId?: string
   areas: AreaEntity[]
   walls: WallEntity[]
   shapes: ShapeEntity[]

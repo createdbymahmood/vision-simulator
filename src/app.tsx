@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {Toaster} from '@/components/ui/sonner'
 import {TooltipProvider} from '@/components/ui/tooltip'
 import {HistoryStoreProvider} from '@/features/scene/infrastructure/stores/history.store'
 import {SceneStoreProvider} from '@/features/scene/infrastructure/stores/scene.store'
@@ -17,6 +18,7 @@ export const App: React.FC<AppProps> = () => {
         <UiStoreProvider initialState={{}}>
           <TooltipProvider delayDuration={0}>
             <EditorLayout />
+            <Toaster />
           </TooltipProvider>
         </UiStoreProvider>
       </HistoryStoreProvider>

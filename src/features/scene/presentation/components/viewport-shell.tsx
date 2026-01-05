@@ -39,9 +39,23 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
         {sceneMode === 'map' && mapVisible ? (
           <MapView />
         ) : (
-          <div className='flex flex-row gap-2 items-center'>
-            <Grid className='h-4 w-4' />
-            <span className='text-sm'>Canvas Mode</span>
+          <div className='relative flex size-full items-center justify-center overflow-hidden'>
+            <div
+              className='absolute inset-0'
+              style={{
+                backgroundImage:
+                  'linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(rgba(0,0,0,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.25) 1px, transparent 1px)',
+                backgroundSize:
+                  '20px 20px, 20px 20px, 200px 200px, 200px 200px',
+                backgroundPosition: '0 0, 0 0, 0 0, 0 0',
+              }}
+            />
+            <div className='relative flex flex-row items-center gap-2 rounded-full bg-white/80 px-3 py-2 shadow'>
+              <Grid className='h-4 w-4' />
+              <span className='text-sm font-medium text-muted-foreground'>
+                Canvas Mode Grid (1m squares)
+              </span>
+            </div>
           </div>
         )}
       </div>

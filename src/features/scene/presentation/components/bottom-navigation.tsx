@@ -1,15 +1,14 @@
-import {BrickWall} from 'lucide-react'
+import {BrickWall, Hand, MousePointer2} from 'lucide-react'
 import React from 'react'
 
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
-import type {AreaCreationMode, ShapeDrawMode} from '../types'
+import type {ShapeDrawMode} from '../types'
 
 import {
   CreateAreaPopover,
-  ModePopover,
   PlacementButtons,
   ShapePopover,
   ToolButton,
@@ -17,12 +16,10 @@ import {
 
 interface BottomNavigationProps {
   activeTool: EditorTool
-  areaMode: AreaCreationMode
   shapeMode: ShapeDrawMode
   isEditMode: boolean
   hasAreas: boolean
   onSelectTool: (tool: EditorTool) => void
-  onSelectAreaMode: (mode: AreaCreationMode) => void
   onSelectShapeMode: (mode: ShapeDrawMode) => void
   onOpenPlaceDevice: () => void
   onPlacePerson: () => void
@@ -30,12 +27,10 @@ interface BottomNavigationProps {
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   activeTool,
-  areaMode,
   shapeMode,
   isEditMode,
   hasAreas,
   onSelectTool,
-  onSelectAreaMode,
   onSelectShapeMode,
   onOpenPlaceDevice,
   onPlacePerson,
@@ -52,23 +47,25 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   return (
     <div className='pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center'>
       <div className='pointer-events-auto flex py-1 w-full max-w-fit items-center justify-between rounded-full px-1 backdrop-blur shadow-lg gap-2 bg-white/30'>
-        <ModePopover
+        <ToolButton
+          active={activeTool === 'hand'}
           disabled={!isEditMode}
-          activeTool={activeTool}
-          onOpenChange={(open) => setPopoverState('mode', open)}
-          onSelect={onSelectTool}
-          open={!!popovers.mode}
+          label='Hand Mode'
+          icon={<Hand className='h-6 w-6' />}
+          onClick={() => onSelectTool('hand')}
+        />
+        <ToolButton
+          active={activeTool === 'select'}
+          disabled={!isEditMode}
+          label='Selector'
+          icon={<MousePointer2 className='h-6 w-6' />}
+          onClick={() => onSelectTool('select')}
         />
 
         <CreateAreaPopover
           disabled={!isEditMode}
-          hasAreas={hasAreas}
           activeTool={activeTool}
-          areaMode={areaMode}
-          onOpenChange={(open) => setPopoverState('create-area', open)}
-          onSelectAreaMode={onSelectAreaMode}
           onSelectTool={() => onSelectTool('draw-area')}
-          open={!!popovers['create-area']}
         />
 
         <ToolButton

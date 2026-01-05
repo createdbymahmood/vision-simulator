@@ -1,10 +1,6 @@
 import {
   Camera,
-  Hand,
   Hexagon,
-  LineChart,
-  MousePointer2,
-  Pointer,
   Shapes,
   User,
 } from 'lucide-react'
@@ -16,7 +12,7 @@ import {Button} from '@/components/ui/button'
 import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 
-import type {AreaCreationMode, ShapeDrawMode} from '../types'
+import type {ShapeDrawMode} from '../types'
 
 export const TOOL_ITEM_CLASS =
   'h-10 w-10 flex items-center justify-center rounded-full'
@@ -56,127 +52,30 @@ export const ToolButton: React.FC<ToolButtonProps> = ({
   )
 }
 
-interface ModePopoverProps {
-  activeTool: EditorTool
-  disabled: boolean
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSelect: (tool: EditorTool) => void
-}
-
-export const ModePopover: React.FC<ModePopoverProps> = ({
-  activeTool,
-  disabled,
-  open,
-  onOpenChange,
-  onSelect,
-}) => {
-  return (
-    <Popover onOpenChange={onOpenChange} open={open}>
-      <PopoverTrigger asChild>
-        <Button
-          className={TOOL_ITEM_CLASS}
-          disabled={disabled}
-          variant={
-            ['hand', 'select'].includes(activeTool) ? 'default' : 'ghost'
-          }
-        >
-          {activeTool === 'hand' ? (
-            <Hand className='h-6 w-6' />
-          ) : (
-            <MousePointer2 className='h-6 w-6' />
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align='start' className='w-48' side='top'>
-        <div className='flex flex-col gap-2'>
-          <Button
-            variant={activeTool === 'hand' ? 'default' : 'ghost'}
-            onClick={() => {
-              onSelect('hand')
-              onOpenChange(false)
-            }}
-          >
-            <Hand className='h-4 w-4' />
-            Hand Mode (H)
-          </Button>
-          <Button
-            variant={activeTool === 'select' ? 'default' : 'ghost'}
-            onClick={() => {
-              onSelect('select')
-              onOpenChange(false)
-            }}
-          >
-            <Pointer className='h-4 w-4' />
-            Selector (V)
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
-  )
-}
-
 interface CreateAreaPopoverProps {
   activeTool: EditorTool
-  areaMode: AreaCreationMode
-  hasAreas: boolean
   disabled: boolean
-  open: boolean
-  onOpenChange: (open: boolean) => void
   onSelectTool: () => void
-  onSelectAreaMode: (mode: AreaCreationMode) => void
 }
 
 export const CreateAreaPopover: React.FC<CreateAreaPopoverProps> = ({
   activeTool,
-  areaMode,
-  hasAreas,
   disabled,
-  open,
-  onOpenChange,
   onSelectTool,
-  onSelectAreaMode,
 }) => {
   return (
-    <Popover onOpenChange={onOpenChange} open={open}>
-      <PopoverTrigger asChild>
-        <Button
-          className={TOOL_ITEM_CLASS}
-          disabled={disabled}
-          variant={activeTool === 'draw-area' ? 'default' : 'ghost'}
-        >
-          <div className='relative'>
-            <Hexagon className='h-6 w-6' />
-          </div>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align='center' className='w-52' side='top'>
-        <div className='flex flex-col gap-2'>
-          <Button
-            variant={areaMode === 'point' ? 'default' : 'ghost'}
-            onClick={() => {
-              onSelectAreaMode('point')
-              onSelectTool()
-              onOpenChange(false)
-            }}
-          >
-            <Pointer className='h-4 w-4' />
-            Point Mode (A)
-          </Button>
-          <Button
-            variant={areaMode === 'pen' ? 'default' : 'ghost'}
-            onClick={() => {
-              onSelectAreaMode('pen')
-              onSelectTool()
-              onOpenChange(false)
-            }}
-          >
-            <LineChart className='h-4 w-4' />
-            Pen Mode
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+    <Button
+      className={TOOL_ITEM_CLASS}
+      disabled={disabled}
+      variant={activeTool === 'draw-area' ? 'default' : 'ghost'}
+      onClick={() => {
+        onSelectTool()
+      }}
+    >
+      <div className='relative'>
+        <Hexagon className='h-6 w-6' />
+      </div>
+    </Button>
   )
 }
 

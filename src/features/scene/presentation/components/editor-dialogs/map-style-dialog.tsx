@@ -18,7 +18,7 @@ export const MapStyleDialog: React.FC<MapStyleDialogProps> = ({
   onOpenChange,
 }) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Map view</DialogTitle>
@@ -29,8 +29,8 @@ export const MapStyleDialog: React.FC<MapStyleDialogProps> = ({
         <div className='space-y-2'>
           {['street', 'satellite', 'traffic', 'osm'].map((style) => (
             <div
-              key={style}
               className='flex items-center justify-between rounded-lg border px-3 py-2'
+              key={style}
             >
               <span className='capitalize'>{style}</span>
               <span className='text-xs text-muted-foreground'>Coming soon</span>

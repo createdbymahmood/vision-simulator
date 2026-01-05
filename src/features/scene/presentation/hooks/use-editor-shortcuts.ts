@@ -3,14 +3,13 @@ import {useEffect} from 'react'
 
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
-import type {AreaCreationMode, ShapeDrawMode} from '../types'
+import type {ShapeDrawMode} from '../types'
 
 interface EditorShortcutOptions {
   isEditMode: boolean
   hasAreas: boolean
   isMapMode: boolean
   onSelectTool: (tool: EditorTool) => void
-  onSelectAreaMode: (mode: AreaCreationMode) => void
   onSelectShapeMode: (mode: ShapeDrawMode) => void
   onOpenPlaceDevice: () => void
   onPlacePerson: () => void
@@ -35,7 +34,6 @@ export const useEditorShortcuts = ({
   hasAreas,
   isMapMode,
   onSelectTool,
-  onSelectAreaMode,
   onSelectShapeMode,
   onOpenPlaceDevice,
   onPlacePerson,
@@ -119,7 +117,6 @@ export const useEditorShortcuts = ({
     if (key === 'a') {
       event.preventDefault()
       onSelectTool('draw-area')
-      onSelectAreaMode('point')
       return true
     }
 

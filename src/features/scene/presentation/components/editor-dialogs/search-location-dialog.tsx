@@ -22,7 +22,7 @@ export const SearchLocationDialog: React.FC<SearchLocationDialogProps> = ({
   onOpenMapStyles,
 }) => {
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog onOpenChange={onOpenChange} open={open}>
       <CommandInput placeholder='Search location...' />
       <CommandList>
         <CommandEmpty>No locations found.</CommandEmpty>

@@ -7,7 +7,7 @@ import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {TopPanel} from '@/features/scene/presentation/components/top-panel'
 
 import type {SceneMode} from '../../domain/types'
-import type {AreaCreationMode, ShapeDrawMode} from '../types'
+import type {ShapeDrawMode} from '../types'
 
 import {createInitialScene} from '../../domain/services/scene-factory'
 import {useEditorShortcuts} from '../hooks/use-editor-shortcuts'
@@ -24,7 +24,6 @@ import {ViewportShell} from './viewport-shell'
 
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const EditorLayout: React.FC = () => {
-  const [areaMode, setAreaMode] = React.useState<AreaCreationMode>('point')
   const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
   const [snapToGrid, setSnapToGrid] = React.useState(true)
   const [measurementEnabled, setMeasurementEnabled] = React.useState(false)
@@ -111,7 +110,6 @@ export const EditorLayout: React.FC = () => {
     hasAreas,
     isMapMode: sceneMode === 'map',
     onSelectTool: setActiveTool,
-    onSelectAreaMode: setAreaMode,
     onSelectShapeMode: setShapeMode,
     onOpenPlaceDevice: () => setPlaceDeviceOpen(true),
     onPlacePerson: () => {
@@ -160,13 +158,11 @@ export const EditorLayout: React.FC = () => {
       <BottomNavigation
         hasAreas={hasAreas}
         activeTool={activeTool}
-        areaMode={areaMode}
         isEditMode={isEditMode}
         onOpenPlaceDevice={() => setPlaceDeviceOpen(true)}
         onPlacePerson={() => {
           /*  */
         }}
-        onSelectAreaMode={setAreaMode}
         onSelectShapeMode={setShapeMode}
         onSelectTool={setActiveTool}
         shapeMode={shapeMode}

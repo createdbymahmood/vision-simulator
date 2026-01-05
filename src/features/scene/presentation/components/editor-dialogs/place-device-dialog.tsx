@@ -21,7 +21,7 @@ export const PlaceDeviceDialog: React.FC<PlaceDeviceDialogProps> = ({
   onSelectDevice,
 }) => {
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog onOpenChange={onOpenChange} open={open}>
       <CommandInput placeholder='Place a device' />
       <CommandList>
         <CommandEmpty>No devices available</CommandEmpty>
