@@ -293,3 +293,4 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - Section 6.2.2: Main Viewport (Trail visualization)
 - Section 6.2.5: Right Sidebar (Camera List)
 - Section 6.6: Physics & Movement (entire section)
+

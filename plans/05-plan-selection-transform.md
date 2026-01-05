@@ -180,3 +180,4 @@ Implement the complete Selection Tool with multi-select, drag operations, transf
 - Section 5.8.1: Default Cursors
 - Section 5.8.4: Selection Cursors
 - Section 5.10.1: Selection Tool (Enhanced)
+
