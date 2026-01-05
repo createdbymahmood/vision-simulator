@@ -968,6 +968,34 @@ export const useSelectionTransform = ({
             const entity = entityIndex.get(id)
             const scaled = scalePoints(original, anchor, scaleX, scaleY)
             const areaForEntity = getAreaForEntity(id)
+            if (entity?.type === 'area') {
+              const previewArea = {
+                ...(entity as AreaEntity),
+                geometry: {
+                  ...(entity as AreaEntity).geometry,
+                  coordinates: scaled,
+                },
+              }
+              const relatedEntities: SceneEntity[] = [
+                ...walls,
+                ...shapes,
+                ...cameras,
+                ...people,
+              ] as SceneEntity[]
+              const hasOutsideChild = relatedEntities.some((child) => {
+                if (getEntityAreaId(child) !== entity.id) {
+                  return false
+                }
+                return !isGeometryInsideAreaSelection(
+                  getEntityPoints(child),
+                  previewArea,
+                )
+              })
+              if (hasOutsideChild) {
+                blockedArea = entity.id
+                return
+              }
+            }
             if (
               entity?.type === 'person' &&
               isPersonPositionBlocked(
