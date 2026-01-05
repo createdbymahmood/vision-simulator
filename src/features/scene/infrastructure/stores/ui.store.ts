@@ -11,6 +11,7 @@ export type EditorTool =
   | 'draw-area'
   | 'draw-shape'
   | 'draw-wall'
+  | 'hand'
   | 'measure'
   | 'place-camera'
   | 'place-person'
@@ -19,12 +20,15 @@ export type EditorTool =
 export interface UiState {
   viewMode: ViewMode
   activeTool: EditorTool
+  isEditMode: boolean
   openPanels: Record<string, boolean>
   openPopovers: Record<string, boolean>
 
   setViewMode: (mode: ViewMode) => ViewMode
   toggleViewMode: () => ViewMode
   setActiveTool: (tool: EditorTool) => EditorTool
+  setEditMode: (enabled: boolean) => boolean
+  toggleEditMode: () => boolean
   openPanel: (panel: string) => Record<string, boolean>
   closePanel: (panel: string) => Record<string, boolean>
   togglePanel: (panel: string) => Record<string, boolean>
@@ -32,6 +36,8 @@ export interface UiState {
     popoverId: string,
     isOpen: boolean,
   ) => Record<string, boolean>
+  closeAllPanels: () => Record<string, boolean>
+  closeAllPopovers: () => Record<string, boolean>
   resetUi: () => UiState
 }
 
@@ -63,6 +69,30 @@ const setActiveTool = (set: SetState, get: GetState, tool: EditorTool) => {
 
   set(nextValue)
   return get().activeTool
+}
+
+const setEditMode = (set: SetState, get: GetState, enabled: boolean) => {
+  const nextValue = produce<UiState>((state) => {
+    state.isEditMode = enabled
+    if (!enabled) {
+      state.activeTool = 'select'
+    }
+  })
+
+  set(nextValue)
+  return get().isEditMode
+}
+
+const toggleEditMode = (set: SetState, get: GetState) => {
+  const nextValue = produce<UiState>((state) => {
+    state.isEditMode = !state.isEditMode
+    if (!state.isEditMode) {
+      state.activeTool = 'select'
+    }
+  })
+
+  set(nextValue)
+  return get().isEditMode
 }
 
 const openPanel = (set: SetState, get: GetState, panel: string) => {
@@ -107,10 +137,29 @@ const setPopoverState = (
   return get().openPopovers
 }
 
+const closeAllPanels = (set: SetState, get: GetState) => {
+  const nextValue = produce<UiState>((state) => {
+    state.openPanels = {}
+  })
+
+  set(nextValue)
+  return get().openPanels
+}
+
+const closeAllPopovers = (set: SetState, get: GetState) => {
+  const nextValue = produce<UiState>((state) => {
+    state.openPopovers = {}
+  })
+
+  set(nextValue)
+  return get().openPopovers
+}
+
 const resetUi = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.viewMode = 'editor'
     state.activeTool = 'select'
+    state.isEditMode = true
     state.openPanels = {}
     state.openPopovers = {}
   })
@@ -124,16 +173,21 @@ const createUiStore: (
 ) => StateCreator<UiState> = (initialValues) => (set, get) => ({
   viewMode: initialValues?.viewMode ?? 'editor',
   activeTool: initialValues?.activeTool ?? 'select',
+  isEditMode: initialValues?.isEditMode ?? true,
   openPanels: initialValues?.openPanels ?? {},
   openPopovers: initialValues?.openPopovers ?? {},
   setViewMode: (mode) => setViewMode(set, get, mode),
   toggleViewMode: () => toggleViewMode(set, get),
   setActiveTool: (tool) => setActiveTool(set, get, tool),
+  setEditMode: (enabled) => setEditMode(set, get, enabled),
+  toggleEditMode: () => toggleEditMode(set, get),
   openPanel: (panel) => openPanel(set, get, panel),
   closePanel: (panel) => closePanel(set, get, panel),
   togglePanel: (panel) => togglePanel(set, get, panel),
   setPopoverState: (popoverId, isOpen) =>
     setPopoverState(set, get, popoverId, isOpen),
+  closeAllPanels: () => closeAllPanels(set, get),
+  closeAllPopovers: () => closeAllPopovers(set, get),
   resetUi: () => resetUi(set, get),
   ...initialValues,
 })

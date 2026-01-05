@@ -1,0 +1,211 @@
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import React from 'react'
+
+import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'
+import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
+import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {TopPanel} from '@/features/scene/presentation/components/top-panel'
+
+import type {SceneMode} from '../../domain/types'
+import type {AreaCreationMode, CursorPosition, ShapeDrawMode} from '../types'
+
+import {createInitialScene} from '../../domain/services/scene-factory'
+import {useEditorShortcuts} from '../hooks/use-editor-shortcuts'
+import {BottomNavigation} from './bottom-navigation'
+import {
+  AreaManagementDialog,
+  DevicesDialog,
+  MapStyleDialog,
+  PlaceDeviceDialog,
+  SearchLocationDialog,
+} from './editor-dialogs'
+import {RightRail} from './right-rail'
+import {ViewportShell} from './viewport-shell'
+
+export const EditorLayout: React.FC = () => {
+  const [areaMode, setAreaMode] = React.useState<AreaCreationMode>('point')
+  const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
+  const [snapToGrid, setSnapToGrid] = React.useState(true)
+  const [measurementEnabled, setMeasurementEnabled] = React.useState(false)
+  const [cursor, setCursor] = React.useState<CursorPosition>({x: 0, y: 0})
+
+  const [placeDeviceOpen, setPlaceDeviceOpen] = React.useState(false)
+  const [searchOpen, setSearchOpen] = React.useState(false)
+  const [areaPanelOpen, setAreaPanelOpen] = React.useState(false)
+  const [devicesPanelOpen, setDevicesPanelOpen] = React.useState(false)
+  const [mapStyleOpen, setMapStyleOpen] = React.useState(false)
+
+  const sceneMode = useSceneStore((state) => state.scene.mode)
+  const mapVisible = useSceneStore((state) => state.scene.mapVisible)
+  const areas = useSceneStore((state) => state.scene.areas)
+  const cameras = useSceneStore((state) => state.scene.cameras)
+  const scene = useSceneStore((state) => state.scene)
+  const setScene = useSceneStore((state) => state.setScene)
+  const setSceneMode = useSceneStore((state) => state.setMode)
+  const setMapVisibility = useSceneStore((state) => state.setMapVisibility)
+  const clearSelection = useSceneStore((state) => state.clearSelection)
+
+  const activeTool = useUiStore((state) => state.activeTool)
+  const setActiveTool = useUiStore((state) => state.setActiveTool)
+  const isEditMode = useUiStore((state) => state.isEditMode)
+  const setEditMode = useUiStore((state) => state.setEditMode)
+  const viewMode = useUiStore((state) => state.viewMode)
+  const setViewMode = useUiStore((state) => state.setViewMode)
+  const closeAllPanels = useUiStore((state) => state.closeAllPanels)
+  const closeAllPopovers = useUiStore((state) => state.closeAllPopovers)
+
+  const pastEntries = useHistoryStore((state) => state.past)
+  const futureEntries = useHistoryStore((state) => state.future)
+  const undoScene = useHistoryStore((state) => state.undo)
+  const redoScene = useHistoryStore((state) => state.redo)
+  const clearHistory = useHistoryStore((state) => state.clear)
+
+  const lastActionDescription = pastEntries.at(-1)?.description
+  const canUndo = pastEntries.length > 0
+  const canRedo = futureEntries.length > 0
+  const hasAreas = areas.length > 0
+  const deviceCount = cameras.length
+
+  const closeTransientUi = useCallbackRef(() => {
+    setPlaceDeviceOpen(false)
+    setSearchOpen(false)
+    setAreaPanelOpen(false)
+    setDevicesPanelOpen(false)
+    setMapStyleOpen(false)
+    closeAllPanels()
+    closeAllPopovers()
+  })
+
+  useEditorShortcuts({
+    isEditMode,
+    hasAreas,
+    isMapMode: sceneMode === 'map',
+    onSelectTool: setActiveTool,
+    onSelectAreaMode: setAreaMode,
+    onSelectShapeMode: setShapeMode,
+    onOpenPlaceDevice: () => setPlaceDeviceOpen(true),
+    onPlacePerson: () => {},
+    onSearchLocation: () => setSearchOpen(true),
+    onOpenAreasPanel: () => setAreaPanelOpen(true),
+    onOpenDevicesPanel: () => setDevicesPanelOpen(true),
+    onUndo: () => handleUndo(),
+    onRedo: () => handleRedo(),
+    onEscape: () => closeTransientUi(),
+  })
+
+  const handleSceneModeChange = (mode: SceneMode) => {
+    setSceneMode(mode)
+    setMapVisibility(mode === 'map')
+  }
+
+  const handleUndo = () => {
+    const entry = undoScene(scene)
+    if (entry) {
+      setScene(entry.scene)
+    }
+  }
+
+  const handleRedo = () => {
+    const entry = redoScene(scene)
+    if (entry) {
+      setScene(entry.scene)
+    }
+  }
+
+  const handleClearBoard = () => {
+    clearHistory()
+    setScene(createInitialScene())
+    clearSelection()
+    setActiveTool('select')
+  }
+
+  const handleBlankClick = () => {
+    closeTransientUi()
+  }
+
+  return (
+    <div className='min-h-screen w-full flex flex-col'>
+      <TopPanel
+        canRedo={canRedo}
+        canUndo={canUndo}
+        isEditMode={isEditMode}
+        lastActionDescription={lastActionDescription}
+        onClearBoard={handleClearBoard}
+        onEditModeChange={setEditMode}
+        onRedo={handleRedo}
+        onSceneModeChange={handleSceneModeChange}
+        onTogglePreview={() =>
+          setViewMode(viewMode === 'preview' ? 'editor' : 'preview')
+        }
+        onUndo={handleUndo}
+        sceneMode={sceneMode}
+        viewMode={viewMode}
+      />
+
+      <main className='mx-auto flex flex-col gap-4 size-full flex-1'>
+        <ViewportShell
+          mapVisible={mapVisible}
+          measurementEnabled={measurementEnabled}
+          cursor={cursor}
+          onBlankClick={handleBlankClick}
+          onCursorMove={setCursor}
+          onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
+          onToggleSnap={() => setSnapToGrid((prev) => !prev)}
+          sceneMode={sceneMode}
+          snapToGrid={snapToGrid}
+          viewMode={viewMode}
+        />
+      </main>
+
+      <BottomNavigation
+        hasAreas={hasAreas}
+        activeTool={activeTool}
+        areaMode={areaMode}
+        isEditMode={isEditMode}
+        onOpenPlaceDevice={() => setPlaceDeviceOpen(true)}
+        onPlacePerson={() => {}}
+        onSelectAreaMode={setAreaMode}
+        onSelectShapeMode={setShapeMode}
+        onSelectTool={setActiveTool}
+        shapeMode={shapeMode}
+      />
+
+      <RightRail
+        areaCount={areas.length}
+        deviceCount={deviceCount}
+        isEditMode={isEditMode}
+        isMapMode={sceneMode === 'map'}
+        onAreaManagement={() => setAreaPanelOpen(true)}
+        onDevicesInUse={() => setDevicesPanelOpen(true)}
+        onMapViewMode={() => setMapStyleOpen(true)}
+        onSearchLocation={() => setSearchOpen(true)}
+      />
+
+      <SearchLocationDialog
+        onOpenChange={setSearchOpen}
+        onOpenMapStyles={() => setMapStyleOpen(true)}
+        open={searchOpen}
+      />
+
+      <PlaceDeviceDialog
+        onOpenChange={setPlaceDeviceOpen}
+        onSelectDevice={() => setActiveTool('place-camera')}
+        open={placeDeviceOpen}
+      />
+
+      <AreaManagementDialog
+        areaCount={areas.length}
+        onOpenChange={setAreaPanelOpen}
+        open={areaPanelOpen}
+      />
+
+      <DevicesDialog
+        deviceCount={deviceCount}
+        onOpenChange={setDevicesPanelOpen}
+        open={devicesPanelOpen}
+      />
+
+      <MapStyleDialog onOpenChange={setMapStyleOpen} open={mapStyleOpen} />
+    </div>
+  )
+}

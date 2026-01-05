@@ -1,0 +1,110 @@
+import {Layers, Map, Search, Video} from 'lucide-react'
+import React from 'react'
+
+import {Badge} from '@/components/ui/badge'
+import {Button} from '@/components/ui/button'
+import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
+
+interface RightRailProps {
+  isMapMode: boolean
+  areaCount: number
+  deviceCount: number
+  isEditMode: boolean
+  onSearchLocation: () => void
+  onAreaManagement: () => void
+  onMapViewMode: () => void
+  onDevicesInUse: () => void
+}
+
+const railButtonClass = 'relative h-12 w-12'
+
+export const RightRail: React.FC<RightRailProps> = ({
+  isMapMode,
+  areaCount,
+  deviceCount,
+  isEditMode,
+  onSearchLocation,
+  onAreaManagement,
+  onMapViewMode,
+  onDevicesInUse,
+}) => {
+  return (
+    <div className='fixed right-4 top-24 z-30 w-12 rounded-xl border border-white/50 bg-white/70 p-1 backdrop-blur shadow-lg dark:border-white/10 dark:bg-black/40'>
+      <div className='flex flex-col gap-2'>
+        {isMapMode ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size='icon'
+                aria-label='Search location (⌘K)'
+                className={railButtonClass}
+                disabled={!isEditMode}
+                variant='ghost'
+                onClick={onSearchLocation}
+              >
+                <Search className='h-5 w-5' />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Search location (⌘K)</TooltipContent>
+          </Tooltip>
+        ) : null}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size='icon'
+              aria-label='Areas (⌘⇧A)'
+              className={railButtonClass}
+              disabled={!isEditMode}
+              variant='ghost'
+              onClick={onAreaManagement}
+            >
+              <Layers className='h-5 w-5' />
+              <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
+                {areaCount}
+              </Badge>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Areas (⌘⇧A)</TooltipContent>
+        </Tooltip>
+
+        {isMapMode ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size='icon'
+                aria-label='Map style'
+                className={railButtonClass}
+                disabled={!isEditMode}
+                variant='ghost'
+                onClick={onMapViewMode}
+              >
+                <Map className='h-5 w-5' />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Map style</TooltipContent>
+          </Tooltip>
+        ) : null}
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size='icon'
+              aria-label='Devices (⌘⇧D)'
+              className={railButtonClass}
+              disabled={!isEditMode}
+              variant='ghost'
+              onClick={onDevicesInUse}
+            >
+              <Video className='h-5 w-5' />
+              <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
+                {deviceCount}
+              </Badge>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Devices (⌘⇧D)</TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
+  )
+}
