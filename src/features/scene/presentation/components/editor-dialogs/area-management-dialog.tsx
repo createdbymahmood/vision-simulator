@@ -42,7 +42,7 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
           </SheetDescription>
         </SheetHeader>
 
-        <div className='mt-4 flex items-center justify-between rounded-lg border px-3 py-2'>
+        <div className='flex items-center justify-between rounded-lg border px-3 py-2'>
           <span className='text-sm text-muted-foreground'>Total areas</span>
           <Badge variant='secondary'>{areaCount}</Badge>
         </div>
