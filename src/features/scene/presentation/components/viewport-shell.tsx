@@ -60,7 +60,7 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
           size='icon-lg'
           aria-label='Snap to grid (0.5m)'
           aria-pressed={snapToGrid}
-          className='h-12 w-12 rounded-full'
+          className='rounded-full backdrop-blur-md'
           variant={snapToGrid ? 'default' : 'outline'}
           onClick={onToggleSnap}
         >
@@ -70,7 +70,7 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
           size='icon-lg'
           aria-label='Measurement overlay'
           aria-pressed={measurementEnabled}
-          className='h-12 w-12 rounded-full'
+          className='rounded-full backdrop-blur-md'
           variant={measurementEnabled ? 'default' : 'outline'}
           onClick={onToggleMeasurement}
         >
