@@ -10,6 +10,17 @@ Implement advanced 3D simulation features including FOV collision visualization,
 
 ---
 
+## How Codex Should Use This Phase
+
+- Build on the Phase 9 scene: add physics/steering, collision visualization, and PTZ-in-3D without altering core schemas.
+- Active camera is a first-class concept; make PTZ panel, frustum thickness, and selection state all reflect the same source of truth.
+- Collision surfaces must follow the rendering rules (opacity, pulsing) and respond to camera/obstacle changes; compute selectively for performance.
+- People movement must be deterministic (seeded RNG + fixed timestep) and respect all area/obstacle/person constraints.
+- PTZ floating panel must mirror editor controls and be draggable/minimizable; Tab cycling between cameras is required.
+- Use toggles (global and per-camera) for collision visualization; do not remove frustum wireframes when disabled.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -282,4 +293,3 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - Section 6.2.2: Main Viewport (Trail visualization)
 - Section 6.2.5: Right Sidebar (Camera List)
 - Section 6.6: Physics & Movement (entire section)
-

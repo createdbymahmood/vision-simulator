@@ -10,6 +10,17 @@ Establish the foundational architecture, data models, routing structure, and sta
 
 ---
 
+## How Codex Should Use This Phase
+
+- Implement all TypeScript schemas and utilities first; they are the contracts every later phase consumes.
+- Wire scene/history/UI stores before UI; verify undo/redo and view switching with unit tests or a lightweight harness.
+- Respect the no-routing rule: view switching is state only (no React Router/history changes).
+- Enforce meters everywhere and auto IDs/color palette via helpers so later phases cannot bypass rules.
+- Deliver persistence ports/adapters early so other phases can save/load scenes without refactors.
+- If any field is unclear, defer to Section 7 schema names rather than inventing new ones.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included

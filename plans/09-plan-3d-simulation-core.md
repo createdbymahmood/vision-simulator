@@ -10,6 +10,17 @@ Implement the core 3D simulation engine using Three.js, including scene setup, w
 
 ---
 
+## How Codex Should Use This Phase
+
+- Keep the no-routing rule: the Simulation Analysis view is a mode toggle from the editor, not a new page.
+- Focus on faithful world generation from existing 2D entities (areas, walls, shapes, cameras, people) into 3D meshes; do not invent new fields.
+- Deliver the view shell (header/top bar/area dropdown) and Three.js scene together; Live Preview must switch instantly.
+- Implement Map vs Canvas textures as purely visual, with the specified fade transition.
+- Orbit controls and focus selection must feel smooth (damping, easing); acceptance criteria expect these interactions.
+- Render camera frustums and basic lighting/shadows now so later collision/physics layers can reuse them.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -271,4 +282,3 @@ Implement the core 3D simulation engine using Three.js, including scene setup, w
 - Section 6.3: Map/Canvas Mode in Preview
 - Section 6.4: Area Dropdown Behavior
 - Section 6.5: 3D Simulation Engine (Engine, Scene Setup, World Generation, Controls)
-

@@ -10,6 +10,17 @@ Implement the complete Selection Tool with multi-select, drag operations, transf
 
 ---
 
+## How Codex Should Use This Phase
+
+- Treat Hand vs Selector as modes with exclusive behaviors; Selector never pans, Hand never selects.
+- Implement hit testing order exactly (People > Cameras > Walls > Shapes > Areas); this affects every click.
+- Enforce area boundaries during drag/resize/rotate; provide visual boundary feedback instead of silent clamping.
+- Build transform handles and cursors to spec; they are required for all object types created so far.
+- Multi-select needs bulk actions (delete/duplicate) and a visible selection count—do not skip UX cues.
+- Collision prevention for people during drag is part of acceptance; wire geometry checks before release.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included

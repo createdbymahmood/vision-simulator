@@ -10,6 +10,16 @@ This document provides a comprehensive 12-phase build plan derived from `plan.md
 
 ---
 
+## How Codex Should Use This File
+
+- Treat each phase file as the authoritative build brief for that slice of work; use this overview only to navigate and order the phases.
+- Follow dependencies in the graph; do not start a phase until its prerequisites are finished.
+- Keep PRD mappings visible while coding so no requirement is skipped; optional items are explicitly labeled.
+- Use the acceptance criteria in each phase as the test checklist before moving on.
+- When unsure, prefer the constraints and non-goals listed here over improvisation (e.g., no routing, areas are mandatory, 20-color camera palette).
+
+---
+
 ## Phase Summary
 
 | Phase | Name | Timeline | PRD Section Coverage |
@@ -208,4 +218,3 @@ plans/
 ---
 
 *Generated from plan.md - Computer Vision Simulator PRD v1.1*
-

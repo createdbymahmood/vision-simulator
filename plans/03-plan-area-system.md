@@ -10,6 +10,17 @@ Implement the complete Area creation system, which is the mandatory foundation f
 
 ---
 
+## How Codex Should Use This Phase
+
+- Enforce the global rule: nothing else can be placed without at least one area; keep wall/shape/camera/person tools disabled until then.
+- Build both Point and Pen modes with the exact visuals, cursors, and measurements; sampling (1000 points) is required, not optional.
+- Validation is strict: areas must close, min 3 vertices, and all later objects must remain inside area bounds.
+- Deliver the first-time experience (prompt + tutorial) so later phases inherit correct gating states.
+- Keep measurement tooltips, cursor states, and overlap visuals identical to the specs; treat toasts/animations as acceptance criteria.
+- Add the area management panel and active-area highlighting so downstream tools can target the active area.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included

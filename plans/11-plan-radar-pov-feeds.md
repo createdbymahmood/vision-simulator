@@ -10,6 +10,17 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
 
 ---
 
+## How Codex Should Use This Phase
+
+- Treat radar and POV feeds as overlays on the existing simulation; no new routing or scene duplication.
+- Implement radar visuals/interactions exactly (draggable, resizable, ping animation, context menu, stats footer); it must be always visible in simulation.
+- Use the camera vision pipeline (frustum culling + occlusion) to drive both radar connection lines and POV bounding boxes—do not fake detections.
+- Bounding boxes in feeds must match camera colors/layout and update in real time; clicking a feed switches the active camera.
+- Keep performance guardrails: limit active feeds (4–6) and support resolution adjustments.
+- All toggles (grid, trails, wedges, lock position) should persist during a session to avoid user confusion.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included

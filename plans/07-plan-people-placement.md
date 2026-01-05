@@ -10,6 +10,17 @@ Implement the complete Person placement system including real-time validation, c
 
 ---
 
+## How Codex Should Use This Phase
+
+- Build the placement flow with live validation: area boundary → walls/shapes → other people; show exact reason in tooltip for invalid states.
+- Keep visuals consistent: person icon + collision radius preview, blue for valid, red/not-allowed for invalid, with the specified animations.
+- Enforce collisions during drag after placement; people cannot overlap obstacles or each other at any time.
+- Auto-open the properties panel after placement and allow immediate drag to adjust position.
+- Use ID auto-naming (person-1, etc.) and ensure properties map to the schema for later simulation.
+- Treat error toasts and shake/pulse animations as required acceptance criteria, not optional polish.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -180,4 +191,3 @@ Implement the complete Person placement system including real-time validation, c
 - Section 5.8.2: Person Placement Cursor
 - Section 5.8.3: Invalid/Error Cursors (Outside Area, Overlapping)
 - Section 5.10.5: Place Person Tool (Enhanced)
-

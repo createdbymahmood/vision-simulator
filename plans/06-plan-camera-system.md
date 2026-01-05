@@ -10,6 +10,17 @@ Implement the complete Camera placement system including the Device Picker CMDK,
 
 ---
 
+## How Codex Should Use This Phase
+
+- Implement the end-to-end flow: open CMDK → choose preset → preview assigned color/range → enforce area validation → place camera → auto-open properties.
+- Enforce the 20-color palette with hue-shift overflow; no duplicate colors until 20 are used.
+- Render all editor visuals (icon, FOV wedge, direction arrow, range circle) using the assigned color with the specified opacities/animations.
+- Placement must fail visibly outside areas; keep the not-allowed cursor and error toast.
+- Keep Devices-in-Use panel wired (counts, color dots, select/focus) so later phases can extend it.
+- Properties color picker must live-update icon/FOV; acceptance criteria treat this as mandatory behavior.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -219,4 +230,3 @@ Implement the complete Camera placement system including the Device Picker CMDK,
 - Section 5.7.3: Measurement Tooltips (Camera)
 - Section 5.8.2: Camera Placement Cursor
 - Section 5.10.4: Place Camera Tool (Enhanced)
-

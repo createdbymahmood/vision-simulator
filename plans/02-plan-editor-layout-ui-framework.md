@@ -10,6 +10,17 @@ Implement the complete editor layout structure including the Top Panel, Bottom N
 
 ---
 
+## How Codex Should Use This Phase
+
+- Ship layout shells, interactions, and keyboard plumbing only; leave tool behaviors to later phases.
+- Keep Map vs Canvas purely visual (toggle hides map tiles only). No routing anywhere.
+- Wire edit-mode gating: when OFF, every editing control and shortcut should be inert.
+- Enforce area dependency: tools that require areas must render disabled states until Phase 3 creates areas.
+- Use consistent glassmorphism tokens and spacing so later panels reuse the same primitives.
+- Treat acceptance criteria and shortcut list as the smoke-test suite for this phase.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included

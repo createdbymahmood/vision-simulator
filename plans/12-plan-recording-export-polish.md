@@ -10,6 +10,17 @@ Implement recording functionality (video capture of 3D view), snapshot export, J
 
 ---
 
+## How Codex Should Use This Phase
+
+- Treat this as the hardening phase: no new features beyond PRD, just exports/recording, performance, micro-interactions, and docs.
+- Implement recording/snapshot/export exactly with filenames, overlays, timers, and flash/pulse effects; they are part of acceptance.
+- Optimize where specified (instancing, LOD, capped feeds) but avoid altering behavior; performance targets are 30 FPS with 10+ cameras and 20+ people.
+- Ensure every cursor, tooltip, and animation from prior phases is present; this phase is the final QA sweep.
+- Deliver documentation (user guide, shortcuts, schema) so future work does not require rereading PRD.
+- Keep optional items labeled as optional; do not silently drop them.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -304,4 +315,3 @@ Implement recording functionality (video capture of 3D view), snapshot export, J
 8. **Bezier curve sampling rate**: 1000 points per curve specified - verify if sufficient
 9. **Spatial hash grid cell size**: 10m × 10m specified - verify performance
 10. **Trail history buffer size**: 600 positions (20s × 30FPS) - verify memory usage
-

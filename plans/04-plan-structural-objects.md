@@ -10,6 +10,17 @@ Implement the complete drawing system for structural objects: Walls and Shapes (
 
 ---
 
+## How Codex Should Use This Phase
+
+- Gate all tools on existing areas; every wall/shape must validate against area boundaries during create/resize/drag.
+- Match visuals to spec: solid wall previews with thickness, dashed shape previews, specified colors/dashes, and enhanced cursors.
+- Build snapping (angle/grid) as toggles; show explicit snapped feedback in tooltips.
+- Surface invalid states clearly (red previews, not-allowed cursor, tooltip message) instead of silently clamping.
+- Keep measurement tooltips and additional distance/angle guides accurate; they are acceptance tests.
+- Shape popover UX is required—do not skip the 2×2 selector or keyboard shortcuts.
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
@@ -246,4 +257,3 @@ Implement the complete drawing system for structural objects: Walls and Shapes (
 - Section 5.8.3: Invalid/Error Cursors
 - Section 5.10.2: Draw Wall Tool (Enhanced)
 - Section 5.10.3: Draw Shapes Tool (Enhanced)
-

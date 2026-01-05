@@ -10,6 +10,17 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 
 ---
 
+## How Codex Should Use This Phase
+
+- Build the properties shell once and reuse per-entity forms; every field should live-update the entity with debounced history commits.
+- PTZ controls here are the canonical implementation—later 3D PTZ reuses this logic/UI.
+- Keep slide-in/out, close behaviors, and blur styling exactly; they are part of the UX contract.
+- Use the schema fields listed; avoid inventing new names or omitting read-only computed values.
+- Keyboard shortcuts (arrow keys, +/- , 0) must be scoped to selected camera only.
+- Color picker and PTZ changes must immediately update editor visuals (FOV wedge, icon).
+
+---
+
 ## Scope & Responsibilities
 
 ### Included
