@@ -125,23 +125,27 @@ export const ShapePopover: React.FC<ShapePopoverProps> = ({
           <Shapes className='h-6 w-6' />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align='center' className='w-fit p-1' side='top'>
-        <div className='flex flex-col gap-2'>
-          {SHAPE_OPTIONS.map((option) => (
-            <Button
-              size='icon'
-              key={option.mode}
-              title={`${option.label} (${option.shortcut})`}
-              variant={shapeMode === option.mode ? 'default' : 'ghost'}
-              onClick={() => {
-                onSelectTool()
-                onSelectShape(option.mode)
-                onOpenChange(false)
-              }}
-            >
-              <option.icon />
-            </Button>
-          ))}
+      <PopoverContent align='center' className='w-56 p-3' side='top'>
+        <div className='grid grid-cols-2 gap-2'>
+          {SHAPE_OPTIONS.map((option) => {
+            const Icon = option.icon
+            return (
+              <Button
+                className='flex h-auto flex-col items-center gap-1 py-3'
+                key={option.mode}
+                title={`${option.label} (${option.shortcut})`}
+                variant={shapeMode === option.mode ? 'default' : 'ghost'}
+                onClick={() => {
+                  onSelectTool()
+                  onSelectShape(option.mode)
+                  onOpenChange(false)
+                }}
+              >
+                <Icon className='h-6 w-6' />
+                <span className='text-xs font-medium'>{option.shortcut}</span>
+              </Button>
+            )
+          })}
         </div>
       </PopoverContent>
     </Popover>

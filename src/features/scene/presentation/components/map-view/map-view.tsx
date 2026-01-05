@@ -403,6 +403,54 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     onShapeBackspace: resetShapeDrawing,
   })
 
+  const handleAreaClick = React.useCallback(
+    (point: GeoPoint) => {
+      const canClose = drawing.points.length >= 3
+      if (drawing.isActive && isNearStart && canClose) {
+        finalizeArea()
+        return
+      }
+
+      if (!drawing.isActive) {
+        startPointMode(point)
+        return
+      }
+
+      appendPoint(point)
+    },
+    [
+      appendPoint,
+      drawing.isActive,
+      drawing.points.length,
+      finalizeArea,
+      isNearStart,
+      startPointMode,
+    ],
+  )
+
+  const handleWallClick = React.useCallback(
+    (point: GeoPoint) => {
+      if (!wallDrawing.isActive) {
+        startWall(point)
+        setTooltip(null)
+        return
+      }
+      appendWallPoint(point)
+    },
+    [appendWallPoint, setTooltip, startWall, wallDrawing.isActive],
+  )
+
+  const handleShapeClick = React.useCallback(
+    (point: GeoPoint) => {
+      if (!shapeDrawing.isActive) {
+        startShape(point)
+        return
+      }
+      finalizeShape(point, shapeMode)
+    },
+    [finalizeShape, shapeDrawing.isActive, shapeMode, startShape],
+  )
+
   const handleMapClick = React.useCallback(
     (event: MapLayerMouseEvent) => {
       if (!isEditMode) {
@@ -434,56 +482,26 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
       }
 
       if (activeTool === 'draw-area') {
-        const canClose = drawing.points.length >= 3
-        if (drawing.isActive && isNearStart && canClose) {
-          finalizeArea()
-          return
-        }
-
-        if (!drawing.isActive) {
-          startPointMode(point)
-          return
-        }
-
-        appendPoint(point)
+        handleAreaClick(point)
         return
       }
 
       if (activeTool === 'draw-wall') {
-        if (!wallDrawing.isActive) {
-          startWall(point)
-          setTooltip(null)
-          return
-        }
-        appendWallPoint(point)
+        handleWallClick(point)
         return
       }
 
       if (activeTool === 'draw-shape') {
-        if (!shapeDrawing.isActive) {
-          startShape(point)
-          return
-        }
-        finalizeShape(point, shapeMode)
+        handleShapeClick(point)
       }
     },
     [
       activeArea,
       activeTool,
-      appendPoint,
-      appendWallPoint,
-      drawing.isActive,
-      drawing.points.length,
-      finalizeArea,
-      finalizeShape,
+      handleAreaClick,
+      handleShapeClick,
+      handleWallClick,
       isEditMode,
-      isNearStart,
-      shapeDrawing.isActive,
-      shapeMode,
-      startPointMode,
-      startShape,
-      startWall,
-      wallDrawing.isActive,
     ],
   )
 

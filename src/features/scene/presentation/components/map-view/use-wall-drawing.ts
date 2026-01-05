@@ -123,11 +123,6 @@ export const useWallDrawing = ({
       setWallPreviewPath(preview)
       const segmentLength = computeSegmentLength(preview)
       const totalLength = computePerimeter(preview)
-      const angle = computeAngleDeg(
-        wallDrawing.points[wallDrawing.points.length - 1],
-        point,
-      )
-
       return {
         tooltip: {
           text: `${formatMeters(segmentLength)} • ${angle.toFixed(0)}° • Total: ${formatMeters(totalLength)}`,
