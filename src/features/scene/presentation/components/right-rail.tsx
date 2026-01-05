@@ -1,14 +1,11 @@
 import {Layers, Map, Search, Video} from 'lucide-react'
 import React from 'react'
 
-import {Badge} from '@/components/ui/badge'
 import {Button} from '@/components/ui/button'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 
 interface RightRailProps {
   isMapMode: boolean
-  areaCount: number
-  deviceCount: number
   isEditMode: boolean
   onSearchLocation: () => void
   onAreaManagement: () => void
@@ -20,8 +17,6 @@ const railButtonClass = 'relative h-12 w-12'
 
 export const RightRail: React.FC<RightRailProps> = ({
   isMapMode,
-  areaCount,
-  deviceCount,
   isEditMode,
   onSearchLocation,
   onAreaManagement,

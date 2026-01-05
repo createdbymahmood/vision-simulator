@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise */
 import {
   CAMERA_COLOR_HUE_SHIFT_DEGREES,
   CAMERA_COLOR_PALETTE,

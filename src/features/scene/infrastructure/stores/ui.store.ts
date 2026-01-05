@@ -1,7 +1,6 @@
 import type {StateCreator, StoreApi} from 'zustand'
 
 import {produce} from 'immer'
-import React from 'react'
 
 import type {ViewMode} from '@/features/scene/domain/types'
 

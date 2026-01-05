@@ -1,10 +1,13 @@
 import {Grid, Ruler} from 'lucide-react'
 import React from 'react'
 
+import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
+
 import {Button} from '@/components/ui/button'
 import {cn} from '@/lib/utils'
 
 import type {SceneMode, ViewMode} from '../../domain/types'
+import type {ShapeDrawMode} from '../types'
 
 import {MapView} from './map-view'
 
@@ -14,6 +17,8 @@ interface ViewportShellProps {
   mapVisible: boolean
   snapToGrid: boolean
   measurementEnabled: boolean
+  activeTool: EditorTool
+  shapeMode: ShapeDrawMode
   onBlankClick: () => void
   onToggleSnap: () => void
   onToggleMeasurement: () => void
@@ -24,6 +29,8 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
   mapVisible,
   snapToGrid,
   measurementEnabled,
+  activeTool,
+  shapeMode,
   onBlankClick,
   onToggleSnap,
   onToggleMeasurement,
@@ -37,7 +44,7 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
 
       <div className='absolute inset-0 flex items-center justify-center'>
         {sceneMode === 'map' && mapVisible ? (
-          <MapView />
+          <MapView activeTool={activeTool} shapeMode={shapeMode} />
         ) : (
           <div className='relative flex size-full items-center justify-center overflow-hidden'>
             <div

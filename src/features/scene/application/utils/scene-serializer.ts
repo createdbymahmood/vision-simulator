@@ -14,7 +14,7 @@ export const parseScene = (payload: string): SceneRoot => {
   try {
     const parsed = JSON.parse(payload)
     return parsed as SceneRoot
-  } catch (error) {
+  } catch {
     throw new SceneParseError('Failed to parse scene JSON')
   }
 }

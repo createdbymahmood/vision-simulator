@@ -1,15 +1,18 @@
 import type {StateCreator, StoreApi} from 'zustand'
 
 import {produce} from 'immer'
-import React from 'react'
 
 import type {
   PolygonGeometry,
   SceneMode,
   SceneRoot,
+  ShapeEntity,
+  WallEntity,
 } from '@/features/scene/domain/types'
 
 import {createZustandContextStore} from '@/components/shared/zustand'
+import {createDefaultShape} from '@/features/scene/domain/constants/shape-style'
+import {createDefaultWall} from '@/features/scene/domain/constants/wall-style'
 import {createAreaEntity} from '@/features/scene/domain/services/area-factory'
 import {createInitialScene} from '@/features/scene/domain/services/scene-factory'
 
@@ -28,6 +31,8 @@ export interface SceneState {
   setActiveArea: (areaId?: string) => SceneRoot
   updateAreaName: (areaId: string, name: string) => SceneRoot
   deleteArea: (areaId: string) => SceneRoot
+  addWall: (wall: Omit<WallEntity, 'id'>) => SceneRoot
+  addShape: (shape: Omit<ShapeEntity, 'id'>) => SceneRoot
 }
 
 type SetState = StoreApi<SceneState>['setState']
@@ -198,10 +203,70 @@ const updateAreaName = (
 const deleteArea = (set: SetState, get: GetState, areaId: string) => {
   const nextValue = produce<SceneState>((state) => {
     state.scene.areas = state.scene.areas.filter((area) => area.id !== areaId)
+    state.scene.walls = state.scene.walls.filter(
+      (wall) => wall.areaId !== areaId,
+    )
+    state.scene.shapes = state.scene.shapes.filter(
+      (shape) => shape.areaId !== areaId,
+    )
+    state.scene.cameras = state.scene.cameras.filter(
+      (camera) => camera.areaId !== areaId,
+    )
+    state.scene.people = state.scene.people.filter(
+      (person) => person.areaId !== areaId,
+    )
+    state.selectedEntityIds = state.selectedEntityIds.filter(
+      (id) =>
+        !id.startsWith('wall-') &&
+        !id.startsWith('shape-') &&
+        !id.startsWith('camera-') &&
+        !id.startsWith('person-'),
+    )
     if (state.scene.activeAreaId === areaId) {
       state.scene.activeAreaId =
         state.scene.areas.length > 0 ? state.scene.areas[0]?.id : undefined
     }
+    state.scene.meta.updatedAt = new Date().toISOString()
+  })
+
+  set(nextValue)
+  const updated = get().scene
+  persistScene(updated)
+  return updated
+}
+
+const addWall = (
+  set: SetState,
+  get: GetState,
+  wall: Omit<WallEntity, 'id'>,
+) => {
+  const nextValue = produce<SceneState>((state) => {
+    const id = `wall-${state.scene.walls.length + 1}`
+    state.scene.walls.push(createDefaultWall(wall.areaId, wall.points, id))
+    state.scene.meta.updatedAt = new Date().toISOString()
+  })
+
+  set(nextValue)
+  const updated = get().scene
+  persistScene(updated)
+  return updated
+}
+
+const addShape = (
+  set: SetState,
+  get: GetState,
+  shape: Omit<ShapeEntity, 'id'>,
+) => {
+  const nextValue = produce<SceneState>((state) => {
+    const id = `shape-${state.scene.shapes.length + 1}`
+    state.scene.shapes.push(
+      createDefaultShape(
+        id,
+        shape.areaId,
+        shape.shapeType as any,
+        shape.geometry,
+      ),
+    )
     state.scene.meta.updatedAt = new Date().toISOString()
   })
 
@@ -227,6 +292,8 @@ const createSceneStore: (
   setActiveArea: (areaId) => setActiveArea(set, get, areaId),
   updateAreaName: (areaId, name) => updateAreaName(set, get, areaId, name),
   deleteArea: (areaId) => deleteArea(set, get, areaId),
+  addWall: (wall) => addWall(set, get, wall),
+  addShape: (shape) => addShape(set, get, shape),
   ...initialValues,
 })
 

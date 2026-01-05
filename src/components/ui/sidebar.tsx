@@ -536,11 +536,8 @@ function SidebarMenuButton({
     return button
   }
 
-  if (typeof tooltip === 'string') {
-    tooltip = {
-      children: tooltip,
-    }
-  }
+  const tooltipContent =
+    typeof tooltip === 'string' ? {children: tooltip} : tooltip
 
   return (
     <Tooltip>
@@ -549,7 +546,7 @@ function SidebarMenuButton({
         align='center'
         hidden={state !== 'collapsed' || isMobile}
         side='right'
-        {...tooltip}
+        {...tooltipContent}
       />
     </Tooltip>
   )
@@ -614,9 +611,7 @@ function SidebarMenuSkeleton({
   showIcon?: boolean
 }) {
   // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
-  }, [])
+  const width = `${Math.floor(Math.random() * 40) + 50}%`
 
   return (
     <div

@@ -122,7 +122,7 @@ export interface WallEntity {
   id: string
   type: 'wall'
   areaId: string
-  points: Point2D[]
+  points: GeoPoint[]
   thickness: number
   height: number
   color: string
@@ -132,35 +132,32 @@ interface BaseShapeEntity {
   id: string
   type: 'shape'
   areaId: string
+  geometry: GeoPoint[]
   height: number
   color: string
 }
 
 export interface RectangleShapeEntity extends BaseShapeEntity {
   shapeType: 'rectangle'
-  x: number
-  y: number
-  width: number
-  length: number
-  rotation: number
+  width?: number
+  length?: number
+  rotation?: number
 }
 
 export interface CircleShapeEntity extends BaseShapeEntity {
   shapeType: 'circle'
-  x: number
-  y: number
-  radius: number
+  radius?: number
 }
 
 export interface TriangleShapeEntity extends BaseShapeEntity {
   shapeType: 'triangle'
-  points: [Point2D, Point2D, Point2D]
+  points?: [GeoPoint, GeoPoint, GeoPoint]
 }
 
 export interface LineShapeEntity extends BaseShapeEntity {
   shapeType: 'line'
-  points: [Point2D, Point2D]
-  thickness: number
+  points?: [GeoPoint, GeoPoint]
+  thickness?: number
 }
 
 export type ShapeEntity =

@@ -5,21 +5,32 @@ import type {FeatureCollection} from 'geojson'
 import type {MapLayerMouseEvent, MapRef} from 'react-map-gl/mapbox'
 
 import React from 'react'
-import Map, {Layer, Source} from 'react-map-gl/mapbox'
+import Map from 'react-map-gl/mapbox'
 import {toast} from 'sonner'
 
 import type {GeoPoint} from '@/features/scene/domain/types'
+import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {
   CursorPoint,
   TooltipState,
 } from '@/features/scene/presentation/components/map-view/map-view-types'
+import type {ShapeDrawMode} from '@/features/scene/presentation/types'
 
+import {SHAPE_STROKE_COLOR} from '@/features/scene/domain/constants/shape-style'
+import {
+  DEFAULT_WALL_COLOR,
+  DEFAULT_WALL_THICKNESS,
+} from '@/features/scene/domain/constants/wall-style'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {MapViewAreaLayers} from '@/features/scene/presentation/components/map-view/map-view-area-layers'
 import {MapViewCursorOverlay} from '@/features/scene/presentation/components/map-view/map-view-cursor-overlay'
 import {
   buildAreaFeatureCollection,
   buildOverlapFeatures,
+  buildShapeFeatures,
+  buildWallFeatures,
+  buildWallVertexFeatures,
   computeArea,
   computePerimeter,
   computeSegmentLength,
@@ -27,16 +38,47 @@ import {
   formatArea,
   formatMeters,
   getNextAreaColor,
+  isPointInsideArea,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {MapViewShapeLayers} from '@/features/scene/presentation/components/map-view/map-view-shape-layers'
 import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/map-view-tooltip'
+import {MapViewWallLayers} from '@/features/scene/presentation/components/map-view/map-view-wall-layers'
+import {useMapViewHotkeys} from '@/features/scene/presentation/components/map-view/use-map-view-hotkeys'
+import {useShapeDrawing} from '@/features/scene/presentation/components/map-view/use-shape-drawing'
+import {useWallDrawing} from '@/features/scene/presentation/components/map-view/use-wall-drawing'
 
 interface DrawingState {
   isActive: boolean
   points: GeoPoint[]
 }
 
-// eslint-disable-next-line max-lines-per-function
-export const MapView: React.FC = () => {
+interface MapViewProps {
+  activeTool: EditorTool
+  shapeMode: ShapeDrawMode
+}
+
+const getBaseCursor = (
+  activeTool: EditorTool,
+  isEditMode: boolean,
+  isDragging: boolean,
+) => {
+  if (activeTool === 'draw-area' && isEditMode) {
+    return 'none'
+  }
+  if (activeTool === 'hand') {
+    return isDragging ? 'grabbing' : 'grab'
+  }
+  if (activeTool === 'select') {
+    return 'default'
+  }
+  if (activeTool === 'draw-wall' || activeTool === 'draw-shape') {
+    return 'crosshair'
+  }
+  return undefined
+}
+
+// eslint-disable-next-line max-lines-per-function, max-statements
+export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   const mapRef = React.useRef<MapRef | null>(null)
   const [drawing, setDrawing] = React.useState<DrawingState>({
     isActive: false,
@@ -46,42 +88,86 @@ export const MapView: React.FC = () => {
   const [cursorPoint, setCursorPoint] = React.useState<CursorPoint | null>(null)
   const [isNearStart, setIsNearStart] = React.useState(false)
   const [isDragging, setIsDragging] = React.useState(false)
+  const [cursorOverride, setCursorOverride] = React.useState<string>()
   const initialAreas = useSceneStore((s) => s.scene.areas)
-  const [drawingColor, setDrawingColor] = React.useState(
+  const [drawingColor, setDrawingColor] = React.useState(() =>
     getNextAreaColor(initialAreas),
   )
   const [previewPath, setPreviewPath] = React.useState<GeoPoint[]>([])
 
-  const activeTool = useUiStore((state) => state.activeTool)
   const isEditMode = useUiStore((state) => state.isEditMode)
-  const setActiveTool = useUiStore((state) => state.setActiveTool)
 
   const areas = useSceneStore((state) => state.scene.areas)
+  const walls = useSceneStore((state) => state.scene.walls)
+  const shapes = useSceneStore((state) => state.scene.shapes)
   const activeAreaId = useSceneStore((state) => state.scene.activeAreaId)
   const addArea = useSceneStore((state) => state.addArea)
+  const addWall = useSceneStore((state) => state.addWall)
+  const addShape = useSceneStore((state) => state.addShape)
   const setActiveArea = useSceneStore((state) => state.setActiveArea)
+
+  const activeArea = React.useMemo(() => {
+    if (!areas.length) return null
+    return areas.find((a) => a.id === activeAreaId) ?? areas[0]
+  }, [areas, activeAreaId])
+
+  const isGeometryInsideActiveArea = React.useCallback(
+    (points: GeoPoint[]) => {
+      if (!activeArea) {
+        return false
+      }
+      return points.every((point) => isPointInsideArea(point, activeArea))
+    },
+    [activeArea],
+  )
+
+  const {
+    wallDrawing,
+    wallPreviewPath,
+    startWall,
+    appendWallPoint,
+    popWallPoint,
+    finalizeWall,
+    resetWallDrawing,
+    handleWallPointerMove,
+  } = useWallDrawing({
+    activeArea,
+    addWall,
+    isGeometryInsideArea: isGeometryInsideActiveArea,
+  })
+
+  const {
+    shapeDrawing,
+    shapePreview,
+    startShape,
+    finalizeShape,
+    handleShapePointerMove,
+    resetShapeDrawing,
+  } = useShapeDrawing({
+    activeArea,
+    addShape,
+    isGeometryInsideArea: isGeometryInsideActiveArea,
+    strokeColor: SHAPE_STROKE_COLOR,
+  })
 
   React.useEffect(() => {
     if (!drawing.isActive) {
       setDrawingColor(getNextAreaColor(areas))
     }
-  }, [areas, drawing.isActive])
+  }, [activeTool, areas, drawing.isActive])
 
   React.useEffect(() => {
-    if (activeTool !== 'hand') {
+    if (activeTool !== 'hand' || !drawing.isActive) {
       setIsDragging(false)
     }
-  }, [activeTool])
+  }, [activeTool, drawing.isActive])
 
-  const cursor = React.useMemo(() => {
-    if (activeTool === 'draw-area' && isEditMode) {
-      return 'none'
-    }
-    if (activeTool === 'hand') {
-      return isDragging ? 'grabbing' : 'grab'
-    }
-    return undefined
-  }, [activeTool, isDragging, isEditMode])
+  const baseCursor = React.useMemo(
+    () => getBaseCursor(activeTool, isEditMode, isDragging),
+    [activeTool, isDragging, isEditMode],
+  )
+
+  const cursor = cursorOverride ?? baseCursor
 
   const resetDrawing = React.useCallback(() => {
     setDrawing({isActive: false, points: []})
@@ -90,63 +176,175 @@ export const MapView: React.FC = () => {
     setPreviewPath([])
   }, [])
 
-  const startPointMode = (point: GeoPoint) => {
-    setDrawingColor(getNextAreaColor(areas))
-    setDrawing({isActive: true, points: [point]})
-  }
-
-  const appendPoint = (point: GeoPoint) => {
+  const startPointMode = React.useCallback(
+    (point: GeoPoint) => {
+      setDrawingColor(getNextAreaColor(areas))
+      setDrawing({isActive: true, points: [point]})
+    },
+    [areas],
+  )
+  const appendPoint = React.useCallback((point: GeoPoint) => {
     setDrawing((prev) => ({...prev, points: [...prev.points, point]}))
-  }
+  }, [])
+
+  const showTooltip = React.useCallback(
+    (text: string, event: MapLayerMouseEvent) => {
+      setTooltip({
+        text,
+        x: event.point.x + 12,
+        y: event.point.y + 12,
+        visible: true,
+      })
+    },
+    [],
+  )
+
+  const handleAreaPointerMove = React.useCallback(
+    (event: MapLayerMouseEvent, mapPoint: GeoPoint) => {
+      if (!(activeTool === 'draw-area' && drawing.isActive)) {
+        return false
+      }
+      const startPoint = drawing.points[0]
+      let isClose = false
+      if (startPoint && mapRef.current) {
+        const startPixel = mapRef.current.project({
+          lng: startPoint[0],
+          lat: startPoint[1],
+        })
+        const dx = startPixel.x - event.point.x
+        const dy = startPixel.y - event.point.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        isClose = distance <= 10
+        setIsNearStart(isClose)
+      }
+
+      const previewPoints = [...drawing.points, mapPoint]
+      const extendedPreview =
+        isClose && previewPoints.length > 0
+          ? [...previewPoints, previewPoints[0]]
+          : previewPoints
+      setPreviewPath(extendedPreview)
+
+      const segmentLength = computeSegmentLength(previewPoints)
+      const totalLength = computePerimeter(previewPoints)
+      const content =
+        previewPoints.length >= 3 && isNearStart
+          ? `Click to close | Total: ${formatMeters(totalLength)}`
+          : previewPoints.length >= 3
+            ? `${formatMeters(segmentLength)} • Total: ${formatMeters(totalLength)}`
+            : `${formatMeters(segmentLength)}`
+
+      showTooltip(content, event)
+      return true
+    },
+    [activeTool, drawing.isActive, drawing.points, isNearStart, showTooltip],
+  )
+
+  const handleWallPointer = React.useCallback(
+    (event: MapLayerMouseEvent, mapPoint: GeoPoint) => {
+      const result = handleWallPointerMove(mapPoint, {
+        x: event.point.x,
+        y: event.point.y,
+      })
+      if (result?.cursor) {
+        setCursorOverride(result.cursor)
+      }
+      setTooltip(result?.tooltip ?? null)
+      return true
+    },
+    [handleWallPointerMove],
+  )
+
+  const handleShapePointer = React.useCallback(
+    (event: MapLayerMouseEvent, mapPoint: GeoPoint) => {
+      const result = handleShapePointerMove(
+        mapPoint,
+        {x: event.point.x, y: event.point.y},
+        shapeMode,
+        {
+          shiftKey: Boolean(
+            (event.originalEvent as MouseEvent | undefined)?.shiftKey,
+          ),
+          altKey: Boolean(
+            (event.originalEvent as MouseEvent | undefined)?.altKey,
+          ),
+        },
+      )
+      if (result?.cursor) {
+        setCursorOverride(result.cursor)
+      }
+      setTooltip(result?.tooltip ?? null)
+      return true
+    },
+    [handleShapePointerMove, shapeMode],
+  )
+
+  const guardPointerWithinArea = React.useCallback(
+    (
+      event: MapLayerMouseEvent,
+      hasActiveArea: boolean,
+      insideActiveArea: boolean,
+    ) => {
+      if (
+        (activeTool === 'draw-wall' || activeTool === 'draw-shape') &&
+        !hasActiveArea
+      ) {
+        setCursorOverride('not-allowed')
+        showTooltip('Create an area first', event)
+        return true
+      }
+
+      if (
+        (activeTool === 'draw-wall' || activeTool === 'draw-shape') &&
+        !insideActiveArea
+      ) {
+        setCursorOverride('not-allowed')
+        showTooltip('Objects must stay inside an area', event)
+        return true
+      }
+      return false
+    },
+    [activeTool, showTooltip],
+  )
 
   const handlePointerMove = (event: MapLayerMouseEvent) => {
     setCursorPoint({x: event.point.x, y: event.point.y})
-    if (!drawing.isActive) {
+    setCursorOverride(undefined)
+
+    const mapPoint: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
+    const hasActiveArea = Boolean(activeArea)
+    const insideActiveArea =
+      activeTool === 'draw-area' ||
+      (hasActiveArea && activeArea
+        ? isPointInsideArea(mapPoint, activeArea)
+        : false)
+
+    if (!isEditMode) {
       setTooltip(null)
-      setPreviewPath([])
       return
     }
 
-    const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
-    const startPoint = drawing.points[0]
-    let isClose = false
-    if (startPoint && mapRef.current) {
-      const startPixel = mapRef.current.project({
-        lng: startPoint[0],
-        lat: startPoint[1],
-      })
-      const dx = startPixel.x - event.point.x
-      const dy = startPixel.y - event.point.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
-      isClose = distance <= 10
-      setIsNearStart(isClose)
+    if (handleAreaPointerMove(event, mapPoint)) {
+      return
     }
 
-    const previewPoints = [...drawing.points, point]
-    const extendedPreview =
-      isClose && previewPoints.length > 0
-        ? [...previewPoints, previewPoints[0]]
-        : previewPoints
-    setPreviewPath(extendedPreview)
+    if (guardPointerWithinArea(event, hasActiveArea, insideActiveArea)) {
+      return
+    }
 
-    const segmentLength = computeSegmentLength(previewPoints)
-    const totalLength = computePerimeter(previewPoints)
-    const content =
-      previewPoints.length >= 3 && isNearStart
-        ? `Click to close | Total: ${formatMeters(totalLength)}`
-        : previewPoints.length >= 3
-          ? `${formatMeters(segmentLength)} • Total: ${formatMeters(totalLength)}`
-          : `${formatMeters(segmentLength)}`
+    if (activeTool === 'draw-wall' && handleWallPointer(event, mapPoint)) {
+      return
+    }
 
-    setTooltip({
-      text: content,
-      x: event.point.x + 12,
-      y: event.point.y + 12,
-      visible: true,
-    })
+    if (activeTool === 'draw-shape' && handleShapePointer(event, mapPoint)) {
+      return
+    }
+
+    setTooltip(null)
+    setPreviewPath([])
   }
 
-  const handleBackspace = React.useCallback(() => {
+  const handleAreaBackspace = React.useCallback(() => {
     if (!drawing.isActive) {
       return
     }
@@ -187,32 +385,117 @@ export const MapView: React.FC = () => {
     resetDrawing()
   }, [addArea, areas.length, drawing, resetDrawing, setActiveArea])
 
+  useMapViewHotkeys({
+    activeTool,
+    isEditMode,
+    wallDrawingActive: wallDrawing.isActive,
+    shapeDrawingActive: shapeDrawing.isActive,
+    onEscape: () => {
+      resetDrawing()
+      resetWallDrawing()
+      resetShapeDrawing()
+      setTooltip(null)
+    },
+    onAreaBackspace: handleAreaBackspace,
+    onAreaEnter: finalizeArea,
+    onWallBackspace: popWallPoint,
+    onWallEnter: finalizeWall,
+    onShapeBackspace: resetShapeDrawing,
+  })
+
   const handleMapClick = React.useCallback(
     (event: MapLayerMouseEvent) => {
-      if (!isEditMode || activeTool !== 'draw-area') {
+      if (!isEditMode) {
         return
       }
       const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
 
-      const canClose = drawing.points.length >= 3
-      if (drawing.isActive && isNearStart && canClose) {
-        finalizeArea()
+      const isDrawingTool =
+        activeTool === 'draw-area' ||
+        activeTool === 'draw-wall' ||
+        activeTool === 'draw-shape'
+
+      if (!isDrawingTool) {
         return
       }
 
-      if (!drawing.isActive) {
-        startPointMode(point)
+      if (!activeArea && activeTool !== 'draw-area') {
+        toast.info('Create an area first')
         return
       }
 
-      appendPoint(point)
+      const pointInside =
+        activeTool === 'draw-area' || !activeArea
+          ? true
+          : isPointInsideArea(point, activeArea)
+      if (!pointInside) {
+        toast.error('Objects must be inside an area')
+        return
+      }
+
+      if (activeTool === 'draw-area') {
+        const canClose = drawing.points.length >= 3
+        if (drawing.isActive && isNearStart && canClose) {
+          finalizeArea()
+          return
+        }
+
+        if (!drawing.isActive) {
+          startPointMode(point)
+          return
+        }
+
+        appendPoint(point)
+        return
+      }
+
+      if (activeTool === 'draw-wall') {
+        if (!wallDrawing.isActive) {
+          startWall(point)
+          setTooltip(null)
+          return
+        }
+        appendWallPoint(point)
+        return
+      }
+
+      if (activeTool === 'draw-shape') {
+        if (!shapeDrawing.isActive) {
+          startShape(point)
+          return
+        }
+        finalizeShape(point, shapeMode)
+      }
     },
-    [activeTool, appendPoint, drawing, finalizeArea, isEditMode, isNearStart],
+    [
+      activeArea,
+      activeTool,
+      appendPoint,
+      appendWallPoint,
+      drawing.isActive,
+      drawing.points.length,
+      finalizeArea,
+      finalizeShape,
+      isEditMode,
+      isNearStart,
+      shapeDrawing.isActive,
+      shapeMode,
+      startPointMode,
+      startShape,
+      startWall,
+      wallDrawing.isActive,
+    ],
   )
 
   const handleDoubleClick = (event: MapLayerMouseEvent) => {
     event.preventDefault()
-    finalizeArea()
+    if (activeTool === 'draw-wall') {
+      finalizeWall()
+      return
+    }
+    if (activeTool === 'draw-area') {
+      finalizeArea()
+    }
   }
 
   const handleDragStart = () => {
@@ -227,31 +510,6 @@ export const MapView: React.FC = () => {
     }
   }
 
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat) {
-        return
-      }
-      if (activeTool !== 'draw-area' || !isEditMode) {
-        return
-      }
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        resetDrawing()
-      }
-      if (event.key === 'Backspace') {
-        event.preventDefault()
-        handleBackspace()
-      }
-      if (event.key === 'Enter') {
-        event.preventDefault()
-        finalizeArea()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [activeTool, finalizeArea, handleBackspace, isEditMode, resetDrawing])
-
   const areaFeatures = React.useMemo(
     () => buildAreaFeatureCollection(areas, activeAreaId),
     [areas, activeAreaId],
@@ -261,6 +519,57 @@ export const MapView: React.FC = () => {
     () => buildOverlapFeatures(areas),
     [areas],
   )
+
+  const wallFeatures = React.useMemo(() => buildWallFeatures(walls), [walls])
+
+  const wallVertexFeatures = React.useMemo(
+    () => buildWallVertexFeatures(walls),
+    [walls],
+  )
+
+  const wallPreviewFeature: FeatureCollection | null = React.useMemo(() => {
+    if (!wallDrawing.isActive || wallPreviewPath.length < 2) {
+      return null
+    }
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {
+            color: DEFAULT_WALL_COLOR,
+            thickness: DEFAULT_WALL_THICKNESS,
+          },
+          geometry: {type: 'LineString', coordinates: wallPreviewPath},
+        },
+      ],
+    }
+  }, [wallDrawing.isActive, wallPreviewPath])
+
+  const shapeFeatures = React.useMemo(
+    () => buildShapeFeatures(shapes),
+    [shapes],
+  )
+
+  const shapePreviewFeature: FeatureCollection | null = React.useMemo(() => {
+    if (!shapePreview || shapePreview.length < 2) {
+      return null
+    }
+    const isLine = shapeMode === 'line'
+    const geometry = isLine
+      ? {type: 'LineString', coordinates: shapePreview}
+      : {type: 'Polygon', coordinates: [shapePreview]}
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {shapeMode},
+          geometry,
+        },
+      ],
+    }
+  }, [shapeMode, shapePreview])
 
   const drawingLine: FeatureCollection | null = React.useMemo(() => {
     if (!drawing.isActive || previewPath.length === 0) {
@@ -295,12 +604,14 @@ export const MapView: React.FC = () => {
   return (
     <div className='relative h-full w-full'>
       <Map
+        dragPan={activeTool === 'hand'}
         mapStyle='mapbox://styles/mapbox/streets-v12'
         ref={mapRef}
         style={{height: '100%', width: '100%'}}
         attributionControl={false}
         cursor={cursor}
         doubleClickZoom={false}
+        dragRotate={false}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
         minZoom={10}
         onClick={handleMapClick}
@@ -315,92 +626,24 @@ export const MapView: React.FC = () => {
           zoom: 10,
         }}
       >
-        <Source data={areaFeatures} id='areas' type='geojson'>
-          <Layer
-            id='area-fill'
-            type='fill'
-            paint={{
-              'fill-color': ['get', 'color'],
-              'fill-opacity': [
-                'case',
-                ['boolean', ['get', 'isActive'], false],
-                ['+', ['get', 'opacity'], 0.12],
-                ['get', 'opacity'],
-              ],
-            }}
-          />
-          <Layer
-            id='area-outline'
-            type='line'
-            paint={{
-              'line-color': ['get', 'borderColor'],
-              'line-width': [
-                'case',
-                ['boolean', ['get', 'isActive'], false],
-                4,
-                2,
-              ],
-            }}
-          />
-        </Source>
+        <MapViewAreaLayers
+          areaFeatures={areaFeatures}
+          drawingLine={drawingLine}
+          drawingColor={drawingColor}
+          drawingPoints={drawingPoints}
+          overlapFeatures={overlapFeatures}
+        />
 
-        {overlapFeatures && overlapFeatures.features.length > 0 ? (
-          <Source data={overlapFeatures} id='area-overlaps' type='geojson'>
-            <Layer
-              id='overlap-fill'
-              type='fill'
-              paint={{
-                'fill-color': '#000000',
-                'fill-opacity': 0.08,
-              }}
-            />
-            <Layer
-              id='overlap-lines'
-              type='line'
-              paint={{
-                'line-color': '#000000',
-                'line-width': 1,
-                'line-dasharray': [2, 2],
-                'line-opacity': 0.4,
-              }}
-            />
-          </Source>
-        ) : null}
+        <MapViewWallLayers
+          wallFeatures={wallFeatures}
+          wallPreviewFeature={wallPreviewFeature}
+          wallVertexFeatures={wallVertexFeatures}
+        />
 
-        {drawingLine ? (
-          <Source data={drawingLine} id='drawing-line' type='geojson'>
-            <Layer
-              id='drawing-outline'
-              type='line'
-              paint={{
-                'line-color': drawingColor,
-                'line-width': 2,
-                'line-opacity': 0.8,
-              }}
-            />
-          </Source>
-        ) : null}
-
-        {drawingPoints ? (
-          <Source data={drawingPoints} id='drawing-points' type='geojson'>
-            <Layer
-              id='drawing-point-layer'
-              type='circle'
-              paint={{
-                'circle-radius': [
-                  'case',
-                  ['==', ['get', 'role'], 'first'],
-                  6,
-                  5,
-                ],
-                'circle-color': '#FFFFFF',
-                'circle-stroke-color': drawingColor,
-                'circle-stroke-width': 2,
-                'circle-blur': 0.2,
-              }}
-            />
-          </Source>
-        ) : null}
+        <MapViewShapeLayers
+          shapeFeatures={shapeFeatures}
+          shapePreviewFeature={shapePreviewFeature}
+        />
       </Map>
 
       {tooltip ? <MapViewTooltip tooltip={tooltip} /> : null}

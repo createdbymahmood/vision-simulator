@@ -146,10 +146,12 @@ export const EditorLayout: React.FC = () => {
         <ViewportShell
           mapVisible={mapVisible}
           measurementEnabled={measurementEnabled}
+          activeTool={activeTool}
           onBlankClick={handleBlankClick}
           onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
           onToggleSnap={() => setSnapToGrid((prev) => !prev)}
           sceneMode={sceneMode}
+          shapeMode={shapeMode}
           snapToGrid={snapToGrid}
           viewMode={viewMode}
         />
