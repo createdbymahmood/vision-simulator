@@ -171,8 +171,6 @@ export const EditorLayout: React.FC = () => {
       />
 
       <RightRail
-        areaCount={areas.length}
-        deviceCount={deviceCount}
         isEditMode={isEditMode}
         isMapMode={sceneMode === 'map'}
         onAreaManagement={() => setAreaPanelOpen(true)}

@@ -1,6 +1,6 @@
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-import type {FeatureCollection} from 'geojson'
+import type {FeatureCollection, Geometry, LineString, Polygon} from 'geojson'
 /* @ts-expect-error - MapLayerMouseEvent is not exported by react-map-gl/mapbox */
 import type {MapLayerMouseEvent, MapRef} from 'react-map-gl/mapbox'
 
@@ -574,15 +574,15 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
       return null
     }
     const isLine = shapeMode === 'line'
-    const geometry = isLine
-      ? ({
+    const geometry: LineString | Polygon = isLine
+      ? {
           type: 'LineString',
           coordinates: shapePreview,
-        } as unknown as FeatureCollection)
-      : ({
+        }
+      : {
           type: 'Polygon',
-          coordinates: [shapePreview],
-        } as unknown as FeatureCollection)
+          coordinates: [shapePreview as GeoPoint[]],
+        }
     return {
       type: 'FeatureCollection',
       features: [
@@ -592,7 +592,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
           geometry,
         },
       ],
-    } as unknown as FeatureCollection
+    } as FeatureCollection<Geometry>
   }, [shapeMode, shapePreview])
 
   const drawingLine: FeatureCollection | null = React.useMemo(() => {

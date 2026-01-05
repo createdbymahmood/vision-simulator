@@ -11,6 +11,8 @@ interface RightRailProps {
   onAreaManagement: () => void
   onMapViewMode: () => void
   onDevicesInUse: () => void
+  areaCount?: number
+  deviceCount?: number
 }
 
 const railButtonClass = 'relative h-12 w-12'

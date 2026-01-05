@@ -97,7 +97,7 @@ const SHAPE_OPTIONS: {
   label: string
   mode: ShapeDrawMode
   shortcut: string
-  icon: React.FC
+  icon: React.ComponentType<{className?: string}>
 }[] = [
   {label: 'Rectangle', mode: 'rectangle', shortcut: 'R', icon: Square},
   {label: 'Circle', mode: 'circle', shortcut: 'C', icon: Circle},

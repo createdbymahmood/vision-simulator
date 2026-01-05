@@ -2,6 +2,7 @@ import type {
   Feature,
   FeatureCollection,
   GeoJsonProperties,
+  Geometry,
   MultiPolygon,
   Polygon,
 } from 'geojson'
@@ -29,10 +30,7 @@ import {
   AREA_COLORS,
   DEFAULT_AREA_STYLE,
 } from '@/features/scene/domain/constants/area-style'
-import {
-  SHAPE_FILL_COLOR,
-  SHAPE_STROKE_COLOR,
-} from '@/features/scene/domain/constants/shape-style'
+import {SHAPE_STROKE_COLOR} from '@/features/scene/domain/constants/shape-style'
 import {DEFAULT_WALL_COLOR} from '@/features/scene/domain/constants/wall-style'
 
 export const closeRing = (points: GeoPoint[]) => {
@@ -216,7 +214,7 @@ export const buildOverlapFeatures = (
     if (!baseRing) {
       return
     }
-    const base = polygon([baseRing]) as FeatureCollection<
+    const base = polygon([baseRing]) as Feature<
       MultiPolygon | Polygon,
       GeoJsonProperties
     >
@@ -226,13 +224,13 @@ export const buildOverlapFeatures = (
         continue
       }
 
-      const other = polygon([otherRing]) as FeatureCollection<
+      const other = polygon([otherRing]) as Feature<
         MultiPolygon | Polygon,
         GeoJsonProperties
       >
 
       try {
-        const overlap = intersect(base, other)
+        const overlap = intersect(base as any, other as any)
         if (overlap) {
           features.push(overlap as Feature)
         }
@@ -295,22 +293,24 @@ export const buildShapeFeatures = (
     .filter((shape) => shape.geometry.length >= 2)
     .map((shape) => {
       const isLine = shape.shapeType === 'line'
-      const geometry = isLine
-        ? ({
+      const lineCoordinates = [...shape.geometry] as number[][]
+      const polygonCoordinates = [closeRing([...shape.geometry]) as number[][]]
+      const geometry: Geometry = isLine
+        ? {
             type: 'LineString',
-            coordinates: shape.geometry,
-          } as const)
-        : ({
+            coordinates: lineCoordinates,
+          }
+        : {
             type: 'Polygon',
-            coordinates: [closeRing(shape.geometry)],
-          } as const)
+            coordinates: polygonCoordinates,
+          }
       return {
-        type: 'Feature' as const,
+        type: 'Feature',
         properties: {
           color: shape.color ?? SHAPE_STROKE_COLOR,
           shapeType: shape.shapeType,
         },
         geometry,
-      }
+      } as Feature<Geometry, GeoJsonProperties>
     }),
 })

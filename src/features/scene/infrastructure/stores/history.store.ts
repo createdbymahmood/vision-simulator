@@ -58,7 +58,7 @@ const record = (
   return get().past
 }
 
-const undo = (set: SetState, get: GetState, currentScene: SceneRoot) => {
+const undo = (set: SetState, _get: GetState, currentScene: SceneRoot) => {
   let entry: HistoryEntry | null = null
 
   const nextValue = produce<HistoryState>((state) => {
@@ -75,7 +75,7 @@ const undo = (set: SetState, get: GetState, currentScene: SceneRoot) => {
   return entry
 }
 
-const redo = (set: SetState, get: GetState, currentScene: SceneRoot) => {
+const redo = (set: SetState, _get: GetState, currentScene: SceneRoot) => {
   let entry: HistoryEntry | null = null
 
   const nextValue = produce<HistoryState>((state) => {
