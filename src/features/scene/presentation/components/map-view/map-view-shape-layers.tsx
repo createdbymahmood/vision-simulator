@@ -22,14 +22,26 @@ export const MapViewShapeLayers: React.FC<MapViewShapeLayersProps> = ({
   return (
     <>
       {hasShapes ? (
-        <Source data={shapeFeatures} id='shapes' type='geojson'>
+        <Source data={shapeFeatures} id='shapes' type='geojson' promoteId='id'>
           <Layer
             filter={['==', ['geometry-type'], 'Polygon']}
             id='shape-fill'
             type='fill'
             paint={{
-              'fill-color': SHAPE_FILL_COLOR,
-              'fill-opacity': 0.4,
+              'fill-color': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                '#DDEEFF',
+                SHAPE_FILL_COLOR,
+              ],
+              'fill-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                0.5,
+                ['boolean', ['feature-state', 'selected'], false],
+                0.45,
+                0.4,
+              ],
             }}
           />
           <Layer
@@ -37,8 +49,18 @@ export const MapViewShapeLayers: React.FC<MapViewShapeLayersProps> = ({
             id='shape-outline'
             type='line'
             paint={{
-              'line-color': ['coalesce', ['get', 'color'], SHAPE_STROKE_COLOR],
-              'line-width': 2,
+              'line-color': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                '#2563EB',
+                ['coalesce', ['get', 'color'], SHAPE_STROKE_COLOR],
+              ],
+              'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                3,
+                2,
+              ],
               'line-dasharray': [3, 2],
             }}
           />
@@ -47,8 +69,18 @@ export const MapViewShapeLayers: React.FC<MapViewShapeLayersProps> = ({
             id='shape-line'
             type='line'
             paint={{
-              'line-color': ['coalesce', ['get', 'color'], SHAPE_STROKE_COLOR],
-              'line-width': 3,
+              'line-color': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                '#2563EB',
+                ['coalesce', ['get', 'color'], SHAPE_STROKE_COLOR],
+              ],
+              'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                4,
+                3,
+              ],
             }}
           />
         </Source>

@@ -4,6 +4,7 @@ import type {
   GeoJsonProperties,
   Geometry,
   MultiPolygon,
+  Point,
   Polygon,
 } from 'geojson'
 
@@ -20,7 +21,9 @@ import {
 
 import type {
   AreaEntity,
+  CameraEntity,
   GeoPoint,
+  PersonEntity,
   PolygonGeometry,
   ShapeEntity,
   WallEntity,
@@ -171,8 +174,11 @@ export const buildAreaFeatureCollection = (
   type: 'FeatureCollection' as const,
   features: areas.map((area) => ({
     type: 'Feature' as const,
+    id: area.id,
     properties: {
       id: area.id,
+      areaId: area.id,
+      entityType: 'area',
       color: area.style.fillColor,
       opacity: area.style.fillOpacity,
       borderColor: area.style.borderColor,
@@ -253,7 +259,11 @@ export const buildWallFeatures = (walls: WallEntity[]): FeatureCollection => ({
     .filter((wall) => wall.points.length >= 2)
     .map((wall) => ({
       type: 'Feature' as const,
+      id: wall.id,
       properties: {
+        id: wall.id,
+        areaId: wall.areaId,
+        entityType: 'wall',
         color: wall.color ?? DEFAULT_WALL_COLOR,
         thickness: wall.thickness,
       },
@@ -273,7 +283,11 @@ export const buildWallVertexFeatures = (
     .flatMap((wall) =>
       wall.points.map((coordinate, index) => ({
         type: 'Feature' as const,
+        id: `${wall.id}-vertex-${index}`,
         properties: {
+          id: wall.id,
+          areaId: wall.areaId,
+          entityType: 'wall',
           color: wall.color ?? DEFAULT_WALL_COLOR,
           role: index === 0 ? 'start' : 'vertex',
         },
@@ -306,11 +320,56 @@ export const buildShapeFeatures = (
           }
       return {
         type: 'Feature',
+        id: shape.id,
         properties: {
+          id: shape.id,
+          areaId: shape.areaId,
+          entityType: 'shape',
           color: shape.color ?? SHAPE_STROKE_COLOR,
           shapeType: shape.shapeType,
         },
         geometry,
       } as Feature<Geometry, GeoJsonProperties>
     }),
+})
+
+export const buildCameraFeatures = (
+  cameras: CameraEntity[],
+): FeatureCollection<Point> => ({
+  type: 'FeatureCollection',
+  features: cameras.map((camera) => ({
+    type: 'Feature',
+    id: camera.id,
+    properties: {
+      id: camera.id,
+      areaId: camera.areaId,
+      entityType: 'camera',
+      direction: camera.direction,
+      color: camera.color,
+    },
+    geometry: {
+      type: 'Point',
+      coordinates: [camera.x, camera.y],
+    },
+  })),
+})
+
+export const buildPersonFeatures = (
+  people: PersonEntity[],
+): FeatureCollection<Point> => ({
+  type: 'FeatureCollection',
+  features: people.map((person) => ({
+    type: 'Feature',
+    id: person.id,
+    properties: {
+      id: person.id,
+      areaId: person.areaId,
+      entityType: 'person',
+      radius: person.radius,
+    },
+    geometry: {
+      type: 'Point',
+      coordinates: [person.x, person.y],
+    },
+  })),
 })

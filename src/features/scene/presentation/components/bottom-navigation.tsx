@@ -46,19 +46,19 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <div className='pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center'>
-      <div className='pointer-events-auto flex py-1 w-full max-w-fit items-center justify-between rounded-full px-1 backdrop-blur shadow-lg gap-2 bg-white/30'>
+      <div className='pointer-events-auto flex w-full max-w-fit items-center justify-between rounded-full backdrop-blur shadow-lg gap-2 bg-white/30 p-2'>
         <ToolButton
           active={activeTool === 'hand'}
           disabled={!isEditMode}
           label='Hand Mode'
-          icon={<Hand className='h-6 w-6' />}
+          icon={<Hand className='size-5' />}
           onClick={() => onSelectTool('hand')}
         />
         <ToolButton
           active={activeTool === 'select'}
           disabled={!isEditMode}
           label='Selector'
-          icon={<MousePointer2 className='h-6 w-6' />}
+          icon={<MousePointer2 className='size-5' />}
           onClick={() => onSelectTool('select')}
         />
 
@@ -72,7 +72,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           active={activeTool === 'draw-wall'}
           disabled={dependentDisabled}
           label='Draw Wall'
-          icon={<BrickWall className='h-6 w-6' />}
+          icon={<BrickWall className='size-5' />}
           onClick={() => onSelectTool('draw-wall')}
           tooltip={dependentDisabled ? disabledToolTooltip : undefined}
         />

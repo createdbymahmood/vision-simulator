@@ -20,7 +20,7 @@ export const MapViewAreaLayers: React.FC<MapViewAreaLayersProps> = ({
 }) => {
   return (
     <>
-      <Source data={areaFeatures} id='areas' type='geojson'>
+      <Source data={areaFeatures} id='areas' type='geojson' promoteId='id'>
         <Layer
           id='area-fill'
           type='fill'
@@ -28,6 +28,10 @@ export const MapViewAreaLayers: React.FC<MapViewAreaLayersProps> = ({
             'fill-color': ['get', 'color'],
             'fill-opacity': [
               'case',
+              ['boolean', ['feature-state', 'hover'], false],
+              ['+', ['get', 'opacity'], 0.14],
+              ['boolean', ['feature-state', 'selected'], false],
+              ['+', ['get', 'opacity'], 0.1],
               ['boolean', ['get', 'isActive'], false],
               ['+', ['get', 'opacity'], 0.12],
               ['get', 'opacity'],
@@ -38,13 +42,33 @@ export const MapViewAreaLayers: React.FC<MapViewAreaLayersProps> = ({
           id='area-outline'
           type='line'
           paint={{
-            'line-color': ['get', 'borderColor'],
+            'line-color': [
+              'case',
+              ['boolean', ['feature-state', 'constraint'], false],
+              '#EF4444',
+              ['boolean', ['feature-state', 'selected'], false],
+              '#2563EB',
+              ['get', 'borderColor'],
+            ],
             'line-width': [
               'case',
+              ['boolean', ['feature-state', 'selected'], false],
+              4,
               ['boolean', ['get', 'isActive'], false],
               4,
               2,
             ],
+          }}
+        />
+        <Layer
+          filter={['boolean', ['feature-state', 'selected'], false]}
+          id='area-selection-glow'
+          type='line'
+          paint={{
+            'line-color': '#2563EB',
+            'line-width': 8,
+            'line-opacity': 0.25,
+            'line-blur': 1.5,
           }}
         />
       </Source>

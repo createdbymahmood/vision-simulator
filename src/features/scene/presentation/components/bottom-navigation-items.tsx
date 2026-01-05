@@ -77,7 +77,7 @@ export const CreateAreaPopover: React.FC<CreateAreaPopoverProps> = ({
       }}
     >
       <div className='relative'>
-        <Hexagon className='h-6 w-6' />
+        <Hexagon className='size-5' />
       </div>
     </Button>
   )
@@ -122,7 +122,7 @@ export const ShapePopover: React.FC<ShapePopoverProps> = ({
           disabled={disabled}
           variant={activeTool === 'draw-shape' ? 'default' : 'ghost'}
         >
-          <Shapes className='h-6 w-6' />
+          <Shapes className='size-5' />
         </Button>
       </PopoverTrigger>
       <PopoverContent align='center' className='w-56 p-3' side='top'>
@@ -175,7 +175,7 @@ export const PlacementButtons: React.FC<PlacementButtonsProps> = ({
         active={activeTool === 'place-camera'}
         disabled={disabled}
         label='Place Device'
-        icon={<Camera className='h-6 w-6' />}
+        icon={<Camera className='size-5' />}
         onClick={() => {
           onSelectTool('place-camera')
           onOpenPlaceDevice()
@@ -186,7 +186,7 @@ export const PlacementButtons: React.FC<PlacementButtonsProps> = ({
         active={activeTool === 'place-person'}
         disabled={disabled}
         label='Place Person'
-        icon={<User className='h-6 w-6' />}
+        icon={<User className='size-5' />}
         onClick={() => {
           onSelectTool('place-person')
           onPlacePerson()

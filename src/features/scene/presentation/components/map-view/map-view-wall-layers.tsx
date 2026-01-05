@@ -24,7 +24,7 @@ export const MapViewWallLayers: React.FC<MapViewWallLayersProps> = ({
   return (
     <>
       {hasWalls ? (
-        <Source data={wallFeatures} id='walls' type='geojson'>
+        <Source data={wallFeatures} id='walls' type='geojson' promoteId='id'>
           <Layer
             id='wall-lines'
             type='line'
@@ -33,13 +33,34 @@ export const MapViewWallLayers: React.FC<MapViewWallLayersProps> = ({
               'line-join': 'round',
             }}
             paint={{
-              'line-color': ['coalesce', ['get', 'color'], DEFAULT_WALL_COLOR],
-              'line-width': [
-                '*',
-                ['coalesce', ['get', 'thickness'], DEFAULT_WALL_THICKNESS],
-                8,
+              'line-color': [
+                'case',
+                ['boolean', ['feature-state', 'constraint'], false],
+                '#EF4444',
+                ['boolean', ['feature-state', 'selected'], false],
+                '#2563EB',
+                ['coalesce', ['get', 'color'], DEFAULT_WALL_COLOR],
               ],
-              'line-opacity': 1,
+              'line-width': [
+                'case',
+                ['boolean', ['feature-state', 'selected'], false],
+                [
+                  '*',
+                  ['coalesce', ['get', 'thickness'], DEFAULT_WALL_THICKNESS],
+                  10,
+                ],
+                [
+                  '*',
+                  ['coalesce', ['get', 'thickness'], DEFAULT_WALL_THICKNESS],
+                  8,
+                ],
+              ],
+              'line-opacity': [
+                'case',
+                ['boolean', ['feature-state', 'hover'], false],
+                0.9,
+                1,
+              ],
             }}
           />
         </Source>

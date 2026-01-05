@@ -148,6 +148,7 @@ export const EditorLayout: React.FC = () => {
           measurementEnabled={measurementEnabled}
           activeTool={activeTool}
           onBlankClick={handleBlankClick}
+          onSelectTool={setActiveTool}
           onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
           onToggleSnap={() => setSnapToGrid((prev) => !prev)}
           sceneMode={sceneMode}
