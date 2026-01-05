@@ -45,25 +45,6 @@ export const MapViewWallLayers: React.FC<MapViewWallLayersProps> = ({
         </Source>
       ) : null}
 
-      {wallVertexFeatures.features.length > 0 ? (
-        <Source data={wallVertexFeatures} id='wall-vertices' type='geojson'>
-          <Layer
-            id='wall-vertices'
-            type='circle'
-            paint={{
-              'circle-radius': 4,
-              'circle-color': '#ffffff',
-              'circle-stroke-color': [
-                'coalesce',
-                ['get', 'color'],
-                DEFAULT_WALL_COLOR,
-              ],
-              'circle-stroke-width': 2,
-            }}
-          />
-        </Source>
-      ) : null}
-
       {wallPreviewFeature ? (
         <Source data={wallPreviewFeature} id='wall-preview' type='geojson'>
           <Layer
