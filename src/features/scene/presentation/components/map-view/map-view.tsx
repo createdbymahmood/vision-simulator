@@ -575,8 +575,14 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     }
     const isLine = shapeMode === 'line'
     const geometry = isLine
-      ? {type: 'LineString', coordinates: shapePreview}
-      : {type: 'Polygon', coordinates: [shapePreview]}
+      ? ({
+          type: 'LineString',
+          coordinates: shapePreview,
+        } as unknown as FeatureCollection)
+      : ({
+          type: 'Polygon',
+          coordinates: [shapePreview],
+        } as unknown as FeatureCollection)
     return {
       type: 'FeatureCollection',
       features: [
@@ -586,7 +592,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
           geometry,
         },
       ],
-    }
+    } as unknown as FeatureCollection
   }, [shapeMode, shapePreview])
 
   const drawingLine: FeatureCollection | null = React.useMemo(() => {

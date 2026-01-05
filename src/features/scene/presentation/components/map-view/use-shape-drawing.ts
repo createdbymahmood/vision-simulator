@@ -15,7 +15,6 @@ import {
   computeAngleDeg,
   computeSegmentLength,
   createCircleRing,
-  createEquilateralTriangleRing,
   createLineGeometry,
   createRectangleRing,
   createTriangleRing,
@@ -187,54 +186,10 @@ export const useShapeDrawing = ({
 
       if (shapeMode === 'triangle') {
         const points = [...shapeDrawing.points, point]
-        const isDragMode =
-          shapeDrawing.points.length === 1 && shapeDrawing.start
-
-        if (isDragMode && shapeDrawing.start) {
-          preview = createEquilateralTriangleRing(
-            shapeDrawing.start,
-            point,
-          )
-          if (!isGeometryInsideArea(preview)) {
-            setShapePreview(null)
-            return {
-              cursor: 'not-allowed',
-              tooltip: {
-                text: 'Shapes must stay inside the active area',
-                x: screen.x + 12,
-                y: screen.y + 12,
-                visible: true,
-              },
-            }
-          }
-          const baseLen = computeSegmentLength([shapeDrawing.start, point])
-          const height = (Math.sqrt(3) / 2) * baseLen
-          setShapePreview(preview)
-          return {
-            tooltip: {
-              text: `Equilateral • Base: ${formatMeters(baseLen)} • Height: ${formatMeters(height)}`,
-              x: screen.x + 12,
-              y: screen.y + 12,
-              visible: true,
-            },
-          }
-        }
-
         if (points.length === 3) {
           preview = createTriangleRing(points)
         }
-        if (preview && !isGeometryInsideArea(preview)) {
-          setShapePreview(null)
-          return {
-            cursor: 'not-allowed',
-            tooltip: {
-              text: 'Shapes must stay inside the active area',
-              x: screen.x + 12,
-              y: screen.y + 12,
-              visible: true,
-            },
-          }
-        }
+        const isValid = preview ? isGeometryInsideArea(preview) : true
         setShapePreview(preview)
         return {
           tooltip: {
@@ -243,6 +198,7 @@ export const useShapeDrawing = ({
             y: screen.y + 12,
             visible: true,
           },
+          cursor: isValid ? undefined : 'not-allowed',
         }
       }
 

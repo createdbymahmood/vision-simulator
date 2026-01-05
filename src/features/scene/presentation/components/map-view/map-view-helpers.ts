@@ -2,6 +2,7 @@ import type {
   Feature,
   FeatureCollection,
   GeoJsonProperties,
+  MultiPolygon,
   Polygon,
 } from 'geojson'
 
@@ -146,16 +147,6 @@ export const createLineGeometry = (start: GeoPoint, end: GeoPoint) => [
 export const createTriangleRing = (points: GeoPoint[]) =>
   points.length === 3 ? closeRing(points) : null
 
-export const createEquilateralTriangleRing = (
-  start: GeoPoint,
-  end: GeoPoint,
-): GeoPoint[] => {
-  const sideLength = computeSegmentLength([start, end])
-  const baseAngle = computeAngleDeg(start, end)
-  const thirdPoint = projectPoint(start, baseAngle + 60, sideLength)
-  return closeRing([start, end, thirdPoint])
-}
-
 export const createCircleRing = (
   center: GeoPoint,
   radiusMeters: number,
@@ -225,14 +216,20 @@ export const buildOverlapFeatures = (
     if (!baseRing) {
       return
     }
-    const base = polygon([baseRing]) as Feature<Polygon, GeoJsonProperties>
+    const base = polygon([baseRing]) as FeatureCollection<
+      MultiPolygon | Polygon,
+      GeoJsonProperties
+    >
     for (let i = index + 1; i < areas.length; i += 1) {
       const otherRing = getSafeRing(areas[i].geometry.coordinates)
       if (!otherRing) {
         continue
       }
 
-      const other = polygon([otherRing])
+      const other = polygon([otherRing]) as FeatureCollection<
+        MultiPolygon | Polygon,
+        GeoJsonProperties
+      >
 
       try {
         const overlap = intersect(base, other)
