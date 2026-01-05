@@ -51,7 +51,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
   return (
     <div className='pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center'>
-      <div className='pointer-events-auto flex py-1 w-full max-w-fit items-center justify-between rounded-full px-1 backdrop-blur shadow-lg gap-2'>
+      <div className='pointer-events-auto flex py-1 w-full max-w-fit items-center justify-between rounded-full px-1 backdrop-blur shadow-lg gap-2 bg-white/30'>
         <ModePopover
           disabled={!isEditMode}
           activeTool={activeTool}

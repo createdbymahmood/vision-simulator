@@ -6,6 +6,8 @@ import {cn} from '@/lib/utils'
 
 import type {SceneMode, ViewMode} from '../../domain/types'
 
+import {MapView} from './map-view'
+
 interface ViewportShellProps {
   sceneMode: SceneMode
   viewMode: ViewMode
@@ -16,7 +18,6 @@ interface ViewportShellProps {
   onToggleSnap: () => void
   onToggleMeasurement: () => void
 }
-
 export const ViewportShell: React.FC<ViewportShellProps> = ({
   sceneMode,
   viewMode,
@@ -35,19 +36,14 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
       <div className={cn('absolute inset-0 transition-all duration-200')} />
 
       <div className='absolute inset-0 flex items-center justify-center'>
-        <div className='flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm backdrop-blur'>
-          {sceneMode === 'map' && mapVisible ? (
-            <>
-              <Map className='h-4 w-4' />
-              <span>Map Mode</span>
-            </>
-          ) : (
-            <>
-              <Grid className='h-4 w-4' />
-              <span>Canvas Mode</span>
-            </>
-          )}
-        </div>
+        {sceneMode === 'map' && mapVisible ? (
+          <MapView />
+        ) : (
+          <div className='flex flex-row gap-2 items-center'>
+            <Grid className='h-4 w-4' />
+            <span className='text-sm'>Canvas Mode</span>
+          </div>
+        )}
       </div>
 
       {viewMode === 'preview' ? (
