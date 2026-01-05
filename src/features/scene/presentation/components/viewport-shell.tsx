@@ -36,7 +36,7 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
 }) => {
   return (
     <div
-      className='relative w-full overflow-hidden backdrop-blur-lg h-full bg-blue-200 flex-1'
+      className='relative w-full overflow-hidden backdrop-blur-lg h-full flex-1'
       onMouseDown={onBlankClick}
       onMouseMove={(event) => {
         const rect = event.currentTarget.getBoundingClientRect()
