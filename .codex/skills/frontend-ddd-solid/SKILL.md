@@ -242,63 +242,134 @@ export const createToastNotificationAdapter = (): NotificationPort => ({
 })
 ```
 
-### Zustand Store (Context-backed)
+### Zustand Store Example (Context-backed)
 
 ```typescript
-// features/user/infrastructure/stores/user.store.ts
-import { create } from 'zustand';
-import { immer } from 'zustand/middleware/immer';
-import { User } from '@/features/user/domain/user.entity';
-import { createContext, useContext } from 'react';
+import {produce} from 'immer'
+import {find, findIndex, remove} from 'lodash-es'
+import type {StateCreator, StoreApi} from 'zustand'
+import {createZustandContextStore} from '@components/shared/zustand.tsx'
 
-interface UserState {
-  users: User[];
-  selectedUser: User | null;
-  isLoading: boolean;
+// 1. Define State Interface
+export interface DashboardWidgetsBoardState {
+  views: DashboardView[]
+  isFullScreen: boolean
+
+  // Actions (inline, not separate functions)
+  setWidgets: (viewId: string, widgets: Widget[]) => DashboardView[]
+  updateWidget: (
+    viewId: string,
+    widgetId: string,
+    widget: Widget,
+  ) => DashboardView[]
+  deleteWidget: (viewId: string, widgetIds: string[]) => DashboardView[]
+  addView: (view: Omit<DashboardView, 'widgets'>) => DashboardView[]
+  deleteView: (viewId: string) => DashboardView[]
+  toggleFullScreen: (nextValue?: boolean) => boolean
 }
 
-interface UserActions {
-  setUsers: (users: User[]) => void;
-  addUser: (user: User) => void;
-  selectUser: (user: User | null) => void;
-  setLoading: (loading: boolean) => void;
+type SetState = StoreApi<DashboardWidgetsBoardState>['setState']
+type GetState = StoreApi<DashboardWidgetsBoardState>['getState']
+
+// 2. Define Action Handlers (pure functions)
+const setWidgets = (
+  set: SetState,
+  get: GetState,
+  viewId: string,
+  widgets: Widget[],
+) => {
+  const nextValue = produce((state: DashboardWidgetsBoardState) => {
+    const view = find(state.views, {id: viewId})
+    if (view) {
+      view.widgets = widgets
+    }
+  })
+
+  set(nextValue)
+  return get().views
 }
 
-type UserStore = UserState & UserActions;
+const deleteWidget = (
+  set: SetState,
+  get: GetState,
+  viewId: string,
+  widgetIds: string[],
+) => {
+  const nextValue = produce((state: DashboardWidgetsBoardState) => {
+    const view = find(state.views, {id: viewId})
+    if (!view) return
 
-export const createUserStore = () =>
-  create<UserStore>()(
-    immer((set, get) => ({
-      // State
-      users: [],
-      selectedUser: null,
-      isLoading: false,
+    remove(view.widgets, (w) => widgetIds.includes(w.id))
+  })
 
-      // Actions (use produce for immutability)
-      setUsers: (users) => set((state) => { state.users = users; }),
-      addUser: (user) => set((state) => { state.users.push(user); }),
-      selectUser: (user) => set((state) => { state.selectedUser = user; }),
-      setLoading: (loading) => set((state) => { state.isLoading = loading; }),
-    }))
-  );
+  set(nextValue)
+  return get().views
+}
 
-// Context wrapper
-const UserStoreContext = createContext<ReturnType<typeof createUserStore> | null>(null);
+const addView = (
+  set: SetState,
+  get: GetState,
+  view: Omit<DashboardView, 'widgets'>,
+) => {
+  const newView: DashboardView = {
+    ...view,
+    widgets: [],
+  }
 
-export const UserStoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const storeRef = React.useRef(createUserStore());
-  return (
-    <UserStoreContext.Provider value={storeRef.current}>
-      {children}
-    </UserStoreContext.Provider>
-  );
-};
+  const nextValue = produce((state: DashboardWidgetsBoardState) => {
+    state.views.push(newView)
+  })
 
-export const useUserStore = () => {
-  const store = useContext(UserStoreContext);
-  if (!store) throw new Error('useUserStore must be used within UserStoreProvider');
-  return store;
-};
+  set(nextValue)
+  return get().views
+}
+
+const toggleFullScreen = (
+  set: SetState,
+  get: GetState,
+  nextValue?: boolean,
+) => {
+  const nextUpdater = produce((state: DashboardWidgetsBoardState) => {
+    state.isFullScreen =
+      typeof nextValue === 'boolean' ? nextValue : !state.isFullScreen
+  })
+
+  set(nextUpdater)
+  return get().isFullScreen
+}
+
+// 3. Create Store Factory
+const createDashboardWidgetsBoardStore =
+  (
+    initialValues: Partial<DashboardWidgetsBoardState>,
+  ): StateCreator<DashboardWidgetsBoardState> =>
+  (set, get) => ({
+    // Default values
+    views: [],
+    isFullScreen: false,
+
+    // Bind actions
+    setWidgets: (viewId, widgets) => setWidgets(set, get, viewId, widgets),
+    updateWidget: (viewId, widgetId, widget) =>
+      updateWidget(set, get, viewId, widgetId, widget),
+    deleteWidget: (viewId, widgetIds) =>
+      deleteWidget(set, get, viewId, widgetIds),
+    addView: (view) => addView(set, get, view),
+    deleteView: (viewId) => deleteView(set, get, viewId),
+    toggleFullScreen: (nextValue) => toggleFullScreen(set, get, nextValue),
+
+    // Override with initial values
+    ...initialValues,
+  })
+
+// 4. Create Context Store
+export const {
+  Provider: DashboardWidgetsBoardStoreProvider,
+  useStore: useDashboardWidgetsBoardStore,
+} = createZustandContextStore<
+  DashboardWidgetsBoardState,
+  Partial<DashboardWidgetsBoardState>
+>(createDashboardWidgetsBoardStore)
 ```
 
 ### Presentation Layer (Hooks + Components)
