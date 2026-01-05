@@ -61,13 +61,17 @@ export const MapViewAreaLayers: React.FC<MapViewAreaLayersProps> = ({
           }}
         />
         <Layer
-          filter={['boolean', ['feature-state', 'selected'], false]}
           id='area-selection-glow'
           type='line'
           paint={{
             'line-color': '#2563EB',
             'line-width': 8,
-            'line-opacity': 0.25,
+            'line-opacity': [
+              'case',
+              ['boolean', ['feature-state', 'selected'], false],
+              0.25,
+              0,
+            ],
             'line-blur': 1.5,
           }}
         />

@@ -262,12 +262,7 @@ const addShape = (
   const nextValue = produce<SceneState>((state) => {
     const id = `shape-${state.scene.shapes.length + 1}`
     state.scene.shapes.push(
-      createDefaultShape(
-        id,
-        shape.areaId,
-        shape.shapeType as any,
-        shape.geometry,
-      ),
+      createDefaultShape(id, shape.areaId, shape.shapeType, shape.geometry),
     )
     state.scene.meta.updatedAt = new Date().toISOString()
   })

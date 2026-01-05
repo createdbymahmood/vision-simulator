@@ -217,7 +217,7 @@ export const buildOverlapFeatures = (
   const features: Feature[] = []
   areas.forEach((area, index) => {
     const baseRing = getSafeRing(area.geometry.coordinates)
-    if (!baseRing) {
+    if (!baseRing || baseRing.length < 4) {
       return
     }
     const base = polygon([baseRing]) as Feature<
@@ -226,7 +226,7 @@ export const buildOverlapFeatures = (
     >
     for (let i = index + 1; i < areas.length; i += 1) {
       const otherRing = getSafeRing(areas[i].geometry.coordinates)
-      if (!otherRing) {
+      if (!otherRing || otherRing.length < 4) {
         continue
       }
 
@@ -236,15 +236,12 @@ export const buildOverlapFeatures = (
       >
 
       try {
-        const overlap = intersect(base as any, other as any)
+        const overlap = intersect(base, other)
         if (overlap) {
           features.push(overlap as Feature)
         }
-      } catch (error) {
-        console.warn(
-          'Skipping overlap calculation due to invalid geometry',
-          error,
-        )
+      } catch {
+        // ignore invalid intersections
       }
     }
   })
