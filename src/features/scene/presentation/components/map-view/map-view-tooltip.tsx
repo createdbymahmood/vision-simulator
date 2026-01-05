@@ -21,7 +21,7 @@ export const MapViewTooltip: React.FC<MapViewTooltipProps> = ({tooltip}) => {
   const {refs, floatingStyles, update} = useFloating({
     open: tooltip.visible,
     placement: 'top-start',
-    middleware: [offset(-48), shift({padding: 8})],
+    middleware: [offset(-32), shift({padding: 8})],
     strategy: 'fixed',
   })
 
