@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@floating-ui/core": "^1.7.3",
+    "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^5.2.2",
     "@mapbox/mapbox-gl-draw": "^1.5.1",
     "@monaco-editor/react": "^4.7.0",
