@@ -5,6 +5,9 @@ import type {
   MultiPolygon,
   Polygon,
 } from 'geojson'
+
+import 'mapbox-gl/dist/mapbox-gl.css'
+
 /* @ts-expect-error - MapLayerMouseEvent is not exported by react-map-gl/mapbox */
 import type {MapLayerMouseEvent, MapRef} from 'react-map-gl/mapbox'
 
@@ -24,6 +27,10 @@ import type {
   GeoPoint,
   PolygonGeometry,
 } from '@/features/scene/domain/types'
+import type {
+  CursorPoint,
+  TooltipState,
+} from '@/features/scene/presentation/components/map-view/map-view-types'
 
 import {
   AREA_COLORS,
@@ -31,17 +38,12 @@ import {
 } from '@/features/scene/domain/constants/area-style'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {MapViewCursorOverlay} from '@/features/scene/presentation/components/map-view/map-view-cursor-overlay'
+import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/map-view-tooltip'
 
 interface DrawingState {
   isActive: boolean
   points: GeoPoint[]
-}
-
-interface TooltipState {
-  text: string
-  x: number
-  y: number
-  visible: boolean
 }
 
 const closeRing = (points: GeoPoint[]) => {
@@ -128,10 +130,7 @@ export const MapView: React.FC = () => {
     points: [],
   })
   const [tooltip, setTooltip] = React.useState<TooltipState | null>(null)
-  const [cursorPoint, setCursorPoint] = React.useState<{
-    x: number
-    y: number
-  } | null>(null)
+  const [cursorPoint, setCursorPoint] = React.useState<CursorPoint | null>(null)
   const [isNearStart, setIsNearStart] = React.useState(false)
   const [isDragging, setIsDragging] = React.useState(false)
   const initialAreas = useSceneStore((s) => s.scene.areas)
@@ -161,7 +160,7 @@ export const MapView: React.FC = () => {
     }
   }, [activeTool])
 
-  const mapCursor = React.useMemo(() => {
+  const cursor = React.useMemo(() => {
     if (activeTool === 'draw-area' && isEditMode) {
       return 'none'
     }
@@ -351,6 +350,9 @@ export const MapView: React.FC = () => {
   )
 
   const overlapFeatures: FeatureCollection | null = React.useMemo(() => {
+    if (areas.length < 2) {
+      return null
+    }
     const features: Feature[] = []
     areas.forEach((area, index) => {
       const baseRing = getSafeRing(area.geometry.coordinates)
@@ -374,15 +376,14 @@ export const MapView: React.FC = () => {
           if (overlap) {
             features.push(overlap as Feature)
           }
-        } catch (error) {
-          console.warn(
-            'Skipping overlap calculation due to invalid geometry',
-            error,
-          )
+        } catch {
+          /* swallow invalid geometry */
         }
       }
     })
-    return {type: 'FeatureCollection', features}
+    return features.length > 0
+      ? ({type: 'FeatureCollection', features} as FeatureCollection)
+      : null
   }, [areas])
 
   const drawingLine: FeatureCollection | null = React.useMemo(() => {
@@ -422,7 +423,7 @@ export const MapView: React.FC = () => {
         ref={mapRef}
         style={{height: '100%', width: '100%'}}
         attributionControl={false}
-        cursor={mapCursor}
+        cursor={cursor}
         doubleClickZoom={false}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
         minZoom={10}
@@ -467,7 +468,7 @@ export const MapView: React.FC = () => {
           />
         </Source>
 
-        {overlapFeatures.features.length > 0 ? (
+        {overlapFeatures && overlapFeatures.features.length > 0 ? (
           <Source data={overlapFeatures} id='area-overlaps' type='geojson'>
             <Layer
               id='overlap-fill'
@@ -526,44 +527,10 @@ export const MapView: React.FC = () => {
         ) : null}
       </Map>
 
-      {tooltip ? (
-        <div
-          className='pointer-events-none fixed z-50 transition-opacity duration-200'
-          style={{
-            left: tooltip.x,
-            top: tooltip.y,
-            opacity: tooltip.visible ? 1 : 0,
-          }}
-        >
-          <div className='relative rounded-md bg-black/85 px-3 py-2 text-[13px] font-bold text-white shadow-lg backdrop-blur'>
-            {tooltip.text}
-          </div>
-        </div>
-      ) : null}
+      {tooltip ? <MapViewTooltip tooltip={tooltip} /> : null}
 
       {activeTool === 'draw-area' && isEditMode && cursorPoint ? (
-        <div
-          className='pointer-events-none absolute inset-0 z-20'
-          style={{cursor: 'none'}}
-        >
-          <div
-            className='absolute'
-            style={{left: cursorPoint.x, top: cursorPoint.y}}
-          >
-            <div className='relative -translate-x-1/2 -translate-y-1/2'>
-              <div className='absolute left-1/2 top-1/2 h-6 w-px -translate-x-1/2 -translate-y-1/2 bg-emerald-500/80 shadow' />
-              <div className='absolute left-1/2 top-1/2 h-px w-6 -translate-x-1/2 -translate-y-1/2 bg-emerald-500/80 shadow' />
-              <div
-                className='size-3 rounded-full shadow-md'
-                style={{
-                  backgroundColor: drawingColor,
-                  opacity: 0.8,
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                }}
-              />
-            </div>
-          </div>
-        </div>
+        <MapViewCursorOverlay color={drawingColor} cursorPoint={cursorPoint} />
       ) : null}
     </div>
   )

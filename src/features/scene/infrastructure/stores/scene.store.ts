@@ -214,8 +214,7 @@ const deleteArea = (set: SetState, get: GetState, areaId: string) => {
 const createSceneStore: (
   initialValues: Partial<SceneState>,
 ) => StateCreator<SceneState> = (initialValues) => (set, get) => ({
-  scene:
-    initialValues?.scene ?? loadSceneFromStorage() ?? createInitialScene(),
+  scene: initialValues?.scene ?? loadSceneFromStorage() ?? createInitialScene(),
   selectedEntityIds: initialValues?.selectedEntityIds ?? [],
   setScene: (scene) => setScene(set, get, scene),
   updateScene: (updater) => updateScene(set, get, updater),

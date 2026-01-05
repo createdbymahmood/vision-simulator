@@ -1,4 +1,4 @@
-import {Grid, Map, Ruler} from 'lucide-react'
+import {Grid, Ruler} from 'lucide-react'
 import React from 'react'
 
 import {Button} from '@/components/ui/button'

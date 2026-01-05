@@ -1,9 +1,4 @@
-import {
-  Camera,
-  Hexagon,
-  Shapes,
-  User,
-} from 'lucide-react'
+import {Camera, Hexagon, Shapes, User} from 'lucide-react'
 import React from 'react'
 
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
