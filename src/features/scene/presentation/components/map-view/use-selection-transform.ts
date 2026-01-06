@@ -45,6 +45,7 @@ export const HANDLE_LAYER_IDS = [
 export const ENTITY_LAYER_IDS = [
   'people-fill',
   'camera-fill',
+  'wall-hit-area',
   'wall-lines',
   'shape-outline',
   'shape-line',
@@ -55,6 +56,7 @@ export const ENTITY_LAYER_IDS = [
 const LAYER_TYPE_MAP: Record<string, string> = {
   'people-fill': 'person',
   'camera-fill': 'camera',
+  'wall-hit-area': 'wall',
   'wall-lines': 'wall',
   'shape-outline': 'shape',
   'shape-line': 'shape',

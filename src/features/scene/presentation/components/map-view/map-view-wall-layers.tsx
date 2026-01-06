@@ -24,6 +24,19 @@ export const MapViewWallLayers: React.FC<MapViewWallLayersProps> = ({
       {hasWalls ? (
         <Source data={wallFeatures} id='walls' type='geojson' promoteId='id'>
           <Layer
+            id='wall-hit-area'
+            type='line'
+            layout={{
+              'line-cap': 'round',
+              'line-join': 'round',
+            }}
+            paint={{
+              'line-color': '#000000',
+              'line-width': 20,
+              'line-opacity': 0,
+            }}
+          />
+          <Layer
             id='wall-lines'
             type='line'
             layout={{
