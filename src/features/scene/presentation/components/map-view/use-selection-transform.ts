@@ -1093,14 +1093,35 @@ export const useSelectionTransform = ({
         )
       }
 
+      const isCameraFovLayer = (layerId: string) =>
+        layerId.startsWith('camera-fov') || layerId === 'camera-direction'
+
       const prioritized = HIT_TEST_PRIORITY.find((priority) =>
-        features.some((feature) => resolveType(feature) === priority),
+        features.some((feature) => {
+          const layerId = feature.layer?.id as string
+          if (priority === 'camera' && isCameraFovLayer(layerId)) {
+            return false
+          }
+          return resolveType(feature) === priority
+        }),
       )
 
       const matched =
         prioritized != null
-          ? features.find((feature) => resolveType(feature) === prioritized)
-          : features[0]
+          ? features.find((feature) => {
+              const layerId = feature.layer?.id as string
+              if (prioritized === 'camera' && isCameraFovLayer(layerId)) {
+                return false
+              }
+              return resolveType(feature) === prioritized
+            })
+          : features.find((feature) => {
+              const layerId = feature.layer?.id as string
+              if (isCameraFovLayer(layerId)) {
+                return false
+              }
+              return true
+            })
 
       if (!matched) {
         return null
