@@ -8,6 +8,7 @@ import type {
   SceneRoot,
   ShapeEntity,
   CameraEntity,
+  PersonEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
 
@@ -17,6 +18,7 @@ import {createDefaultWall} from '@/features/scene/domain/constants/wall-style'
 import {createAreaEntity} from '@/features/scene/domain/services/area-factory'
 import {createCameraEntity} from '@/features/scene/domain/services/camera-factory'
 import {createInitialScene} from '@/features/scene/domain/services/scene-factory'
+import {createDefaultPerson} from '@/features/scene/domain/constants/person-defaults'
 
 export interface SceneState {
   scene: SceneRoot
@@ -41,6 +43,11 @@ export interface SceneState {
   updateCamera: (
     id: string,
     updater: (camera: CameraEntity) => void,
+  ) => SceneRoot
+  addPerson: (person: Omit<PersonEntity, 'id' | 'type'>) => SceneRoot
+  updatePerson: (
+    id: string,
+    updater: (person: PersonEntity) => void,
   ) => SceneRoot
   deleteEntities: (ids: string[]) => SceneRoot
 }
@@ -319,6 +326,33 @@ const addCamera = (
   return updated
 }
 
+const addPerson = (
+  set: SetState,
+  get: GetState,
+  person: Omit<PersonEntity, 'id' | 'type'>,
+) => {
+  const nextValue = produce<SceneState>((state) => {
+    const id = getNextId(state.scene.people.map((item) => item.id), 'person')
+    const base = createDefaultPerson(person.areaId, [person.x, person.y], id)
+    state.scene.people.push({
+      ...base,
+      radius: person.radius ?? base.radius,
+      height: person.height ?? base.height,
+      speed: person.speed ?? base.speed,
+      behavior: person.behavior ?? base.behavior,
+      trailEnabled: person.trailEnabled ?? base.trailEnabled,
+      trailLength: person.trailLength ?? base.trailLength,
+      trailHistory: person.trailHistory ?? base.trailHistory,
+    })
+    state.scene.meta.updatedAt = new Date().toISOString()
+  })
+
+  set(nextValue)
+  const updated = get().scene
+  persistScene(updated)
+  return updated
+}
+
 const updateCamera = (
   set: SetState,
   get: GetState,
@@ -329,6 +363,26 @@ const updateCamera = (
     const camera = state.scene.cameras.find((item) => item.id === id)
     if (camera) {
       updater(camera)
+      state.scene.meta.updatedAt = new Date().toISOString()
+    }
+  })
+
+  set(nextValue)
+  const updated = get().scene
+  persistScene(updated)
+  return updated
+}
+
+const updatePerson = (
+  set: SetState,
+  get: GetState,
+  id: string,
+  updater: (person: PersonEntity) => void,
+) => {
+  const nextValue = produce<SceneState>((state) => {
+    const target = state.scene.people.find((item) => item.id === id)
+    if (target) {
+      updater(target)
       state.scene.meta.updatedAt = new Date().toISOString()
     }
   })
@@ -429,6 +483,8 @@ const createSceneStore: (
   addShape: (shape) => addShape(set, get, shape),
   addCamera: (camera) => addCamera(set, get, camera),
   updateCamera: (id, updater) => updateCamera(set, get, id, updater),
+  addPerson: (person) => addPerson(set, get, person),
+  updatePerson: (id, updater) => updatePerson(set, get, id, updater),
   deleteEntities: (entityIds) => deleteEntities(set, get, entityIds),
   ...initialValues,
 })

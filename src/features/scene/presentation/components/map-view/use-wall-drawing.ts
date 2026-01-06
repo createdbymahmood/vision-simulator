@@ -4,6 +4,7 @@ import {toast} from 'sonner'
 import type {
   AreaEntity,
   GeoPoint,
+  PersonEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
 
@@ -19,6 +20,7 @@ import {
   computePerimeter,
   computeSegmentLength,
   formatMeters,
+  doesWallPathHitPerson,
 } from './map-view-helpers'
 
 interface WallDrawingState {
@@ -35,6 +37,7 @@ interface UseWallDrawingParams {
   addWall: (wall: Omit<WallEntity, 'id'>) => unknown
   getAreaForPoint: (point: GeoPoint) => AreaEntity | null
   isGeometryInsideArea: (points: GeoPoint[], area: AreaEntity | null) => boolean
+  people: PersonEntity[]
 }
 
 interface WallPointerResult {
@@ -46,6 +49,7 @@ export const useWallDrawing = ({
   addWall,
   getAreaForPoint,
   isGeometryInsideArea,
+  people,
 }: UseWallDrawingParams) => {
   const [wallDrawing, setWallDrawing] = React.useState<WallDrawingState>({
     isActive: false,
@@ -93,6 +97,11 @@ export const useWallDrawing = ({
       resetWallDrawing()
       return false
     }
+    if (doesWallPathHitPerson(wallDrawing.points, people, DEFAULT_WALL_THICKNESS)) {
+      toast.error('Cannot draw walls over people')
+      resetWallDrawing()
+      return false
+    }
     addWall({
       areaId: targetArea.id,
       points: wallDrawing.points,
@@ -134,6 +143,18 @@ export const useWallDrawing = ({
           },
         }
       }
+      if (doesWallPathHitPerson(preview, people, DEFAULT_WALL_THICKNESS)) {
+        setWallPreviewPath([])
+        return {
+          cursor: 'not-allowed',
+          tooltip: {
+            text: 'Cannot draw walls over people',
+            x: screen.x + 12,
+            y: screen.y + 12,
+            visible: true,
+          },
+        }
+      }
       setWallPreviewPath(preview)
       const segmentLength = computeSegmentLength(preview)
       const totalLength = computePerimeter(preview)
@@ -150,7 +171,7 @@ export const useWallDrawing = ({
         },
       }
     },
-    [isGeometryInsideArea, targetArea, wallDrawing],
+    [isGeometryInsideArea, people, targetArea, wallDrawing],
   )
 
   return {

@@ -5,6 +5,7 @@ import {toast} from 'sonner'
 import type {
   AreaEntity,
   GeoPoint,
+  PersonEntity,
   ShapeEntity,
 } from '@/features/scene/domain/types'
 import type {ShapeDrawMode} from '@/features/scene/presentation/types'
@@ -19,6 +20,7 @@ import {
   createRectangleRing,
   createTriangleRing,
   formatMeters,
+  doesShapeHitPerson,
 } from './map-view-helpers'
 
 interface ShapeDrawingState {
@@ -42,6 +44,7 @@ interface UseShapeDrawingParams {
   getAreaForPoint: (point: GeoPoint) => AreaEntity | null
   isGeometryInsideArea: (points: GeoPoint[], area: AreaEntity | null) => boolean
   strokeColor: string
+  people: PersonEntity[]
 }
 
 interface ShapePointerResult {
@@ -54,6 +57,7 @@ export const useShapeDrawing = ({
   getAreaForPoint,
   isGeometryInsideArea,
   strokeColor,
+  people,
 }: UseShapeDrawingParams) => {
   const [shapeDrawing, setShapeDrawing] = React.useState<ShapeDrawingState>({
     isActive: false,
@@ -135,6 +139,18 @@ export const useShapeDrawing = ({
             },
           }
         }
+        if (doesShapeHitPerson({geometry: preview, shapeType: 'rectangle'} as ShapeEntity, people)) {
+          setShapePreview(null)
+          return {
+            cursor: 'not-allowed',
+            tooltip: {
+              text: 'Cannot draw shapes over people',
+              x: screen.x + 12,
+              y: screen.y + 12,
+              visible: true,
+            },
+          }
+        }
         setShapePreview(preview)
         return {
           tooltip: {
@@ -155,6 +171,18 @@ export const useShapeDrawing = ({
             cursor: 'not-allowed',
             tooltip: {
               text: 'Shapes must stay inside an area',
+              x: screen.x + 12,
+              y: screen.y + 12,
+              visible: true,
+            },
+          }
+        }
+        if (doesShapeHitPerson({geometry: preview, shapeType: 'circle'} as ShapeEntity, people)) {
+          setShapePreview(null)
+          return {
+            cursor: 'not-allowed',
+            tooltip: {
+              text: 'Cannot draw shapes over people',
               x: screen.x + 12,
               y: screen.y + 12,
               visible: true,
@@ -186,6 +214,18 @@ export const useShapeDrawing = ({
             },
           }
         }
+        if (doesShapeHitPerson({geometry: preview, shapeType: 'line'} as ShapeEntity, people)) {
+          setShapePreview(null)
+          return {
+            cursor: 'not-allowed',
+            tooltip: {
+              text: 'Cannot draw shapes over people',
+              x: screen.x + 12,
+              y: screen.y + 12,
+              visible: true,
+            },
+          }
+        }
         const angle = computeAngleDeg(shapeDrawing.start, point)
         const len = computeSegmentLength([shapeDrawing.start, point])
         setShapePreview(preview)
@@ -205,6 +245,9 @@ export const useShapeDrawing = ({
           preview = createTriangleRing(points)
         }
         const isValid = preview ? isGeometryInsideArea(preview, targetArea) : true
+        const hitsPerson =
+          preview &&
+          doesShapeHitPerson({geometry: preview, shapeType: 'triangle'} as ShapeEntity, people)
         setShapePreview(preview)
         return {
           tooltip: {
@@ -213,7 +256,7 @@ export const useShapeDrawing = ({
             y: screen.y + 12,
             visible: true,
           },
-          cursor: isValid ? undefined : 'not-allowed',
+          cursor: isValid && !hitsPerson ? undefined : 'not-allowed',
         }
       }
 
@@ -263,16 +306,22 @@ export const useShapeDrawing = ({
         return false
       }
 
-      if (!isGeometryInsideArea(geometry, targetArea)) {
-        toast.error('Shapes must stay inside an area')
-        resetShapeDrawing()
-        return false
-      }
+    if (!isGeometryInsideArea(geometry, targetArea)) {
+      toast.error('Shapes must stay inside an area')
+      resetShapeDrawing()
+      return false
+    }
+    const peopleInArea = people.filter((person) => person.areaId === targetArea.id)
+    if (doesShapeHitPerson({geometry, shapeType: shapeMode} as ShapeEntity, peopleInArea)) {
+      toast.error('Cannot draw shapes over people')
+      resetShapeDrawing()
+      return false
+    }
 
-      addShape({
-        areaId: targetArea.id,
-        geometry,
-        shapeType: shapeMode,
+    addShape({
+      areaId: targetArea.id,
+      geometry,
+      shapeType: shapeMode,
         height: 0,
         color: strokeColor,
         type: 'shape',
@@ -283,6 +332,7 @@ export const useShapeDrawing = ({
     [
       addShape,
       isGeometryInsideArea,
+      people,
       resetShapeDrawing,
       shapeDrawing.isActive,
       shapeDrawing.points,

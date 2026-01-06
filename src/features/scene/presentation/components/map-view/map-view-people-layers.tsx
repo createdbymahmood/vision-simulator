@@ -20,7 +20,12 @@ export const MapViewPeopleLayers: React.FC<MapViewPeopleLayersProps> = ({
         id='people-outline'
         type='circle'
         paint={{
-          'circle-radius': 8,
+          'circle-radius': [
+            'case',
+            ['boolean', ['feature-state', 'pulse'], false],
+            11,
+            8,
+          ],
           'circle-color': '#FFFFFF',
           'circle-stroke-color': '#0EA5E9',
           'circle-stroke-width': 2,
@@ -36,7 +41,12 @@ export const MapViewPeopleLayers: React.FC<MapViewPeopleLayersProps> = ({
         id='people-fill'
         type='circle'
         paint={{
-          'circle-radius': 5,
+          'circle-radius': [
+            'case',
+            ['boolean', ['feature-state', 'pulse'], false],
+            8,
+            5,
+          ],
           'circle-color': [
             'case',
             ['boolean', ['feature-state', 'selected'], false],

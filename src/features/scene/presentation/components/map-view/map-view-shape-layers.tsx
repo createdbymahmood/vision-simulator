@@ -32,15 +32,15 @@ export const MapViewShapeLayers: React.FC<MapViewShapeLayersProps> = ({
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
                 '#DDEEFF',
-                SHAPE_FILL_COLOR,
+                ['coalesce', ['get', 'color'], SHAPE_FILL_COLOR],
               ],
               'fill-opacity': [
                 'case',
                 ['boolean', ['feature-state', 'hover'], false],
-                0.5,
+                0.3,
                 ['boolean', ['feature-state', 'selected'], false],
-                0.45,
-                0.4,
+                0.25,
+                0.2,
               ],
             }}
           />

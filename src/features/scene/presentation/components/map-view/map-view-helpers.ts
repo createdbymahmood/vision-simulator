@@ -19,6 +19,8 @@ import {
   polygon,
   area as turfArea,
   length as turfLength,
+  pointToLineDistance,
+  distance as turfDistance,
 } from '@turf/turf'
 
 import type {
@@ -36,7 +38,10 @@ import {
   DEFAULT_AREA_STYLE,
 } from '@/features/scene/domain/constants/area-style'
 import {SHAPE_STROKE_COLOR} from '@/features/scene/domain/constants/shape-style'
-import {DEFAULT_WALL_COLOR} from '@/features/scene/domain/constants/wall-style'
+import {
+  DEFAULT_WALL_COLOR,
+  DEFAULT_WALL_THICKNESS,
+} from '@/features/scene/domain/constants/wall-style'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
 export const getBaseCursor = (
@@ -56,7 +61,7 @@ export const getBaseCursor = (
   if (activeTool === 'draw-wall' || activeTool === 'draw-shape') {
     return 'crosshair'
   }
-  if (activeTool === 'place-camera') {
+  if (activeTool === 'place-camera' || activeTool === 'place-person') {
     return 'none'
   }
   return undefined
@@ -253,6 +258,23 @@ export const getSafeRing = (coordinates: GeoPoint[]) => {
     return null
   }
   return closeRing(coordinates)
+}
+
+export const distanceToSegment = (point: GeoPoint, a: GeoPoint, b: GeoPoint) => {
+  const [px, py] = point
+  const [ax, ay] = a
+  const [bx, by] = b
+  const dx = bx - ax
+  const dy = by - ay
+  const lengthSq = dx * dx + dy * dy
+  if (lengthSq === 0) {
+    return Math.hypot(px - ax, py - ay)
+  }
+  let t = ((px - ax) * dx + (py - ay) * dy) / lengthSq
+  t = Math.max(0, Math.min(1, t))
+  const projX = ax + t * dx
+  const projY = ay + t * dy
+  return Math.hypot(px - projX, py - projY)
 }
 
 export const buildOverlapFeatures = (
@@ -494,3 +516,189 @@ export const buildPersonFeatures = (
     },
   })),
 })
+
+export type PersonCollisionType = 'person' | 'wall' | 'shape'
+
+interface PersonCollisionParams {
+  candidate: GeoPoint
+  radius: number
+  areaId?: string
+  people: PersonEntity[]
+  walls: WallEntity[]
+  shapes: ShapeEntity[]
+  personId?: string
+}
+
+export const getPersonCollision = ({
+  candidate,
+  radius,
+  areaId,
+  people,
+  walls,
+  shapes,
+  personId,
+}: PersonCollisionParams): {blocked: boolean; type?: PersonCollisionType} => {
+  const relevantWalls = areaId
+    ? walls.filter((wall) => wall.areaId === areaId)
+    : walls
+  const candidatePoint = point(candidate)
+  const hitsWall = relevantWalls.some((wall) => {
+    if (wall.points.length < 2) {
+      return false
+    }
+    const thresholdMeters = radius + (wall.thickness ?? DEFAULT_WALL_THICKNESS)
+    return wall.points.some((wallPoint, index) => {
+      if (index === wall.points.length - 1) {
+        return false
+      }
+      const next = wall.points[index + 1]
+      const segment = lineString([wallPoint, next])
+      const distance = pointToLineDistance(candidatePoint, segment, {
+        units: 'meters',
+      })
+      return distance < thresholdMeters
+    })
+  })
+
+  if (hitsWall) {
+    return {blocked: true, type: 'wall'}
+  }
+
+  const relevantShapes = areaId
+    ? shapes.filter((shape) => shape.areaId === areaId)
+    : shapes
+  const hitsShape = relevantShapes.some((shape) => {
+    if (shape.shapeType === 'line' && shape.geometry.length >= 2) {
+      const linePoints = shape.geometry
+      const thickness = (shape as {thickness?: number}).thickness ?? 0
+      return linePoints.some((shapePoint, index) => {
+        if (index === linePoints.length - 1) {
+          return false
+        }
+        const segment = lineString([shapePoint, linePoints[index + 1]])
+        const distance = pointToLineDistance(candidatePoint, segment, {
+          units: 'meters',
+        })
+        return distance < radius + thickness
+      })
+    }
+    if (shape.geometry.length < 3) {
+      return false
+    }
+    const ringCoords = closeRing(shape.geometry)
+    if (ringCoords.length < 4) {
+      return false
+    }
+    const ring = polygon([ringCoords])
+    try {
+      return booleanPointInPolygon(point(candidate), ring)
+    } catch {
+      return false
+    }
+  })
+
+  if (hitsShape) {
+    return {blocked: true, type: 'shape'}
+  }
+
+  const relevantPeople = areaId
+    ? people.filter((person) => person.areaId === areaId)
+    : people
+  const collidingPerson = relevantPeople.some((person) => {
+    if (person.id === personId) return false
+    const distanceMeters = turfDistance(
+      candidatePoint,
+      point([person.x, person.y]),
+      {units: 'meters'},
+    )
+    return distanceMeters < radius + person.radius
+  })
+
+  if (collidingPerson) {
+    return {blocked: true, type: 'person'}
+  }
+
+  return {blocked: false}
+}
+
+export const doesWallPathHitPerson = (
+  path: GeoPoint[],
+  people: PersonEntity[],
+  thickness: number,
+) => {
+  if (path.length < 2) {
+    return false
+  }
+  return people.some((person) => {
+    const personPoint = point([person.x, person.y])
+    return path.some((wallPoint, index) => {
+      if (index === path.length - 1) {
+        return false
+      }
+      const next = path[index + 1]
+      const segment = lineString([wallPoint, next])
+      const distanceMeters = pointToLineDistance(personPoint, segment, {
+        units: 'meters',
+      })
+      return distanceMeters < person.radius + thickness
+    })
+  })
+}
+
+export const doesShapeHitPerson = (
+  shape: ShapeEntity,
+  people: PersonEntity[],
+) => {
+  if (shape.geometry.length < 2) {
+    return false
+  }
+
+  const ring = shape.shapeType === 'line' ? null : getSafeRing(shape.geometry)
+  const linePoints = shape.shapeType === 'line' ? shape.geometry : null
+  const shapePolygon = ring ? polygon([ring]) : null
+  const lineThickness = (shape as {thickness?: number}).thickness ?? 0
+
+  return people.some((person) => {
+    const personPoint = point([person.x, person.y])
+    if (shapePolygon) {
+      try {
+        if (booleanPointInPolygon(personPoint, shapePolygon)) {
+          return true
+        }
+      } catch {
+        /* ignore invalid polygon */
+      }
+
+      // Edge proximity for polygons
+      return ring
+        ? ring.some((edgePoint, index) => {
+            if (index === ring.length - 1) {
+              return false
+            }
+            const next = ring[index + 1]
+            const segment = lineString([edgePoint, next])
+            const distanceMeters = pointToLineDistance(personPoint, segment, {
+              units: 'meters',
+            })
+            return distanceMeters < person.radius
+          })
+        : false
+    }
+
+    if (linePoints) {
+      return linePoints.some((edgePoint, index) => {
+        if (index === linePoints.length - 1) {
+          return false
+        }
+        const next = linePoints[index + 1]
+        const segment = lineString([edgePoint, next])
+        const distanceMeters = pointToLineDistance(personPoint, segment, {
+          units: 'meters',
+        })
+        return distanceMeters < person.radius + lineThickness
+      })
+    }
+
+    return false
+  })
+}

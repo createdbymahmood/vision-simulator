@@ -33,7 +33,9 @@ export const PersonPropertiesSheet: React.FC = () => {
     (updater: (person: (typeof people)[number]) => void) => {
       if (!selectedPerson) return
       updateScene((scene) => {
-        const target = scene.people.find((person) => person.id === selectedPerson.id)
+        const target = scene.people.find(
+          (person) => person.id === selectedPerson.id,
+        )
         if (target) {
           updater(target)
         }
@@ -41,13 +43,6 @@ export const PersonPropertiesSheet: React.FC = () => {
     },
     [selectedPerson, updateScene],
   )
-
-  const handleRadiusChange = (values: number[]) => {
-    const [radius] = values
-    updateSelectedPerson((person) => {
-      person.radius = radius
-    })
-  }
 
   const handleHeightChange = (values: number[]) => {
     const [height] = values
@@ -60,6 +55,19 @@ export const PersonPropertiesSheet: React.FC = () => {
     const [speed] = values
     updateSelectedPerson((person) => {
       person.speed = speed
+    })
+  }
+
+  const handlePositionChange = (
+    key: 'x' | 'y',
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const value = Number.parseFloat(event.target.value)
+    if (!Number.isFinite(value)) {
+      return
+    }
+    updateSelectedPerson((person) => {
+      person[key] = value
     })
   }
 
@@ -77,21 +85,33 @@ export const PersonPropertiesSheet: React.FC = () => {
 
         {selectedPerson ? (
           <div className='mt-6 space-y-6'>
-            <div className='space-y-2'>
-              <Label>Radius ({selectedPerson.radius.toFixed(2)} m)</Label>
-              <Slider
-                max={5}
-                min={0.2}
-                step={0.1}
-                value={[selectedPerson.radius]}
-                onValueChange={handleRadiusChange}
-              />
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='person-x'>Position X</Label>
+                <Input
+                  id='person-x'
+                  inputMode='decimal'
+                  type='number'
+                  value={selectedPerson.x.toFixed(3)}
+                  onChange={(event) => handlePositionChange('x', event)}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='person-y'>Position Y</Label>
+                <Input
+                  id='person-y'
+                  inputMode='decimal'
+                  type='number'
+                  value={selectedPerson.y.toFixed(3)}
+                  onChange={(event) => handlePositionChange('y', event)}
+                />
+              </div>
             </div>
 
             <div className='space-y-2'>
               <Label>Height ({selectedPerson.height.toFixed(2)} m)</Label>
               <Slider
-                max={2.5}
+                max={1.9}
                 min={0.5}
                 step={0.05}
                 value={[selectedPerson.height]}

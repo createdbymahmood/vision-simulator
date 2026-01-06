@@ -6,35 +6,27 @@ import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import {Button} from '@/components/ui/button'
 import {cn} from '@/lib/utils'
 
-import type {SceneMode, ViewMode} from '../../domain/types'
+import type {SceneMode} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {MapView} from './map-view'
 
 interface ViewportShellProps {
   sceneMode: SceneMode
-  viewMode: ViewMode
   mapVisible: boolean
-  snapToGrid: boolean
   measurementEnabled: boolean
   activeTool: EditorTool
   shapeMode: ShapeDrawMode
-  onSelectTool: (tool: EditorTool) => void
   onBlankClick: () => void
-  onToggleSnap: () => void
   onToggleMeasurement: () => void
 }
 export const ViewportShell: React.FC<ViewportShellProps> = ({
   sceneMode,
-  viewMode,
   mapVisible,
-  snapToGrid,
   measurementEnabled,
   activeTool,
   shapeMode,
-  onSelectTool,
   onBlankClick,
-  onToggleSnap,
   onToggleMeasurement,
 }) => {
   return (
@@ -73,16 +65,6 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
         className='absolute bottom-4 right-4 flex flex-col gap-2'
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <Button
-          size='icon-lg'
-          aria-label='Snap to grid (0.5m)'
-          aria-pressed={snapToGrid}
-          className='rounded-full backdrop-blur-md'
-          variant={snapToGrid ? 'default' : 'outline'}
-          onClick={onToggleSnap}
-        >
-          <Grid className='h-5 w-5' />
-        </Button>
         <Button
           size='icon-lg'
           aria-label='Measurement overlay'

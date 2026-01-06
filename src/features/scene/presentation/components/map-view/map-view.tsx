@@ -27,6 +27,7 @@ import {MapViewAreaLayers} from '@/features/scene/presentation/components/map-vi
 import {MapViewCameraLayers} from '@/features/scene/presentation/components/map-view/map-view-camera-layers'
 import {MapViewCameraPreviewLayer} from '@/features/scene/presentation/components/map-view/map-view-camera-preview-layer'
 import {MapViewCursorOverlay} from '@/features/scene/presentation/components/map-view/map-view-cursor-overlay'
+import {MapViewPersonPreviewLayer} from '@/features/scene/presentation/components/map-view/map-view-person-preview-layer'
 import {MapViewRotationHandleLayer} from '@/features/scene/presentation/components/map-view/map-view-rotation-handle-layer'
 import {MapViewSelectionBoundsLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-bounds-layer'
 import {MapViewSelectionHandlesLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-handles-layer'
@@ -53,6 +54,7 @@ import {MapViewShapeLayers} from '@/features/scene/presentation/components/map-v
 import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/map-view-tooltip'
 import {MapViewWallLayers} from '@/features/scene/presentation/components/map-view/map-view-wall-layers'
 import {SelectionOverlay} from '@/features/scene/presentation/components/map-view/selection-overlay'
+import {usePersonPlacement} from '@/features/scene/presentation/components/map-view/use-person-placement'
 import {useMapViewHotkeys} from '@/features/scene/presentation/components/map-view/use-map-view-hotkeys'
 import {
   ENTITY_LAYER_IDS,
@@ -102,6 +104,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   const addWall = useSceneStore((state) => state.addWall)
   const addShape = useSceneStore((state) => state.addShape)
   const addCamera = useSceneStore((state) => state.addCamera)
+  const addPerson = useSceneStore((state) => state.addPerson)
   const setActiveArea = useSceneStore((state) => state.setActiveArea)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const setSelection = useSceneStore((state) => state.setSelection)
@@ -144,6 +147,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     addWall,
     getAreaForPoint: getAreaAtPoint,
     isGeometryInsideArea,
+    people,
   })
 
   const {
@@ -158,6 +162,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     getAreaForPoint: getAreaAtPoint,
     isGeometryInsideArea,
     strokeColor: SHAPE_STROKE_COLOR,
+    people,
   })
 
   React.useEffect(() => {
@@ -253,6 +258,26 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     setSelection,
     setActiveTool,
     openCameraPanel: () => openPanel('camera-properties'),
+    setTooltip,
+    setCursorOverride,
+  })
+
+  const {
+    preview: personPreview,
+    onPointerMove: handlePersonPointerMove,
+    onMapClick: handlePersonMapClick,
+  } = usePersonPlacement({
+    activeTool,
+    isEditMode,
+    mapRef,
+    areas,
+    walls,
+    shapes,
+    people,
+    addPerson,
+    setSelection,
+    setActiveTool,
+    openPersonPanel: () => openPanel('person-properties'),
     setTooltip,
     setCursorOverride,
   })
@@ -428,6 +453,11 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
         return
       }
     }
+    if (activeTool === 'place-person') {
+      if (handlePersonPointerMove(event)) {
+        return
+      }
+    }
 
     if (handleAreaPointerMove(event, mapPoint)) {
       return
@@ -569,6 +599,11 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
 
       if (activeTool === 'place-camera') {
         if (handleCameraMapClick(event)) {
+          return
+        }
+      }
+      if (activeTool === 'place-person') {
+        if (handlePersonMapClick(event)) {
           return
         }
       }
@@ -801,6 +836,14 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
           shapeFeatures={shapeFeatures}
           shapePreviewFeature={shapePreviewFeature}
         />
+
+        {personPreview ? (
+          <MapViewPersonPreviewLayer
+            circle={personPreview.circle}
+            isValid={personPreview.isValid}
+            point={personPreview.point}
+          />
+        ) : null}
 
         {cameraPreview ? (
           <MapViewCameraPreviewLayer

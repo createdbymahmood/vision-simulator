@@ -31,7 +31,6 @@ import {WallPropertiesSheet} from './properties-sheet/wall-properties-sheet'
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const EditorLayout: React.FC = () => {
   const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
-  const [snapToGrid, setSnapToGrid] = React.useState(true)
   const [measurementEnabled, setMeasurementEnabled] = React.useState(false)
 
   const [placeDeviceOpen, setPlaceDeviceOpen] = React.useState(false)
@@ -129,9 +128,7 @@ export const EditorLayout: React.FC = () => {
     onSelectTool: setActiveTool,
     onSelectShapeMode: setShapeMode,
     onOpenPlaceDevice: () => setPlaceDeviceOpen(true),
-    onPlacePerson: () => {
-      /*  */
-    },
+    onPlacePerson: () => setActiveTool('place-person'),
     onSearchLocation: () => setSearchOpen(true),
     onOpenAreasPanel: () => setAreaPanelOpen(true),
     onOpenDevicesPanel: () => setDevicesPanelOpen(true),
@@ -165,13 +162,9 @@ export const EditorLayout: React.FC = () => {
           measurementEnabled={measurementEnabled}
           activeTool={activeTool}
           onBlankClick={handleBlankClick}
-          onSelectTool={setActiveTool}
           onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
-          onToggleSnap={() => setSnapToGrid((prev) => !prev)}
           sceneMode={sceneMode}
           shapeMode={shapeMode}
-          snapToGrid={snapToGrid}
-          viewMode={viewMode}
         />
       </main>
 
@@ -180,9 +173,7 @@ export const EditorLayout: React.FC = () => {
         activeTool={activeTool}
         isEditMode={isEditMode}
         onOpenPlaceDevice={() => setPlaceDeviceOpen(true)}
-        onPlacePerson={() => {
-          /*  */
-        }}
+        onPlacePerson={() => setActiveTool('place-person')}
         onSelectShapeMode={setShapeMode}
         onSelectTool={setActiveTool}
         shapeMode={shapeMode}
