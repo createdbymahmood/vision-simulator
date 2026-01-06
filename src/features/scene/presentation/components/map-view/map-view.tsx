@@ -214,6 +214,27 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     setTooltip,
     setCursorOverride,
     baseCursor,
+    openPropertiesForEntity: (entity) => {
+      if (entity.type === 'camera') {
+        openPanel('camera-properties')
+        return
+      }
+      if (entity.type === 'area') {
+        openPanel('area-properties')
+        return
+      }
+      if (entity.type === 'wall') {
+        openPanel('wall-properties')
+        return
+      }
+      if (entity.type === 'shape') {
+        openPanel('shape-properties')
+        return
+      }
+      if (entity.type === 'person') {
+        openPanel('person-properties')
+      }
+    },
   })
 
   const {

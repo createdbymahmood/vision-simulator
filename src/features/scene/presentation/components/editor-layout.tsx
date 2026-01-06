@@ -13,7 +13,10 @@ import type {ShapeDrawMode} from '../types'
 import {createInitialScene} from '../../domain/services/scene-factory'
 import {useEditorShortcuts} from '../hooks/use-editor-shortcuts'
 import {BottomNavigation} from './bottom-navigation'
-import {CameraPropertiesSheet} from './camera-properties-sheet'
+import {AreaPropertiesSheet} from './properties-sheet/area-properties-sheet'
+import {CameraPropertiesSheet} from './properties-sheet/camera-properties-sheet'
+import {PersonPropertiesSheet} from './properties-sheet/person-properties-sheet'
+import {ShapePropertiesSheet} from './properties-sheet/shape-properties-sheet'
 import {
   AreaManagementDialog,
   DevicesDialog,
@@ -23,6 +26,7 @@ import {
 } from './editor-dialogs'
 import {RightRail} from './right-rail'
 import {ViewportShell} from './viewport-shell'
+import {WallPropertiesSheet} from './properties-sheet/wall-properties-sheet'
 
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const EditorLayout: React.FC = () => {
@@ -218,6 +222,10 @@ export const EditorLayout: React.FC = () => {
         open={devicesPanelOpen}
       />
 
+      <AreaPropertiesSheet />
+      <WallPropertiesSheet />
+      <ShapePropertiesSheet />
+      <PersonPropertiesSheet />
       <CameraPropertiesSheet />
 
       <MapStyleDialog onOpenChange={setMapStyleOpen} open={mapStyleOpen} />

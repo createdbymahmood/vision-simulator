@@ -123,6 +123,7 @@ interface UseSelectionTransformParams {
   setTooltip: (tooltip: TooltipState | null) => void
   setCursorOverride: (cursor?: string) => void
   baseCursor: string | undefined
+  openPropertiesForEntity: (entity: SceneEntity) => void
 }
 
 interface UseSelectionTransformResult {
@@ -826,6 +827,7 @@ export const useSelectionTransform = ({
   setTooltip,
   setCursorOverride,
   baseCursor,
+  openPropertiesForEntity,
 }: UseSelectionTransformParams): UseSelectionTransformResult => {
   const [mapLoaded, setMapLoaded] = React.useState(false)
   const [hoveredFeature, setHoveredFeature] = React.useState<{
@@ -837,6 +839,7 @@ export const useSelectionTransform = ({
   const [selectionBounds, setSelectionBounds] = React.useState<Bounds | null>(
     null,
   )
+  const dragStartedRef = React.useRef(false)
   const [handleFeatures, setHandleFeatures] =
     React.useState<FeatureCollection<Point> | null>(null)
   const [rotationHandle, setRotationHandle] =
@@ -1277,6 +1280,7 @@ export const useSelectionTransform = ({
           people,
         })
         applyTransformResult(result, event)
+        dragStartedRef.current = true
         return
       }
 
@@ -1417,6 +1421,7 @@ export const useSelectionTransform = ({
           handleHit.handleType,
           selectedEntities,
         )
+        dragStartedRef.current = false
         return true
       }
 
@@ -1441,6 +1446,10 @@ export const useSelectionTransform = ({
           if (dragEntities.length > 0) {
             startTransformSession('move', mapPoint, undefined, dragEntities)
             return true
+          }
+          const entity = entityIndex.get(hit.id)
+          if (entity) {
+            openPropertiesForEntity(entity)
           }
         }
       } else {
@@ -1496,6 +1505,12 @@ export const useSelectionTransform = ({
             : [...selectedEntityIds, feature.id]
           : [feature.id]
         setSelection(nextSelection)
+        if (!shiftKey) {
+          const entity = entityIndex.get(feature.id)
+          if (entity && !dragStartedRef.current) {
+            openPropertiesForEntity(entity)
+          }
+        }
       } else {
         clearSelection()
       }
@@ -1519,6 +1534,7 @@ export const useSelectionTransform = ({
       setTransformSession(null)
       setConstraintAreaId(null)
     }
+    dragStartedRef.current = false
   }, [setTooltip, transformSession])
 
   const onDeleteSelection = React.useCallback(() => {
