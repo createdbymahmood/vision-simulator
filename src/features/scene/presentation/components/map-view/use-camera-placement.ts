@@ -34,7 +34,6 @@ interface CameraPlacementState {
 interface UseCameraPlacementParams {
   activeTool: EditorTool
   isEditMode: boolean
-  activeArea: AreaEntity | null
   areas: AreaEntity[]
   cameras: CameraEntity[]
   cameraPlacement: CameraPlacementState
@@ -75,7 +74,6 @@ const createEmptyPreview = (): CameraPreviewData => ({
 export const useCameraPlacement = ({
   activeTool,
   isEditMode,
-  activeArea,
   areas,
   cameras,
   cameraPlacement,
@@ -89,6 +87,12 @@ export const useCameraPlacement = ({
   setCursorOverride,
 }: UseCameraPlacementParams): UseCameraPlacementResult => {
   const [preview, setPreview] = React.useState<CameraPreviewData | null>(null)
+
+  const getAreaAtPoint = React.useCallback(
+    (point: GeoPoint) =>
+      areas.find((area) => isPointInsideArea(point, area)) ?? null,
+    [areas],
+  )
 
   const resolvePreset = React.useCallback(() => {
     const defaultPresetId = 'static-hd'
@@ -115,10 +119,7 @@ export const useCameraPlacement = ({
       const ring = createFovRing(point, 0, preset.fov, preset.depth)
       const directionPoint = projectPoint(point, 0, preset.depth * 0.6)
       const rangeRing = createCircleRing(point, preset.depth, 72)
-      const areaForPoint =
-        activeArea ??
-        areas.find((area) => isPointInsideArea(point, area)) ??
-        null
+      const areaForPoint = getAreaAtPoint(point)
 
       return {
         point: {
@@ -174,7 +175,7 @@ export const useCameraPlacement = ({
         isValid: Boolean(areaForPoint),
       }
     },
-    [activeArea, areas, ensurePlacementColor, resolvePreset],
+    [ensurePlacementColor, getAreaAtPoint, resolvePreset],
   )
 
   const onPointerMove = React.useCallback(
@@ -236,13 +237,11 @@ export const useCameraPlacement = ({
       const preset = resolvePreset()
       const color = ensurePlacementColor()
 
-      const areaForPlacement =
-        activeArea ??
-        areas.find((area) => isPointInsideArea(mapPoint, area)) ??
-        null
+      const areaForPlacement = getAreaAtPoint(mapPoint)
 
       if (!areaForPlacement) {
         toast.error('Cannot place camera outside area')
+        setCursorOverride('not-allowed')
         return true
       }
 
@@ -273,17 +272,17 @@ export const useCameraPlacement = ({
       return true
     },
     [
-      activeArea,
       activeTool,
       addCamera,
-      areas,
       clearCameraPlacement,
       ensurePlacementColor,
       isEditMode,
       openCameraPanel,
       resolvePreset,
+      getAreaAtPoint,
       setActiveTool,
       setSelection,
+      setCursorOverride,
     ],
   )
 

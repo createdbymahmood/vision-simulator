@@ -115,11 +115,6 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   const clearCameraPlacement = useUiStore((state) => state.clearCameraPlacement)
   const openPanel = useUiStore((state) => state.openPanel)
 
-  const activeArea = React.useMemo(() => {
-    if (!areas.length) return null
-    return areas.find((a) => a.id === activeAreaId) ?? areas[0]
-  }, [areas, activeAreaId])
-
   const getAreaAtPoint = React.useCallback(
     (point: GeoPoint) =>
       areas.find((area) => isPointInsideArea(point, area)) ?? null,
@@ -228,7 +223,6 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   } = useCameraPlacement({
     activeTool,
     isEditMode,
-    activeArea,
     areas,
     cameras,
     cameraPlacement,
@@ -352,13 +346,26 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   )
 
   const guardPointerWithinArea = React.useCallback(
-    (event: MapLayerMouseEvent, hasAreas: boolean) => {
+    (
+      event: MapLayerMouseEvent,
+      hasAreas: boolean,
+      areaAtPoint: AreaEntity | null,
+    ) => {
       if (
         (activeTool === 'draw-wall' || activeTool === 'draw-shape') &&
         !hasAreas
       ) {
         setCursorOverride('not-allowed')
         showTooltip('Create an area first', event)
+        return true
+      }
+
+      if (
+        (activeTool === 'draw-wall' || activeTool === 'draw-shape') &&
+        !areaAtPoint
+      ) {
+        setCursorOverride('not-allowed')
+        showTooltip('Objects must stay inside an area', event)
         return true
       }
       return false
@@ -386,6 +393,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
 
     const mapPoint: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
     const hasAreas = areas.length > 0
+    const areaAtPoint = getAreaAtPoint(mapPoint)
 
     setCursorOverride(undefined)
 
@@ -404,7 +412,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
       return
     }
 
-    if (guardPointerWithinArea(event, hasAreas)) {
+    if (guardPointerWithinArea(event, hasAreas, areaAtPoint)) {
       return
     }
 
@@ -560,6 +568,13 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
 
       if (areas.length === 0 && activeTool !== 'draw-area') {
         toast.info('Create an area first')
+        return
+      }
+
+      const areaAtPoint = getAreaAtPoint(point)
+      const pointInside = activeTool === 'draw-area' || Boolean(areaAtPoint)
+      if (!pointInside) {
+        toast.error('Objects must be inside an area')
         return
       }
 
