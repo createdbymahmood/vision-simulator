@@ -11,6 +11,7 @@ import type {
 import {
   booleanPointInPolygon,
   destination,
+  featureCollection,
   intersect,
   lineString,
   point,
@@ -257,7 +258,12 @@ export const buildOverlapFeatures = (
       >
 
       try {
-        const overlap = intersect(base, other)
+        const overlap = intersect(
+          featureCollection([
+            base,
+            other,
+          ]) as FeatureCollection<Polygon | MultiPolygon, GeoJsonProperties>,
+        )
         if (overlap) {
           features.push(overlap as Feature)
         }

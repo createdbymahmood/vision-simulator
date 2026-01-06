@@ -10,13 +10,11 @@ import {
 
 interface MapViewWallLayersProps {
   wallFeatures: FeatureCollection
-  wallVertexFeatures: FeatureCollection
   wallPreviewFeature: FeatureCollection | null
 }
 
 export const MapViewWallLayers: React.FC<MapViewWallLayersProps> = ({
   wallFeatures,
-  wallVertexFeatures,
   wallPreviewFeature,
 }) => {
   const hasWalls = wallFeatures.features.length > 0

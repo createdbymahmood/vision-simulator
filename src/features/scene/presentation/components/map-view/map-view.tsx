@@ -37,7 +37,6 @@ import {
   buildShapeFeatures,
   getBaseCursor,
   buildWallFeatures,
-  buildWallVertexFeatures,
   computeArea,
   computePerimeter,
   computeSegmentLength,
@@ -611,11 +610,6 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
 
   const wallFeatures = React.useMemo(() => buildWallFeatures(walls), [walls])
 
-  const wallVertexFeatures = React.useMemo(
-    () => buildWallVertexFeatures(walls),
-    [walls],
-  )
-
   const wallPreviewFeature: FeatureCollection | null = React.useMemo(() => {
     if (!wallDrawing.isActive || wallPreviewPath.length < 2) {
       return null
@@ -745,7 +739,6 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
         <MapViewWallLayers
           wallFeatures={wallFeatures}
           wallPreviewFeature={wallPreviewFeature}
-          wallVertexFeatures={wallVertexFeatures}
         />
 
         <MapViewShapeLayers

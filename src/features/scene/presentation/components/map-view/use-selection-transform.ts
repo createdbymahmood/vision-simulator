@@ -1,22 +1,24 @@
-import type {FeatureCollection, LineString, Point, Polygon} from 'geojson'
+import type {FeatureCollection, LineString, Point} from 'geojson'
 import type {MapboxGeoJSONFeature, Map as MapboxMap} from 'mapbox-gl'
-import type {MapLayerMouseEvent, MapRef} from 'react-map-gl/mapbox'
+import type {MapMouseEvent, MapRef} from 'react-map-gl/mapbox'
 
 import {booleanPointInPolygon, polygon, point as turfPoint} from '@turf/turf'
 import React from 'react'
 
 import type {
   AreaEntity,
+  CameraEntity,
   GeoPoint,
   PersonEntity,
   SceneEntity,
   SceneRoot,
+  ShapeEntity,
+  WallEntity,
 } from '@/features/scene/domain/types'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {TooltipState} from '@/features/scene/presentation/components/map-view/map-view-types'
 import type {
   Bounds,
-  SelectableEntity,
 } from '@/features/scene/presentation/components/map-view/selection-geometry'
 
 import {closeRing} from '@/features/scene/presentation/components/map-view/map-view-helpers'
@@ -31,6 +33,8 @@ import {
   scalePoints,
   translatePoints,
 } from '@/features/scene/presentation/components/map-view/selection-geometry'
+
+type MapLayerMouseEvent = MapMouseEvent
 
 export const HANDLE_LAYER_IDS = [
   'selection-rotation-handle',
@@ -97,10 +101,10 @@ interface UseSelectionTransformParams {
   activeTool: EditorTool
   isEditMode: boolean
   areas: AreaEntity[]
-  walls: SelectableEntity[]
-  shapes: SelectableEntity[]
-  cameras: SelectableEntity[]
-  people: SelectableEntity[]
+  walls: WallEntity[]
+  shapes: ShapeEntity[]
+  cameras: CameraEntity[]
+  people: PersonEntity[]
   selectedEntityIds: string[]
   setSelection: (ids: string[]) => void
   clearSelection: () => void
@@ -142,6 +146,663 @@ const getHandleCursor = (handleType: string) => {
   if (handleType === 'e' || handleType === 'w') return 'ew-resize'
   if (handleType === 'rotate') return ROTATE_CURSOR
   return 'pointer'
+}
+
+const distanceToSegment = (point: GeoPoint, a: GeoPoint, b: GeoPoint) => {
+  const [px, py] = point
+  const [ax, ay] = a
+  const [bx, by] = b
+  const dx = bx - ax
+  const dy = by - ay
+  const lengthSq = dx * dx + dy * dy
+  if (lengthSq === 0) {
+    return Math.hypot(px - ax, py - ay)
+  }
+  let t = ((px - ax) * dx + (py - ay) * dy) / lengthSq
+  t = Math.max(0, Math.min(1, t))
+  const projX = ax + t * dx
+  const projY = ay + t * dy
+  return Math.hypot(px - projX, py - projY)
+}
+
+const isPointInsideEntity = (point: GeoPoint, entity: SceneEntity) => {
+  if (entity.type === 'area' || entity.type === 'shape') {
+    if (entity.type === 'shape' && entity.geometry.length < 3) {
+      return false
+    }
+    const ringCoords = closeRing(getEntityPoints(entity))
+    if (ringCoords.length < 4) {
+      return false
+    }
+    const ring = polygon([ringCoords])
+    try {
+      return booleanPointInPolygon(turfPoint(point), ring)
+    } catch {
+      return false
+    }
+  }
+  if (entity.type === 'wall') {
+    const pts = entity.points
+    return pts.some((pt, index) => {
+      if (index === pts.length - 1) return false
+      return distanceToSegment(point, pt, pts[index + 1]) < 0.0001
+    })
+  }
+  if (entity.type === 'person') {
+    return Math.hypot(entity.x - point[0], entity.y - point[1]) < entity.radius * 1.5
+  }
+  if (entity.type === 'camera') {
+    return Math.hypot(entity.x - point[0], entity.y - point[1]) < 0.0002
+  }
+  return false
+}
+
+interface TransformComputationResult {
+  updates: Record<string, GeoPoint[]>
+  constraintAreaId: string | null
+  cursor?: string
+  tooltipText?: string
+}
+
+interface MoveTransformParams {
+  transformSession: TransformSession
+  mapPoint: GeoPoint
+  selectedEntities: SceneEntity[]
+  entityIndex: Map<string, SceneEntity>
+  getAreaForEntity: (id: string) => AreaEntity | undefined
+  getEntityAreaId: (entity: SceneEntity) => string | undefined
+  isGeometryInsideAreaSelection: typeof isGeometryInsideAreaSelection
+  translatePoints: typeof translatePoints
+  isPersonPositionBlocked: (
+    candidate: GeoPoint,
+    personId: string,
+    radius: number,
+    areaId?: string,
+  ) => boolean
+  walls: WallEntity[]
+  shapes: ShapeEntity[]
+  cameras: CameraEntity[]
+  people: PersonEntity[]
+}
+
+interface ResizeTransformParams {
+  transformSession: TransformSession & {handleType: string}
+  mapPoint: GeoPoint
+  entityIndex: Map<string, SceneEntity>
+  getAreaForEntity: (id: string) => AreaEntity | undefined
+  getEntityAreaId: (entity: SceneEntity) => string | undefined
+  isGeometryInsideAreaSelection: typeof isGeometryInsideAreaSelection
+  isPersonPositionBlocked: (
+    candidate: GeoPoint,
+    personId: string,
+    radius: number,
+    areaId?: string,
+  ) => boolean
+  scalePoints: typeof scalePoints
+  walls: WallEntity[]
+  shapes: ShapeEntity[]
+  cameras: CameraEntity[]
+  people: PersonEntity[]
+  originalBounds: Bounds | null
+  modifiers?: {shiftKey?: boolean}
+}
+
+interface RotateTransformParams {
+  transformSession: TransformSession
+  mapPoint: GeoPoint
+  entityIndex: Map<string, SceneEntity>
+  getAreaForEntity: (id: string) => AreaEntity | undefined
+  isGeometryInsideAreaSelection: typeof isGeometryInsideAreaSelection
+  isPersonPositionBlocked: (
+    candidate: GeoPoint,
+    personId: string,
+    radius: number,
+    areaId?: string,
+  ) => boolean
+  origin: GeoPoint
+  modifiers?: {shiftKey?: boolean}
+  rotatePoints: typeof rotatePoints
+}
+
+interface HandleFeaturesResult {
+  handleFeatures: FeatureCollection<Point> | null
+  rotationHandle: FeatureCollection<LineString> | null
+}
+
+const createHandleFeatures = (
+  bounds: Bounds | null,
+  map: MapboxMap | null,
+): HandleFeaturesResult => {
+  if (!bounds || !map) {
+    return {handleFeatures: null, rotationHandle: null}
+  }
+
+  const {minLng, maxLng, minLat, maxLat} = bounds
+  const topCenter: GeoPoint = [(minLng + maxLng) / 2, maxLat]
+  const projectedTop = map.project({lng: topCenter[0], lat: topCenter[1]})
+  const rotationPixelPoint = {
+    x: projectedTop.x,
+    y: projectedTop.y - 20,
+  }
+  const rotationGeo = map.unproject([rotationPixelPoint.x, rotationPixelPoint.y])
+  const handlePoints: {coordinate: GeoPoint; handleType: string}[] = [
+    {coordinate: [minLng, maxLat], handleType: 'nw'},
+    {coordinate: [maxLng, maxLat], handleType: 'ne'},
+    {coordinate: [maxLng, minLat], handleType: 'se'},
+    {coordinate: [minLng, minLat], handleType: 'sw'},
+    {coordinate: [minLng, (minLat + maxLat) / 2], handleType: 'w'},
+    {coordinate: [maxLng, (minLat + maxLat) / 2], handleType: 'e'},
+    {coordinate: [(minLng + maxLng) / 2, maxLat], handleType: 'n'},
+    {coordinate: [(minLng + maxLng) / 2, minLat], handleType: 's'},
+    {
+      coordinate: [rotationGeo.lng, rotationGeo.lat],
+      handleType: 'rotate',
+    },
+  ]
+
+  const handleFeatures: FeatureCollection<Point> = {
+    type: 'FeatureCollection',
+    features: handlePoints.map((handle) => ({
+      type: 'Feature',
+      id: `handle-${handle.handleType}`,
+      properties: {
+        handleType: handle.handleType,
+        role:
+          handle.handleType === 'rotate'
+            ? 'rotate'
+            : handle.handleType.length === 1
+              ? 'edge'
+              : 'corner',
+      },
+      geometry: {type: 'Point', coordinates: handle.coordinate},
+    })),
+  }
+
+  const rotationHandle: FeatureCollection<LineString> = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        id: 'rotation-connector',
+        properties: {handleType: 'rotate'},
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            topCenter,
+            [rotationGeo.lng, rotationGeo.lat],
+          ] as GeoPoint[],
+        },
+      },
+    ],
+  }
+
+  return {handleFeatures, rotationHandle}
+}
+
+const syncFeatureStates = ({
+  map,
+  mapLoaded,
+  selectedEntityIds,
+  hoveredFeature,
+  constraintAreaId,
+  getSourceForId,
+  featureStateRef,
+}: {
+  map: MapboxMap | null
+  mapLoaded: boolean
+  selectedEntityIds: string[]
+  hoveredFeature: {id: string; source: string} | null
+  constraintAreaId: string | null
+  getSourceForId: (id: string) => string | null
+  featureStateRef: React.MutableRefObject<{
+    hover?: {id: string; source: string}
+    selected: {id: string; source: string}[]
+    constraint?: {id: string; source: string}
+  }>
+}) => {
+  if (!map || !mapLoaded) {
+    return
+  }
+
+  const nextSelected = selectedEntityIds
+    .map((id) => {
+      const source = getSourceForId(id)
+      return source && map.getSource(source) ? {id, source} : null
+    })
+    .filter(Boolean) as {id: string; source: string}[]
+
+  featureStateRef.current.selected.forEach((entry) => {
+    const stillSelected = nextSelected.some(
+      (item) => item.id === entry.id && item.source === entry.source,
+    )
+    if (!stillSelected && map.getSource(entry.source)) {
+      map.setFeatureState({source: entry.source, id: entry.id}, {selected: false})
+    }
+  })
+
+  nextSelected.forEach((entry) => {
+    map.setFeatureState({source: entry.source, id: entry.id}, {selected: true})
+  })
+
+  featureStateRef.current.selected = nextSelected
+
+  const hoverEntry = hoveredFeature ? {id: hoveredFeature.id, source: hoveredFeature.source} : null
+
+  if (
+    featureStateRef.current.hover &&
+    (!hoverEntry ||
+      featureStateRef.current.hover.id !== hoverEntry.id ||
+      featureStateRef.current.hover.source !== hoverEntry.source)
+  ) {
+    const {id, source} = featureStateRef.current.hover
+    if (map.getSource(source)) {
+      map.setFeatureState({source, id}, {hover: false})
+    }
+  }
+
+  if (hoverEntry && map.getSource(hoverEntry.source)) {
+    map.setFeatureState({source: hoverEntry.source, id: hoverEntry.id}, {hover: true})
+  }
+  featureStateRef.current.hover = hoverEntry ?? undefined
+
+  const nextConstraint =
+    constraintAreaId && map.getSource('areas')
+      ? {id: constraintAreaId, source: 'areas'}
+      : null
+
+  if (
+    featureStateRef.current.constraint &&
+    (!nextConstraint || featureStateRef.current.constraint.id !== nextConstraint.id)
+  ) {
+    const {id, source} = featureStateRef.current.constraint
+    map.setFeatureState({source, id}, {constraint: false})
+  }
+
+  if (nextConstraint) {
+    map.setFeatureState(
+      {source: nextConstraint.source, id: nextConstraint.id},
+      {constraint: true},
+    )
+  }
+
+  featureStateRef.current.constraint = nextConstraint ?? undefined
+}
+
+interface PersonBlockParams {
+  candidate: GeoPoint
+  personId: string
+  radius: number
+  areaId?: string
+  people: PersonEntity[]
+  walls: WallEntity[]
+  shapes: ShapeEntity[]
+  getEntityAreaId: (entity: SceneEntity) => string | undefined
+}
+
+const isPersonPositionBlockedHelper = ({
+  candidate,
+  personId,
+  radius,
+  areaId,
+  people,
+  walls,
+  shapes,
+  getEntityAreaId,
+}: PersonBlockParams) => {
+  const collidesPerson = people.some((person) => {
+    if (person.id === personId) return false
+    if (areaId && getEntityAreaId(person as SceneEntity) !== areaId) {
+      return false
+    }
+    const distance = Math.hypot((person as PersonEntity).x - candidate[0], (person as PersonEntity).y - candidate[1])
+    return distance < radius + (person as PersonEntity).radius
+  })
+
+  if (collidesPerson) {
+    return true
+  }
+
+  const relevantWalls = areaId
+    ? walls.filter((wall) => getEntityAreaId(wall as SceneEntity) === areaId)
+    : walls
+  const hitsWall = relevantWalls.some((wallEntity) => {
+    const wall = wallEntity as SceneEntity & {
+      points: GeoPoint[]
+      thickness?: number
+    }
+    if (wall.points.length < 2) {
+      return false
+    }
+    const threshold = radius + (wall.thickness ?? 0)
+    return wall.points.some((pt, index) => {
+      if (index === wall.points.length - 1) {
+        return false
+      }
+      const next = wall.points[index + 1]
+      return distanceToSegment(candidate, pt, next) < threshold
+    })
+  })
+
+  if (hitsWall) {
+    return true
+  }
+
+  const relevantShapes = areaId
+    ? shapes.filter((shape) => getEntityAreaId(shape as SceneEntity) === areaId)
+    : shapes
+  const hitsShape = relevantShapes.some((shapeEntity) => {
+    const shape = shapeEntity as SceneEntity & {
+      geometry: GeoPoint[]
+      shapeType: string
+    }
+    if (shape.shapeType === 'line' || shape.geometry.length < 3) {
+      return false
+    }
+    const ringCoords = closeRing(shape.geometry)
+    if (ringCoords.length < 4) {
+      return false
+    }
+    const ring = polygon([ringCoords])
+    try {
+      return booleanPointInPolygon(turfPoint(candidate), ring)
+    } catch {
+      return false
+    }
+  })
+
+  return hitsShape
+}
+
+const computeMoveTransform = ({
+  transformSession,
+  mapPoint,
+  selectedEntities,
+  entityIndex,
+  getAreaForEntity,
+  getEntityAreaId,
+  isGeometryInsideAreaSelection: isInsideArea,
+  isPersonPositionBlocked,
+  translatePoints: translate,
+  walls,
+  shapes,
+  cameras,
+  people,
+}: MoveTransformParams): TransformComputationResult => {
+  const updates: Record<string, GeoPoint[]> = {}
+  let blockedArea: string | null = null
+
+  const deltaLng = mapPoint[0] - transformSession.startPoint[0]
+  const deltaLat = mapPoint[1] - transformSession.startPoint[1]
+  const movingAreaIds = new Set(
+    selectedEntities
+      .filter((entity) => entity.type === 'area')
+      .map((entity) => entity.id),
+  )
+
+  Object.entries(transformSession.originalGeometries).forEach(([id, original]) => {
+    const entity = entityIndex.get(id)
+    const nextPoints = translate(original, deltaLng, deltaLat)
+    const areaForEntity = getAreaForEntity(id)
+    const areaIsMoving = areaForEntity && movingAreaIds.has(areaForEntity.id)
+    if (
+      entity?.type === 'person' &&
+      isPersonPositionBlocked(
+        nextPoints[0] as GeoPoint,
+        entity.id,
+        (entity as PersonEntity).radius,
+        areaForEntity?.id,
+      )
+    ) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
+    if (!areaIsMoving) {
+      const insideArea = isInsideArea(nextPoints, areaForEntity)
+      if (!insideArea) {
+        blockedArea = areaForEntity?.id ?? null
+        return
+      }
+    }
+    updates[id] = nextPoints
+  })
+
+  selectedEntities
+    .filter((entity) => entity.type === 'area')
+    .forEach((area) => {
+      const areaId = area.id
+      const moveAssociated = (ids: string[]) => {
+        ids.forEach((entityId) => {
+          if (updates[entityId]) {
+            return
+          }
+          const base = transformSession.originalGeometries[entityId]
+          if (!base) {
+            return
+          }
+          updates[entityId] = translate(base, deltaLng, deltaLat)
+        })
+      }
+
+      const associatedIds = [
+        ...walls
+          .filter((wall) => getEntityAreaId(wall as SceneEntity) === areaId)
+          .map((wall) => (wall as SceneEntity).id),
+        ...shapes
+          .filter((shape) => getEntityAreaId(shape as SceneEntity) === areaId)
+          .map((shape) => (shape as SceneEntity).id),
+        ...cameras
+          .filter((camera) => getEntityAreaId(camera as SceneEntity) === areaId)
+          .map((camera) => (camera as SceneEntity).id),
+        ...people
+          .filter((person) => getEntityAreaId(person as SceneEntity) === areaId)
+          .map((person) => (person as SceneEntity).id),
+      ]
+
+      moveAssociated(associatedIds)
+    })
+
+  if (blockedArea) {
+    return {updates: {}, constraintAreaId: blockedArea, cursor: 'not-allowed'}
+  }
+
+  return {updates, constraintAreaId: null, cursor: 'move'}
+}
+
+const computeResizeTransform = ({
+  transformSession,
+  mapPoint,
+  entityIndex,
+  getAreaForEntity,
+  getEntityAreaId,
+  isGeometryInsideAreaSelection: isInsideArea,
+  isPersonPositionBlocked,
+  scalePoints: scale,
+  walls,
+  shapes,
+  cameras,
+  people,
+  originalBounds,
+  modifiers,
+}: ResizeTransformParams): TransformComputationResult => {
+  const bounds =
+    originalBounds ??
+    computeBounds(Object.values(transformSession.originalGeometries).flatMap((points) => points))
+  if (!bounds) {
+    return {updates: {}, constraintAreaId: null}
+  }
+
+  const centerX = (bounds.minLng + bounds.maxLng) / 2
+  const centerY = (bounds.minLat + bounds.maxLat) / 2
+  const initialHandle: Record<string, GeoPoint> = {
+    e: [bounds.maxLng, centerY],
+    w: [bounds.minLng, centerY],
+    n: [centerX, bounds.maxLat],
+    s: [centerX, bounds.minLat],
+    ne: [bounds.maxLng, bounds.maxLat],
+    nw: [bounds.minLng, bounds.maxLat],
+    se: [bounds.maxLng, bounds.minLat],
+    sw: [bounds.minLng, bounds.maxLat],
+  }
+  const anchors: Record<string, GeoPoint> = {
+    e: [bounds.minLng, centerY],
+    w: [bounds.maxLng, centerY],
+    n: [centerX, bounds.minLat],
+    s: [centerX, bounds.maxLat],
+    ne: [bounds.minLng, bounds.minLat],
+    nw: [bounds.maxLng, bounds.minLat],
+    se: [bounds.minLng, bounds.maxLat],
+    sw: [bounds.maxLng, bounds.maxLat],
+  }
+  const handleType = transformSession.handleType
+  const anchor = anchors[handleType] ?? [centerX, centerY]
+  const startHandle = initialHandle[handleType] ?? transformSession.startPoint
+
+  const originVector = {
+    dx: startHandle[0] - anchor[0],
+    dy: startHandle[1] - anchor[1],
+  }
+  const nextVector = {
+    dx: mapPoint[0] - anchor[0],
+    dy: mapPoint[1] - anchor[1],
+  }
+
+  let scaleX = originVector.dx !== 0 ? nextVector.dx / originVector.dx : 1
+  let scaleY = originVector.dy !== 0 ? nextVector.dy / originVector.dy : 1
+
+  if (handleType === 'e' || handleType === 'w') {
+    scaleY = 1
+  }
+  if (handleType === 'n' || handleType === 's') {
+    scaleX = 1
+  }
+
+  if (modifiers?.shiftKey) {
+    const uniform = Math.min(Math.abs(scaleX || 1), Math.abs(scaleY || 1))
+    const signX = Math.sign(scaleX || 1)
+    const signY = Math.sign(scaleY || 1)
+    scaleX = uniform * signX
+    scaleY = uniform * signY
+  }
+
+  const updates: Record<string, GeoPoint[]> = {}
+  let blockedArea: string | null = null
+
+  Object.entries(transformSession.originalGeometries).forEach(([id, original]) => {
+    const entity = entityIndex.get(id)
+    const scaled = scale(original, anchor, scaleX, scaleY)
+    const areaForEntity = getAreaForEntity(id)
+    if (entity?.type === 'area') {
+      const previewArea = {
+        ...(entity as AreaEntity),
+        geometry: {
+          ...(entity as AreaEntity).geometry,
+          coordinates: scaled,
+        },
+      }
+      const relatedEntities: SceneEntity[] = [
+        ...walls,
+        ...shapes,
+        ...cameras,
+        ...people,
+      ] as SceneEntity[]
+      const hasOutsideChild = relatedEntities.some((child) => {
+        if (getEntityAreaId(child) !== entity.id) {
+          return false
+        }
+        return !isInsideArea(getEntityPoints(child), previewArea)
+      })
+      if (hasOutsideChild) {
+        blockedArea = entity.id
+        return
+      }
+    }
+    if (
+      entity?.type === 'person' &&
+      isPersonPositionBlocked(
+        scaled[0] as GeoPoint,
+        entity.id,
+        (entity as PersonEntity).radius,
+        areaForEntity?.id,
+      )
+    ) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
+    if (!isInsideArea(scaled, areaForEntity)) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
+    updates[id] = scaled
+  })
+
+  if (blockedArea) {
+    return {updates: {}, constraintAreaId: blockedArea, cursor: 'not-allowed'}
+  }
+
+  return {
+    updates,
+    constraintAreaId: null,
+    cursor: getHandleCursor(handleType),
+  }
+}
+
+const computeRotateTransform = ({
+  transformSession,
+  mapPoint,
+  entityIndex,
+  getAreaForEntity,
+  isGeometryInsideAreaSelection: isInsideArea,
+  isPersonPositionBlocked,
+  rotatePoints: rotate,
+  modifiers,
+  origin,
+}: RotateTransformParams): TransformComputationResult => {
+  const startAngle = Math.atan2(
+    transformSession.startPoint[1] - origin[1],
+    transformSession.startPoint[0] - origin[0],
+  )
+  const currentAngle = Math.atan2(mapPoint[1] - origin[1], mapPoint[0] - origin[0])
+  let deltaDeg = ((currentAngle - startAngle) * 180) / Math.PI
+  if (!modifiers?.shiftKey) {
+    deltaDeg = Math.round(deltaDeg / 15) * 15
+  }
+
+  const updates: Record<string, GeoPoint[]> = {}
+  let blockedArea: string | null = null
+
+  Object.entries(transformSession.originalGeometries).forEach(([id, original]) => {
+    const entity = entityIndex.get(id)
+    const areaForEntity = getAreaForEntity(id)
+    if (
+      entity?.type === 'person' &&
+      isPersonPositionBlocked(
+        rotate(original, origin, deltaDeg)[0] as GeoPoint,
+        entity.id,
+        (entity as PersonEntity).radius,
+        areaForEntity?.id,
+      )
+    ) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
+    const rotated = rotate(original, origin, deltaDeg)
+    if (!isInsideArea(rotated, areaForEntity)) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
+    updates[id] = rotated
+  })
+
+  if (blockedArea) {
+    return {updates: {}, constraintAreaId: blockedArea, cursor: 'not-allowed'}
+  }
+
+  return {
+    updates,
+    constraintAreaId: null,
+    cursor: ROTATE_CURSOR,
+    tooltipText: `Rotation: ${deltaDeg.toFixed(0)}°`,
+  }
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -198,18 +859,10 @@ export const useSelectionTransform = ({
   const entityIndex = React.useMemo(() => {
     const index = new Map<string, SceneEntity>()
     areas.forEach((area) => index.set(area.id, area))
-    walls.forEach((wall) =>
-      index.set((wall as SceneEntity).id, wall as SceneEntity),
-    )
-    shapes.forEach((shape) =>
-      index.set((shape as SceneEntity).id, shape as SceneEntity),
-    )
-    cameras.forEach((camera) =>
-      index.set((camera as SceneEntity).id, camera as SceneEntity),
-    )
-    people.forEach((person) =>
-      index.set((person as SceneEntity).id, person as SceneEntity),
-    )
+    walls.forEach((wall) => index.set(wall.id, wall))
+    shapes.forEach((shape) => index.set(shape.id, shape))
+    cameras.forEach((camera) => index.set(camera.id, camera))
+    people.forEach((person) => index.set(person.id, person))
     return index
   }, [areas, cameras, people, shapes, walls])
 
@@ -278,84 +931,17 @@ export const useSelectionTransform = ({
 
   React.useEffect(() => {
     const map = getMapInstance()
-    if (!map || !mapLoaded) {
-      return
-    }
-
-    const nextSelected = selectedEntityIds
-      .map((id) => {
-        const source = getSourceForId(id)
-        return source && map.getSource(source) ? {id, source} : null
-      })
-      .filter(Boolean) as {id: string; source: string}[]
-
-    featureStateRef.current.selected.forEach((entry) => {
-      const stillSelected = nextSelected.some(
-        (item) => item.id === entry.id && item.source === entry.source,
-      )
-      if (!stillSelected && map.getSource(entry.source)) {
-        map.setFeatureState(
-          {source: entry.source, id: entry.id},
-          {selected: false},
-        )
-      }
+    syncFeatureStates({
+      map,
+      mapLoaded,
+      selectedEntityIds,
+      hoveredFeature: hoveredFeature
+        ? {id: hoveredFeature.id, source: hoveredFeature.source}
+        : null,
+      constraintAreaId,
+      getSourceForId,
+      featureStateRef,
     })
-
-    nextSelected.forEach((entry) => {
-      map.setFeatureState(
-        {source: entry.source, id: entry.id},
-        {selected: true},
-      )
-    })
-
-    featureStateRef.current.selected = nextSelected
-
-    const hoverEntry = hoveredFeature
-      ? {id: hoveredFeature.id, source: hoveredFeature.source}
-      : null
-
-    if (
-      featureStateRef.current.hover &&
-      (!hoverEntry ||
-        featureStateRef.current.hover.id !== hoverEntry.id ||
-        featureStateRef.current.hover.source !== hoverEntry.source)
-    ) {
-      const {id, source} = featureStateRef.current.hover
-      if (map.getSource(source)) {
-        map.setFeatureState({source, id}, {hover: false})
-      }
-    }
-
-    if (hoverEntry && map.getSource(hoverEntry.source)) {
-      map.setFeatureState(
-        {source: hoverEntry.source, id: hoverEntry.id},
-        {hover: true},
-      )
-    }
-    featureStateRef.current.hover = hoverEntry ?? undefined
-
-    const nextConstraint =
-      constraintAreaId && map.getSource('areas')
-        ? {id: constraintAreaId, source: 'areas'}
-        : null
-
-    if (
-      featureStateRef.current.constraint &&
-      (!nextConstraint ||
-        featureStateRef.current.constraint.id !== nextConstraint.id)
-    ) {
-      const {id, source} = featureStateRef.current.constraint
-      map.setFeatureState({source, id}, {constraint: false})
-    }
-
-    if (nextConstraint) {
-      map.setFeatureState(
-        {source: nextConstraint.source, id: nextConstraint.id},
-        {constraint: true},
-      )
-    }
-
-    featureStateRef.current.constraint = nextConstraint ?? undefined
   }, [
     constraintAreaId,
     getMapInstance,
@@ -377,78 +963,11 @@ export const useSelectionTransform = ({
     const bounds = computeBounds(points)
     setSelectionBounds(bounds)
 
-    if (!bounds || !mapRef.current) {
-      setHandleFeatures(null)
-      setRotationHandle(null)
-      return
-    }
-
-    const {minLng, maxLng, minLat, maxLat} = bounds
-    const topCenter: GeoPoint = [(minLng + maxLng) / 2, maxLat]
     const map = getMapInstance()
-    if (!map) {
-      return
-    }
-    const projectedTop = map.project({lng: topCenter[0], lat: topCenter[1]})
-    const rotationPixelPoint = {
-      x: projectedTop.x,
-      y: projectedTop.y - 20,
-    }
-    const rotationGeo = map.unproject(rotationPixelPoint)
-    const handlePoints: {coordinate: GeoPoint; handleType: string}[] = [
-      {coordinate: [minLng, maxLat], handleType: 'nw'},
-      {coordinate: [maxLng, maxLat], handleType: 'ne'},
-      {coordinate: [maxLng, minLat], handleType: 'se'},
-      {coordinate: [minLng, minLat], handleType: 'sw'},
-      {coordinate: [minLng, (minLat + maxLat) / 2], handleType: 'w'},
-      {coordinate: [maxLng, (minLat + maxLat) / 2], handleType: 'e'},
-      {coordinate: [(minLng + maxLng) / 2, maxLat], handleType: 'n'},
-      {coordinate: [(minLng + maxLng) / 2, minLat], handleType: 's'},
-      {
-        coordinate: [rotationGeo.lng, rotationGeo.lat],
-        handleType: 'rotate',
-      },
-    ]
-
-    const handles: FeatureCollection<Point> = {
-      type: 'FeatureCollection',
-      features: handlePoints.map((handle) => ({
-        type: 'Feature',
-        id: `handle-${handle.handleType}`,
-        properties: {
-          handleType: handle.handleType,
-          role:
-            handle.handleType === 'rotate'
-              ? 'rotate'
-              : handle.handleType.length === 1
-                ? 'edge'
-                : 'corner',
-        },
-        geometry: {type: 'Point', coordinates: handle.coordinate},
-      })),
-    }
-
-    const rotationFeatures: FeatureCollection<LineString> = {
-      type: 'FeatureCollection',
-      features: [
-        {
-          type: 'Feature',
-          id: 'rotation-connector',
-          properties: {handleType: 'rotate'},
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              topCenter,
-              [rotationGeo.lng, rotationGeo.lat],
-            ] as GeoPoint[],
-          },
-        },
-      ],
-    }
-
-    setHandleFeatures(handles)
-    setRotationHandle(rotationFeatures)
-  }, [getMapInstance, mapRef, selectedEntities])
+    const {handleFeatures, rotationHandle} = createHandleFeatures(bounds, map)
+    setHandleFeatures(handleFeatures)
+    setRotationHandle(rotationHandle)
+  }, [getMapInstance, selectedEntities])
 
   const selectionBoundsFeature: FeatureCollection | null = React.useMemo(() => {
     if (!selectionBounds) {
@@ -469,11 +988,6 @@ export const useSelectionTransform = ({
       ],
     }
   }, [selectionBounds])
-
-  const getMapFromEvent = (event: MapLayerMouseEvent) =>
-    (
-      event.target as unknown as {getMap?: () => MapboxMap | undefined}
-    )?.getMap?.() ?? getMapInstance()
 
   const hitTestHandles = React.useCallback(
     (
@@ -622,26 +1136,6 @@ export const useSelectionTransform = ({
     [],
   )
 
-  const distanceToSegment = React.useCallback(
-    (point: GeoPoint, a: GeoPoint, b: GeoPoint) => {
-      const [px, py] = point
-      const [ax, ay] = a
-      const [bx, by] = b
-      const dx = bx - ax
-      const dy = by - ay
-      const lengthSq = dx * dx + dy * dy
-      if (lengthSq === 0) {
-        return Math.hypot(px - ax, py - ay)
-      }
-      let t = ((px - ax) * dx + (py - ay) * dy) / lengthSq
-      t = Math.max(0, Math.min(1, t))
-      const projX = ax + t * dx
-      const projY = ay + t * dy
-      return Math.hypot(px - projX, py - projY)
-    },
-    [],
-  )
-
   const isPersonPositionBlocked = React.useCallback(
     (
       candidate: GeoPoint,
@@ -649,77 +1143,51 @@ export const useSelectionTransform = ({
       radius: number,
       areaId?: string,
     ) => {
-      const collidesPerson = people.some((person) => {
-        if (person.id === personId) return false
-        if (areaId && getEntityAreaId(person as SceneEntity) !== areaId) {
-          return false
-        }
-        const distance = Math.hypot(
-          (person as PersonEntity).x - candidate[0],
-          (person as PersonEntity).y - candidate[1],
-        )
-        return distance < radius + (person as PersonEntity).radius
+      return isPersonPositionBlockedHelper({
+        candidate,
+        personId,
+        radius,
+        areaId,
+        people,
+        walls,
+        shapes,
+        getEntityAreaId,
       })
-
-      if (collidesPerson) {
-        return true
-      }
-
-      const relevantWalls = areaId
-        ? walls.filter(
-            (wall) => getEntityAreaId(wall as SceneEntity) === areaId,
-          )
-        : walls
-      const hitsWall = relevantWalls.some((wallEntity) => {
-        const wall = wallEntity as SceneEntity & {
-          points: GeoPoint[]
-          thickness?: number
-        }
-        if (wall.points.length < 2) {
-          return false
-        }
-        const threshold = radius + (wall.thickness ?? 0)
-        return wall.points.some((pt, index) => {
-          if (index === wall.points.length - 1) {
-            return false
-          }
-          const next = wall.points[index + 1]
-          return distanceToSegment(candidate, pt, next) < threshold
-        })
-      })
-
-      if (hitsWall) {
-        return true
-      }
-
-      const relevantShapes = areaId
-        ? shapes.filter(
-            (shape) => getEntityAreaId(shape as SceneEntity) === areaId,
-          )
-        : shapes
-      const hitsShape = relevantShapes.some((shapeEntity) => {
-        const shape = shapeEntity as SceneEntity & {
-          geometry: GeoPoint[]
-          shapeType: string
-        }
-        if (shape.shapeType === 'line' || shape.geometry.length < 3) {
-          return false
-        }
-        const ringCoords = closeRing(shape.geometry)
-        if (ringCoords.length < 4) {
-          return false
-        }
-        const ring = polygon([ringCoords])
-        try {
-          return booleanPointInPolygon(turfPoint(candidate), ring)
-        } catch {
-          return false
-        }
-      })
-
-      return hitsShape
     },
-    [distanceToSegment, getEntityAreaId, people, shapes, walls],
+    [getEntityAreaId, people, shapes, walls],
+  )
+
+  const applyTransformResult = React.useCallback(
+    (result: TransformComputationResult, event: MapLayerMouseEvent) => {
+      if (result.constraintAreaId) {
+        setConstraintAreaId(result.constraintAreaId)
+        setCursorOverride('not-allowed')
+        return
+      }
+
+      setConstraintAreaId(null)
+      if (result.cursor) {
+        setCursorOverride(result.cursor)
+      }
+      if (result.tooltipText) {
+        setTooltip({
+          text: result.tooltipText,
+          x: event.point.x + 12,
+          y: event.point.y + 12,
+          visible: true,
+        })
+      }
+
+      if (Object.keys(result.updates).length > 0) {
+        updateScene((scene) => {
+          Object.entries(result.updates).forEach(([id, points]) => {
+            applyPointsToScene(scene, id, points as GeoPoint[])
+          })
+          scene.meta.updatedAt = new Date().toISOString()
+        })
+      }
+    },
+    [applyPointsToScene, setCursorOverride, setTooltip, updateScene],
   )
 
   const startTransformSession = React.useCallback(
@@ -743,7 +1211,7 @@ export const useSelectionTransform = ({
           .filter((entity) => entity.type === 'area')
           .forEach((area) => {
             const areaId = area.id
-            const collect = <T extends SelectableEntity & {areaId: string}>(
+            const collect = <T extends SceneEntity & {areaId: string}>(
               list: T[],
             ) => {
               list
@@ -752,15 +1220,13 @@ export const useSelectionTransform = ({
                   if (originalGeometries[item.id]) {
                     return
                   }
-                  originalGeometries[item.id] = getEntityPoints(
-                    item as SceneEntity,
-                  )
+                  originalGeometries[item.id] = getEntityPoints(item)
                 })
             }
-            collect(walls as SelectableEntity[])
-            collect(shapes as SelectableEntity[])
-            collect(cameras as SelectableEntity[])
-            collect(people as SelectableEntity[])
+            collect(walls)
+            collect(shapes)
+            collect(cameras)
+            collect(people)
           })
       }
       const bounds = computeBounds(
@@ -779,344 +1245,79 @@ export const useSelectionTransform = ({
   )
 
   const processTransformMove = React.useCallback(
-    // eslint-disable-next-line max-lines-per-function, max-statements
-    (
-      event: MapLayerMouseEvent,
-      mapPoint: GeoPoint,
-      modifiers?: {shiftKey?: boolean},
-      // eslint-disable-next-line complexity
-    ) => {
+    (event: MapLayerMouseEvent, mapPoint: GeoPoint, modifiers?: {shiftKey?: boolean}) => {
       if (!transformSession) {
         return
       }
 
       if (transformSession.type === 'move') {
-        const updates: Record<string, GeoPoint[]> = {}
-        let blockedArea: string | null = null
-        const deltaLng = mapPoint[0] - transformSession.startPoint[0]
-        const deltaLat = mapPoint[1] - transformSession.startPoint[1]
-        const movingAreaIds = new Set(
-          selectedEntities
-            .filter((entity) => entity.type === 'area')
-            .map((entity) => entity.id),
-        )
-        Object.entries(transformSession.originalGeometries).forEach(
-          ([id, original]) => {
-            const entity = entityIndex.get(id)
-            const nextPoints = translatePoints(original, deltaLng, deltaLat)
-            const areaForEntity = getAreaForEntity(id)
-            const areaIsMoving =
-              areaForEntity && movingAreaIds.has(areaForEntity.id)
-            if (
-              entity?.type === 'person' &&
-              isPersonPositionBlocked(
-                nextPoints[0] as GeoPoint,
-                entity.id,
-                (entity as PersonEntity).radius,
-                areaForEntity?.id,
-              )
-            ) {
-              blockedArea = areaForEntity?.id ?? null
-              return
-            }
-            if (!areaIsMoving) {
-              const insideArea = isGeometryInsideAreaSelection(
-                nextPoints,
-                areaForEntity,
-              )
-              if (!insideArea) {
-                blockedArea = areaForEntity?.id ?? null
-                return
-              }
-            }
-            updates[id] = nextPoints
-          },
-        )
-
-        selectedEntities
-          .filter((entity) => entity.type === 'area')
-          .forEach((area) => {
-            const areaId = area.id
-            const moveAssociated = (ids: string[]) => {
-              ids.forEach((entityId) => {
-                if (updates[entityId]) {
-                  return
-                }
-                const base = transformSession.originalGeometries[entityId]
-                if (!base) {
-                  return
-                }
-                updates[entityId] = translatePoints(base, deltaLng, deltaLat)
-              })
-            }
-
-            const associatedIds = [
-              ...walls
-                .filter(
-                  (wall) => getEntityAreaId(wall as SceneEntity) === areaId,
-                )
-                .map((w) => (w as SceneEntity).id),
-              ...shapes
-                .filter(
-                  (shape) => getEntityAreaId(shape as SceneEntity) === areaId,
-                )
-                .map((shape) => (shape as SceneEntity).id),
-              ...cameras
-                .filter(
-                  (camera) => getEntityAreaId(camera as SceneEntity) === areaId,
-                )
-                .map((camera) => (camera as SceneEntity).id),
-              ...people
-                .filter(
-                  (person) => getEntityAreaId(person as SceneEntity) === areaId,
-                )
-                .map((person) => (person as SceneEntity).id),
-            ]
-
-            moveAssociated(associatedIds)
-          })
-
-        if (blockedArea) {
-          setConstraintAreaId(blockedArea)
-          setCursorOverride('not-allowed')
-          return
-        }
-
-        setConstraintAreaId(null)
-        setCursorOverride('move')
-
-        if (Object.keys(updates).length > 0) {
-          updateScene((scene) => {
-            Object.entries(updates).forEach(([id, points]) => {
-              applyPointsToScene(scene, id, points as GeoPoint[])
-            })
-            scene.meta.updatedAt = new Date().toISOString()
-          })
-        }
+        const result = computeMoveTransform({
+          transformSession,
+          mapPoint,
+          selectedEntities,
+          entityIndex,
+          getAreaForEntity,
+          getEntityAreaId,
+          isGeometryInsideAreaSelection,
+          translatePoints,
+          isPersonPositionBlocked,
+          walls,
+          shapes,
+          cameras,
+          people,
+        })
+        applyTransformResult(result, event)
+        return
       }
 
       if (transformSession.type === 'resize' && transformSession.handleType) {
-        const bounds =
-          transformSession.originalBounds ??
-          computeBounds(
-            Object.values(transformSession.originalGeometries).flatMap(
-              (points) => points,
-            ),
-          )
-        if (!bounds) {
-          return
-        }
-        const centerX = (bounds.minLng + bounds.maxLng) / 2
-        const centerY = (bounds.minLat + bounds.maxLat) / 2
-        const initialHandle: Record<string, GeoPoint> = {
-          e: [bounds.maxLng, centerY],
-          w: [bounds.minLng, centerY],
-          n: [centerX, bounds.maxLat],
-          s: [centerX, bounds.minLat],
-          ne: [bounds.maxLng, bounds.maxLat],
-          nw: [bounds.minLng, bounds.maxLat],
-          se: [bounds.maxLng, bounds.minLat],
-          sw: [bounds.minLng, bounds.minLat],
-        }
-        const anchors: Record<string, GeoPoint> = {
-          e: [bounds.minLng, centerY],
-          w: [bounds.maxLng, centerY],
-          n: [centerX, bounds.minLat],
-          s: [centerX, bounds.maxLat],
-          ne: [bounds.minLng, bounds.minLat],
-          nw: [bounds.maxLng, bounds.minLat],
-          se: [bounds.minLng, bounds.maxLat],
-          sw: [bounds.maxLng, bounds.maxLat],
-        }
-        const handleType = transformSession.handleType
-        const anchor = anchors[handleType] ?? [centerX, centerY]
-        const startHandle =
-          initialHandle[handleType] ?? transformSession.startPoint
-
-        const originVector = {
-          dx: startHandle[0] - anchor[0],
-          dy: startHandle[1] - anchor[1],
-        }
-        const nextVector = {
-          dx: mapPoint[0] - anchor[0],
-          dy: mapPoint[1] - anchor[1],
-        }
-
-        let scaleX = originVector.dx !== 0 ? nextVector.dx / originVector.dx : 1
-        let scaleY = originVector.dy !== 0 ? nextVector.dy / originVector.dy : 1
-
-        if (handleType === 'e' || handleType === 'w') {
-          scaleY = 1
-        }
-        if (handleType === 'n' || handleType === 's') {
-          scaleX = 1
-        }
-
-        if (modifiers?.shiftKey) {
-          const uniform = Math.min(Math.abs(scaleX || 1), Math.abs(scaleY || 1))
-          const signX = Math.sign(scaleX || 1)
-          const signY = Math.sign(scaleY || 1)
-          scaleX = uniform * signX
-          scaleY = uniform * signY
-        }
-
-        const updates: Record<string, GeoPoint[]> = {}
-        let blockedArea: string | null = null
-
-        Object.entries(transformSession.originalGeometries).forEach(
-          ([id, original]) => {
-            const entity = entityIndex.get(id)
-            const scaled = scalePoints(original, anchor, scaleX, scaleY)
-            const areaForEntity = getAreaForEntity(id)
-            if (entity?.type === 'area') {
-              const previewArea = {
-                ...(entity as AreaEntity),
-                geometry: {
-                  ...(entity as AreaEntity).geometry,
-                  coordinates: scaled,
-                },
-              }
-              const relatedEntities: SceneEntity[] = [
-                ...walls,
-                ...shapes,
-                ...cameras,
-                ...people,
-              ] as SceneEntity[]
-              const hasOutsideChild = relatedEntities.some((child) => {
-                if (getEntityAreaId(child) !== entity.id) {
-                  return false
-                }
-                return !isGeometryInsideAreaSelection(
-                  getEntityPoints(child),
-                  previewArea,
-                )
-              })
-              if (hasOutsideChild) {
-                blockedArea = entity.id
-                return
-              }
-            }
-            if (
-              entity?.type === 'person' &&
-              isPersonPositionBlocked(
-                scaled[0] as GeoPoint,
-                entity.id,
-                (entity as PersonEntity).radius,
-                areaForEntity?.id,
-              )
-            ) {
-              blockedArea = areaForEntity?.id ?? null
-              return
-            }
-            if (!isGeometryInsideAreaSelection(scaled, areaForEntity)) {
-              blockedArea = areaForEntity?.id ?? null
-              return
-            }
-            updates[id] = scaled
-          },
-        )
-
-        if (blockedArea) {
-          setConstraintAreaId(blockedArea)
-          setCursorOverride('not-allowed')
-          return
-        }
-
-        setConstraintAreaId(null)
-        setCursorOverride(getHandleCursor(handleType))
-
-        if (Object.keys(updates).length > 0) {
-          updateScene((scene) => {
-            Object.entries(updates).forEach(([id, points]) => {
-              applyPointsToScene(scene, id, points as GeoPoint[])
-            })
-            scene.meta.updatedAt = new Date().toISOString()
-          })
-        }
+        const result = computeResizeTransform({
+          transformSession: transformSession as TransformSession & {handleType: string},
+          mapPoint,
+          entityIndex,
+          getAreaForEntity,
+          getEntityAreaId,
+          isGeometryInsideAreaSelection,
+          isPersonPositionBlocked,
+          scalePoints,
+          walls,
+          shapes,
+          cameras,
+          people,
+          originalBounds: transformSession.originalBounds ?? null,
+          modifiers,
+        })
+        applyTransformResult(result, event)
+        return
       }
 
       if (transformSession.type === 'rotate') {
-        const origin = transformSession.origin ?? mapPoint
-        const startAngle = Math.atan2(
-          transformSession.startPoint[1] - origin[1],
-          transformSession.startPoint[0] - origin[0],
-        )
-        const currentAngle = Math.atan2(
-          mapPoint[1] - origin[1],
-          mapPoint[0] - origin[0],
-        )
-        let deltaDeg = ((currentAngle - startAngle) * 180) / Math.PI
-        if (!modifiers?.shiftKey) {
-          deltaDeg = Math.round(deltaDeg / 15) * 15
-        }
-
-        const updates: Record<string, GeoPoint[]> = {}
-        let blockedArea: string | null = null
-
-        Object.entries(transformSession.originalGeometries).forEach(
-          ([id, original]) => {
-            const entity = entityIndex.get(id)
-            const areaForEntity = getAreaForEntity(id)
-            if (
-              entity?.type === 'person' &&
-              isPersonPositionBlocked(
-                rotatePoints(original, origin, deltaDeg)[0] as GeoPoint,
-                entity.id,
-                (entity as PersonEntity).radius,
-                areaForEntity?.id,
-              )
-            ) {
-              blockedArea = areaForEntity?.id ?? null
-              return
-            }
-            const rotated = rotatePoints(original, origin, deltaDeg)
-            if (!isGeometryInsideAreaSelection(rotated, areaForEntity)) {
-              blockedArea = areaForEntity?.id ?? null
-              return
-            }
-            updates[id] = rotated
-          },
-        )
-
-        if (blockedArea) {
-          setConstraintAreaId(blockedArea)
-          setCursorOverride('not-allowed')
-          return
-        }
-
-        setConstraintAreaId(null)
-        setCursorOverride(ROTATE_CURSOR)
-        setTooltip({
-          text: `Rotation: ${deltaDeg.toFixed(0)}°`,
-          x: event.point.x + 12,
-          y: event.point.y + 12,
-          visible: true,
+        const result = computeRotateTransform({
+          transformSession,
+          mapPoint,
+          entityIndex,
+          getAreaForEntity,
+          isGeometryInsideAreaSelection,
+          isPersonPositionBlocked,
+          rotatePoints,
+          modifiers,
+          origin: transformSession.origin ?? mapPoint,
         })
-
-        if (Object.keys(updates).length > 0) {
-          updateScene((scene) => {
-            Object.entries(updates).forEach(([id, points]) => {
-              applyPointsToScene(scene, id, points as GeoPoint[])
-            })
-            scene.meta.updatedAt = new Date().toISOString()
-          })
-        }
+        applyTransformResult(result, event)
       }
     },
     [
-      applyPointsToScene,
+      applyTransformResult,
       entityIndex,
       getAreaForEntity,
+      getEntityAreaId,
       isGeometryInsideAreaSelection,
       isPersonPositionBlocked,
       rotatePoints,
       scalePoints,
       selectedEntities,
-      setCursorOverride,
-      setTooltip,
       translatePoints,
       transformSession,
-      updateScene,
       walls,
       shapes,
       cameras,
@@ -1210,41 +1411,6 @@ export const useSelectionTransform = ({
         return true
       }
 
-      const isPointInsideEntity = (point: GeoPoint, entity: SceneEntity) => {
-        if (entity.type === 'area' || entity.type === 'shape') {
-          if (entity.type === 'shape' && entity.geometry.length < 3) {
-            return false
-          }
-          const ringCoords = closeRing(getEntityPoints(entity))
-          if (ringCoords.length < 4) {
-            return false
-          }
-          const ring = polygon([ringCoords])
-          try {
-            return booleanPointInPolygon(turfPoint(point), ring)
-          } catch {
-            return false
-          }
-        }
-        if (entity.type === 'wall') {
-          const pts = entity.points
-          return pts.some((pt, index) => {
-            if (index === pts.length - 1) return false
-            return distanceToSegment(point, pt, pts[index + 1]) < 0.0001
-          })
-        }
-        if (entity.type === 'person') {
-          return (
-            Math.hypot(entity.x - point[0], entity.y - point[1]) <
-            entity.radius * 1.5
-          )
-        }
-        if (entity.type === 'camera') {
-          return Math.hypot(entity.x - point[0], entity.y - point[1]) < 0.0002
-        }
-        return false
-      }
-
       const clickedOnSelection =
         selectedEntities.length > 0 &&
         selectedEntities.some((entity) => isPointInsideEntity(mapPoint, entity))
@@ -1271,7 +1437,6 @@ export const useSelectionTransform = ({
     [
       activeTool,
       clearSelection,
-      distanceToSegment,
       hitTestEntities,
       hitTestHandles,
       isEditMode,
