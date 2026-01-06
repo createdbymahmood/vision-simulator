@@ -43,7 +43,6 @@ export interface SceneState {
     updater: (camera: CameraEntity) => void,
   ) => SceneRoot
   deleteEntities: (ids: string[]) => SceneRoot
-  duplicateEntities: (ids: string[]) => SceneRoot
 }
 
 type SetState = StoreApi<SceneState>['setState']
@@ -410,115 +409,6 @@ const deleteEntities = (set: SetState, get: GetState, ids: string[]) => {
   return updated
 }
 
-const duplicateEntities = (set: SetState, get: GetState, ids: string[]) => {
-  const nextValue = produce<SceneState>((state) => {
-    const bump = 0.00002
-    ids.forEach((id) => {
-      if (id.startsWith('area-')) {
-        const target = state.scene.areas.find((area) => area.id === id)
-        if (!target) {
-          return
-        }
-        const geometry: PolygonGeometry = {
-          ...target.geometry,
-          coordinates: target.geometry.coordinates.map(([lng, lat]) => [
-            lng + bump,
-            lat + bump,
-          ]),
-          bezierControls: target.geometry.bezierControls.map(([lng, lat]) => [
-            lng + bump,
-            lat + bump,
-          ]),
-        }
-        const newArea = createAreaEntity(state.scene.areas, geometry)
-        state.scene.areas.push(newArea)
-        return
-      }
-
-      if (id.startsWith('wall-')) {
-        const target = state.scene.walls.find((wall) => wall.id === id)
-        if (!target) {
-          return
-        }
-        const wallId = getNextId(
-          state.scene.walls.map((wall) => wall.id),
-          'wall',
-        )
-        state.scene.walls.push(
-          createDefaultWall(
-            target.areaId,
-            target.points.map(([lng, lat]) => [lng + bump, lat + bump]),
-            wallId,
-          ),
-        )
-        return
-      }
-
-      if (id.startsWith('shape-')) {
-        const target = state.scene.shapes.find((shape) => shape.id === id)
-        if (!target) {
-          return
-        }
-        const shapeId = getNextId(
-          state.scene.shapes.map((shape) => shape.id),
-          'shape',
-        )
-        state.scene.shapes.push({
-          ...target,
-          id: shapeId,
-          geometry: target.geometry.map(([lng, lat]) => [
-            lng + bump,
-            lat + bump,
-          ]),
-        })
-        return
-      }
-
-      if (id.startsWith('camera-')) {
-        const target = state.scene.cameras.find((camera) => camera.id === id)
-        if (!target) {
-          return
-        }
-        const cameraId = getNextId(
-          state.scene.cameras.map((camera) => camera.id),
-          'camera',
-        )
-        state.scene.cameras.push({
-          ...target,
-          id: cameraId,
-          x: target.x + bump,
-          y: target.y + bump,
-        })
-        return
-      }
-
-      if (id.startsWith('person-')) {
-        const target = state.scene.people.find((person) => person.id === id)
-        if (!target) {
-          return
-        }
-        const personId = getNextId(
-          state.scene.people.map((person) => person.id),
-          'person',
-        )
-        state.scene.people.push({
-          ...target,
-          id: personId,
-          x: target.x + bump,
-          y: target.y + bump,
-        })
-      }
-    })
-
-    state.scene.meta.updatedAt = new Date().toISOString()
-  })
-
-  set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
-}
-
 const createSceneStore: (
   initialValues: Partial<SceneState>,
 ) => StateCreator<SceneState> = (initialValues) => (set, get) => ({
@@ -540,7 +430,6 @@ const createSceneStore: (
   addCamera: (camera) => addCamera(set, get, camera),
   updateCamera: (id, updater) => updateCamera(set, get, id, updater),
   deleteEntities: (entityIds) => deleteEntities(set, get, entityIds),
-  duplicateEntities: (entityIds) => duplicateEntities(set, get, entityIds),
   ...initialValues,
 })
 

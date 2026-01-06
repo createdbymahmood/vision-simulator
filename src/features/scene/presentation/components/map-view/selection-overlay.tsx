@@ -6,14 +6,12 @@ import {Button} from '@/components/ui/button'
 interface SelectionOverlayProps {
   count: number
   onDelete: () => void
-  onDuplicate: () => void
   isEditMode: boolean
 }
 
 export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   count,
   onDelete,
-  onDuplicate,
   isEditMode,
 }) => {
   if (!isEditMode) return null
@@ -30,9 +28,6 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
         <div className='flex items-center gap-1'>
           <Button size='sm' variant='ghost' onClick={onDelete}>
             Delete
-          </Button>
-          <Button size='sm' variant='ghost' onClick={onDuplicate}>
-            Duplicate
           </Button>
           <Button
             size='sm'

@@ -120,7 +120,6 @@ interface UseSelectionTransformParams {
   clearSelection: () => void
   updateScene: (updater: (scene: SceneRoot) => void) => void
   deleteEntities: (ids: string[]) => void
-  duplicateEntities: (ids: string[]) => void
   setTooltip: (tooltip: TooltipState | null) => void
   setCursorOverride: (cursor?: string) => void
   baseCursor: string | undefined
@@ -145,7 +144,6 @@ interface UseSelectionTransformResult {
   onMouseUp: () => void
   onMapLoad: () => void
   onDeleteSelection: () => void
-  onDuplicateSelection: () => void
   mapLoaded: boolean
 }
 
@@ -825,7 +823,6 @@ export const useSelectionTransform = ({
   clearSelection,
   updateScene,
   deleteEntities,
-  duplicateEntities,
   setTooltip,
   setCursorOverride,
   baseCursor,
@@ -1525,13 +1522,6 @@ export const useSelectionTransform = ({
     clearSelection()
   }, [clearSelection, deleteEntities, selectedEntityIds])
 
-  const onDuplicateSelection = React.useCallback(() => {
-    if (!selectedEntityIds.length) {
-      return
-    }
-    duplicateEntities(selectedEntityIds)
-  }, [duplicateEntities, selectedEntityIds])
-
   const selectionCount = selectedEntityIds.length
 
   const cursor = baseCursor
@@ -1550,7 +1540,6 @@ export const useSelectionTransform = ({
     onMouseUp,
     onMapLoad: handleMapLoad,
     onDeleteSelection,
-    onDuplicateSelection,
     mapLoaded,
   }
 }

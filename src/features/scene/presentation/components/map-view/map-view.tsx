@@ -107,7 +107,6 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   const setSelection = useSceneStore((state) => state.setSelection)
   const clearSelection = useSceneStore((state) => state.clearSelection)
   const deleteEntities = useSceneStore((state) => state.deleteEntities)
-  const duplicateEntities = useSceneStore((state) => state.duplicateEntities)
   const updateScene = useSceneStore((state) => state.updateScene)
 
   const setActiveTool = useUiStore((state) => state.setActiveTool)
@@ -202,7 +201,6 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     onMouseUp: handleSelectionMouseUp,
     onMapLoad: handleSelectionMapLoad,
     onDeleteSelection,
-    onDuplicateSelection,
     mapLoaded,
   } = useSelectionTransform({
     mapRef,
@@ -218,7 +216,6 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     clearSelection,
     updateScene,
     deleteEntities,
-    duplicateEntities,
     setTooltip,
     setCursorOverride,
     baseCursor,
@@ -798,7 +795,6 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
         isEditMode={isEditMode}
         count={selectionCount}
         onDelete={onDeleteSelection}
-        onDuplicate={onDuplicateSelection}
       />
 
       {tooltip ? <MapViewTooltip tooltip={tooltip} /> : null}
