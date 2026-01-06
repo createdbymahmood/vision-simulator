@@ -7,6 +7,7 @@ import type {
   GeoPoint,
   PersonEntity,
   ShapeEntity,
+  WallEntity,
 } from '@/features/scene/domain/types'
 import type {ShapeDrawMode} from '@/features/scene/presentation/types'
 
@@ -21,6 +22,7 @@ import {
   createTriangleRing,
   formatMeters,
   doesShapeHitPerson,
+  doesShapeCollideWithWalls,
 } from './map-view-helpers'
 
 interface ShapeDrawingState {
@@ -45,6 +47,7 @@ interface UseShapeDrawingParams {
   isGeometryInsideArea: (points: GeoPoint[], area: AreaEntity | null) => boolean
   strokeColor: string
   people: PersonEntity[]
+  walls: WallEntity[]
 }
 
 interface ShapePointerResult {
@@ -58,6 +61,7 @@ export const useShapeDrawing = ({
   isGeometryInsideArea,
   strokeColor,
   people,
+  walls,
 }: UseShapeDrawingParams) => {
   const [shapeDrawing, setShapeDrawing] = React.useState<ShapeDrawingState>({
     isActive: false,
@@ -139,6 +143,23 @@ export const useShapeDrawing = ({
             },
           }
         }
+        if (
+          doesShapeCollideWithWalls(
+            {geometry: preview, shapeType: 'rectangle'} as ShapeEntity,
+            walls.filter((wall) => wall.areaId === targetArea.id),
+          )
+        ) {
+          setShapePreview(null)
+          return {
+            cursor: 'not-allowed',
+            tooltip: {
+              text: 'Cannot draw shapes over walls',
+              x: screen.x + 12,
+              y: screen.y + 12,
+              visible: true,
+            },
+          }
+        }
         if (doesShapeHitPerson({geometry: preview, shapeType: 'rectangle'} as ShapeEntity, people)) {
           setShapePreview(null)
           return {
@@ -171,6 +192,23 @@ export const useShapeDrawing = ({
             cursor: 'not-allowed',
             tooltip: {
               text: 'Shapes must stay inside an area',
+              x: screen.x + 12,
+              y: screen.y + 12,
+              visible: true,
+            },
+          }
+        }
+        if (
+          doesShapeCollideWithWalls(
+            {geometry: preview, shapeType: 'circle'} as ShapeEntity,
+            walls.filter((wall) => wall.areaId === targetArea.id),
+          )
+        ) {
+          setShapePreview(null)
+          return {
+            cursor: 'not-allowed',
+            tooltip: {
+              text: 'Cannot draw shapes over walls',
               x: screen.x + 12,
               y: screen.y + 12,
               visible: true,
@@ -214,6 +252,23 @@ export const useShapeDrawing = ({
             },
           }
         }
+        if (
+          doesShapeCollideWithWalls(
+            {geometry: preview, shapeType: 'line'} as ShapeEntity,
+            walls.filter((wall) => wall.areaId === targetArea.id),
+          )
+        ) {
+          setShapePreview(null)
+          return {
+            cursor: 'not-allowed',
+            tooltip: {
+              text: 'Cannot draw shapes over walls',
+              x: screen.x + 12,
+              y: screen.y + 12,
+              visible: true,
+            },
+          }
+        }
         if (doesShapeHitPerson({geometry: preview, shapeType: 'line'} as ShapeEntity, people)) {
           setShapePreview(null)
           return {
@@ -248,6 +303,12 @@ export const useShapeDrawing = ({
         const hitsPerson =
           preview &&
           doesShapeHitPerson({geometry: preview, shapeType: 'triangle'} as ShapeEntity, people)
+        const hitsWall =
+          preview &&
+          doesShapeCollideWithWalls(
+            {geometry: preview, shapeType: 'triangle'} as ShapeEntity,
+            walls.filter((wall) => wall.areaId === targetArea.id),
+          )
         setShapePreview(preview)
         return {
           tooltip: {
@@ -256,7 +317,7 @@ export const useShapeDrawing = ({
             y: screen.y + 12,
             visible: true,
           },
-          cursor: isValid && !hitsPerson ? undefined : 'not-allowed',
+          cursor: isValid && !hitsPerson && !hitsWall ? undefined : 'not-allowed',
         }
       }
 
@@ -306,12 +367,18 @@ export const useShapeDrawing = ({
         return false
       }
 
-    if (!isGeometryInsideArea(geometry, targetArea)) {
-      toast.error('Shapes must stay inside an area')
+      if (!isGeometryInsideArea(geometry, targetArea)) {
+        toast.error('Shapes must stay inside an area')
+        resetShapeDrawing()
+        return false
+      }
+    const peopleInArea = people.filter((person) => person.areaId === targetArea.id)
+    const wallsInArea = walls.filter((wall) => wall.areaId === targetArea.id)
+    if (doesShapeCollideWithWalls({geometry, shapeType: shapeMode} as ShapeEntity, wallsInArea)) {
+      toast.error('Cannot draw shapes over walls')
       resetShapeDrawing()
       return false
     }
-    const peopleInArea = people.filter((person) => person.areaId === targetArea.id)
     if (doesShapeHitPerson({geometry, shapeType: shapeMode} as ShapeEntity, peopleInArea)) {
       toast.error('Cannot draw shapes over people')
       resetShapeDrawing()

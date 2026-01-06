@@ -24,7 +24,9 @@ import type {
 import {
   closeRing,
   distanceToSegment,
+  doesShapeCollideWithWalls,
   doesShapeHitPerson,
+  doesWallCollideWithShapes,
   getPersonCollision,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
 import {
@@ -258,6 +260,8 @@ interface RotateTransformParams {
     areaId?: string,
   ) => boolean
   people: PersonEntity[]
+  walls: WallEntity[]
+  shapes: ShapeEntity[]
   origin: GeoPoint
   rotatePoints: typeof rotatePoints
 }
@@ -457,36 +461,62 @@ const computeMoveTransform = ({
     const nextPoints = translate(original, deltaLng, deltaLat)
     const areaForEntity = getAreaForEntity(id)
     const areaIsMoving = areaForEntity && movingAreaIds.has(areaForEntity.id)
-    if (
-      entity?.type === 'person' &&
-      isPersonPositionBlocked(
-        nextPoints[0] as GeoPoint,
-        entity.id,
-        (entity as PersonEntity).radius,
-        areaForEntity?.id,
-      )
-    ) {
-      blockedArea = areaForEntity?.id ?? null
-      return
-    }
     if (!areaIsMoving) {
+      if (
+        entity?.type === 'person' &&
+        isPersonPositionBlocked(
+          nextPoints[0] as GeoPoint,
+          entity.id,
+          (entity as PersonEntity).radius,
+          areaForEntity?.id,
+        )
+      ) {
+        blockedArea = areaForEntity?.id ?? null
+        return
+      }
       const insideArea = isInsideArea(nextPoints, areaForEntity)
       if (!insideArea) {
         blockedArea = areaForEntity?.id ?? null
         return
       }
-    }
-    if (
-      entity?.type === 'shape' &&
-      doesShapeHitPerson(
-        {...(entity as ShapeEntity), geometry: nextPoints} as ShapeEntity,
-        people.filter(
-          (person) => getEntityAreaId(person as SceneEntity) === areaForEntity?.id,
-        ),
-      )
-    ) {
-      blockedArea = areaForEntity?.id ?? null
-      return
+      if (
+        entity?.type === 'shape' &&
+        doesShapeHitPerson(
+          {...(entity as ShapeEntity), geometry: nextPoints} as ShapeEntity,
+          people.filter(
+            (person) => getEntityAreaId(person as SceneEntity) === areaForEntity?.id,
+          ),
+        )
+      ) {
+        blockedArea = areaForEntity?.id ?? null
+        return
+      }
+      if (
+        entity?.type === 'shape' &&
+        doesShapeCollideWithWalls(
+          {...(entity as ShapeEntity), geometry: nextPoints} as ShapeEntity,
+          walls.filter(
+            (wall) => getEntityAreaId(wall as SceneEntity) === areaForEntity?.id,
+          ),
+        )
+      ) {
+        blockedArea = areaForEntity?.id ?? null
+        return
+      }
+      if (
+        entity?.type === 'wall' &&
+        doesWallCollideWithShapes(
+          nextPoints,
+          shapes.filter(
+            (shape) => getEntityAreaId(shape as SceneEntity) === areaForEntity?.id,
+          ),
+          (entity as WallEntity).thickness,
+          areaForEntity?.id,
+        )
+      ) {
+        blockedArea = areaForEntity?.id ?? null
+        return
+      }
     }
     updates[id] = nextPoints
   })
@@ -665,6 +695,32 @@ const computeResizeTransform = ({
       blockedArea = areaForEntity?.id ?? null
       return
     }
+    if (
+      entity?.type === 'shape' &&
+      doesShapeCollideWithWalls(
+        {...(entity as ShapeEntity), geometry: scaled} as ShapeEntity,
+        walls.filter(
+          (wall) => getEntityAreaId(wall as SceneEntity) === areaForEntity?.id,
+        ),
+      )
+    ) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
+    if (
+      entity?.type === 'wall' &&
+      doesWallCollideWithShapes(
+        scaled,
+        shapes.filter(
+          (shape) => getEntityAreaId(shape as SceneEntity) === areaForEntity?.id,
+        ),
+        (entity as WallEntity).thickness,
+        areaForEntity?.id,
+      )
+    ) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
     if (!isInsideArea(scaled, areaForEntity)) {
       blockedArea = areaForEntity?.id ?? null
       return
@@ -692,6 +748,8 @@ const computeRotateTransform = ({
   isGeometryInsideAreaSelection: isInsideArea,
   isPersonPositionBlocked,
   people,
+  walls,
+  shapes,
   rotatePoints: rotate,
   origin,
 }: RotateTransformParams): TransformComputationResult => {
@@ -728,6 +786,32 @@ const computeRotateTransform = ({
         people.filter(
           (person) => getEntityAreaId(person as SceneEntity) === areaForEntity?.id,
         ),
+      )
+    ) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
+    if (
+      entity?.type === 'shape' &&
+      doesShapeCollideWithWalls(
+        {...(entity as ShapeEntity), geometry: rotated} as ShapeEntity,
+        walls.filter(
+          (wall) => getEntityAreaId(wall as SceneEntity) === areaForEntity?.id,
+        ),
+      )
+    ) {
+      blockedArea = areaForEntity?.id ?? null
+      return
+    }
+    if (
+      entity?.type === 'wall' &&
+      doesWallCollideWithShapes(
+        rotated,
+        shapes.filter(
+          (shape) => getEntityAreaId(shape as SceneEntity) === areaForEntity?.id,
+        ),
+        (entity as WallEntity).thickness,
+        areaForEntity?.id,
       )
     ) {
       blockedArea = areaForEntity?.id ?? null
@@ -1276,14 +1360,16 @@ export const useSelectionTransform = ({
           transformSession,
           mapPoint,
           entityIndex,
-        getAreaForEntity,
-        getEntityAreaId,
-        isGeometryInsideAreaSelection,
-        isPersonPositionBlocked,
-        people,
-        rotatePoints,
-        origin: transformSession.origin ?? mapPoint,
-      })
+          getAreaForEntity,
+          getEntityAreaId,
+          isGeometryInsideAreaSelection,
+          isPersonPositionBlocked,
+          people,
+          walls,
+          shapes,
+          rotatePoints,
+          origin: transformSession.origin ?? mapPoint,
+        })
         applyTransformResult(result, event)
       }
     },

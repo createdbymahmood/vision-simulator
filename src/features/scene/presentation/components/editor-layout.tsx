@@ -38,6 +38,8 @@ export const EditorLayout: React.FC = () => {
   const [areaPanelOpen, setAreaPanelOpen] = React.useState(false)
   const [devicesPanelOpen, setDevicesPanelOpen] = React.useState(false)
   const [mapStyleOpen, setMapStyleOpen] = React.useState(false)
+  const applyingHistoryRef = React.useRef(false)
+  const hasRecordedInitialRef = React.useRef(false)
 
   const sceneMode = useSceneStore((state) => state.scene.mode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
@@ -64,6 +66,7 @@ export const EditorLayout: React.FC = () => {
   const undoScene = useHistoryStore((state) => state.undo)
   const redoScene = useHistoryStore((state) => state.redo)
   const clearHistory = useHistoryStore((state) => state.clear)
+  const recordHistory = useHistoryStore((state) => state.record)
 
   const lastActionDescription = pastEntries.at(-1)?.description
   const canUndo = pastEntries.length > 0
@@ -93,6 +96,7 @@ export const EditorLayout: React.FC = () => {
   const handleUndo = () => {
     const entry = undoScene(scene)
     if (entry) {
+      applyingHistoryRef.current = true
       setScene(entry.scene)
     }
   }
@@ -100,6 +104,7 @@ export const EditorLayout: React.FC = () => {
   const handleRedo = () => {
     const entry = redoScene(scene)
     if (entry) {
+      applyingHistoryRef.current = true
       setScene(entry.scene)
     }
   }
@@ -120,6 +125,18 @@ export const EditorLayout: React.FC = () => {
   const handleBlankClick = () => {
     closeTransientUi()
   }
+
+  React.useEffect(() => {
+    if (applyingHistoryRef.current) {
+      applyingHistoryRef.current = false
+      return
+    }
+    if (!hasRecordedInitialRef.current) {
+      hasRecordedInitialRef.current = true
+      return
+    }
+    recordHistory(scene)
+  }, [recordHistory, scene])
 
   useEditorShortcuts({
     isEditMode,

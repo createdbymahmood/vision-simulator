@@ -5,6 +5,7 @@ import type {
   AreaEntity,
   GeoPoint,
   PersonEntity,
+  ShapeEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
 
@@ -21,6 +22,7 @@ import {
   computeSegmentLength,
   formatMeters,
   doesWallPathHitPerson,
+  doesWallCollideWithShapes,
 } from './map-view-helpers'
 
 interface WallDrawingState {
@@ -38,6 +40,7 @@ interface UseWallDrawingParams {
   getAreaForPoint: (point: GeoPoint) => AreaEntity | null
   isGeometryInsideArea: (points: GeoPoint[], area: AreaEntity | null) => boolean
   people: PersonEntity[]
+  shapes: ShapeEntity[]
 }
 
 interface WallPointerResult {
@@ -50,6 +53,7 @@ export const useWallDrawing = ({
   getAreaForPoint,
   isGeometryInsideArea,
   people,
+  shapes,
 }: UseWallDrawingParams) => {
   const [wallDrawing, setWallDrawing] = React.useState<WallDrawingState>({
     isActive: false,
@@ -102,6 +106,17 @@ export const useWallDrawing = ({
       resetWallDrawing()
       return false
     }
+    if (
+      doesWallCollideWithShapes(
+        wallDrawing.points,
+        shapes.filter((shape) => shape.areaId === targetArea.id),
+        DEFAULT_WALL_THICKNESS,
+      )
+    ) {
+      toast.error('Cannot draw walls over shapes')
+      resetWallDrawing()
+      return false
+    }
     addWall({
       areaId: targetArea.id,
       points: wallDrawing.points,
@@ -149,6 +164,24 @@ export const useWallDrawing = ({
           cursor: 'not-allowed',
           tooltip: {
             text: 'Cannot draw walls over people',
+            x: screen.x + 12,
+            y: screen.y + 12,
+            visible: true,
+          },
+        }
+      }
+      if (
+        doesWallCollideWithShapes(
+          preview,
+          shapes.filter((shape) => shape.areaId === targetArea.id),
+          DEFAULT_WALL_THICKNESS,
+        )
+      ) {
+        setWallPreviewPath([])
+        return {
+          cursor: 'not-allowed',
+          tooltip: {
+            text: 'Cannot draw walls over shapes',
             x: screen.x + 12,
             y: screen.y + 12,
             visible: true,

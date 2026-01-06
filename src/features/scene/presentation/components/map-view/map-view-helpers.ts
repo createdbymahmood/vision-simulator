@@ -20,6 +20,7 @@ import {
   area as turfArea,
   length as turfLength,
   pointToLineDistance,
+  lineIntersect,
   distance as turfDistance,
 } from '@turf/turf'
 
@@ -700,5 +701,168 @@ export const doesShapeHitPerson = (
     }
 
     return false
+  })
+}
+
+const segmentDistanceMeters = (a: GeoPoint, b: GeoPoint, c: GeoPoint, d: GeoPoint) => {
+  const segA = lineString([a, b])
+  const segB = lineString([c, d])
+  const intersects = lineIntersect(segA, segB)
+  if (intersects.features.length > 0) {
+    return 0
+  }
+  const d1 = pointToLineDistance(point(a), segB, {units: 'meters'})
+  const d2 = pointToLineDistance(point(b), segB, {units: 'meters'})
+  const d3 = pointToLineDistance(point(c), segA, {units: 'meters'})
+  const d4 = pointToLineDistance(point(d), segA, {units: 'meters'})
+  return Math.min(d1, d2, d3, d4)
+}
+
+export const doesWallCollideWithShapes = (
+  wallPoints: GeoPoint[],
+  shapes: ShapeEntity[],
+  thickness: number,
+  areaId?: string,
+) => {
+  if (wallPoints.length < 2) {
+    return false
+  }
+  const filteredShapes = areaId
+    ? shapes.filter((shape) => shape.areaId === areaId)
+    : shapes
+
+  return filteredShapes.some((shape) => {
+    if (shape.shapeType === 'line' && shape.geometry.length >= 2) {
+      const shapePoints = shape.geometry
+      return wallPoints.some((point, index) => {
+        if (index === wallPoints.length - 1) {
+          return false
+        }
+        const nextWall = wallPoints[index + 1]
+        return shapePoints.some((shapePoint, sIndex) => {
+          if (sIndex === shapePoints.length - 1) {
+            return false
+          }
+          const nextShape = shapePoints[sIndex + 1]
+          return (
+            segmentDistanceMeters(point, nextWall, shapePoint, nextShape) <
+            thickness
+          )
+        })
+      })
+    }
+
+    const ring = getSafeRing(shape.geometry)
+    if (!ring) {
+      return false
+    }
+    const ringLine = lineString(ring)
+    const wallLine = lineString(wallPoints)
+
+    if (lineIntersect(wallLine, ringLine).features.length > 0) {
+      return true
+    }
+
+    try {
+      const poly = polygon([ring])
+      if (wallPoints.some((pt) => booleanPointInPolygon(point(pt), poly))) {
+        return true
+      }
+    } catch {
+      /* ignore invalid polygon */
+    }
+
+    return wallPoints.some((pt, index) => {
+      if (index === wallPoints.length - 1) {
+        return false
+      }
+      const next = wallPoints[index + 1]
+      return ring.some((ringPt, ringIndex) => {
+        if (ringIndex === ring.length - 1) {
+          return false
+        }
+        const ringNext = ring[ringIndex + 1]
+        return (
+          segmentDistanceMeters(pt, next, ringPt, ringNext) < thickness
+        )
+      })
+    })
+  })
+}
+
+export const doesShapeCollideWithWalls = (
+  shape: ShapeEntity,
+  walls: WallEntity[],
+) => {
+  if (shape.geometry.length < 2) {
+    return false
+  }
+  const relevantWalls = walls.filter((wall) => wall.areaId === shape.areaId)
+  if (relevantWalls.length === 0) {
+    return false
+  }
+
+  if (shape.shapeType === 'line') {
+    const shapePoints = shape.geometry
+    return relevantWalls.some((wall) =>
+      wall.points.some((wallPt, index) => {
+        if (index === wall.points.length - 1) {
+          return false
+        }
+        const wallNext = wall.points[index + 1]
+        return shapePoints.some((shapePt, sIndex) => {
+          if (sIndex === shapePoints.length - 1) {
+            return false
+          }
+          const shapeNext = shapePoints[sIndex + 1]
+          return (
+            segmentDistanceMeters(shapePt, shapeNext, wallPt, wallNext) <
+            wall.thickness
+          )
+        })
+      }),
+    )
+  }
+
+  const ring = getSafeRing(shape.geometry)
+  if (!ring) {
+    return false
+  }
+  const ringLine = lineString(ring)
+
+  return relevantWalls.some((wall) => {
+    if (wall.points.length < 2) {
+      return false
+    }
+    const wallLine = lineString(wall.points)
+    if (lineIntersect(wallLine, ringLine).features.length > 0) {
+      return true
+    }
+
+    try {
+      const poly = polygon([ring])
+      if (wall.points.some((pt) => booleanPointInPolygon(point(pt), poly))) {
+        return true
+      }
+    } catch {
+      /* ignore invalid polygon */
+    }
+
+    return wall.points.some((wallPt, index) => {
+      if (index === wall.points.length - 1) {
+        return false
+      }
+      const wallNext = wall.points[index + 1]
+      return ring.some((ringPt, ringIndex) => {
+        if (ringIndex === ring.length - 1) {
+          return false
+        }
+        const ringNext = ring[ringIndex + 1]
+        return (
+          segmentDistanceMeters(wallPt, wallNext, ringPt, ringNext) <
+          wall.thickness
+        )
+      })
+    })
   })
 }

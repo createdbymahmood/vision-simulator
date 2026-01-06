@@ -148,6 +148,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     getAreaForPoint: getAreaAtPoint,
     isGeometryInsideArea,
     people,
+    shapes,
   })
 
   const {
@@ -163,6 +164,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     isGeometryInsideArea,
     strokeColor: SHAPE_STROKE_COLOR,
     people,
+    walls,
   })
 
   React.useEffect(() => {
