@@ -1,10 +1,9 @@
-import {Grid, Hand, MousePointer2, Ruler} from 'lucide-react'
+import {Grid, Ruler} from 'lucide-react'
 import React from 'react'
 
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
 import {Button} from '@/components/ui/button'
-import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover'
 import {cn} from '@/lib/utils'
 
 import type {SceneMode, ViewMode} from '../../domain/types'
@@ -68,56 +67,6 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
             </div>
           </div>
         )}
-      </div>
-
-      <div
-        className='absolute left-4 top-4 z-30 flex flex-col gap-2'
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              size='sm'
-              className='gap-2 rounded-full bg-white/80'
-              variant='outline'
-            >
-              {activeTool === 'hand' ? (
-                <Hand className='h-4 w-4' />
-              ) : (
-                <MousePointer2 className='h-4 w-4' />
-              )}
-              <span className='text-sm font-medium'>
-                {activeTool === 'hand' ? 'Hand Mode' : 'Selector'}
-              </span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align='start' className='w-48' side='right'>
-            <div className='flex flex-col gap-2'>
-              <Button
-                className='justify-start gap-2'
-                variant={activeTool === 'hand' ? 'default' : 'ghost'}
-                onClick={() => onSelectTool('hand')}
-              >
-                <Hand className='h-4 w-4' />
-                Hand (H)
-              </Button>
-              <Button
-                className='justify-start gap-2'
-                variant={activeTool === 'select' ? 'default' : 'ghost'}
-                onClick={() => onSelectTool('select')}
-              >
-                <MousePointer2 className='h-4 w-4' />
-                Selector (V)
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {viewMode === 'preview' ? (
-          <div className='rounded-full bg-emerald-500/80 px-4 py-1 text-xs font-semibold text-white shadow-sm'>
-            Preview View
-          </div>
-        ) : null}
       </div>
 
       <div
