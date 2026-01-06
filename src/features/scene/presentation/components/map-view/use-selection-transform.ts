@@ -260,7 +260,6 @@ interface RotateTransformParams {
     areaId?: string,
   ) => boolean
   origin: GeoPoint
-  modifiers?: {shiftKey?: boolean}
   rotatePoints: typeof rotatePoints
 }
 
@@ -754,7 +753,6 @@ const computeRotateTransform = ({
   isGeometryInsideAreaSelection: isInsideArea,
   isPersonPositionBlocked,
   rotatePoints: rotate,
-  modifiers,
   origin,
 }: RotateTransformParams): TransformComputationResult => {
   const startAngle = Math.atan2(
@@ -762,10 +760,7 @@ const computeRotateTransform = ({
     transformSession.startPoint[0] - origin[0],
   )
   const currentAngle = Math.atan2(mapPoint[1] - origin[1], mapPoint[0] - origin[0])
-  let deltaDeg = ((currentAngle - startAngle) * 180) / Math.PI
-  if (!modifiers?.shiftKey) {
-    deltaDeg = Math.round(deltaDeg / 15) * 15
-  }
+  const deltaDeg = ((currentAngle - startAngle) * 180) / Math.PI
 
   const updates: Record<string, GeoPoint[]> = {}
   let blockedArea: string | null = null
@@ -1300,7 +1295,6 @@ export const useSelectionTransform = ({
           isGeometryInsideAreaSelection,
           isPersonPositionBlocked,
           rotatePoints,
-          modifiers,
           origin: transformSession.origin ?? mapPoint,
         })
         applyTransformResult(result, event)
