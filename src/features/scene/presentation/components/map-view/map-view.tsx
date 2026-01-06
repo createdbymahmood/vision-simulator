@@ -35,6 +35,7 @@ import {
   buildOverlapFeatures,
   buildPersonFeatures,
   buildShapeFeatures,
+  getBaseCursor,
   buildWallFeatures,
   buildWallVertexFeatures,
   computeArea,
@@ -68,26 +69,6 @@ interface DrawingState {
 interface MapViewProps {
   activeTool: EditorTool
   shapeMode: ShapeDrawMode
-}
-
-const getBaseCursor = (
-  activeTool: EditorTool,
-  isEditMode: boolean,
-  isDragging: boolean,
-) => {
-  if (activeTool === 'draw-area' && isEditMode) {
-    return 'none'
-  }
-  if (activeTool === 'hand') {
-    return isDragging ? 'grabbing' : 'grab'
-  }
-  if (activeTool === 'select') {
-    return 'default'
-  }
-  if (activeTool === 'draw-wall' || activeTool === 'draw-shape') {
-    return 'crosshair'
-  }
-  return undefined
 }
 
 // eslint-disable-next-line max-lines-per-function, max-statements
@@ -787,13 +768,12 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
         />
       </Mapbox>
 
-      {isEditMode ? (
-        <SelectionOverlay
-          count={selectionCount}
-          onDelete={onDeleteSelection}
-          onDuplicate={onDuplicateSelection}
-        />
-      ) : null}
+      <SelectionOverlay
+        isEditMode={isEditMode}
+        count={selectionCount}
+        onDelete={onDeleteSelection}
+        onDuplicate={onDuplicateSelection}
+      />
 
       {tooltip ? <MapViewTooltip tooltip={tooltip} /> : null}
 

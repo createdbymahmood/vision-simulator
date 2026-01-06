@@ -35,6 +35,27 @@ import {
 } from '@/features/scene/domain/constants/area-style'
 import {SHAPE_STROKE_COLOR} from '@/features/scene/domain/constants/shape-style'
 import {DEFAULT_WALL_COLOR} from '@/features/scene/domain/constants/wall-style'
+import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
+
+export const getBaseCursor = (
+  activeTool: EditorTool,
+  isEditMode: boolean,
+  isDragging: boolean,
+) => {
+  if (activeTool === 'draw-area' && isEditMode) {
+    return 'none'
+  }
+  if (activeTool === 'hand') {
+    return isDragging ? 'grabbing' : 'grab'
+  }
+  if (activeTool === 'select') {
+    return 'default'
+  }
+  if (activeTool === 'draw-wall' || activeTool === 'draw-shape') {
+    return 'crosshair'
+  }
+  return undefined
+}
 
 export const closeRing = (points: GeoPoint[]) => {
   if (points.length === 0) {

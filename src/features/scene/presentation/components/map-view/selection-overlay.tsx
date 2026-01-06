@@ -7,13 +7,16 @@ interface SelectionOverlayProps {
   count: number
   onDelete: () => void
   onDuplicate: () => void
+  isEditMode: boolean
 }
 
 export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   count,
   onDelete,
   onDuplicate,
+  isEditMode,
 }) => {
+  if (!isEditMode) return null
   if (count === 0) {
     return null
   }
