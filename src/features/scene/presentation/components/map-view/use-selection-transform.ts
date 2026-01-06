@@ -962,9 +962,16 @@ export const useSelectionTransform = ({
       return
     }
 
+    const hasCamera = selectedEntities.some((entity) => entity.type === 'camera')
     const points = selectedEntities.flatMap((entity) => getEntityPoints(entity))
     const bounds = computeBounds(points)
     setSelectionBounds(bounds)
+
+    if (hasCamera) {
+      setHandleFeatures(null)
+      setRotationHandle(null)
+      return
+    }
 
     const map = getMapInstance()
     const {handleFeatures, rotationHandle} = createHandleFeatures(bounds, map)
