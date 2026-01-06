@@ -1407,7 +1407,13 @@ export const useSelectionTransform = ({
 
       const clickedOnSelection =
         selectedEntities.length > 0 &&
-        selectedEntities.some((entity) => isPointInsideEntity(mapPoint, entity))
+        (selectedEntities.some((entity) => isPointInsideEntity(mapPoint, entity)) ||
+          (selectionBounds
+            ? booleanPointInPolygon(
+                turfPoint(mapPoint),
+                polygon([boundsToPolygon(selectionBounds)]),
+              )
+            : false))
 
       if (clickedOnSelection) {
         startTransformSession('move', mapPoint, undefined, selectedEntities)
