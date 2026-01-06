@@ -5,7 +5,7 @@ import type {FeatureCollection, Geometry, LineString, Polygon} from 'geojson'
 import type {MapLayerMouseEvent, MapRef} from 'react-map-gl/mapbox'
 
 import React from 'react'
-import Mapbox, {Layer, Source} from 'react-map-gl/mapbox'
+import Mapbox from 'react-map-gl/mapbox'
 import {toast} from 'sonner'
 
 import type {GeoPoint} from '@/features/scene/domain/types'
@@ -26,6 +26,9 @@ import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {MapViewAreaLayers} from '@/features/scene/presentation/components/map-view/map-view-area-layers'
 import {MapViewCameraLayers} from '@/features/scene/presentation/components/map-view/map-view-camera-layers'
 import {MapViewCursorOverlay} from '@/features/scene/presentation/components/map-view/map-view-cursor-overlay'
+import {MapViewRotationHandleLayer} from '@/features/scene/presentation/components/map-view/map-view-rotation-handle-layer'
+import {MapViewSelectionBoundsLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-bounds-layer'
+import {MapViewSelectionHandlesLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-handles-layer'
 import {
   buildAreaFeatureCollection,
   buildCameraFeatures,
@@ -772,79 +775,16 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
         <MapViewCameraLayers cameraFeatures={cameraFeatures} />
         <MapViewPeopleLayers personFeatures={personFeatures} />
 
-        {selectionBoundsFeature ? (
-          <Source
-            data={selectionBoundsFeature}
-            id='selection-bounds'
-            type='geojson'
-          >
-            <Layer
-              id='selection-bounds-outline'
-              type='line'
-              paint={{
-                'line-color': '#2563EB',
-                'line-width': 1.5,
-                'line-dasharray': [2, 2],
-                'line-opacity': 0.8,
-              }}
-            />
-          </Source>
-        ) : null}
+        <MapViewSelectionBoundsLayer
+          selectionBoundsFeature={selectionBoundsFeature}
+        />
 
-        {rotationHandle ? (
-          <Source
-            data={rotationHandle}
-            id='rotation-handle-line'
-            type='geojson'
-          >
-            <Layer
-              id='rotation-connector'
-              type='line'
-              paint={{
-                'line-color': '#2563EB',
-                'line-width': 1,
-                'line-dasharray': [1, 1],
-              }}
-            />
-          </Source>
-        ) : null}
+        <MapViewRotationHandleLayer rotationHandle={rotationHandle} />
 
-        {handleFeatures && mapLoaded ? (
-          <Source data={handleFeatures} id='selection-handles' type='geojson'>
-            <Layer
-              filter={['==', ['get', 'role'], 'corner']}
-              id='selection-handles-corner'
-              type='symbol'
-              layout={{
-                'icon-image': 'handle-square',
-                'icon-size': 1,
-                'icon-allow-overlap': true,
-              }}
-            />
-            <Layer
-              filter={['==', ['get', 'role'], 'edge']}
-              id='selection-handles-edge'
-              type='circle'
-              paint={{
-                'circle-radius': 6,
-                'circle-color': '#FFFFFF',
-                'circle-stroke-color': '#2563EB',
-                'circle-stroke-width': 2,
-              }}
-            />
-            <Layer
-              filter={['==', ['get', 'handleType'], 'rotate']}
-              id='selection-rotation-handle'
-              type='circle'
-              paint={{
-                'circle-radius': 5,
-                'circle-color': '#FFFFFF',
-                'circle-stroke-color': '#2563EB',
-                'circle-stroke-width': 2,
-              }}
-            />
-          </Source>
-        ) : null}
+        <MapViewSelectionHandlesLayer
+          handleFeatures={handleFeatures}
+          mapLoaded={mapLoaded}
+        />
       </Mapbox>
 
       {isEditMode ? (
