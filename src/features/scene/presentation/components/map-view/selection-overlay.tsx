@@ -29,15 +29,6 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
           <Button size='sm' variant='ghost' onClick={onDelete}>
             Delete
           </Button>
-          <Button
-            size='sm'
-            variant='ghost'
-            onClick={() => {
-              /* grouping placeholder */
-            }}
-          >
-            Group
-          </Button>
         </div>
       </div>
     </div>
