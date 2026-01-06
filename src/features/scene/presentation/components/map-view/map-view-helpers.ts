@@ -4,6 +4,7 @@ import type {
   GeoJsonProperties,
   Geometry,
   MultiPolygon,
+  LineString,
   Point,
   Polygon,
 } from 'geojson'
@@ -54,6 +55,9 @@ export const getBaseCursor = (
   }
   if (activeTool === 'draw-wall' || activeTool === 'draw-shape') {
     return 'crosshair'
+  }
+  if (activeTool === 'place-camera') {
+    return 'none'
   }
   return undefined
 }
@@ -184,6 +188,27 @@ export const createCircleRing = (
     coords.push(dest.geometry.coordinates as GeoPoint)
   }
   return closeRing(coords)
+}
+
+export const createFovRing = (
+  origin: GeoPoint,
+  direction: number,
+  fov: number,
+  depth: number,
+  segments = 24,
+) => {
+  const halfFov = fov / 2
+  const start = direction - halfFov
+  const step = fov / segments
+  const ring: GeoPoint[] = [origin]
+
+  for (let i = 0; i <= segments; i += 1) {
+    const bearing = start + step * i
+    ring.push(projectPoint(origin, bearing, depth))
+  }
+
+  ring.push(origin)
+  return closeRing(ring)
 }
 
 export const getNextAreaColor = (areas: AreaEntity[]) =>
@@ -377,6 +402,78 @@ export const buildCameraFeatures = (
     },
   })),
 })
+
+export interface CameraLayerData {
+  points: FeatureCollection<Point>
+  fovs: FeatureCollection<Polygon>
+  directions: FeatureCollection<LineString>
+}
+
+export const buildCameraLayerData = (cameras: CameraEntity[]): CameraLayerData => {
+  const pointFeatures: Feature<Point>[] = []
+  const fovFeatures: Feature<Polygon>[] = []
+  const directionFeatures: Feature<LineString>[] = []
+
+  cameras.forEach((camera) => {
+    const origin: GeoPoint = [camera.x, camera.y]
+    const fovRing = createFovRing(origin, camera.direction, camera.fov, camera.depth)
+    const directionPoint = projectPoint(origin, camera.direction, camera.depth * 0.6)
+
+    pointFeatures.push({
+      type: 'Feature',
+      id: camera.id,
+      properties: {
+        id: camera.id,
+        areaId: camera.areaId,
+        entityType: 'camera',
+        direction: camera.direction,
+        color: camera.color,
+      },
+      geometry: {
+        type: 'Point',
+        coordinates: origin,
+      },
+    })
+
+    fovFeatures.push({
+      type: 'Feature',
+      id: camera.id,
+      properties: {
+        id: camera.id,
+        cameraId: camera.id,
+        areaId: camera.areaId,
+        entityType: 'camera',
+        color: camera.color,
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [fovRing],
+      },
+    })
+
+    directionFeatures.push({
+      type: 'Feature',
+      id: camera.id,
+      properties: {
+        id: camera.id,
+        cameraId: camera.id,
+        areaId: camera.areaId,
+        entityType: 'camera',
+        color: camera.color,
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [origin, directionPoint],
+      },
+    })
+  })
+
+  return {
+    points: {type: 'FeatureCollection', features: pointFeatures},
+    fovs: {type: 'FeatureCollection', features: fovFeatures},
+    directions: {type: 'FeatureCollection', features: directionFeatures},
+  }
+}
 
 export const buildPersonFeatures = (
   people: PersonEntity[],

@@ -30,12 +30,12 @@ export const MapViewWallLayers: React.FC<MapViewWallLayersProps> = ({
               'line-cap': 'round',
               'line-join': 'round',
             }}
-            paint={{
-              'line-color': '#000000',
-              'line-width': 20,
-              'line-opacity': 0,
-            }}
-          />
+          paint={{
+            'line-color': '#000000',
+            'line-width': 32,
+            'line-opacity': 0,
+          }}
+        />
           <Layer
             id='wall-lines'
             type='line'

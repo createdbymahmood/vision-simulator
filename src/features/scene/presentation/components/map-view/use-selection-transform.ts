@@ -44,7 +44,11 @@ export const HANDLE_LAYER_IDS = [
 
 export const ENTITY_LAYER_IDS = [
   'people-fill',
-  'camera-fill',
+  'camera-icon',
+  'camera-outline',
+  'camera-fov-fill',
+  'camera-fov-outline',
+  'camera-direction',
   'wall-hit-area',
   'wall-lines',
   'shape-outline',
@@ -55,7 +59,11 @@ export const ENTITY_LAYER_IDS = [
 
 const LAYER_TYPE_MAP: Record<string, string> = {
   'people-fill': 'person',
-  'camera-fill': 'camera',
+  'camera-icon': 'camera',
+  'camera-outline': 'camera',
+  'camera-fov-fill': 'camera',
+  'camera-fov-outline': 'camera',
+  'camera-direction': 'camera',
   'wall-hit-area': 'wall',
   'wall-lines': 'wall',
   'shape-outline': 'shape',
@@ -346,7 +354,7 @@ const syncFeatureStates = ({
   selectedEntityIds,
   hoveredFeature,
   constraintAreaId,
-  getSourceForId,
+  getSourcesForId,
   featureStateRef,
 }: {
   map: MapboxMap | null
@@ -354,7 +362,7 @@ const syncFeatureStates = ({
   selectedEntityIds: string[]
   hoveredFeature: {id: string; source: string} | null
   constraintAreaId: string | null
-  getSourceForId: (id: string) => string | null
+  getSourcesForId: (id: string) => string[]
   featureStateRef: React.MutableRefObject<{
     hover?: {id: string; source: string}
     selected: {id: string; source: string}[]
@@ -366,11 +374,11 @@ const syncFeatureStates = ({
   }
 
   const nextSelected = selectedEntityIds
-    .map((id) => {
-      const source = getSourceForId(id)
-      return source && map.getSource(source) ? {id, source} : null
-    })
-    .filter(Boolean) as {id: string; source: string}[]
+    .flatMap((id) =>
+      getSourcesForId(id)
+        .map((source) => (map.getSource(source) ? {id, source} : null))
+        .filter(Boolean) as {id: string; source: string}[],
+    )
 
   featureStateRef.current.selected.forEach((entry) => {
     const stillSelected = nextSelected.some(
@@ -917,13 +925,14 @@ export const useSelectionTransform = ({
     setTooltip(null)
   }, [setTooltip])
 
-  const getSourceForId = React.useCallback((id: string) => {
-    if (id.startsWith('area-')) return 'areas'
-    if (id.startsWith('wall-')) return 'walls'
-    if (id.startsWith('shape-')) return 'shapes'
-    if (id.startsWith('camera-')) return 'cameras'
-    if (id.startsWith('person-')) return 'people'
-    return null
+  const getSourcesForId = React.useCallback((id: string) => {
+    if (id.startsWith('area-')) return ['areas']
+    if (id.startsWith('wall-')) return ['walls']
+    if (id.startsWith('shape-')) return ['shapes']
+    if (id.startsWith('camera-'))
+      return ['cameras', 'camera-fovs', 'camera-directions']
+    if (id.startsWith('person-')) return ['people']
+    return []
   }, [])
 
   React.useEffect(() => {
@@ -936,13 +945,13 @@ export const useSelectionTransform = ({
         ? {id: hoveredFeature.id, source: hoveredFeature.source}
         : null,
       constraintAreaId,
-      getSourceForId,
+      getSourcesForId,
       featureStateRef,
     })
   }, [
     constraintAreaId,
     getMapInstance,
-    getSourceForId,
+    getSourcesForId,
     hoveredFeature,
     mapLoaded,
     selectedEntityIds,
@@ -1407,6 +1416,33 @@ export const useSelectionTransform = ({
         return true
       }
 
+      const hit = hitTestEntities(event.point, event.features, mapPoint)
+      if (hit) {
+        const alreadySelected = selectedEntityIds.includes(hit.id)
+        const nextSelection = shiftKey
+          ? alreadySelected
+            ? selectedEntityIds.filter((id) => id !== hit.id)
+            : [...selectedEntityIds, hit.id]
+          : [hit.id]
+        setSelection(nextSelection)
+
+        if (!shiftKey) {
+          const dragEntities =
+            selectedEntities.length > 0 && alreadySelected
+              ? selectedEntities
+              : (() => {
+                  const entity = entityIndex.get(hit.id)
+                  return entity ? [entity] : []
+                })()
+          if (dragEntities.length > 0) {
+            startTransformSession('move', mapPoint, undefined, dragEntities)
+            return true
+          }
+        }
+      } else {
+        clearSelection()
+      }
+
       const clickedOnSelection =
         selectedEntities.length > 0 &&
         (selectedEntities.some((entity) => isPointInsideEntity(mapPoint, entity)) ||
@@ -1422,23 +1458,12 @@ export const useSelectionTransform = ({
         return true
       }
 
-      const hit = hitTestEntities(event.point, event.features, mapPoint)
-      if (hit) {
-        const alreadySelected = selectedEntityIds.includes(hit.id)
-        const nextSelection = shiftKey
-          ? alreadySelected
-            ? selectedEntityIds.filter((id) => id !== hit.id)
-            : [...selectedEntityIds, hit.id]
-          : [hit.id]
-        setSelection(nextSelection)
-      } else {
-        clearSelection()
-      }
       return Boolean(hit)
     },
     [
       activeTool,
       clearSelection,
+      entityIndex,
       hitTestEntities,
       hitTestHandles,
       isEditMode,

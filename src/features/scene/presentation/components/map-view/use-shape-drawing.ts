@@ -38,9 +38,9 @@ interface Modifiers {
 }
 
 interface UseShapeDrawingParams {
-  activeArea: AreaEntity | null
   addShape: (shape: Omit<ShapeEntity, 'id'>) => unknown
-  isGeometryInsideArea: (points: GeoPoint[]) => boolean
+  getAreaForPoint: (point: GeoPoint) => AreaEntity | null
+  isGeometryInsideArea: (points: GeoPoint[], area: AreaEntity | null) => boolean
   strokeColor: string
 }
 
@@ -50,8 +50,8 @@ interface ShapePointerResult {
 }
 
 export const useShapeDrawing = ({
-  activeArea,
   addShape,
+  getAreaForPoint,
   isGeometryInsideArea,
   strokeColor,
 }: UseShapeDrawingParams) => {
@@ -63,15 +63,26 @@ export const useShapeDrawing = ({
   const [shapePreview, setShapePreview] = React.useState<GeoPoint[] | null>(
     null,
   )
+  const [targetArea, setTargetArea] = React.useState<AreaEntity | null>(null)
 
   const resetShapeDrawing = React.useCallback(() => {
     setShapeDrawing({isActive: false, start: undefined, points: []})
     setShapePreview(null)
+    setTargetArea(null)
   }, [])
 
-  const startShape = React.useCallback((point: GeoPoint) => {
-    setShapeDrawing({isActive: true, start: point, points: [point]})
-  }, [])
+  const startShape = React.useCallback(
+    (point: GeoPoint) => {
+      const area = getAreaForPoint(point)
+      if (!area) {
+        toast.info('Place shapes inside an area')
+        return
+      }
+      setTargetArea(area)
+      setShapeDrawing({isActive: true, start: point, points: [point]})
+    },
+    [getAreaForPoint],
+  )
 
   const handleShapePointerMove = React.useCallback(
     (
@@ -81,6 +92,10 @@ export const useShapeDrawing = ({
       modifiers: Modifiers,
     ): ShapePointerResult | null => {
       if (!shapeDrawing.isActive) {
+        setShapePreview(null)
+        return null
+      }
+      if (!targetArea) {
         setShapePreview(null)
         return null
       }
@@ -108,12 +123,12 @@ export const useShapeDrawing = ({
           [minX, maxY],
         ])
         const text = `W: ${formatMeters(width)} × H: ${formatMeters(height)}${modifiers.shiftKey ? ' (square)' : ''}`
-        if (!isGeometryInsideArea(preview)) {
+        if (!isGeometryInsideArea(preview, targetArea)) {
           setShapePreview(null)
           return {
             cursor: 'not-allowed',
             tooltip: {
-              text: 'Shapes must stay inside the active area',
+              text: 'Shapes must stay inside an area',
               x: screen.x + 12,
               y: screen.y + 12,
               visible: true,
@@ -134,12 +149,12 @@ export const useShapeDrawing = ({
       if (shapeMode === 'circle' && shapeDrawing.start) {
         const radiusMeters = computeSegmentLength([shapeDrawing.start, point])
         preview = createCircleRing(shapeDrawing.start, radiusMeters)
-        if (!isGeometryInsideArea(preview)) {
+        if (!isGeometryInsideArea(preview, targetArea)) {
           setShapePreview(null)
           return {
             cursor: 'not-allowed',
             tooltip: {
-              text: 'Shapes must stay inside the active area',
+              text: 'Shapes must stay inside an area',
               x: screen.x + 12,
               y: screen.y + 12,
               visible: true,
@@ -159,12 +174,12 @@ export const useShapeDrawing = ({
 
       if (shapeMode === 'line' && shapeDrawing.start) {
         preview = createLineGeometry(shapeDrawing.start, point)
-        if (!isGeometryInsideArea(preview)) {
+        if (!isGeometryInsideArea(preview, targetArea)) {
           setShapePreview(null)
           return {
             cursor: 'not-allowed',
             tooltip: {
-              text: 'Shapes must stay inside the active area',
+              text: 'Shapes must stay inside an area',
               x: screen.x + 12,
               y: screen.y + 12,
               visible: true,
@@ -189,7 +204,7 @@ export const useShapeDrawing = ({
         if (points.length === 3) {
           preview = createTriangleRing(points)
         }
-        const isValid = preview ? isGeometryInsideArea(preview) : true
+        const isValid = preview ? isGeometryInsideArea(preview, targetArea) : true
         setShapePreview(preview)
         return {
           tooltip: {
@@ -205,12 +220,12 @@ export const useShapeDrawing = ({
       setShapePreview(preview)
       return null
     },
-    [isGeometryInsideArea, shapeDrawing],
+    [isGeometryInsideArea, shapeDrawing, targetArea],
   )
 
   const finalizeShape = React.useCallback(
     (end: GeoPoint, shapeMode: ShapeDrawMode) => {
-      if (!shapeDrawing.isActive || !shapeDrawing.start || !activeArea) {
+      if (!shapeDrawing.isActive || !shapeDrawing.start || !targetArea) {
         return false
       }
       let geometry: GeoPoint[] = []
@@ -248,14 +263,14 @@ export const useShapeDrawing = ({
         return false
       }
 
-      if (!isGeometryInsideArea(geometry)) {
-        toast.error('Shapes must stay inside the active area')
+      if (!isGeometryInsideArea(geometry, targetArea)) {
+        toast.error('Shapes must stay inside an area')
         resetShapeDrawing()
         return false
       }
 
       addShape({
-        areaId: activeArea.id,
+        areaId: targetArea.id,
         geometry,
         shapeType: shapeMode,
         height: 0,
@@ -266,7 +281,6 @@ export const useShapeDrawing = ({
       return true
     },
     [
-      activeArea,
       addShape,
       isGeometryInsideArea,
       resetShapeDrawing,
@@ -275,6 +289,7 @@ export const useShapeDrawing = ({
       shapeDrawing.start,
       shapePreview,
       strokeColor,
+      targetArea,
     ],
   )
 

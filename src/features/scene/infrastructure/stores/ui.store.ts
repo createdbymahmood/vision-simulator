@@ -22,6 +22,10 @@ export interface UiState {
   isEditMode: boolean
   openPanels: Record<string, boolean>
   openPopovers: Record<string, boolean>
+  cameraPlacement: {
+    presetId: string | null
+    color: string | null
+  }
 
   setViewMode: (mode: ViewMode) => ViewMode
   toggleViewMode: () => ViewMode
@@ -37,6 +41,14 @@ export interface UiState {
   ) => Record<string, boolean>
   closeAllPanels: () => Record<string, boolean>
   closeAllPopovers: () => Record<string, boolean>
+  setCameraPlacement: (presetId: string | null, color: string | null) => {
+    presetId: string | null
+    color: string | null
+  }
+  clearCameraPlacement: () => {
+    presetId: string | null
+    color: string | null
+  }
   resetUi: () => UiState
 }
 
@@ -161,6 +173,7 @@ const resetUi = (set: SetState, get: GetState) => {
     state.isEditMode = true
     state.openPanels = {}
     state.openPopovers = {}
+    state.cameraPlacement = {presetId: null, color: null}
   })
 
   set(nextValue)
@@ -175,6 +188,10 @@ const createUiStore: (
   isEditMode: initialValues?.isEditMode ?? true,
   openPanels: initialValues?.openPanels ?? {},
   openPopovers: initialValues?.openPopovers ?? {},
+  cameraPlacement: initialValues?.cameraPlacement ?? {
+    presetId: null,
+    color: null,
+  },
   setViewMode: (mode) => setViewMode(set, get, mode),
   toggleViewMode: () => toggleViewMode(set, get),
   setActiveTool: (tool) => setActiveTool(set, get, tool),
@@ -187,6 +204,20 @@ const createUiStore: (
     setPopoverState(set, get, popoverId, isOpen),
   closeAllPanels: () => closeAllPanels(set, get),
   closeAllPopovers: () => closeAllPopovers(set, get),
+  setCameraPlacement: (presetId, color) => {
+    const nextValue = produce<UiState>((state) => {
+      state.cameraPlacement = {presetId, color}
+    })
+    set(nextValue)
+    return get().cameraPlacement
+  },
+  clearCameraPlacement: () => {
+    const nextValue = produce<UiState>((state) => {
+      state.cameraPlacement = {presetId: null, color: null}
+    })
+    set(nextValue)
+    return get().cameraPlacement
+  },
   resetUi: () => resetUi(set, get),
   ...initialValues,
 })

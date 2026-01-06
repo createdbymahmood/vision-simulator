@@ -32,9 +32,9 @@ interface PointerPosition {
 }
 
 interface UseWallDrawingParams {
-  activeArea: AreaEntity | null
   addWall: (wall: Omit<WallEntity, 'id'>) => unknown
-  isGeometryInsideArea: (points: GeoPoint[]) => boolean
+  getAreaForPoint: (point: GeoPoint) => AreaEntity | null
+  isGeometryInsideArea: (points: GeoPoint[], area: AreaEntity | null) => boolean
 }
 
 interface WallPointerResult {
@@ -43,8 +43,8 @@ interface WallPointerResult {
 }
 
 export const useWallDrawing = ({
-  activeArea,
   addWall,
+  getAreaForPoint,
   isGeometryInsideArea,
 }: UseWallDrawingParams) => {
   const [wallDrawing, setWallDrawing] = React.useState<WallDrawingState>({
@@ -52,15 +52,26 @@ export const useWallDrawing = ({
     points: [],
   })
   const [wallPreviewPath, setWallPreviewPath] = React.useState<GeoPoint[]>([])
+  const [targetArea, setTargetArea] = React.useState<AreaEntity | null>(null)
 
   const resetWallDrawing = React.useCallback(() => {
     setWallDrawing({isActive: false, points: []})
     setWallPreviewPath([])
+    setTargetArea(null)
   }, [])
 
-  const startWall = React.useCallback((point: GeoPoint) => {
-    setWallDrawing({isActive: true, points: [point]})
-  }, [])
+  const startWall = React.useCallback(
+    (point: GeoPoint) => {
+      const area = getAreaForPoint(point)
+      if (!area) {
+        toast.info('Place walls inside an area')
+        return
+      }
+      setTargetArea(area)
+      setWallDrawing({isActive: true, points: [point]})
+    },
+    [getAreaForPoint],
+  )
 
   const appendWallPoint = React.useCallback((point: GeoPoint) => {
     setWallDrawing((prev) => ({...prev, points: [...prev.points, point]}))
@@ -74,16 +85,16 @@ export const useWallDrawing = ({
   }, [])
 
   const finalizeWall = React.useCallback(() => {
-    if (!wallDrawing.isActive || wallDrawing.points.length < 2 || !activeArea) {
+    if (!wallDrawing.isActive || wallDrawing.points.length < 2 || !targetArea) {
       return false
     }
-    if (!isGeometryInsideArea(wallDrawing.points)) {
-      toast.error('Walls must stay inside the active area')
+    if (!isGeometryInsideArea(wallDrawing.points, targetArea)) {
+      toast.error('Walls must stay inside an area')
       resetWallDrawing()
       return false
     }
     addWall({
-      areaId: activeArea.id,
+      areaId: targetArea.id,
       points: wallDrawing.points,
       color: DEFAULT_WALL_COLOR,
       height: 3,
@@ -93,10 +104,10 @@ export const useWallDrawing = ({
     resetWallDrawing()
     return true
   }, [
-    activeArea,
     addWall,
     isGeometryInsideArea,
     resetWallDrawing,
+    targetArea,
     wallDrawing.isActive,
     wallDrawing.points,
   ])
@@ -107,13 +118,16 @@ export const useWallDrawing = ({
         setWallPreviewPath([])
         return null
       }
+      if (!targetArea) {
+        return null
+      }
       const preview = [...wallDrawing.points, point]
-      if (!isGeometryInsideArea(preview)) {
+      if (!isGeometryInsideArea(preview, targetArea)) {
         setWallPreviewPath([])
         return {
           cursor: 'not-allowed',
           tooltip: {
-            text: 'Walls must stay inside the active area',
+            text: 'Walls must stay inside an area',
             x: screen.x + 12,
             y: screen.y + 12,
             visible: true,
@@ -136,7 +150,7 @@ export const useWallDrawing = ({
         },
       }
     },
-    [isGeometryInsideArea, wallDrawing],
+    [isGeometryInsideArea, targetArea, wallDrawing],
   )
 
   return {

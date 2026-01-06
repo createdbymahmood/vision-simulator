@@ -7,6 +7,7 @@ import type {
   SceneMode,
   SceneRoot,
   ShapeEntity,
+  CameraEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
 
@@ -14,6 +15,7 @@ import {createZustandContextStore} from '@/components/shared/zustand'
 import {createDefaultShape} from '@/features/scene/domain/constants/shape-style'
 import {createDefaultWall} from '@/features/scene/domain/constants/wall-style'
 import {createAreaEntity} from '@/features/scene/domain/services/area-factory'
+import {createCameraEntity} from '@/features/scene/domain/services/camera-factory'
 import {createInitialScene} from '@/features/scene/domain/services/scene-factory'
 
 export interface SceneState {
@@ -33,6 +35,13 @@ export interface SceneState {
   deleteArea: (areaId: string) => SceneRoot
   addWall: (wall: Omit<WallEntity, 'id'>) => SceneRoot
   addShape: (shape: Omit<ShapeEntity, 'id'>) => SceneRoot
+  addCamera: (
+    camera: Omit<CameraEntity, 'id' | 'type' | 'ptz' | 'ptzPresets'>,
+  ) => SceneRoot
+  updateCamera: (
+    id: string,
+    updater: (camera: CameraEntity) => void,
+  ) => SceneRoot
   deleteEntities: (ids: string[]) => SceneRoot
   duplicateEntities: (ids: string[]) => SceneRoot
 }
@@ -273,6 +282,64 @@ const addShape = (
   return updated
 }
 
+const addCamera = (
+  set: SetState,
+  get: GetState,
+  camera: Omit<CameraEntity, 'id' | 'type' | 'ptz' | 'ptzPresets'>,
+) => {
+  const nextValue = produce<SceneState>((state) => {
+    const id = getNextId(state.scene.cameras.map((item) => item.id), 'camera')
+    const newCamera = createCameraEntity(
+      {
+        id,
+        areaId: camera.areaId,
+        presetId: camera.typePreset,
+        position: [camera.x, camera.y],
+        color: camera.color,
+        direction: camera.direction,
+      },
+      state.scene.cameras.length,
+    )
+    state.scene.cameras.push({
+      ...newCamera,
+      fov: camera.fov ?? newCamera.fov,
+      depth: camera.depth ?? newCamera.depth,
+      zoom: camera.zoom ?? newCamera.zoom,
+      nearClipping: camera.nearClipping ?? newCamera.nearClipping,
+      height: camera.height ?? newCamera.height,
+      resolution: camera.resolution ?? newCamera.resolution,
+      showCollisions: camera.showCollisions ?? newCamera.showCollisions,
+      areaId: camera.areaId,
+    })
+    state.scene.meta.updatedAt = new Date().toISOString()
+  })
+
+  set(nextValue)
+  const updated = get().scene
+  persistScene(updated)
+  return updated
+}
+
+const updateCamera = (
+  set: SetState,
+  get: GetState,
+  id: string,
+  updater: (camera: CameraEntity) => void,
+) => {
+  const nextValue = produce<SceneState>((state) => {
+    const camera = state.scene.cameras.find((item) => item.id === id)
+    if (camera) {
+      updater(camera)
+      state.scene.meta.updatedAt = new Date().toISOString()
+    }
+  })
+
+  set(nextValue)
+  const updated = get().scene
+  persistScene(updated)
+  return updated
+}
+
 const getNextId = (existingIds: string[], prefix: string) => {
   const suffixes = existingIds
     .map((value) => Number.parseInt(value.replace(`${prefix}-`, ''), 10))
@@ -470,6 +537,8 @@ const createSceneStore: (
   deleteArea: (areaId) => deleteArea(set, get, areaId),
   addWall: (wall) => addWall(set, get, wall),
   addShape: (shape) => addShape(set, get, shape),
+  addCamera: (camera) => addCamera(set, get, camera),
+  updateCamera: (id, updater) => updateCamera(set, get, id, updater),
   deleteEntities: (entityIds) => deleteEntities(set, get, entityIds),
   duplicateEntities: (entityIds) => duplicateEntities(set, get, entityIds),
   ...initialValues,

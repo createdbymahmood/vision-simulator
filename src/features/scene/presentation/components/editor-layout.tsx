@@ -6,12 +6,14 @@ import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {TopPanel} from '@/features/scene/presentation/components/top-panel'
 
+import {assignCameraColor} from '../../domain/services/color-assignment'
 import type {SceneMode} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {createInitialScene} from '../../domain/services/scene-factory'
 import {useEditorShortcuts} from '../hooks/use-editor-shortcuts'
 import {BottomNavigation} from './bottom-navigation'
+import {CameraPropertiesSheet} from './camera-properties-sheet'
 import {
   AreaManagementDialog,
   DevicesDialog,
@@ -50,6 +52,7 @@ export const EditorLayout: React.FC = () => {
   const setEditMode = useUiStore((state) => state.setEditMode)
   const viewMode = useUiStore((state) => state.viewMode)
   const setViewMode = useUiStore((state) => state.setViewMode)
+  const setCameraPlacement = useUiStore((state) => state.setCameraPlacement)
   const closeAllPanels = useUiStore((state) => state.closeAllPanels)
   const closeAllPopovers = useUiStore((state) => state.closeAllPopovers)
 
@@ -64,6 +67,10 @@ export const EditorLayout: React.FC = () => {
   const canRedo = futureEntries.length > 0
   const hasAreas = areas.length > 0
   const deviceCount = cameras.length
+  const nextCameraColor = React.useMemo(
+    () => assignCameraColor(cameras.length),
+    [cameras.length],
+  )
 
   const closeTransientUi = useCallbackRef(() => {
     setPlaceDeviceOpen(false)
@@ -99,6 +106,12 @@ export const EditorLayout: React.FC = () => {
     setScene(createInitialScene())
     clearSelection()
     setActiveTool('select')
+  }
+
+  const handleSelectDevicePreset = (presetId: string) => {
+    setActiveTool('place-camera')
+    setCameraPlacement(presetId, nextCameraColor)
+    setPlaceDeviceOpen(false)
   }
 
   const handleBlankClick = () => {
@@ -188,7 +201,8 @@ export const EditorLayout: React.FC = () => {
 
       <PlaceDeviceDialog
         onOpenChange={setPlaceDeviceOpen}
-        onSelectDevice={() => setActiveTool('place-camera')}
+        onSelectDevice={handleSelectDevicePreset}
+        nextColor={nextCameraColor}
         open={placeDeviceOpen}
       />
 
@@ -203,6 +217,8 @@ export const EditorLayout: React.FC = () => {
         onOpenChange={setDevicesPanelOpen}
         open={devicesPanelOpen}
       />
+
+      <CameraPropertiesSheet />
 
       <MapStyleDialog onOpenChange={setMapStyleOpen} open={mapStyleOpen} />
     </div>

@@ -8,7 +8,7 @@ import React from 'react'
 import Mapbox from 'react-map-gl/mapbox'
 import {toast} from 'sonner'
 
-import type {GeoPoint} from '@/features/scene/domain/types'
+import type {AreaEntity, GeoPoint} from '@/features/scene/domain/types'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {
   CursorPoint,
@@ -25,13 +25,14 @@ import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {MapViewAreaLayers} from '@/features/scene/presentation/components/map-view/map-view-area-layers'
 import {MapViewCameraLayers} from '@/features/scene/presentation/components/map-view/map-view-camera-layers'
+import {MapViewCameraPreviewLayer} from '@/features/scene/presentation/components/map-view/map-view-camera-preview-layer'
 import {MapViewCursorOverlay} from '@/features/scene/presentation/components/map-view/map-view-cursor-overlay'
 import {MapViewRotationHandleLayer} from '@/features/scene/presentation/components/map-view/map-view-rotation-handle-layer'
 import {MapViewSelectionBoundsLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-bounds-layer'
 import {MapViewSelectionHandlesLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-handles-layer'
 import {
   buildAreaFeatureCollection,
-  buildCameraFeatures,
+  buildCameraLayerData,
   buildOverlapFeatures,
   buildPersonFeatures,
   buildShapeFeatures,
@@ -46,6 +47,7 @@ import {
   getNextAreaColor,
   isPointInsideArea,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {useCameraPlacement} from '@/features/scene/presentation/components/map-view/use-camera-placement'
 import {MapViewPeopleLayers} from '@/features/scene/presentation/components/map-view/map-view-people-layers'
 import {MapViewShapeLayers} from '@/features/scene/presentation/components/map-view/map-view-shape-layers'
 import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/map-view-tooltip'
@@ -99,6 +101,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   const addArea = useSceneStore((state) => state.addArea)
   const addWall = useSceneStore((state) => state.addWall)
   const addShape = useSceneStore((state) => state.addShape)
+  const addCamera = useSceneStore((state) => state.addCamera)
   const setActiveArea = useSceneStore((state) => state.setActiveArea)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const setSelection = useSceneStore((state) => state.setSelection)
@@ -107,19 +110,31 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   const duplicateEntities = useSceneStore((state) => state.duplicateEntities)
   const updateScene = useSceneStore((state) => state.updateScene)
 
+  const setActiveTool = useUiStore((state) => state.setActiveTool)
+  const cameraPlacement = useUiStore((state) => state.cameraPlacement)
+  const setCameraPlacement = useUiStore((state) => state.setCameraPlacement)
+  const clearCameraPlacement = useUiStore((state) => state.clearCameraPlacement)
+  const openPanel = useUiStore((state) => state.openPanel)
+
   const activeArea = React.useMemo(() => {
     if (!areas.length) return null
     return areas.find((a) => a.id === activeAreaId) ?? areas[0]
   }, [areas, activeAreaId])
 
-  const isGeometryInsideActiveArea = React.useCallback(
-    (points: GeoPoint[]) => {
-      if (!activeArea) {
+  const getAreaAtPoint = React.useCallback(
+    (point: GeoPoint) =>
+      areas.find((area) => isPointInsideArea(point, area)) ?? null,
+    [areas],
+  )
+
+  const isGeometryInsideArea = React.useCallback(
+    (points: GeoPoint[], area: AreaEntity | null) => {
+      if (!area) {
         return false
       }
-      return points.every((point) => isPointInsideArea(point, activeArea))
+      return points.every((point) => isPointInsideArea(point, area))
     },
-    [activeArea],
+    [],
   )
 
   const {
@@ -132,9 +147,9 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     resetWallDrawing,
     handleWallPointerMove,
   } = useWallDrawing({
-    activeArea,
     addWall,
-    isGeometryInsideArea: isGeometryInsideActiveArea,
+    getAreaForPoint: getAreaAtPoint,
+    isGeometryInsideArea,
   })
 
   const {
@@ -145,9 +160,9 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     handleShapePointerMove,
     resetShapeDrawing,
   } = useShapeDrawing({
-    activeArea,
     addShape,
-    isGeometryInsideArea: isGeometryInsideActiveArea,
+    getAreaForPoint: getAreaAtPoint,
+    isGeometryInsideArea,
     strokeColor: SHAPE_STROKE_COLOR,
   })
 
@@ -207,6 +222,27 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     setTooltip,
     setCursorOverride,
     baseCursor,
+  })
+
+  const {
+    preview: cameraPreview,
+    onPointerMove: handleCameraPointerMove,
+    onMapClick: handleCameraMapClick,
+  } = useCameraPlacement({
+    activeTool,
+    isEditMode,
+    activeArea,
+    areas,
+    cameras,
+    cameraPlacement,
+    setCameraPlacement,
+    clearCameraPlacement,
+    addCamera,
+    setSelection,
+    setActiveTool,
+    openCameraPanel: () => openPanel('camera-properties'),
+    setTooltip,
+    setCursorOverride,
   })
 
   const resetDrawing = React.useCallback(() => {
@@ -319,26 +355,13 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   )
 
   const guardPointerWithinArea = React.useCallback(
-    (
-      event: MapLayerMouseEvent,
-      hasActiveArea: boolean,
-      insideActiveArea: boolean,
-    ) => {
+    (event: MapLayerMouseEvent, hasAreas: boolean) => {
       if (
         (activeTool === 'draw-wall' || activeTool === 'draw-shape') &&
-        !hasActiveArea
+        !hasAreas
       ) {
         setCursorOverride('not-allowed')
         showTooltip('Create an area first', event)
-        return true
-      }
-
-      if (
-        (activeTool === 'draw-wall' || activeTool === 'draw-shape') &&
-        !insideActiveArea
-      ) {
-        setCursorOverride('not-allowed')
-        showTooltip('Objects must stay inside an area', event)
         return true
       }
       return false
@@ -365,12 +388,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     }
 
     const mapPoint: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
-    const hasActiveArea = Boolean(activeArea)
-    const insideActiveArea =
-      activeTool === 'draw-area' ||
-      (hasActiveArea && activeArea
-        ? isPointInsideArea(mapPoint, activeArea)
-        : false)
+    const hasAreas = areas.length > 0
 
     setCursorOverride(undefined)
 
@@ -379,11 +397,17 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
       return
     }
 
+    if (activeTool === 'place-camera') {
+      if (handleCameraPointerMove(event)) {
+        return
+      }
+    }
+
     if (handleAreaPointerMove(event, mapPoint)) {
       return
     }
 
-    if (guardPointerWithinArea(event, hasActiveArea, insideActiveArea)) {
+    if (guardPointerWithinArea(event, hasAreas)) {
       return
     }
 
@@ -517,6 +541,12 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
       }
       const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
 
+      if (activeTool === 'place-camera') {
+        if (handleCameraMapClick(event)) {
+          return
+        }
+      }
+
       if (activeTool === 'hand') {
         clearSelection()
         return
@@ -531,17 +561,8 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
         return
       }
 
-      if (!activeArea && activeTool !== 'draw-area') {
+      if (areas.length === 0 && activeTool !== 'draw-area') {
         toast.info('Create an area first')
-        return
-      }
-
-      const pointInside =
-        activeTool === 'draw-area' || !activeArea
-          ? true
-          : isPointInsideArea(point, activeArea)
-      if (!pointInside) {
-        toast.error('Objects must be inside an area')
         return
       }
 
@@ -560,14 +581,16 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
       }
     },
     [
-      activeArea,
       activeTool,
       clearSelection,
+      handleCameraMapClick,
       handleAreaClick,
       handleShapeClick,
       handleWallClick,
       handleSelectionMapClick,
       isEditMode,
+      getAreaAtPoint,
+      areas.length,
     ],
   )
 
@@ -634,8 +657,8 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     [shapes],
   )
 
-  const cameraFeatures = React.useMemo(
-    () => buildCameraFeatures(cameras),
+  const cameraLayerData = React.useMemo(
+    () => buildCameraLayerData(cameras),
     [cameras],
   )
 
@@ -746,7 +769,17 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
           shapePreviewFeature={shapePreviewFeature}
         />
 
-        <MapViewCameraLayers cameraFeatures={cameraFeatures} />
+        {cameraPreview ? (
+          <MapViewCameraPreviewLayer
+            previewDirection={cameraPreview.direction}
+            previewFov={cameraPreview.fov}
+            previewPoint={cameraPreview.point}
+            previewRange={cameraPreview.range}
+            isValid={cameraPreview.isValid}
+          />
+        ) : null}
+
+        <MapViewCameraLayers data={cameraLayerData} />
         <MapViewPeopleLayers personFeatures={personFeatures} />
 
         <MapViewSelectionBoundsLayer
