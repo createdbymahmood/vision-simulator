@@ -6,6 +6,7 @@ import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {ShapeDrawMode} from '../types'
 
 interface EditorShortcutOptions {
+  enabled?: boolean
   isEditMode: boolean
   hasAreas: boolean
   isMapMode: boolean
@@ -30,6 +31,7 @@ const shapeByKey: Record<string, ShapeDrawMode> = {
 }
 
 export const useEditorShortcuts = ({
+  enabled = true,
   isEditMode,
   hasAreas,
   isMapMode,
@@ -151,6 +153,10 @@ export const useEditorShortcuts = ({
   }
 
   const handleKeyDown = useCallbackRef((event: KeyboardEvent) => {
+    if (!enabled) {
+      return
+    }
+
     const key = normalizeKey(event.key)
     const isMeta = event.metaKey || event.ctrlKey
 

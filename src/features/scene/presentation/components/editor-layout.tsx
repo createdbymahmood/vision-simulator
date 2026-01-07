@@ -17,6 +17,7 @@ import {AreaPropertiesSheet} from './properties-sheet/area-properties-sheet'
 import {CameraPropertiesSheet} from './properties-sheet/camera-properties-sheet'
 import {PersonPropertiesSheet} from './properties-sheet/person-properties-sheet'
 import {ShapePropertiesSheet} from './properties-sheet/shape-properties-sheet'
+import {SimulationAnalysisView} from './simulation/simulation-analysis-view'
 import {
   AreaManagementDialog,
   DevicesDialog,
@@ -162,7 +163,18 @@ export const EditorLayout: React.FC = () => {
     closeAllPanels()
   }, [activeTool, closeAllPanels])
 
+  React.useEffect(() => {
+    if (viewMode === 'preview') {
+      closeTransientUi()
+      setEditMode(false)
+      setMeasurementEnabled(false)
+    } else {
+      setEditMode(true)
+    }
+  }, [closeTransientUi, setEditMode, viewMode])
+
   useEditorShortcuts({
+    enabled: viewMode === 'editor',
     isEditMode,
     hasAreas,
     isMapMode: sceneMode === 'map',
@@ -180,87 +192,97 @@ export const EditorLayout: React.FC = () => {
 
   return (
     <div className='min-h-screen w-full flex flex-col'>
-      <TopPanel
-        canRedo={canRedo}
-        canUndo={canUndo}
-        isEditMode={isEditMode}
-        lastActionDescription={lastActionDescription}
-        onClearBoard={handleClearBoard}
-        onEditModeChange={setEditMode}
-        onRedo={handleRedo}
-        onSceneModeChange={handleSceneModeChange}
-        onTogglePreview={() =>
-          setViewMode(viewMode === 'preview' ? 'editor' : 'preview')
-        }
-        onUndo={handleUndo}
-        sceneMode={sceneMode}
-        viewMode={viewMode}
-      />
-
-      <main className='mx-auto flex flex-col gap-4 size-full flex-1 pt-14'>
-        <ViewportShell
-          mapVisible={mapVisible}
-          measurementEnabled={measurementEnabled}
-          activeTool={activeTool}
-          onBlankClick={handleBlankClick}
-          onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
+      {viewMode === 'editor' ? (
+        <TopPanel
+          canRedo={canRedo}
+          canUndo={canUndo}
+          isEditMode={isEditMode}
+          lastActionDescription={lastActionDescription}
+          onClearBoard={handleClearBoard}
+          onEditModeChange={setEditMode}
+          onRedo={handleRedo}
+          onSceneModeChange={handleSceneModeChange}
+          onTogglePreview={() => setViewMode('preview')}
+          onUndo={handleUndo}
           sceneMode={sceneMode}
-          shapeMode={shapeMode}
+          viewMode={viewMode}
         />
+      ) : null}
+
+      <main
+        className={`mx-auto flex min-h-0 flex-1 flex-col gap-4 size-full ${viewMode === 'editor' ? 'pt-14' : ''}`}
+      >
+        {viewMode === 'editor' ? (
+          <ViewportShell
+            mapVisible={mapVisible}
+            measurementEnabled={measurementEnabled}
+            activeTool={activeTool}
+            onBlankClick={handleBlankClick}
+            onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
+            sceneMode={sceneMode}
+            shapeMode={shapeMode}
+          />
+        ) : (
+          <SimulationAnalysisView />
+        )}
       </main>
 
-      <BottomNavigation
-        hasAreas={hasAreas}
-        activeTool={activeTool}
-        isEditMode={isEditMode}
-        onOpenPlaceDevice={() => setPlaceDeviceOpen(true)}
-        onPlacePerson={() => setActiveTool('place-person')}
-        onSelectShapeMode={setShapeMode}
-        onSelectTool={setActiveTool}
-        shapeMode={shapeMode}
-      />
+      {viewMode === 'editor' ? (
+        <>
+          <BottomNavigation
+            hasAreas={hasAreas}
+            activeTool={activeTool}
+            isEditMode={isEditMode}
+            onOpenPlaceDevice={() => setPlaceDeviceOpen(true)}
+            onPlacePerson={() => setActiveTool('place-person')}
+            onSelectShapeMode={setShapeMode}
+            onSelectTool={setActiveTool}
+            shapeMode={shapeMode}
+          />
 
-      <RightRail
-        isEditMode={isEditMode}
-        isMapMode={sceneMode === 'map'}
-        onAreaManagement={() => setAreaPanelOpen(true)}
-        onDevicesInUse={() => setDevicesPanelOpen(true)}
-        onMapViewMode={() => setMapStyleOpen(true)}
-        onSearchLocation={() => setSearchOpen(true)}
-      />
+          <RightRail
+            isEditMode={isEditMode}
+            isMapMode={sceneMode === 'map'}
+            onAreaManagement={() => setAreaPanelOpen(true)}
+            onDevicesInUse={() => setDevicesPanelOpen(true)}
+            onMapViewMode={() => setMapStyleOpen(true)}
+            onSearchLocation={() => setSearchOpen(true)}
+          />
 
-      <SearchLocationDialog
-        onOpenChange={setSearchOpen}
-        onOpenMapStyles={() => setMapStyleOpen(true)}
-        open={searchOpen}
-      />
+          <SearchLocationDialog
+            onOpenChange={setSearchOpen}
+            onOpenMapStyles={() => setMapStyleOpen(true)}
+            open={searchOpen}
+          />
 
-      <PlaceDeviceDialog
-        onOpenChange={setPlaceDeviceOpen}
-        onSelectDevice={handleSelectDevicePreset}
-        nextColor={nextCameraColor}
-        open={placeDeviceOpen}
-      />
+          <PlaceDeviceDialog
+            onOpenChange={setPlaceDeviceOpen}
+            onSelectDevice={handleSelectDevicePreset}
+            nextColor={nextCameraColor}
+            open={placeDeviceOpen}
+          />
 
-      <AreaManagementDialog
-        areaCount={areas.length}
-        onOpenChange={setAreaPanelOpen}
-        open={areaPanelOpen}
-      />
+          <AreaManagementDialog
+            areaCount={areas.length}
+            onOpenChange={setAreaPanelOpen}
+            open={areaPanelOpen}
+          />
 
-      <DevicesDialog
-        deviceCount={deviceCount}
-        onOpenChange={setDevicesPanelOpen}
-        open={devicesPanelOpen}
-      />
+          <DevicesDialog
+            deviceCount={deviceCount}
+            onOpenChange={setDevicesPanelOpen}
+            open={devicesPanelOpen}
+          />
 
-      <AreaPropertiesSheet />
-      <WallPropertiesSheet />
-      <ShapePropertiesSheet />
-      <PersonPropertiesSheet />
-      <CameraPropertiesSheet />
+          <AreaPropertiesSheet />
+          <WallPropertiesSheet />
+          <ShapePropertiesSheet />
+          <PersonPropertiesSheet />
+          <CameraPropertiesSheet />
 
-      <MapStyleDialog onOpenChange={setMapStyleOpen} open={mapStyleOpen} />
+          <MapStyleDialog onOpenChange={setMapStyleOpen} open={mapStyleOpen} />
+        </>
+      ) : null}
     </div>
   )
 }
