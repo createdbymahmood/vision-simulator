@@ -255,13 +255,8 @@ export const usePersonPlacement = ({
         areaId: validation.areaId,
         x: mapPoint[0],
         y: mapPoint[1],
-        radius: DEFAULT_PERSON_RADIUS,
         height: DEFAULT_PERSON_HEIGHT,
         speed: DEFAULT_PERSON_SPEED,
-        behavior: 'roam',
-        trailEnabled: false,
-        trailLength: 20,
-        trailHistory: [],
       })
 
       const newPersonId = updated?.people?.at(-1)?.id

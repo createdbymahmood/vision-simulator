@@ -16,15 +16,11 @@ import {
 import {
   computeBounds,
   getBoundsCenter,
-  rotatePoints,
   scalePoints,
-  translatePoints,
 } from '@/features/scene/presentation/components/map-view/selection-geometry'
 import type {ShapeEntity} from '@/features/scene/domain/types'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
-
-const clamp360 = (value: number) => ((value % 360) + 360) % 360
 
 export const ShapePropertiesSheet: React.FC = () => {
   const openPanels = useUiStore((state) => state.openPanels)
@@ -62,27 +58,6 @@ export const ShapePropertiesSheet: React.FC = () => {
     }
     return shape.geometry[0] ?? [0, 0]
   }, [])
-
-  const moveShape = (nextX: number, nextY: number) => {
-    if (!selectedShape) return
-    const center = getCenter(selectedShape)
-    const deltaLng = nextX - center[0]
-    const deltaLat = nextY - center[1]
-    updateSelectedShape((shape) => {
-      shape.geometry = translatePoints(shape.geometry, deltaLng, deltaLat)
-    })
-  }
-
-  const handleRotationChange = (value: number) => {
-    if (!selectedShape) return
-    const center = getCenter(selectedShape)
-    const currentRotation = selectedShape.rotation ?? 0
-    const delta = clamp360(value) - currentRotation
-    updateSelectedShape((shape) => {
-      shape.rotation = clamp360(value)
-      shape.geometry = rotatePoints(shape.geometry, center, delta)
-    })
-  }
 
   const handleHeightChange = (values: number[]) => {
     const [height] = values
@@ -187,44 +162,9 @@ export const ShapePropertiesSheet: React.FC = () => {
     >
       {selectedShape ? (
         <div className='space-y-6'>
-          <PropertiesSection title='Transform'>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-2'>
-                <Label htmlFor='shape-x'>X (m)</Label>
-                <Input
-                  id='shape-x'
-                  type='number'
-                  inputMode='decimal'
-                  value={center ? center[0].toFixed(1) : ''}
-                  onChange={(event) =>
-                    moveShape(Number.parseFloat(event.target.value), center?.[1] ?? 0)
-                  }
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='shape-y'>Y (m)</Label>
-                <Input
-                  id='shape-y'
-                  type='number'
-                  inputMode='decimal'
-                  value={center ? center[1].toFixed(1) : ''}
-                  onChange={(event) =>
-                    moveShape(center?.[0] ?? 0, Number.parseFloat(event.target.value))
-                  }
-                />
-              </div>
-            </div>
-            <div className='space-y-2'>
-              <Label>Rotation ({clamp360(selectedShape.rotation ?? 0).toFixed(0)}°)</Label>
-              <Slider
-                max={360}
-                min={0}
-                step={1}
-                value={[clamp360(selectedShape.rotation ?? 0)]}
-                onValueChange={(values) => handleRotationChange(values[0] ?? 0)}
-              />
-            </div>
-          </PropertiesSection>
+          <p className='text-xs text-muted-foreground'>
+            Position and rotation adjustments are disabled here to prevent shapes from exceeding area bounds.
+          </p>
 
           <PropertiesSection title='Appearance'>
             <div className='space-y-2'>

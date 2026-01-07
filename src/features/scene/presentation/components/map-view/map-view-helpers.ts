@@ -38,6 +38,9 @@ import {
   AREA_COLORS,
   DEFAULT_AREA_STYLE,
 } from '@/features/scene/domain/constants/area-style'
+import {
+  DEFAULT_PERSON_RADIUS,
+} from '@/features/scene/domain/constants/person-defaults'
 import {SHAPE_STROKE_COLOR} from '@/features/scene/domain/constants/shape-style'
 import {
   DEFAULT_WALL_COLOR,
@@ -511,7 +514,7 @@ export const buildPersonFeatures = (
       id: person.id,
       areaId: person.areaId,
       entityType: 'person',
-      radius: person.radius,
+      radius: DEFAULT_PERSON_RADIUS,
     },
     geometry: {
       type: 'Point',
@@ -524,7 +527,7 @@ export type PersonCollisionType = 'person' | 'wall' | 'shape'
 
 interface PersonCollisionParams {
   candidate: GeoPoint
-  radius: number
+  radius?: number
   areaId?: string
   people: PersonEntity[]
   walls: WallEntity[]
@@ -534,7 +537,7 @@ interface PersonCollisionParams {
 
 export const getPersonCollision = ({
   candidate,
-  radius,
+  radius = DEFAULT_PERSON_RADIUS,
   areaId,
   people,
   walls,
@@ -614,7 +617,7 @@ export const getPersonCollision = ({
       point([person.x, person.y]),
       {units: 'meters'},
     )
-    return distanceMeters < radius + person.radius
+    return distanceMeters < radius + DEFAULT_PERSON_RADIUS
   })
 
   if (collidingPerson) {
@@ -643,7 +646,7 @@ export const doesWallPathHitPerson = (
       const distanceMeters = pointToLineDistance(personPoint, segment, {
         units: 'meters',
       })
-      return distanceMeters < person.radius + thickness
+      return distanceMeters < DEFAULT_PERSON_RADIUS + thickness
     })
   })
 }
@@ -683,7 +686,7 @@ export const doesShapeHitPerson = (
             const distanceMeters = pointToLineDistance(personPoint, segment, {
               units: 'meters',
             })
-            return distanceMeters < person.radius
+            return distanceMeters < DEFAULT_PERSON_RADIUS
           })
         : false
     }
@@ -698,7 +701,7 @@ export const doesShapeHitPerson = (
         const distanceMeters = pointToLineDistance(personPoint, segment, {
           units: 'meters',
         })
-        return distanceMeters < person.radius + lineThickness
+        return distanceMeters < DEFAULT_PERSON_RADIUS + lineThickness
       })
     }
 

@@ -338,13 +338,8 @@ const addPerson = (
     state.scene.people.push({
       ...base,
       name: person.name ?? base.name,
-      radius: person.radius ?? base.radius,
       height: person.height ?? base.height,
       speed: person.speed ?? base.speed,
-      behavior: person.behavior ?? base.behavior,
-      trailEnabled: person.trailEnabled ?? base.trailEnabled,
-      trailLength: person.trailLength ?? base.trailLength,
-      trailHistory: person.trailHistory ?? base.trailHistory,
     })
     state.scene.meta.updatedAt = new Date().toISOString()
   })

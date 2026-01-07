@@ -10,7 +10,6 @@ import {
 
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
-import {InputGroup} from '@/components/ui/input-group'
 import {Label} from '@/components/ui/label'
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
@@ -110,17 +109,6 @@ export const CameraPropertiesSheet: React.FC = () => {
     }
     updateSelectedCamera((camera) => {
       camera.resolution = {...camera.resolution, [key]: next}
-    })
-  }
-
-  const handlePositionChange = (
-    key: 'x' | 'y',
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const value = Number.parseFloat(event.target.value)
-    if (!Number.isFinite(value)) return
-    updateSelectedCamera((camera) => {
-      camera[key] = value
     })
   }
 
@@ -294,28 +282,6 @@ export const CameraPropertiesSheet: React.FC = () => {
           </PropertiesSection>
 
           <PropertiesSection title='Position'>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-2'>
-                <Label htmlFor='camera-x'>X (m)</Label>
-                <Input
-                  id='camera-x'
-                  type='number'
-                  inputMode='decimal'
-                  value={selectedCamera.x.toFixed(1)}
-                  onChange={(event) => handlePositionChange('x', event)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='camera-y'>Y (m)</Label>
-                <Input
-                  id='camera-y'
-                  type='number'
-                  inputMode='decimal'
-                  value={selectedCamera.y.toFixed(1)}
-                  onChange={(event) => handlePositionChange('y', event)}
-                />
-              </div>
-            </div>
             <div className='space-y-2'>
               <Label>Height ({selectedCamera.height.toFixed(2)} m)</Label>
               <Slider
@@ -373,7 +339,7 @@ export const CameraPropertiesSheet: React.FC = () => {
             </div>
             <div className='space-y-2'>
               <Label>Resolution</Label>
-              <InputGroup>
+              <div className='flex items-center gap-2'>
                 <Input
                   type='number'
                   min={1}
@@ -393,7 +359,7 @@ export const CameraPropertiesSheet: React.FC = () => {
                   }
                   aria-label='Resolution height'
                 />
-              </InputGroup>
+              </div>
             </div>
           </PropertiesSection>
 

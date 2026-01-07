@@ -138,12 +138,8 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
   - Name (text input)
   - X position (meters)
   - Y position (meters)
-  - Radius (meters)
   - Height (meters)
   - Speed (m/s)
-  - Behavior (dropdown: roam)
-  - Trail Enabled (toggle)
-  - Trail Length (seconds, if enabled)
 
 ### PTZ Controls in Editor (Section 5.5.2, 5.5.3)
 
@@ -286,5 +282,4 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - Section 5.5.2: PTZ UI Component (Always Available)
 - Section 5.5.3: PTZ Behavior in Editor
 - Section 5.5.5: PTZ Data Model (presets)
-
 

@@ -145,14 +145,9 @@ This ensures person placement integrates with the collision detection system and
 ### Person Entity Properties
 
 - [ ] `id`, `type: "person"`, `areaId`
-- [ ] `x`, `y`
-- [ ] `radius` (default 0.3m)
+- [ ] `name`, `x`, `y`
 - [ ] `height` (default 1.7m)
 - [ ] `speed` (default 1.2 m/s)
-- [ ] `behavior: "roam"`
-- [ ] `trailEnabled: false`
-- [ ] `trailLength: 20` (seconds)
-- [ ] `trailHistory: []`
 
 ### Collision Detection
 
@@ -170,7 +165,6 @@ This ensures person placement integrates with the collision detection system and
 - [ ] **Fields**:
   - Position X (meters)
   - Position Y (meters)
-  - Radius (meters)
   - Height (meters)
   - Speed (m/s)
   - Behavior dropdown (roam)
@@ -222,4 +216,3 @@ This ensures person placement integrates with the collision detection system and
 - Section 5.8.2: Person Placement Cursor
 - Section 5.8.3: Invalid/Error Cursors (Outside Area, Overlapping)
 - Section 5.10.5: Place Person Tool (Enhanced)
-

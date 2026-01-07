@@ -15,6 +15,7 @@ import type {
   ShapeEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
+import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {TooltipState} from '@/features/scene/presentation/components/map-view/map-view-types'
 import type {
@@ -188,7 +189,10 @@ const isPointInsideEntity = (point: GeoPoint, entity: SceneEntity) => {
     })
   }
   if (entity.type === 'person') {
-    return Math.hypot(entity.x - point[0], entity.y - point[1]) < entity.radius * 1.5
+    return (
+      Math.hypot(entity.x - point[0], entity.y - point[1]) <
+      DEFAULT_PERSON_RADIUS * 1.5
+    )
   }
   if (entity.type === 'camera') {
     return Math.hypot(entity.x - point[0], entity.y - point[1]) < 0.0002
@@ -215,7 +219,6 @@ interface MoveTransformParams {
   isPersonPositionBlocked: (
     candidate: GeoPoint,
     personId: string,
-    radius: number,
     areaId?: string,
   ) => boolean
   walls: WallEntity[]
@@ -234,7 +237,6 @@ interface ResizeTransformParams {
   isPersonPositionBlocked: (
     candidate: GeoPoint,
     personId: string,
-    radius: number,
     areaId?: string,
   ) => boolean
   scalePoints: typeof scalePoints
@@ -256,7 +258,6 @@ interface RotateTransformParams {
   isPersonPositionBlocked: (
     candidate: GeoPoint,
     personId: string,
-    radius: number,
     areaId?: string,
   ) => boolean
   people: PersonEntity[]
@@ -467,7 +468,6 @@ const computeMoveTransform = ({
         isPersonPositionBlocked(
           nextPoints[0] as GeoPoint,
           entity.id,
-          (entity as PersonEntity).radius,
           areaForEntity?.id,
         )
       ) {
@@ -676,7 +676,6 @@ const computeResizeTransform = ({
       isPersonPositionBlocked(
         scaled[0] as GeoPoint,
         entity.id,
-        (entity as PersonEntity).radius,
         areaForEntity?.id,
       )
     ) {
@@ -771,7 +770,6 @@ const computeRotateTransform = ({
       isPersonPositionBlocked(
         rotate(original, origin, deltaDeg)[0] as GeoPoint,
         entity.id,
-        (entity as PersonEntity).radius,
         areaForEntity?.id,
       )
     ) {
@@ -779,6 +777,33 @@ const computeRotateTransform = ({
       return
     }
     const rotated = rotate(original, origin, deltaDeg)
+
+    if (entity?.type === 'area') {
+      const previewArea: AreaEntity = {
+        ...(entity as AreaEntity),
+        geometry: {
+          ...(entity as AreaEntity).geometry,
+          coordinates: closeRing(rotated),
+        },
+      }
+      const relatedEntities: SceneEntity[] = [
+        ...walls,
+        ...shapes,
+        ...cameras,
+        ...people,
+      ] as SceneEntity[]
+      const hasOutsideChild = relatedEntities.some((child) => {
+        if (getEntityAreaId(child) !== entity.id) {
+          return false
+        }
+        return !isInsideAreaSelection(getEntityPoints(child), previewArea)
+      })
+      if (hasOutsideChild) {
+        blockedArea = entity.id
+        return
+      }
+    }
+
     if (
       entity?.type === 'shape' &&
       doesShapeHitPerson(
@@ -1203,12 +1228,11 @@ export const useSelectionTransform = ({
     (
       candidate: GeoPoint,
       personId: string,
-      radius: number,
       areaId?: string,
     ) => {
       const collision = getPersonCollision({
         candidate,
-        radius,
+        radius: DEFAULT_PERSON_RADIUS,
         areaId,
         people,
         walls,

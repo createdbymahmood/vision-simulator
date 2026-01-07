@@ -2,13 +2,10 @@ import React from 'react'
 
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
-import {Switch} from '@/components/ui/switch'
 
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
-import {formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
@@ -60,26 +57,6 @@ export const PersonPropertiesSheet: React.FC = () => {
     })
   }
 
-  const handleRadiusChange = (values: number[]) => {
-    const [radius] = values
-    updateSelectedPerson((person) => {
-      person.radius = radius
-    })
-  }
-
-  const handlePositionChange = (
-    key: 'x' | 'y',
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const value = Number.parseFloat(event.target.value)
-    if (!Number.isFinite(value)) {
-      return
-    }
-    updateSelectedPerson((person) => {
-      person[key] = value
-    })
-  }
-
   return (
     <PropertiesShell
       open={isOpen}
@@ -107,44 +84,7 @@ export const PersonPropertiesSheet: React.FC = () => {
             </div>
           </PropertiesSection>
 
-          <PropertiesSection title='Position'>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='person-x'>X (m)</Label>
-                <Input
-                  id='person-x'
-                  inputMode='decimal'
-                  type='number'
-                  value={selectedPerson.x.toFixed(1)}
-                  onChange={(event) => handlePositionChange('x', event)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='person-y'>Y (m)</Label>
-                <Input
-                  id='person-y'
-                  inputMode='decimal'
-                  type='number'
-                  value={selectedPerson.y.toFixed(1)}
-                  onChange={(event) => handlePositionChange('y', event)}
-                />
-              </div>
-            </div>
-          </PropertiesSection>
-
           <PropertiesSection title='Physical'>
-            <div className='space-y-2'>
-              <Label>
-                Radius ({formatMeters(selectedPerson.radius)})
-              </Label>
-              <Slider
-                max={1}
-                min={0.1}
-                step={0.01}
-                value={[selectedPerson.radius]}
-                onValueChange={handleRadiusChange}
-              />
-            </div>
             <div className='space-y-2'>
               <Label>Height ({selectedPerson.height.toFixed(2)} m)</Label>
               <Slider
@@ -165,61 +105,6 @@ export const PersonPropertiesSheet: React.FC = () => {
                 onValueChange={handleSpeedChange}
               />
             </div>
-          </PropertiesSection>
-
-          <PropertiesSection title='Behavior'>
-            <div className='space-y-2'>
-              <Label htmlFor='behavior'>Behavior</Label>
-              <Select
-                value={selectedPerson.behavior}
-                onValueChange={(value) =>
-                  updateSelectedPerson((person) => {
-                    person.behavior = value as typeof person.behavior
-                  })
-                }
-              >
-                <SelectTrigger id='behavior'>
-                  <SelectValue placeholder='Select behavior' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='roam'>Roam</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className='flex items-center justify-between rounded-md border p-3'>
-              <div className='space-y-1'>
-                <p className='text-sm font-medium'>Trail Enabled</p>
-                <p className='text-xs text-muted-foreground'>
-                  Toggle path tracing for this person.
-                </p>
-              </div>
-              <Switch
-                checked={selectedPerson.trailEnabled}
-                onCheckedChange={(checked) =>
-                  updateSelectedPerson((person) => {
-                    person.trailEnabled = checked
-                  })
-                }
-              />
-            </div>
-            {selectedPerson.trailEnabled ? (
-              <div className='space-y-2'>
-                <Label>Trail Length ({selectedPerson.trailLength.toFixed(0)} s)</Label>
-                <Slider
-                  max={120}
-                  min={5}
-                  step={5}
-                  value={[selectedPerson.trailLength]}
-                  onValueChange={(values) => {
-                    const [length] = values
-                    updateSelectedPerson((person) => {
-                      person.trailLength = length
-                    })
-                  }}
-                />
-              </div>
-            ) : null}
           </PropertiesSection>
         </div>
       ) : (

@@ -83,9 +83,7 @@ Establish the foundational architecture, data models, routing structure, and sta
 
 - [ ] **Person Entity** (Section 7.2)
   - `id`, `type: "person"`, `areaId`
-  - `x`, `y`, `radius`, `height`, `speed`
-  - `behavior: "roam"`
-  - `trailEnabled`, `trailLength`, `trailHistory`
+  - `name`, `x`, `y`, `height`, `speed`
 
 - [ ] **Wall Entity**
   - `id`, `type: "wall"`, `areaId`

@@ -15,11 +15,6 @@ export const createDefaultPerson = (
   areaId,
   x: position[0],
   y: position[1],
-  radius: DEFAULT_PERSON_RADIUS,
   height: DEFAULT_PERSON_HEIGHT,
   speed: DEFAULT_PERSON_SPEED,
-  behavior: 'roam',
-  trailEnabled: false,
-  trailLength: 20,
-  trailHistory: [],
 })

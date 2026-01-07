@@ -111,13 +111,8 @@ export interface PersonEntity {
   areaId: string
   x: number
   y: number
-  radius: number
   height: number
   speed: number
-  behavior: 'roam'
-  trailEnabled: boolean
-  trailLength: number
-  trailHistory: Point2D[]
 }
 
 export interface WallEntity {
