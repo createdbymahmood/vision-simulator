@@ -347,7 +347,7 @@ const ShapeMesh: React.FC<{
   const depth = maxZ - minZ
   const center = new THREE.Vector3(
     (minX + maxX) / 2,
-    entity.height / 2 + 0.02,
+    entity.height / 2 + 0.1,
     (minZ + maxZ) / 2,
   )
 
@@ -363,6 +363,7 @@ const ShapeMesh: React.FC<{
       polygonOffset
       polygonOffsetFactor={2}
       polygonOffsetUnits={2}
+      depthWrite={false}
     />
   )
 
@@ -426,7 +427,7 @@ const ShapeMesh: React.FC<{
       bevelEnabled: false,
     })
     geometry.rotateX(-Math.PI / 2)
-    geometry.translate(0, 0.02, 0)
+    geometry.translate(0, 0.1, 0)
     return (
       <mesh
         geometry={geometry}
@@ -458,7 +459,7 @@ const ShapeMesh: React.FC<{
     const midpoint = start.clone().add(end).multiplyScalar(0.5)
     const angle = Math.atan2(end.z - start.z, end.x - start.x)
     return (
-      <group position={midpoint.clone().setY(midpoint.y + 0.02)} rotation={[0, angle, 0]}>
+      <group position={midpoint.clone().setY(midpoint.y + 0.1)} rotation={[0, angle, 0]}>
         <mesh
           castShadow
           receiveShadow
@@ -506,7 +507,7 @@ const AreaMesh: React.FC<{
   return (
     <mesh
       geometry={extrude}
-      position={[0, 0.02, 0]}
+      position={[0, 0.12, 0]}
       castShadow
       receiveShadow
       renderOrder={1}
@@ -533,8 +534,10 @@ const AreaMesh: React.FC<{
         emissive={selected ? data.entity.color : '#000000'}
         emissiveIntensity={selected ? 0.25 : 0}
         polygonOffset
-        polygonOffsetFactor={1}
-        polygonOffsetUnits={1}
+        polygonOffsetFactor={3}
+        polygonOffsetUnits={3}
+        depthWrite={false}
+        depthTest
       />
     </mesh>
   )
