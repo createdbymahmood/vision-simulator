@@ -596,7 +596,7 @@ const computeResizeTransform = ({
     ne: [bounds.maxLng, bounds.maxLat],
     nw: [bounds.minLng, bounds.maxLat],
     se: [bounds.maxLng, bounds.minLat],
-    sw: [bounds.minLng, bounds.maxLat],
+    sw: [bounds.minLng, bounds.minLat],
   }
   const anchors: Record<string, GeoPoint> = {
     e: [bounds.minLng, centerY],
@@ -641,6 +641,7 @@ const computeResizeTransform = ({
 
   const updates: Record<string, GeoPoint[]> = {}
   let blockedArea: string | null = null
+  const isShrinking = scaleX < 1 || scaleY < 1
 
   Object.entries(transformSession.originalGeometries).forEach(([id, original]) => {
     const entity = entityIndex.get(id)
@@ -654,21 +655,26 @@ const computeResizeTransform = ({
           coordinates: scaled,
         },
       }
-      const relatedEntities: SceneEntity[] = [
-        ...walls,
-        ...shapes,
-        ...cameras,
-        ...people,
-      ] as SceneEntity[]
-      const hasOutsideChild = relatedEntities.some((child) => {
-        if (getEntityAreaId(child) !== entity.id) {
-          return false
+      if (isShrinking) {
+        const relatedEntities: SceneEntity[] = [
+          ...walls,
+          ...shapes,
+          ...cameras,
+          ...people,
+        ] as SceneEntity[]
+        const hasOutsideChild = relatedEntities.some((child) => {
+          if (getEntityAreaId(child) !== entity.id) {
+            return false
+          }
+          return !isPointInsideAreaWithBuffer(
+            getEntityPoints(child)[0] ?? previewArea.geometry.coordinates[0],
+            previewArea,
+          )
+        })
+        if (hasOutsideChild) {
+          blockedArea = entity.id
+          return
         }
-        return !isInsideArea(getEntityPoints(child), previewArea)
-      })
-      if (hasOutsideChild) {
-        blockedArea = entity.id
-        return
       }
     }
     if (
@@ -786,21 +792,24 @@ const computeRotateTransform = ({
           coordinates: closeRing(rotated),
         },
       }
-      const relatedEntities: SceneEntity[] = [
-        ...walls,
-        ...shapes,
-        ...cameras,
-        ...people,
-      ] as SceneEntity[]
-      const hasOutsideChild = relatedEntities.some((child) => {
-        if (getEntityAreaId(child) !== entity.id) {
-          return false
+      if (isShrinking) {
+        const relatedEntities: SceneEntity[] = [
+          ...walls,
+          ...shapes,
+          ...cameras,
+          ...people,
+        ] as SceneEntity[]
+        const hasOutsideChild = relatedEntities.some((child) => {
+          if (getEntityAreaId(child) !== entity.id) {
+            return false
+          }
+          const points = getEntityPoints(child)
+          return !points.every((pt) => isPointInsideAreaWithBuffer(pt, previewArea))
+        })
+        if (hasOutsideChild) {
+          blockedArea = entity.id
+          return
         }
-        return !isInsideAreaSelection(getEntityPoints(child), previewArea)
-      })
-      if (hasOutsideChild) {
-        blockedArea = entity.id
-        return
       }
     }
 
