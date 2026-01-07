@@ -11,6 +11,7 @@ export const createDefaultPerson = (
 ): PersonEntity => ({
   id,
   type: 'person',
+  name: `Person ${id.split('-')[1] ?? id}`,
   areaId,
   x: position[0],
   y: position[1],

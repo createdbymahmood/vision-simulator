@@ -1,17 +1,30 @@
 import React from 'react'
+import {length as turfLength, lineString} from '@turf/turf'
 
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
 import {Slider} from '@/components/ui/slider'
 
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {
+  computeAngleDeg,
+  computeSegmentLength,
+  formatMeters,
+  createCircleRing,
+} from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {
+  computeBounds,
+  getBoundsCenter,
+  rotatePoints,
+  scalePoints,
+  translatePoints,
+} from '@/features/scene/presentation/components/map-view/selection-geometry'
+import type {ShapeEntity} from '@/features/scene/domain/types'
+
+import {PropertiesSection, PropertiesShell} from './properties-shell'
+
+const clamp360 = (value: number) => ((value % 360) + 360) % 360
 
 export const ShapePropertiesSheet: React.FC = () => {
   const openPanels = useUiStore((state) => state.openPanels)
@@ -42,9 +55,32 @@ export const ShapePropertiesSheet: React.FC = () => {
     [selectedShape, updateScene],
   )
 
-  const handleColorChange = (value: string) => {
+  const getCenter = React.useCallback((shape: ShapeEntity) => {
+    const bounds = computeBounds(shape.geometry)
+    if (bounds) {
+      return getBoundsCenter(bounds)
+    }
+    return shape.geometry[0] ?? [0, 0]
+  }, [])
+
+  const moveShape = (nextX: number, nextY: number) => {
+    if (!selectedShape) return
+    const center = getCenter(selectedShape)
+    const deltaLng = nextX - center[0]
+    const deltaLat = nextY - center[1]
     updateSelectedShape((shape) => {
-      shape.color = value
+      shape.geometry = translatePoints(shape.geometry, deltaLng, deltaLat)
+    })
+  }
+
+  const handleRotationChange = (value: number) => {
+    if (!selectedShape) return
+    const center = getCenter(selectedShape)
+    const currentRotation = selectedShape.rotation ?? 0
+    const delta = clamp360(value) - currentRotation
+    updateSelectedShape((shape) => {
+      shape.rotation = clamp360(value)
+      shape.geometry = rotatePoints(shape.geometry, center, delta)
     })
   }
 
@@ -55,20 +91,142 @@ export const ShapePropertiesSheet: React.FC = () => {
     })
   }
 
+  const handleColorChange = (value: string) => {
+    updateSelectedShape((shape) => {
+      shape.color = value
+    })
+  }
+
+  const handleScale = (scaleX: number, scaleY: number) => {
+    if (!selectedShape) return
+    const center = getCenter(selectedShape)
+    updateSelectedShape((shape) => {
+      shape.geometry = scalePoints(shape.geometry, center, scaleX, scaleY)
+    })
+  }
+
+  const handleThicknessChange = (values: number[]) => {
+    const [thickness] = values
+    updateSelectedShape((shape) => {
+      if (shape.shapeType === 'line') {
+        ;(shape as {thickness?: number}).thickness = thickness
+      }
+    })
+  }
+
+  const bounds = selectedShape ? computeBounds(selectedShape.geometry) : null
+  const center = selectedShape && bounds ? getBoundsCenter(bounds) : null
+
+  const rectDimensions = React.useMemo(() => {
+    if (!selectedShape || selectedShape.shapeType !== 'rectangle' || !bounds) {
+      return {width: 0, height: 0}
+    }
+    const width = computeSegmentLength([
+      [bounds.minLng, bounds.minLat],
+      [bounds.maxLng, bounds.minLat],
+    ])
+    const height = computeSegmentLength([
+      [bounds.minLng, bounds.minLat],
+      [bounds.minLng, bounds.maxLat],
+    ])
+    return {width, height}
+  }, [bounds, selectedShape])
+
+  const circleRadius = React.useMemo(() => {
+    if (!selectedShape || selectedShape.shapeType !== 'circle' || !bounds) {
+      return 0
+    }
+    const diameter = computeSegmentLength([
+      [bounds.minLng, bounds.minLat],
+      [bounds.maxLng, bounds.minLat],
+    ])
+    return diameter / 2
+  }, [bounds, selectedShape])
+
+  const triangleBaseHeight = React.useMemo(() => {
+    if (!selectedShape || selectedShape.shapeType !== 'triangle') {
+      return {base: 0, height: 0}
+    }
+    const pts = selectedShape.geometry.slice(0, 3)
+    if (pts.length < 3) {
+      return {base: 0, height: 0}
+    }
+    const base = computeSegmentLength([pts[0], pts[1]])
+    const third = pts[2]
+    const midpoint: [number, number] = [
+      (pts[0][0] + pts[1][0]) / 2,
+      (pts[0][1] + pts[1][1]) / 2,
+    ]
+    const height = computeSegmentLength([midpoint, third])
+    return {base, height}
+  }, [selectedShape])
+
+  const lineMetrics = React.useMemo(() => {
+    if (!selectedShape || selectedShape.shapeType !== 'line') {
+      return {length: 0, angle: 0, thickness: 0}
+    }
+    const pts = selectedShape.geometry.slice(0, 2)
+    const length =
+      pts.length === 2
+        ? turfLength(lineString(pts), {units: 'kilometers'}) * 1000
+        : 0
+    const angle = pts.length === 2 ? computeAngleDeg(pts[0], pts[1]) : 0
+    const thickness = (selectedShape as {thickness?: number}).thickness ?? 0.1
+    return {length, angle, thickness}
+  }, [selectedShape])
+
   return (
-    <Sheet
+    <PropertiesShell
       open={isOpen}
       onOpenChange={(open) =>
         open ? openPanel('shape-properties') : closePanel('shape-properties')
       }
+      title='Shape Properties'
+      entityId={selectedShape?.id}
+      accentColor={selectedShape?.color}
     >
-      <SheetContent className='w-[360px] sm:w-[420px]' side='right'>
-        <SheetHeader>
-          <SheetTitle>Shape Properties</SheetTitle>
-        </SheetHeader>
+      {selectedShape ? (
+        <div className='space-y-6'>
+          <PropertiesSection title='Transform'>
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='space-y-2'>
+                <Label htmlFor='shape-x'>X (m)</Label>
+                <Input
+                  id='shape-x'
+                  type='number'
+                  inputMode='decimal'
+                  value={center ? center[0].toFixed(1) : ''}
+                  onChange={(event) =>
+                    moveShape(Number.parseFloat(event.target.value), center?.[1] ?? 0)
+                  }
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='shape-y'>Y (m)</Label>
+                <Input
+                  id='shape-y'
+                  type='number'
+                  inputMode='decimal'
+                  value={center ? center[1].toFixed(1) : ''}
+                  onChange={(event) =>
+                    moveShape(center?.[0] ?? 0, Number.parseFloat(event.target.value))
+                  }
+                />
+              </div>
+            </div>
+            <div className='space-y-2'>
+              <Label>Rotation ({clamp360(selectedShape.rotation ?? 0).toFixed(0)}°)</Label>
+              <Slider
+                max={360}
+                min={0}
+                step={1}
+                value={[clamp360(selectedShape.rotation ?? 0)]}
+                onValueChange={(values) => handleRotationChange(values[0] ?? 0)}
+              />
+            </div>
+          </PropertiesSection>
 
-        {selectedShape ? (
-          <div className='mt-6 space-y-6'>
+          <PropertiesSection title='Appearance'>
             <div className='space-y-2'>
               <Label htmlFor='shape-color'>Color</Label>
               <Input
@@ -78,7 +236,6 @@ export const ShapePropertiesSheet: React.FC = () => {
                 onChange={(event) => handleColorChange(event.target.value)}
               />
             </div>
-
             <div className='space-y-2'>
               <Label>Height ({selectedShape.height.toFixed(2)} m)</Label>
               <Slider
@@ -89,13 +246,114 @@ export const ShapePropertiesSheet: React.FC = () => {
                 onValueChange={handleHeightChange}
               />
             </div>
-          </div>
-        ) : (
-          <p className='mt-6 text-sm text-muted-foreground'>
-            Select a shape to edit its properties.
-          </p>
-        )}
-      </SheetContent>
-    </Sheet>
+          </PropertiesSection>
+
+          {selectedShape.shapeType === 'rectangle' ? (
+            <PropertiesSection title='Rectangle'>
+              <div className='grid grid-cols-2 gap-3'>
+                <Metric label='Width' value={formatMeters(rectDimensions.width)} />
+                <Metric label='Height' value={formatMeters(rectDimensions.height)} />
+              </div>
+              <div className='grid grid-cols-2 gap-3'>
+                <div className='space-y-2'>
+                  <Label>Width (m)</Label>
+                  <Input
+                    type='number'
+                    inputMode='decimal'
+                    value={rectDimensions.width.toFixed(2)}
+                    onChange={(event) => {
+                      const next = Number.parseFloat(event.target.value)
+                      if (!Number.isFinite(next) || rectDimensions.width === 0) return
+                      handleScale(next / rectDimensions.width, 1)
+                    }}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label>Height (m)</Label>
+                  <Input
+                    type='number'
+                    inputMode='decimal'
+                    value={rectDimensions.height.toFixed(2)}
+                    onChange={(event) => {
+                      const next = Number.parseFloat(event.target.value)
+                      if (!Number.isFinite(next) || rectDimensions.height === 0) return
+                      handleScale(1, next / rectDimensions.height)
+                    }}
+                  />
+                </div>
+              </div>
+            </PropertiesSection>
+          ) : null}
+
+          {selectedShape.shapeType === 'circle' ? (
+            <PropertiesSection title='Circle'>
+              <div className='grid grid-cols-2 gap-3'>
+                <Metric label='Radius' value={formatMeters(circleRadius)} />
+                <Metric label='Diameter' value={formatMeters(circleRadius * 2)} />
+              </div>
+              <div className='space-y-2'>
+                <Label>Radius (m)</Label>
+                <Input
+                  type='number'
+                  inputMode='decimal'
+                  value={circleRadius.toFixed(2)}
+                  onChange={(event) => {
+                    const next = Number.parseFloat(event.target.value)
+                    if (!Number.isFinite(next) || !center) return
+                    updateSelectedShape((shape) => {
+                      shape.geometry = createCircleRing(center, next)
+                    })
+                  }}
+                />
+              </div>
+            </PropertiesSection>
+          ) : null}
+
+          {selectedShape.shapeType === 'triangle' ? (
+            <PropertiesSection title='Triangle'>
+              <div className='grid grid-cols-2 gap-3'>
+                <Metric label='Base' value={formatMeters(triangleBaseHeight.base)} />
+                <Metric label='Height' value={formatMeters(triangleBaseHeight.height)} />
+              </div>
+            </PropertiesSection>
+          ) : null}
+
+          {selectedShape.shapeType === 'line' ? (
+            <PropertiesSection title='Line'>
+              <div className='grid grid-cols-2 gap-3'>
+                <Metric label='Length' value={formatMeters(lineMetrics.length)} />
+                <Metric label='Angle' value={`${lineMetrics.angle.toFixed(0)}°`} />
+              </div>
+              <div className='space-y-2'>
+                <Label>Thickness ({lineMetrics.thickness.toFixed(2)} m)</Label>
+                <Slider
+                  max={2}
+                  min={0.01}
+                  step={0.01}
+                  value={[lineMetrics.thickness]}
+                  onValueChange={handleThicknessChange}
+                />
+              </div>
+            </PropertiesSection>
+          ) : null}
+        </div>
+      ) : (
+        <p className='text-sm text-muted-foreground'>
+          Select a shape to edit its properties.
+        </p>
+      )}
+    </PropertiesShell>
   )
 }
+
+interface MetricProps {
+  label: string
+  value: string
+}
+
+const Metric: React.FC<MetricProps> = ({label, value}) => (
+  <div className='space-y-1 rounded-md border p-3'>
+    <p className='text-xs text-muted-foreground'>{label}</p>
+    <p className='text-sm font-semibold'>{value}</p>
+  </div>
+)

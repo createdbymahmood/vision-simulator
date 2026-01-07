@@ -416,7 +416,7 @@ export const buildCameraFeatures = (
       id: camera.id,
       areaId: camera.areaId,
       entityType: 'camera',
-      direction: camera.direction,
+      direction: camera.ptz?.pan ?? camera.direction,
       color: camera.color,
     },
     geometry: {
@@ -439,8 +439,10 @@ export const buildCameraLayerData = (cameras: CameraEntity[]): CameraLayerData =
 
   cameras.forEach((camera) => {
     const origin: GeoPoint = [camera.x, camera.y]
-    const fovRing = createFovRing(origin, camera.direction, camera.fov, camera.depth)
-    const directionPoint = projectPoint(origin, camera.direction, camera.depth * 0.6)
+    const effectivePan = camera.ptz?.pan ?? camera.direction
+    const effectiveFov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+    const fovRing = createFovRing(origin, effectivePan, effectiveFov, camera.depth)
+    const directionPoint = projectPoint(origin, effectivePan, camera.depth * 0.6)
 
     pointFeatures.push({
       type: 'Feature',
@@ -449,7 +451,7 @@ export const buildCameraLayerData = (cameras: CameraEntity[]): CameraLayerData =
         id: camera.id,
         areaId: camera.areaId,
         entityType: 'camera',
-        direction: camera.direction,
+        direction: effectivePan,
         color: camera.color,
       },
       geometry: {

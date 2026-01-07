@@ -86,6 +86,7 @@ export interface PtzState {
 export interface CameraEntity {
   id: string
   type: 'camera'
+  name: string
   areaId: string
   typePreset: string
   x: number
@@ -106,6 +107,7 @@ export interface CameraEntity {
 export interface PersonEntity {
   id: string
   type: 'person'
+  name: string
   areaId: string
   x: number
   y: number
@@ -135,6 +137,7 @@ interface BaseShapeEntity {
   geometry: GeoPoint[]
   height: number
   color: string
+  rotation?: number
 }
 
 export interface RectangleShapeEntity extends BaseShapeEntity {

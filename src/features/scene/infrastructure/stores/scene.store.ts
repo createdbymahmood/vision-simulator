@@ -308,6 +308,7 @@ const addCamera = (
     )
     state.scene.cameras.push({
       ...newCamera,
+      name: camera.name ?? newCamera.name,
       fov: camera.fov ?? newCamera.fov,
       depth: camera.depth ?? newCamera.depth,
       zoom: camera.zoom ?? newCamera.zoom,
@@ -336,6 +337,7 @@ const addPerson = (
     const base = createDefaultPerson(person.areaId, [person.x, person.y], id)
     state.scene.people.push({
       ...base,
+      name: person.name ?? base.name,
       radius: person.radius ?? base.radius,
       height: person.height ?? base.height,
       speed: person.speed ?? base.speed,

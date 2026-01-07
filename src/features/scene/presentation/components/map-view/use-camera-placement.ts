@@ -250,6 +250,7 @@ export const useCameraPlacement = ({
         areaId: areaForPlacement.id,
         x: mapPoint[0],
         y: mapPoint[1],
+        name: preset?.name ?? 'Camera',
         height: preset?.height ?? 3,
         direction: 0,
         fov: preset?.fov ?? 90,

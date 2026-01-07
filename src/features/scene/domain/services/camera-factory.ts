@@ -17,12 +17,12 @@ const createDefaultPtzState = (zoom: number): PtzState => ({
   tilt: 0,
   zoom,
   limits: {
-    panMin: -180,
-    panMax: 180,
-    tiltMin: -60,
+    panMin: 0,
+    panMax: 360,
+    tiltMin: -45,
     tiltMax: 90,
     zoomMin: 1,
-    zoomMax: Math.max(zoom, 4),
+    zoomMax: 10,
   },
 })
 
@@ -42,6 +42,7 @@ export const createCameraEntity = (
   return {
     id: params.id,
     type: 'camera',
+    name: params.id,
     areaId: params.areaId,
     typePreset: preset?.id ?? params.presetId,
     x: params.position[0],

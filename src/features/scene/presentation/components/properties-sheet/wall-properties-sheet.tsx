@@ -1,17 +1,15 @@
 import React from 'react'
+import {lineString, length as turfLength} from '@turf/turf'
 
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
 import {Slider} from '@/components/ui/slider'
 
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'
+
+import {PropertiesSection, PropertiesShell} from './properties-shell'
 
 export const WallPropertiesSheet: React.FC = () => {
   const openPanels = useUiStore((state) => state.openPanels)
@@ -62,20 +60,44 @@ export const WallPropertiesSheet: React.FC = () => {
     })
   }
 
+  const handleNumericInput = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    onValid: (value: number) => void,
+  ) => {
+    const next = Number.parseFloat(event.target.value)
+    if (!Number.isFinite(next)) return
+    onValid(next)
+  }
+
+  const totalLength =
+    selectedWall && selectedWall.points.length >= 2
+      ? turfLength(lineString(selectedWall.points), {units: 'kilometers'}) *
+        1000
+      : 0
+  const segmentCount = selectedWall
+    ? Math.max(0, selectedWall.points.length - 1)
+    : 0
+
   return (
-    <Sheet
+    <PropertiesShell
       open={isOpen}
       onOpenChange={(open) =>
         open ? openPanel('wall-properties') : closePanel('wall-properties')
       }
+      title='Wall Properties'
+      entityId={selectedWall?.id}
+      accentColor={selectedWall?.color}
     >
-      <SheetContent className='w-[360px] sm:w-[420px]' side='right'>
-        <SheetHeader>
-          <SheetTitle>Wall Properties</SheetTitle>
-        </SheetHeader>
+      {selectedWall ? (
+        <div className='space-y-6'>
+          <PropertiesSection title='Metrics'>
+            <div className='grid grid-cols-2 gap-3'>
+              <Metric label='Segments' value={segmentCount.toString()} />
+              <Metric label='Total Length' value={formatMeters(totalLength)} />
+            </div>
+          </PropertiesSection>
 
-        {selectedWall ? (
-          <div className='mt-6 space-y-6'>
+          <PropertiesSection title='Appearance & Dimensions'>
             <div className='space-y-2'>
               <Label htmlFor='wall-color'>Color</Label>
               <Input
@@ -86,34 +108,78 @@ export const WallPropertiesSheet: React.FC = () => {
               />
             </div>
 
-            <div className='space-y-2'>
-              <Label>Thickness ({selectedWall.thickness.toFixed(2)} m)</Label>
-              <Slider
-                max={2}
-                min={0.05}
-                step={0.01}
-                value={[selectedWall.thickness]}
-                onValueChange={handleThicknessChange}
-              />
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='space-y-2'>
+                <Label>Thickness ({selectedWall.thickness.toFixed(2)} m)</Label>
+                <Slider
+                  max={2}
+                  min={0.05}
+                  step={0.01}
+                  value={[selectedWall.thickness]}
+                  onValueChange={handleThicknessChange}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label className='sr-only'>Thickness input</Label>
+                <Input
+                  type='number'
+                  min={0.05}
+                  step={0.01}
+                  value={selectedWall.thickness.toFixed(2)}
+                  onChange={(event) =>
+                    handleNumericInput(event, (value) =>
+                      handleThicknessChange([value]),
+                    )
+                  }
+                />
+              </div>
             </div>
 
-            <div className='space-y-2'>
-              <Label>Height ({selectedWall.height.toFixed(2)} m)</Label>
-              <Slider
-                max={10}
-                min={0.5}
-                step={0.1}
-                value={[selectedWall.height]}
-                onValueChange={handleHeightChange}
-              />
+            <div className='grid grid-cols-2 gap-3'>
+              <div className='space-y-2'>
+                <Label>Height ({selectedWall.height.toFixed(2)} m)</Label>
+                <Slider
+                  max={10}
+                  min={0.5}
+                  step={0.1}
+                  value={[selectedWall.height]}
+                  onValueChange={handleHeightChange}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label className='sr-only'>Height input</Label>
+                <Input
+                  type='number'
+                  min={0.5}
+                  step={0.1}
+                  value={selectedWall.height.toFixed(2)}
+                  onChange={(event) =>
+                    handleNumericInput(event, (value) =>
+                      handleHeightChange([value]),
+                    )
+                  }
+                />
+              </div>
             </div>
-          </div>
-        ) : (
-          <p className='mt-6 text-sm text-muted-foreground'>
-            Select a wall to edit its properties.
-          </p>
-        )}
-      </SheetContent>
-    </Sheet>
+          </PropertiesSection>
+        </div>
+      ) : (
+        <p className='text-sm text-muted-foreground'>
+          Select a wall to edit its properties.
+        </p>
+      )}
+    </PropertiesShell>
   )
 }
+
+interface MetricProps {
+  label: string
+  value: string
+}
+
+const Metric: React.FC<MetricProps> = ({label, value}) => (
+  <div className='space-y-1 rounded-md border p-3'>
+    <p className='text-xs text-muted-foreground'>{label}</p>
+    <p className='text-sm font-semibold'>{value}</p>
+  </div>
+)

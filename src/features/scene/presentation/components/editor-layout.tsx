@@ -126,7 +126,15 @@ export const EditorLayout: React.FC = () => {
     closeTransientUi()
   }
 
+  const historyDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
+
   React.useEffect(() => {
+    if (historyDebounceRef.current) {
+      clearTimeout(historyDebounceRef.current)
+    }
+
     if (applyingHistoryRef.current) {
       applyingHistoryRef.current = false
       return
@@ -135,8 +143,24 @@ export const EditorLayout: React.FC = () => {
       hasRecordedInitialRef.current = true
       return
     }
-    recordHistory(scene)
+
+    historyDebounceRef.current = setTimeout(() => {
+      recordHistory(scene)
+    }, 300)
   }, [recordHistory, scene])
+
+  React.useEffect(
+    () => () => {
+      if (historyDebounceRef.current) {
+        clearTimeout(historyDebounceRef.current)
+      }
+    },
+    [],
+  )
+
+  React.useEffect(() => {
+    closeAllPanels()
+  }, [activeTool, closeAllPanels])
 
   useEditorShortcuts({
     isEditMode,
