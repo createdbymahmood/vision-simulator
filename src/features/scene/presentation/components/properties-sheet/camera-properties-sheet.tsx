@@ -11,7 +11,13 @@ import {
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
 import {Switch} from '@/components/ui/switch'
 
@@ -48,9 +54,9 @@ export const CameraPropertiesSheet: React.FC = () => {
   }, [cameras, selectedEntityIds])
 
   const [presetName, setPresetName] = React.useState('')
-  const [selectedPresetName, setSelectedPresetName] = React.useState<string | null>(
-    null,
-  )
+  const [selectedPresetName, setSelectedPresetName] = React.useState<
+    string | null
+  >(null)
 
   const updateSelectedCamera = React.useCallback(
     (updater: (camera: (typeof cameras)[number]) => void) => {
@@ -112,11 +118,17 @@ export const CameraPropertiesSheet: React.FC = () => {
     })
   }
 
-  const applyPtz = (next: Partial<{pan: number; tilt: number; zoom: number}>) => {
+  const applyPtz = (
+    next: Partial<{pan: number; tilt: number; zoom: number}>,
+  ) => {
     updateSelectedCamera((camera) => {
       const limits = camera.ptz.limits
       const pan = normalizePan(next.pan ?? camera.ptz.pan)
-      const tilt = clamp(next.tilt ?? camera.ptz.tilt, limits.tiltMin, limits.tiltMax)
+      const tilt = clamp(
+        next.tilt ?? camera.ptz.tilt,
+        limits.tiltMin,
+        limits.tiltMax,
+      )
       const zoom = clamp(
         next.zoom ?? camera.ptz.zoom,
         limits.zoomMin,
@@ -210,8 +222,11 @@ export const CameraPropertiesSheet: React.FC = () => {
 
   const panDegrees = selectedCamera ? normalizePan(selectedCamera.ptz.pan) : 0
 
-  const cameraName =
-    (selectedCamera?.name ?? selectedCamera?.id ?? '').toString()
+  const cameraName = (
+    selectedCamera?.name ??
+    selectedCamera?.id ??
+    ''
+  ).toString()
 
   return (
     <PropertiesShell
@@ -244,7 +259,9 @@ export const CameraPropertiesSheet: React.FC = () => {
               <Select
                 value={selectedCamera.typePreset}
                 onValueChange={(value) => {
-                  const preset = CAMERA_PRESETS.find((item) => item.id === value)
+                  const preset = CAMERA_PRESETS.find(
+                    (item) => item.id === value,
+                  )
                   if (!preset) return
                   updateSelectedCamera((camera) => {
                     camera.typePreset = value
@@ -367,7 +384,9 @@ export const CameraPropertiesSheet: React.FC = () => {
             <PtzDpad
               color={selectedCamera.color}
               onPan={(delta) => applyPtz({pan: selectedCamera.ptz.pan + delta})}
-              onTilt={(delta) => applyPtz({tilt: selectedCamera.ptz.tilt + delta})}
+              onTilt={(delta) =>
+                applyPtz({tilt: selectedCamera.ptz.tilt + delta})
+              }
             />
             <div className='space-y-2'>
               <Label>Pan ({panDegrees.toFixed(0)}°)</Label>
@@ -376,13 +395,13 @@ export const CameraPropertiesSheet: React.FC = () => {
                 min={0}
                 step={1}
                 value={[panDegrees]}
-                onValueChange={(values) => applyPtz({pan: values[0] ?? panDegrees})}
+                onValueChange={(values) =>
+                  applyPtz({pan: values[0] ?? panDegrees})
+                }
               />
             </div>
             <div className='space-y-2'>
-              <Label>
-                Tilt ({selectedCamera.ptz.tilt.toFixed(0)}°)
-              </Label>
+              <Label>Tilt ({selectedCamera.ptz.tilt.toFixed(0)}°)</Label>
               <Slider
                 max={selectedCamera.ptz.limits.tiltMax}
                 min={selectedCamera.ptz.limits.tiltMin}
@@ -474,30 +493,41 @@ interface PtzDpadProps {
 }
 
 const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
-  <div className='grid grid-cols-3 gap-2 rounded-md border p-3'>
+  <div className='grid grid-cols-3 gap-2 rounded-md border p-3 '>
     <div />
-    <Button variant='secondary' size='icon' onClick={() => onTilt(5)}>
-      <ArrowUp className='size-4' />
-    </Button>
+    <div className='flex items-center justify-center'>
+      <Button variant='secondary' size='icon' onClick={() => onTilt(5)}>
+        <ArrowUp className='size-4' />
+      </Button>
+    </div>
     <div />
 
-    <Button variant='secondary' size='icon' onClick={() => onPan(-5)}>
-      <ArrowLeft className='size-4' />
-    </Button>
     <div className='flex items-center justify-center'>
+      <Button variant='secondary' size='icon' onClick={() => onPan(-5)}>
+        <ArrowLeft className='size-4' />
+      </Button>
+    </div>
+
+    <div className='flex items-center justify-center '>
       <span
         className='block size-4 rounded-full'
         style={{backgroundColor: color}}
       />
     </div>
-    <Button variant='secondary' size='icon' onClick={() => onPan(5)}>
-      <ArrowRight className='size-4' />
-    </Button>
+
+    <div className='flex items-center justify-center'>
+      <Button variant='secondary' size='icon' onClick={() => onPan(5)}>
+        <ArrowRight className='size-4' />
+      </Button>
+    </div>
 
     <div />
-    <Button variant='secondary' size='icon' onClick={() => onTilt(-5)}>
-      <ArrowDown className='size-4' />
-    </Button>
+
+    <div className='flex items-center justify-center'>
+      <Button variant='secondary' size='icon' onClick={() => onTilt(-5)}>
+        <ArrowDown className='size-4' />
+      </Button>
+    </div>
     <div />
   </div>
 )
