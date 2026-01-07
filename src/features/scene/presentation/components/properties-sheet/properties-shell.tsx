@@ -40,7 +40,7 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
       className='w-[360px] gap-0 border-l bg-background px-0 backdrop-blur'
       style={{width: 360}}
     >
-      <SheetHeader className='h-14 border-b px-4 py-3'>
+      <SheetHeader className='border-b px-4 py-3'>
         <div className='flex items-center justify-between gap-3'>
           <div className='flex min-w-0 items-center gap-3'>
             {icon ? (
@@ -48,7 +48,7 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
                 {icon}
               </div>
             ) : null}
-            <div className='flex min-w-0 flex-col text-left leading-tight'>
+            <div className='flex min-w-0 flex-col text-left leading-tight gap-1'>
               <SheetTitle className='flex items-center gap-2 text-base'>
                 <span className='truncate'>{entityName ?? title}</span>
                 {accentColor ? (

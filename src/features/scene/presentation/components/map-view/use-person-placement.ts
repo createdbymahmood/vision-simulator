@@ -253,6 +253,7 @@ export const usePersonPlacement = ({
 
       const updated = addPerson({
         areaId: validation.areaId,
+        name: 'Person',
         x: mapPoint[0],
         y: mapPoint[1],
         height: DEFAULT_PERSON_HEIGHT,

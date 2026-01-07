@@ -44,6 +44,18 @@ import {
 
 type MapLayerMouseEvent = MapMouseEvent
 
+const isPointInsideAreaWithBuffer = (point: GeoPoint, area: AreaEntity) => {
+  const ring = closeRing(area.geometry.coordinates)
+  if (ring.length < 4) {
+    return false
+  }
+  try {
+    return booleanPointInPolygon(turfPoint(point), polygon([ring]))
+  } catch {
+    return false
+  }
+}
+
 export const HANDLE_LAYER_IDS = [
   'selection-rotation-handle',
   'selection-handles-corner',
@@ -265,6 +277,7 @@ interface RotateTransformParams {
   shapes: ShapeEntity[]
   origin: GeoPoint
   rotatePoints: typeof rotatePoints
+  cameras: CameraEntity[]
 }
 
 interface HandleFeaturesResult {
@@ -624,6 +637,9 @@ const computeResizeTransform = ({
   let scaleX = originVector.dx !== 0 ? nextVector.dx / originVector.dx : 1
   let scaleY = originVector.dy !== 0 ? nextVector.dy / originVector.dy : 1
 
+  scaleX = Math.max(scaleX, 0.01)
+  scaleY = Math.max(scaleY, 0.01)
+
   if (handleType === 'e' || handleType === 'w') {
     scaleY = 1
   }
@@ -641,7 +657,6 @@ const computeResizeTransform = ({
 
   const updates: Record<string, GeoPoint[]> = {}
   let blockedArea: string | null = null
-  const isShrinking = scaleX < 1 || scaleY < 1
 
   Object.entries(transformSession.originalGeometries).forEach(([id, original]) => {
     const entity = entityIndex.get(id)
@@ -655,26 +670,22 @@ const computeResizeTransform = ({
           coordinates: scaled,
         },
       }
-      if (isShrinking) {
-        const relatedEntities: SceneEntity[] = [
-          ...walls,
-          ...shapes,
-          ...cameras,
-          ...people,
-        ] as SceneEntity[]
-        const hasOutsideChild = relatedEntities.some((child) => {
-          if (getEntityAreaId(child) !== entity.id) {
-            return false
-          }
-          return !isPointInsideAreaWithBuffer(
-            getEntityPoints(child)[0] ?? previewArea.geometry.coordinates[0],
-            previewArea,
-          )
-        })
-        if (hasOutsideChild) {
-          blockedArea = entity.id
-          return
+      const relatedEntities: SceneEntity[] = [
+        ...walls,
+        ...shapes,
+        ...cameras,
+        ...people,
+      ] as SceneEntity[]
+      const hasOutsideChild = relatedEntities.some((child) => {
+        if (getEntityAreaId(child) !== entity.id) {
+          return false
         }
+        const points = getEntityPoints(child)
+        return !points.every((pt) => isPointInsideAreaWithBuffer(pt, previewArea))
+      })
+      if (hasOutsideChild) {
+        blockedArea = entity.id
+        return
       }
     }
     if (
@@ -755,6 +766,7 @@ const computeRotateTransform = ({
   people,
   walls,
   shapes,
+  cameras,
   rotatePoints: rotate,
   origin,
 }: RotateTransformParams): TransformComputationResult => {
@@ -792,24 +804,22 @@ const computeRotateTransform = ({
           coordinates: closeRing(rotated),
         },
       }
-      if (isShrinking) {
-        const relatedEntities: SceneEntity[] = [
-          ...walls,
-          ...shapes,
-          ...cameras,
-          ...people,
-        ] as SceneEntity[]
-        const hasOutsideChild = relatedEntities.some((child) => {
-          if (getEntityAreaId(child) !== entity.id) {
-            return false
-          }
-          const points = getEntityPoints(child)
-          return !points.every((pt) => isPointInsideAreaWithBuffer(pt, previewArea))
-        })
-        if (hasOutsideChild) {
-          blockedArea = entity.id
-          return
+      const relatedEntities: SceneEntity[] = [
+        ...walls,
+        ...shapes,
+        ...cameras,
+        ...people,
+      ] as SceneEntity[]
+      const hasOutsideChild = relatedEntities.some((child) => {
+        if (getEntityAreaId(child) !== entity.id) {
+          return false
         }
+        const points = getEntityPoints(child)
+        return !points.every((pt) => isPointInsideAreaWithBuffer(pt, previewArea))
+      })
+      if (hasOutsideChild) {
+        blockedArea = entity.id
+        return
       }
     }
 
@@ -1400,6 +1410,7 @@ export const useSelectionTransform = ({
           people,
           walls,
           shapes,
+          cameras,
           rotatePoints,
           origin: transformSession.origin ?? mapPoint,
         })

@@ -16,7 +16,7 @@ import {Slider} from '@/components/ui/slider'
 import {Switch} from '@/components/ui/switch'
 
 import {CAMERA_PRESETS} from '@/features/scene/domain/constants/camera-presets'
-import type {CameraEntity, PtzPreset} from '@/features/scene/domain/types'
+import type {PtzPreset} from '@/features/scene/domain/types'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'

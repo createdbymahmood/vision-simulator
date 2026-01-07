@@ -86,11 +86,9 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 ### Shape Properties Panel
 
 - [ ] **Common Fields**:
-  - Position X (meters)
-  - Position Y (meters)
-  - Rotation (circular slider + input, 0-360)
   - Height (meters)
   - Color (color picker)
+  - Position/rotation edits happen on-canvas only to prevent boundary overflows
 
 - [ ] **Rectangle-specific**:
   - Width (meters)
@@ -116,10 +114,9 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
   - Color (color picker with real-time preview)
 
 - [ ] **Position Section**:
-  - X position (meters)
-  - Y position (meters)
   - Height (meters, default 2.5m)
   - Direction (circular slider, 0-360)
+  - X/Y adjustments handled via map interactions (not in sheet)
 
 - [ ] **Optics Section**:
   - FOV (slider, degrees)
@@ -136,8 +133,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 
 - [ ] **Fields**:
   - Name (text input)
-  - X position (meters)
-  - Y position (meters)
   - Height (meters)
   - Speed (m/s)
 
@@ -218,12 +213,7 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 
 ### Coordinate Display in Properties (Section 5.2)
 
-- [ ] X and Y in meters (relative to scene origin)
-  - Format: "X: 12.5 m", "Y: -3.2 m"
-  - Precision: 0.1m
-- [ ] Rotation degrees (0–360)
-  - Format: "45°"
-  - Visual: circular slider + number input
+- [ ] Coordinate and rotation adjustments are map-only; properties sheets show derived metrics instead of manual X/Y inputs
 
 ### History Integration
 
@@ -282,4 +272,3 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - Section 5.5.2: PTZ UI Component (Always Available)
 - Section 5.5.3: PTZ Behavior in Editor
 - Section 5.5.5: PTZ Data Model (presets)
-
