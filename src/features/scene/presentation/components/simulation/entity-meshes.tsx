@@ -146,15 +146,19 @@ export const PersonMesh: React.FC<{
   )
 }
 
-const buildFrustumGeometry = (camera: CameraEntity) => {
+const buildFrustumGeometry = (camera: CameraEntity, maxFrustumDepth?: number) => {
   const yaw = 0 // yaw comes from parent group rotation
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
   const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
   const near = Math.max(camera.nearClipping, 0.1)
-  const far = Math.max(camera.depth, near + 0.1)
+  const unclampedFar = Math.max(camera.depth * 1.05, near + 0.1)
+  const far = Math.max(
+    near + 0.1,
+    Math.min(maxFrustumDepth ?? unclampedFar, unclampedFar),
+  )
   const halfFov = degToRad(fov) / 2
 
-  const rotation = new THREE.Euler(-tilt, yaw, 0, 'YXZ')
+  const rotation = new THREE.Euler(tilt, yaw, 0, 'YXZ')
   const forward = new THREE.Vector3(0, 0, -1).applyEuler(rotation).normalize()
   const right = new THREE.Vector3(1, 0, 0).applyEuler(rotation).normalize()
   const up = new THREE.Vector3(0, 1, 0).applyEuler(rotation).normalize()
@@ -217,7 +221,8 @@ export const CameraMesh: React.FC<{
   onSelect: (id?: string) => void
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selected: boolean
-}> = ({data, onSelect, onFocus, selected}) => {
+  maxFrustumDepth?: number
+}> = ({data, onSelect, onFocus, selected, maxFrustumDepth}) => {
   const {entity, position, dimmed} = data
   const bodyHeight = 0.6
   const standHeight = Math.max(entity.height - bodyHeight, 0.4)
@@ -226,8 +231,8 @@ export const CameraMesh: React.FC<{
   const yaw = degToRad((entity.ptz?.pan ?? entity.direction) - 90)
   const frustum = React.useMemo(
     () =>
-      buildFrustumGeometry(entity),
-    [entity],
+      buildFrustumGeometry(entity, maxFrustumDepth),
+    [entity, maxFrustumDepth],
   )
 
   return (
@@ -329,7 +334,8 @@ export const EntitiesMesh: React.FC<{
   onSelectEntity: (id?: string) => void
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selectedEntityIds: string[]
-}> = ({entities, onSelectEntity, onFocus, selectedEntityIds}) => (
+  maxFrustumDepth?: number
+}> = ({entities, onSelectEntity, onFocus, selectedEntityIds, maxFrustumDepth}) => (
   <>
     {entities.map((entity) => {
       if (entity.type === 'area') {
@@ -384,6 +390,7 @@ export const EntitiesMesh: React.FC<{
             onSelect={onSelectEntity}
             onFocus={onFocus}
             selected={selectedEntityIds.includes(entity.entity.id)}
+            maxFrustumDepth={maxFrustumDepth}
           />
         )
       }

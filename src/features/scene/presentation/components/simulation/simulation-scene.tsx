@@ -233,6 +233,15 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     return new THREE.Box3().setFromPoints(points)
   }, [entities])
 
+  const maxFrustumDepth = React.useMemo(() => {
+    if (!bounds) {
+      return undefined
+    }
+    const size = new THREE.Vector3()
+    bounds.getSize(size)
+    return Math.max(size.x, size.z)
+  }, [bounds])
+
   const [focusRequest, setFocusRequest] = React.useState<FocusRequest | null>(
     null,
   )
@@ -323,6 +332,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
         onSelectEntity={onSelectEntity}
         onFocus={requestFocus}
         selectedEntityIds={selectedEntityIds}
+        maxFrustumDepth={maxFrustumDepth}
       />
 
       <OrbitControls
