@@ -112,7 +112,7 @@ export const createCoordinateTransformer = (
     const merc = lngLatToMeters(point)
     return {
       x: merc.x - originMeters.x,
-      z: merc.y - originMeters.y,
+      z: -(merc.y - originMeters.y),
     }
   }
   const toVector3 = (point: GeoPoint, y = 0) => {

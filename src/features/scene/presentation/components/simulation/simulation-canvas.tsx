@@ -178,16 +178,16 @@ const GroundPlane: React.FC<{
       if (isStaticMap) {
         mapTexture.wrapS = THREE.ClampToEdgeWrapping
         mapTexture.wrapT = THREE.ClampToEdgeWrapping
-        mapTexture.repeat.set(1, -1)
-        mapTexture.offset.set(0, 1)
+        mapTexture.repeat.set(-1, -1)
+        mapTexture.offset.set(1, 1)
       } else {
         mapTexture.wrapS = THREE.RepeatWrapping
         mapTexture.wrapT = THREE.RepeatWrapping
         mapTexture.repeat.set(
-          mapPlaneSize.width / 16,
+          -(mapPlaneSize.width / 16),
           -(mapPlaneSize.height / 16),
         )
-        mapTexture.offset.set(0, 1)
+        mapTexture.offset.set(1, 1)
       }
       mapTexture.needsUpdate = true
     }
@@ -880,7 +880,44 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
         scene,
         transformer,
         focusAreaId,
-      ),
+      ).map((entity) => {
+        if (entity.type === 'area') {
+          return {
+            ...entity,
+            points: entity.points.map((p) =>
+              p.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
+            ),
+          }
+        }
+        if (entity.type === 'wall') {
+          return {
+            ...entity,
+            start: entity.start
+              .clone()
+              .applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
+            end: entity.end
+              .clone()
+              .applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
+          }
+        }
+        if (entity.type === 'shape') {
+          return {
+            ...entity,
+            points: entity.points.map((p) =>
+              p.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
+            ),
+          }
+        }
+        if (entity.type === 'person' || entity.type === 'camera') {
+          return {
+            ...entity,
+            position: entity.position
+              .clone()
+              .applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
+          }
+        }
+        return entity
+      }),
     [focusAreaId, scene, transformer],
   )
 
