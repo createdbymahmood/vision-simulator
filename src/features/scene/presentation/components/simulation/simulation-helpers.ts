@@ -100,19 +100,19 @@ export const createCoordinateTransformer = (
   origin: GeoPoint,
 ): CoordinateTransformer => {
   const EARTH_RADIUS = 6378137
-  const lngLatToMercator = (point: GeoPoint) => {
+  const lngLatToMeters = (point: GeoPoint) => {
     const [lng, lat] = point
-    const x = (lng * Math.PI * EARTH_RADIUS) / 180
+    const x = (EARTH_RADIUS * lng * Math.PI) / 180
     const y =
-      Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) * EARTH_RADIUS
+      EARTH_RADIUS * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))
     return {x, y}
   }
-  const originMerc = lngLatToMercator(origin)
+  const originMeters = lngLatToMeters(origin)
   const toFlat = (point: GeoPoint) => {
-    const merc = lngLatToMercator(point)
+    const merc = lngLatToMeters(point)
     return {
-      x: merc.x - originMerc.x,
-      z: merc.y - originMerc.y,
+      x: merc.x - originMeters.x,
+      z: merc.y - originMeters.y,
     }
   }
   const toVector3 = (point: GeoPoint, y = 0) => {

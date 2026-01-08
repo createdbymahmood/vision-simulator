@@ -19,6 +19,10 @@ import {
   parseColorAndAlpha,
   transformFeatureCollectionsToThreeJSShapes,
 } from './simulation-helpers'
+import {computeBounds} from '../map-view/selection-geometry'
+
+const WALL_BASE_OPACITY = 0.8
+const SHAPE_BASE_OPACITY = 0.8
 
 interface SimulationCanvasProps {
   scene: SceneRoot
@@ -131,8 +135,17 @@ const GroundPlane: React.FC<{
   showMapTexture: boolean
   mapTexture: THREE.Texture | null
   gridTexture: THREE.Texture | null
-}> = ({showMapTexture, mapTexture, gridTexture}) => {
-  const planeSize = 1000
+  mapPlaneSize: {width: number; height: number}
+  gridPlaneSize: {width: number; height: number}
+  isStaticMap: boolean
+}> = ({
+  showMapTexture,
+  mapTexture,
+  gridTexture,
+  mapPlaneSize,
+  gridPlaneSize,
+  isStaticMap,
+}) => {
   const mapOffset = -0.004
   const gridOffset = -0.002
   const [mapOpacity, setMapOpacity] = React.useState(showMapTexture ? 1 : 0)
@@ -162,17 +175,46 @@ const GroundPlane: React.FC<{
 
   React.useEffect(() => {
     if (mapTexture) {
-      mapTexture.repeat.set(planeSize / 16, planeSize / 16)
+      if (isStaticMap) {
+        mapTexture.wrapS = THREE.ClampToEdgeWrapping
+        mapTexture.wrapT = THREE.ClampToEdgeWrapping
+        mapTexture.repeat.set(1, -1)
+        mapTexture.offset.set(0, 1)
+      } else {
+        mapTexture.wrapS = THREE.RepeatWrapping
+        mapTexture.wrapT = THREE.RepeatWrapping
+        mapTexture.repeat.set(
+          mapPlaneSize.width / 16,
+          -(mapPlaneSize.height / 16),
+        )
+        mapTexture.offset.set(0, 1)
+      }
+      mapTexture.needsUpdate = true
     }
     if (gridTexture) {
-      gridTexture.repeat.set(planeSize / 4, planeSize / 4)
+      gridTexture.repeat.set(
+        gridPlaneSize.width / 4,
+        gridPlaneSize.height / 4,
+      )
     }
-  }, [gridTexture, mapTexture, planeSize])
+  }, [
+    gridPlaneSize.height,
+    gridPlaneSize.width,
+    gridTexture,
+    isStaticMap,
+    mapPlaneSize.height,
+    mapPlaneSize.width,
+    mapTexture,
+  ])
 
   return (
     <>
-      <mesh position={[0, mapOffset, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[planeSize, planeSize]} />
+      <mesh
+        position={[0, mapOffset, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow
+      >
+        <planeGeometry args={[mapPlaneSize.width, mapPlaneSize.height]} />
         <meshStandardMaterial
           map={mapTexture ?? undefined}
           color={mapTexture ? undefined : '#E5E7EB'}
@@ -183,8 +225,12 @@ const GroundPlane: React.FC<{
           polygonOffsetUnits={1}
         />
       </mesh>
-      <mesh position={[0, gridOffset, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[planeSize, planeSize]} />
+      <mesh
+        position={[0, gridOffset, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        receiveShadow
+      >
+        <planeGeometry args={[gridPlaneSize.width, gridPlaneSize.height]} />
         <meshStandardMaterial
           map={gridTexture ?? undefined}
           color={gridTexture ? undefined : '#F8FAFC'}
@@ -228,8 +274,8 @@ const WallMesh: React.FC<{
           color={data.entity.color}
           roughness={0.9}
           metalness={0}
-          transparent={data.dimmed}
-          opacity={data.dimmed ? 0.5 : 1}
+          transparent
+          opacity={data.dimmed ? WALL_BASE_OPACITY * 0.5 : WALL_BASE_OPACITY}
         />
       </mesh>
     </group>
@@ -262,7 +308,7 @@ const ShapeMesh: React.FC<{
       roughness={0.9}
       metalness={0}
       transparent
-      opacity={shapeColor.alpha}
+      opacity={shapeColor.alpha * SHAPE_BASE_OPACITY}
       polygonOffset
       polygonOffsetFactor={4}
       polygonOffsetUnits={4}
@@ -277,7 +323,10 @@ const ShapeMesh: React.FC<{
     const midpoint = start.clone().add(end).multiplyScalar(0.5)
     const angle = Math.atan2(end.z - start.z, end.x - start.x)
     return (
-      <group position={midpoint.clone().setY(midpoint.y + 0.1)} rotation={[0, angle, 0]}>
+      <group
+        position={midpoint.clone().setY(midpoint.y + 0.1)}
+        rotation={[0, angle, 0]}
+      >
         <mesh
           castShadow
           receiveShadow
@@ -322,7 +371,10 @@ const ShapeMesh: React.FC<{
         event.stopPropagation()
         onSelect(entity.id)
         if (event.detail === 2) {
-          onFocus(center.clone(), Math.max(size.x, size.z, entity.height * 2, 10))
+          onFocus(
+            center.clone(),
+            Math.max(size.x, size.z, entity.height * 2, 10),
+          )
         }
       }}
     >
@@ -355,7 +407,9 @@ const AreaMesh: React.FC<{
     bevelEnabled: false,
   })
   extrude.rotateX(-Math.PI / 2)
-  const fillColorParsed = parseColorAndAlpha(data.entity.style.fillColor ?? data.entity.color)
+  const fillColorParsed = parseColorAndAlpha(
+    data.entity.style.fillColor ?? data.entity.color,
+  )
   const baseOpacity = data.entity.style.fillOpacity ?? 1
   const appliedOpacity = baseOpacity * fillColorParsed.alpha
   const fillColor = fillColorParsed.color
@@ -732,17 +786,93 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
   selectedEntityIds,
 }) => {
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
-  const originPoint = React.useMemo(
-    () => computeSceneOrigin(scene),
-    [scene],
-  )
+  const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
   const transformer = React.useMemo(
     () => createCoordinateTransformer(originPoint),
     [originPoint],
   )
 
   const gridTexture = React.useMemo(() => createGridTexture(), [])
-  const mapTexture = React.useMemo(() => createMapTexture(), [])
+  const fallbackMapTexture = React.useMemo(() => createMapTexture(), [])
+  const [staticMapTexture, setStaticMapTexture] =
+    React.useState<THREE.Texture | null>(null)
+  const [isStaticMapReady, setIsStaticMapReady] = React.useState(false)
+
+  const geoPoints = React.useMemo(() => {
+    const points: [number, number][] = []
+    scene.areas.forEach((area) => points.push(...area.geometry.coordinates))
+    scene.shapes.forEach((shape) => points.push(...shape.geometry))
+    scene.walls.forEach((wall) => points.push(...wall.points))
+    scene.people.forEach((person) => points.push([person.x, person.y]))
+    scene.cameras.forEach((camera) => points.push([camera.x, camera.y]))
+    return points
+  }, [scene])
+
+  const geoBounds = React.useMemo(() => computeBounds(geoPoints), [geoPoints])
+
+  const mapPlaneSize = React.useMemo(() => {
+    if (!geoBounds) {
+      return {width: 800, height: 800}
+    }
+    const minFlat = transformer.toFlat([geoBounds.minLng, geoBounds.minLat])
+    const maxXFlat = transformer.toFlat([geoBounds.maxLng, geoBounds.minLat])
+    const maxZFlat = transformer.toFlat([geoBounds.minLng, geoBounds.maxLat])
+    const width = Math.abs(maxXFlat.x - minFlat.x)
+    const height = Math.abs(maxZFlat.z - minFlat.z)
+    const paddingMultiplier = 1.1
+    const paddingAbsolute = 50
+    return {
+      width: Math.max(width * paddingMultiplier, width + paddingAbsolute, 200),
+      height: Math.max(
+        height * paddingMultiplier,
+        height + paddingAbsolute,
+        200,
+      ),
+    }
+  }, [geoBounds, transformer])
+
+  const gridPlaneSize = React.useMemo(() => {
+    const base = mapPlaneSize
+    const multiplier = 8
+    return {
+      width: Math.max(base.width * multiplier, 3200),
+      height: Math.max(base.height * multiplier, 3200),
+    }
+  }, [mapPlaneSize])
+
+  React.useEffect(() => {
+    const token = import.meta.env.VITE_MAPBOX_TOKEN
+    if (!showMapTexture || !geoBounds || !token) {
+      setStaticMapTexture(null)
+      setIsStaticMapReady(false)
+      return
+    }
+    const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/[${geoBounds.minLng},${geoBounds.minLat},${geoBounds.maxLng},${geoBounds.maxLat}]/1280x1280@2x?access_token=${token}`
+    let canceled = false
+    const loader = new THREE.TextureLoader()
+    loader.setCrossOrigin('anonymous')
+    loader.load(
+      url,
+      (texture) => {
+        if (canceled) return
+        texture.wrapS = THREE.ClampToEdgeWrapping
+        texture.wrapT = THREE.ClampToEdgeWrapping
+        texture.anisotropy = 8
+        setStaticMapTexture(texture)
+        setIsStaticMapReady(true)
+      },
+      undefined,
+      () => {
+        if (!canceled) {
+          setStaticMapTexture(null)
+          setIsStaticMapReady(false)
+        }
+      },
+    )
+    return () => {
+      canceled = true
+    }
+  }, [geoBounds, showMapTexture])
 
   const entities: WorldEntity[] = React.useMemo(
     () =>
@@ -846,7 +976,10 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
       <GroundPlane
         showMapTexture={showMapTexture}
         gridTexture={gridTexture}
-        mapTexture={mapTexture}
+        mapTexture={staticMapTexture ?? fallbackMapTexture}
+        mapPlaneSize={mapPlaneSize}
+        gridPlaneSize={gridPlaneSize}
+        isStaticMap={Boolean(staticMapTexture && isStaticMapReady)}
       />
 
       {entities.map((entity) => {

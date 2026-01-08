@@ -155,7 +155,9 @@ export const SimulationAnalysisView: React.FC = () => {
             scene={scene}
             focusAreaId={scene.activeAreaId}
             sceneMode={scene.mode}
-            showMapTexture={scene.mapVisible && scene.mode === 'map'}
+            showMapTexture={
+              scene.mode === 'canvas' ? true : scene.mapVisible && scene.mode === 'map'
+            }
             selectedEntityIds={selectedEntityIds}
             onSelectEntity={(id) => setSelection(id ? [id] : [])}
           />
