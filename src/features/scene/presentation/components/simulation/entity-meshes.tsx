@@ -146,7 +146,11 @@ export const PersonMesh: React.FC<{
   )
 }
 
-const buildFrustumGeometry = (camera: CameraEntity, maxFrustumDepth?: number) => {
+const buildFrustumGeometry = (
+  camera: CameraEntity,
+  opticHeight: number,
+  maxFrustumDepth?: number,
+) => {
   const yaw = 0 // yaw comes from parent group rotation
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
   const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
@@ -190,8 +194,19 @@ const buildFrustumGeometry = (camera: CameraEntity, maxFrustumDepth?: number) =>
 
   const nearCorners = buildCorners(nearCenter, nearSize)
   const farCorners = buildCorners(farCenter, farSize)
-  const vertices = [...nearCorners, ...farCorners]
-  const positions = new Float32Array(vertices.flatMap((v) => [v.x, v.y, v.z]))
+  const groundClearance = 0.01
+  const minLocalY = -opticHeight + groundClearance
+  const vertices = [...nearCorners, ...farCorners].map((vertex) => {
+    if (vertex.y >= minLocalY) {
+      return vertex
+    }
+    const clamped = vertex.clone()
+    clamped.y = minLocalY
+    return clamped
+  })
+  const positions = new Float32Array(
+    vertices.flatMap((vertex) => [vertex.x, vertex.y, vertex.z]),
+  )
 
   const indices = [
     0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2,
@@ -230,9 +245,8 @@ export const CameraMesh: React.FC<{
   const opticHeight = standHeight + bodyHeight * 0.5
   const yaw = degToRad((entity.ptz?.pan ?? entity.direction) - 90)
   const frustum = React.useMemo(
-    () =>
-      buildFrustumGeometry(entity, maxFrustumDepth),
-    [entity, maxFrustumDepth],
+    () => buildFrustumGeometry(entity, opticHeight, maxFrustumDepth),
+    [entity, maxFrustumDepth, opticHeight],
   )
 
   return (
