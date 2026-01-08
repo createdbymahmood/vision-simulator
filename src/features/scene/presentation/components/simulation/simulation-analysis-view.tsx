@@ -2,7 +2,6 @@ import React from 'react'
 import {ArrowLeft, Film, Image, Map, MapPin, ToggleLeft} from 'lucide-react'
 
 import {Button} from '@/components/ui/button'
-import {Label} from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -10,8 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {Switch} from '@/components/ui/switch'
-import {cn} from '@/lib/utils'
 
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
@@ -72,7 +69,7 @@ export const SimulationAnalysisView: React.FC = () => {
 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
-      <div className='flex h-14 items-center justify-between bg-background/80 backdrop-blur px-4 border-b'>
+      <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
         <div className='flex items-center gap-4'>
           <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
             <Button
@@ -94,33 +91,6 @@ export const SimulationAnalysisView: React.FC = () => {
               Canvas
             </Button>
           </div>
-
-          <div className='flex items-center gap-2 pl-2'>
-            <Switch
-              id='map-visibility'
-              checked={scene.mapVisible}
-              onCheckedChange={(checked) => setMapVisibility(checked)}
-              disabled={scene.mode !== 'map'}
-            />
-            <Label
-              htmlFor='map-visibility'
-              className={cn(
-                'text-sm',
-                scene.mode !== 'map' ? 'text-muted-foreground' : undefined,
-              )}
-            >
-              Map View
-            </Label>
-          </div>
-
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={() => setViewMode('editor')}
-          >
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Back to Editor
-          </Button>
         </div>
 
         <div className='flex items-center gap-3'>
@@ -158,7 +128,7 @@ export const SimulationAnalysisView: React.FC = () => {
           )}
         </div>
 
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-2 ml-auto'>
           <Button size='sm' variant='outline'>
             <Film className='mr-2 h-4 w-4' />
             Start Recording
@@ -168,6 +138,15 @@ export const SimulationAnalysisView: React.FC = () => {
             Export Snapshot
           </Button>
         </div>
+
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={() => setViewMode('editor')}
+        >
+          <ArrowLeft className='mr-2 h-4 w-4' />
+          Back to Editor
+        </Button>
       </div>
 
       <div className='relative flex-1 min-h-[520px] overflow-hidden shadow-inner'>
@@ -175,8 +154,8 @@ export const SimulationAnalysisView: React.FC = () => {
           <SimulationCanvas
             scene={scene}
             focusAreaId={scene.activeAreaId}
-            showMapTexture={scene.mapVisible && scene.mode === 'map'}
             sceneMode={scene.mode}
+            showMapTexture={scene.mapVisible && scene.mode === 'map'}
             selectedEntityIds={selectedEntityIds}
             onSelectEntity={(id) => setSelection(id ? [id] : [])}
           />
