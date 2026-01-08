@@ -206,6 +206,7 @@ const WallMesh: React.FC<{
   selected: boolean
 }> = ({data, onSelect, onFocus, selected: _selected}) => {
   const midpoint = data.start.clone().add(data.end).multiplyScalar(0.5)
+  midpoint.y = data.entity.height / 2
   const angle = Math.atan2(data.end.z - data.start.z, data.end.x - data.start.x)
   return (
     <group position={midpoint} rotation={[0, angle, 0]}>
@@ -863,7 +864,7 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
         if (entity.type === 'wall') {
           return (
             <WallMesh
-              key={entity.entity.id}
+              key={`${entity.entity.id}-${entity.segmentIndex}`}
               data={entity}
               onSelect={onSelectEntity}
               onFocus={requestFocus}

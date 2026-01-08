@@ -29,6 +29,7 @@ export type WorldEntity =
       end: THREE.Vector3
       length: number
       dimmed: boolean
+      segmentIndex: number
     }
   | {
       type: 'shape'
@@ -131,18 +132,25 @@ export const transformWallFeatureCollectionsToThreeJSShapes = (
   isDimmed: (areaId?: string) => boolean,
 ): WorldEntity[] =>
   scene.walls
-    .filter((wall) => wall.points.length >= 2)
-    .map((wall) => {
-      const start = transformer.toVector3(wall.points[0])
-      const end = transformer.toVector3(wall.points[wall.points.length - 1])
-      return {
-        type: 'wall',
-        entity: wall,
-        start,
-        end,
-        length: start.distanceTo(end),
-        dimmed: isDimmed(wall.areaId),
-      } satisfies WorldEntity
+    .filter((wall) => scene.areas.some((area) => area.id === wall.areaId))
+    .flatMap((wall) => {
+      const segments: WorldEntity[] = []
+      for (let index = 0; index < wall.points.length - 1; index += 1) {
+        const startPoint = wall.points[index]
+        const endPoint = wall.points[index + 1]
+        const start = transformer.toVector3(startPoint)
+        const end = transformer.toVector3(endPoint)
+        segments.push({
+          type: 'wall',
+          entity: wall,
+          start,
+          end,
+          length: start.distanceTo(end),
+          dimmed: isDimmed(wall.areaId),
+          segmentIndex: index,
+        })
+      }
+      return segments
     })
 
 export const transformShapeFeatureCollectionsToThreeJSShapes = (
@@ -150,37 +158,43 @@ export const transformShapeFeatureCollectionsToThreeJSShapes = (
   transformer: CoordinateTransformer,
   isDimmed: (areaId?: string) => boolean,
 ): WorldEntity[] =>
-  scene.shapes.map((shape, index) => ({
-    type: 'shape',
-    entity: shape,
-    points: shape.geometry.map((point) => transformer.toVector3(point)),
-    dimmed: isDimmed(shape.areaId),
-    renderOrder: 10 + index,
-  }))
+  scene.shapes
+    .filter((shape) => scene.areas.some((area) => area.id === shape.areaId))
+    .map((shape, index) => ({
+      type: 'shape',
+      entity: shape,
+      points: shape.geometry.map((point) => transformer.toVector3(point)),
+      dimmed: isDimmed(shape.areaId),
+      renderOrder: 10 + index,
+    }))
 
 export const transformPeopleFeatureCollectionsToThreeJSShape = (
   scene: SceneRoot,
   transformer: CoordinateTransformer,
   isDimmed: (areaId?: string) => boolean,
 ): WorldEntity[] =>
-  scene.people.map((person) => ({
-    type: 'person',
-    entity: person,
-    position: transformer.toVector3([person.x, person.y], person.height / 2),
-    dimmed: isDimmed(person.areaId),
-  }))
+  scene.people
+    .filter((person) => scene.areas.some((area) => area.id === person.areaId))
+    .map((person) => ({
+      type: 'person',
+      entity: person,
+      position: transformer.toVector3([person.x, person.y], person.height / 2),
+      dimmed: isDimmed(person.areaId),
+    }))
 
 export const transformCameraFeatureCollectionsToThreeJSShape = (
   scene: SceneRoot,
   transformer: CoordinateTransformer,
   isDimmed: (areaId?: string) => boolean,
 ): WorldEntity[] =>
-  scene.cameras.map((camera) => ({
-    type: 'camera',
-    entity: camera,
-    position: transformer.toVector3([camera.x, camera.y], 0),
-    dimmed: isDimmed(camera.areaId),
-  }))
+  scene.cameras
+    .filter((camera) => scene.areas.some((area) => area.id === camera.areaId))
+    .map((camera) => ({
+      type: 'camera',
+      entity: camera,
+      position: transformer.toVector3([camera.x, camera.y], 0),
+      dimmed: isDimmed(camera.areaId),
+    }))
 
 export const transformFeatureCollectionsToThreeJSShapes = (
   scene: SceneRoot,
