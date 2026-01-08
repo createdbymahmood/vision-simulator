@@ -74,6 +74,7 @@ const createGridTexture = () => {
   }
 
   const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
   texture.anisotropy = 8
@@ -123,6 +124,7 @@ const createMapTexture = () => {
   ctx.stroke()
 
   const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
   texture.anisotropy = 8
@@ -192,10 +194,7 @@ const GroundPlane: React.FC<{
       mapTexture.needsUpdate = true
     }
     if (gridTexture) {
-      gridTexture.repeat.set(
-        gridPlaneSize.width / 4,
-        gridPlaneSize.height / 4,
-      )
+      gridTexture.repeat.set(gridPlaneSize.width / 4, gridPlaneSize.height / 4)
     }
   }, [
     gridPlaneSize.height,
@@ -212,10 +211,9 @@ const GroundPlane: React.FC<{
       <mesh
         position={[0, mapOffset, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
       >
         <planeGeometry args={[mapPlaneSize.width, mapPlaneSize.height]} />
-        <meshStandardMaterial
+        <meshBasicMaterial
           map={mapTexture ?? undefined}
           color={mapTexture ? undefined : '#E5E7EB'}
           transparent
@@ -228,10 +226,9 @@ const GroundPlane: React.FC<{
       <mesh
         position={[0, gridOffset, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
-        receiveShadow
       >
         <planeGeometry args={[gridPlaneSize.width, gridPlaneSize.height]} />
-        <meshStandardMaterial
+        <meshBasicMaterial
           map={gridTexture ?? undefined}
           color={gridTexture ? undefined : '#F8FAFC'}
           transparent
@@ -857,6 +854,7 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
         if (canceled) return
         texture.wrapS = THREE.ClampToEdgeWrapping
         texture.wrapT = THREE.ClampToEdgeWrapping
+        texture.colorSpace = THREE.SRGBColorSpace
         texture.anisotropy = 8
         setStaticMapTexture(texture)
         setIsStaticMapReady(true)
