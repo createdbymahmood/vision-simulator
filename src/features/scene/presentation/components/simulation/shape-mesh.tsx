@@ -174,6 +174,7 @@ export const ShapeMesh: React.FC<{
     (entity as {thickness?: number}).thickness ?? DEFAULT_LINE_THICKNESS,
     0.02,
   )
+  const renderOrder = data.renderOrder ?? 0
 
   const shapeData = useShapeData(entity, points, shapeHeight, lineThickness)
 
@@ -200,8 +201,12 @@ export const ShapeMesh: React.FC<{
 
   if (shapeData.kind === 'line') {
     return (
-      <group position={shapeData.position} rotation={[0, shapeData.rotationY, 0]}>
-        <mesh castShadow receiveShadow onClick={handleSelect}>
+      <group
+        position={shapeData.position}
+        rotation={[0, shapeData.rotationY, 0]}
+        renderOrder={renderOrder}
+      >
+        <mesh castShadow receiveShadow onClick={handleSelect} renderOrder={renderOrder}>
           <boxGeometry
             args={[shapeData.length, shapeHeight, shapeData.thickness]}
           />
@@ -213,6 +218,7 @@ export const ShapeMesh: React.FC<{
             opacity={baseOpacity}
             emissive={selected ? color : '#000000'}
             emissiveIntensity={selected ? 0.3 : 0}
+            depthWrite={false}
           />
         </mesh>
       </group>
@@ -221,8 +227,8 @@ export const ShapeMesh: React.FC<{
 
   if (shapeData.kind === 'cylinder') {
     return (
-      <group position={shapeData.position}>
-        <mesh castShadow receiveShadow onClick={handleSelect}>
+      <group position={shapeData.position} renderOrder={renderOrder}>
+        <mesh castShadow receiveShadow onClick={handleSelect} renderOrder={renderOrder}>
           <cylinderGeometry
             args={[shapeData.radius, shapeData.radius, shapeHeight, 48]}
           />
@@ -234,6 +240,7 @@ export const ShapeMesh: React.FC<{
             opacity={baseOpacity}
             emissive={selected ? color : '#000000'}
             emissiveIntensity={selected ? 0.3 : 0}
+            depthWrite={false}
           />
         </mesh>
       </group>
@@ -241,12 +248,13 @@ export const ShapeMesh: React.FC<{
   }
 
   return (
-    <group position={shapeData.position}>
+    <group position={shapeData.position} renderOrder={renderOrder}>
       <mesh
         castShadow
         receiveShadow
         geometry={shapeData.geometry}
         onClick={handleSelect}
+        renderOrder={renderOrder}
       >
         <meshStandardMaterial
           color={color}
@@ -259,6 +267,7 @@ export const ShapeMesh: React.FC<{
           polygonOffset
           polygonOffsetFactor={2}
           polygonOffsetUnits={2}
+          depthWrite={false}
         />
       </mesh>
     </group>

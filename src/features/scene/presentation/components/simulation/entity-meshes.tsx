@@ -196,14 +196,14 @@ const buildFrustumGeometry = (
   const farCorners = buildCorners(farCenter, farSize)
   const groundClearance = 0.01
   const minLocalY = -opticHeight + groundClearance
-  const vertices = [...nearCorners, ...farCorners].map((vertex) => {
+  const clampToGround = (vertex: THREE.Vector3) => {
     if (vertex.y >= minLocalY) {
       return vertex
     }
-    const clamped = vertex.clone()
-    clamped.y = minLocalY
-    return clamped
-  })
+    const scale = minLocalY / vertex.y
+    return vertex.clone().multiplyScalar(scale)
+  }
+  const vertices = [...nearCorners, ...farCorners].map(clampToGround)
   const positions = new Float32Array(
     vertices.flatMap((vertex) => [vertex.x, vertex.y, vertex.z]),
   )
@@ -243,7 +243,7 @@ export const CameraMesh: React.FC<{
   const standHeight = Math.max(entity.height - bodyHeight, 0.4)
   const color = entity.color
   const opticHeight = standHeight + bodyHeight * 0.5
-  const yaw = degToRad((entity.ptz?.pan ?? entity.direction) - 90)
+  const yaw = -degToRad(entity.ptz?.pan ?? entity.direction)
   const frustum = React.useMemo(
     () => buildFrustumGeometry(entity, opticHeight, maxFrustumDepth),
     [entity, maxFrustumDepth, opticHeight],
