@@ -90,7 +90,7 @@ const createMapTexture = () => {
   if (!ctx) {
     return null
   }
-  const gradient = ctx.createLinearGradient(0, 0, size, size)
+  const gradient = ctx.createLinearGradient(0, 0, size, 0)
   gradient.addColorStop(0, '#E0F2FE')
   gradient.addColorStop(1, '#F8FAFC')
   ctx.fillStyle = gradient
@@ -180,21 +180,24 @@ const GroundPlane: React.FC<{
       if (isStaticMap) {
         mapTexture.wrapS = THREE.ClampToEdgeWrapping
         mapTexture.wrapT = THREE.ClampToEdgeWrapping
-        mapTexture.repeat.set(-1, -1)
-        mapTexture.offset.set(1, 1)
+        mapTexture.repeat.set(1, 1)
+        mapTexture.offset.set(0, 0)
+        mapTexture.flipY = true
       } else {
         mapTexture.wrapS = THREE.RepeatWrapping
         mapTexture.wrapT = THREE.RepeatWrapping
         mapTexture.repeat.set(
-          -(mapPlaneSize.width / 16),
-          -(mapPlaneSize.height / 16),
+          mapPlaneSize.width / 16,
+          mapPlaneSize.height / 16,
         )
-        mapTexture.offset.set(1, 1)
+        mapTexture.offset.set(0, 0)
+        mapTexture.flipY = true
       }
       mapTexture.needsUpdate = true
     }
     if (gridTexture) {
       gridTexture.repeat.set(gridPlaneSize.width / 4, gridPlaneSize.height / 4)
+      gridTexture.offset.set(0, 0)
     }
   }, [
     gridPlaneSize.height,
@@ -838,7 +841,16 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
       setIsStaticMapReady(false)
       return
     }
-    const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/[${geoBounds.minLng},${geoBounds.minLat},${geoBounds.maxLng},${geoBounds.maxLat}]/1280x1280@2x?access_token=${token}`
+    const maxSize = 1280
+    const planeAspect = mapPlaneSize.width / mapPlaneSize.height || 1
+    let reqWidth = maxSize
+    let reqHeight = Math.max(1, Math.round(reqWidth / planeAspect))
+    if (reqHeight > maxSize) {
+      reqHeight = maxSize
+      reqWidth = Math.max(1, Math.round(reqHeight * planeAspect))
+    }
+
+    const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/[${geoBounds.minLng},${geoBounds.minLat},${geoBounds.maxLng},${geoBounds.maxLat}]/${reqWidth}x${reqHeight}@2x?attribution=false&logo=false&access_token=${token}`
     let canceled = false
     const loader = new THREE.TextureLoader()
     loader.setCrossOrigin('anonymous')
@@ -850,6 +862,8 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
         texture.wrapT = THREE.ClampToEdgeWrapping
         texture.colorSpace = THREE.SRGBColorSpace
         texture.anisotropy = 8
+        texture.flipY = true
+        texture.needsUpdate = true
         setStaticMapTexture(texture)
         setIsStaticMapReady(true)
       },
@@ -872,44 +886,7 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
         scene,
         transformer,
         focusAreaId,
-      ).map((entity) => {
-        if (entity.type === 'area') {
-          return {
-            ...entity,
-            points: entity.points.map((p) =>
-              p.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
-            ),
-          }
-        }
-        if (entity.type === 'wall') {
-          return {
-            ...entity,
-            start: entity.start
-              .clone()
-              .applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
-            end: entity.end
-              .clone()
-              .applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
-          }
-        }
-        if (entity.type === 'shape') {
-          return {
-            ...entity,
-            points: entity.points.map((p) =>
-              p.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
-            ),
-          }
-        }
-        if (entity.type === 'person' || entity.type === 'camera') {
-          return {
-            ...entity,
-            position: entity.position
-              .clone()
-              .applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI),
-          }
-        }
-        return entity
-      }),
+      ),
     [focusAreaId, scene, transformer],
   )
 
