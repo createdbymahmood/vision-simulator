@@ -2,23 +2,23 @@ import React from 'react'
 import {Canvas, useFrame, useThree} from '@react-three/fiber'
 import {OrbitControls} from '@react-three/drei'
 import * as THREE from 'three'
-import {distance} from '@turf/turf'
 import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
 
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 import type {
-  AreaEntity,
   CameraEntity,
-  GeoPoint,
-  PersonEntity,
   SceneMode,
   SceneRoot,
-  ShapeEntity,
-  WallEntity,
 } from '@/features/scene/domain/types'
 
-import {closeRing} from '../map-view/map-view-helpers'
-import {computeBounds, getBoundsCenter} from '../map-view/selection-geometry'
+import {
+  type WorldEntity,
+  closeRingVectors,
+  computeSceneOrigin,
+  createCoordinateTransformer,
+  parseColorAndAlpha,
+  transformFeatureCollectionsToThreeJSShapes,
+} from './simulation-helpers'
 
 interface SimulationCanvasProps {
   scene: SceneRoot
@@ -27,96 +27,6 @@ interface SimulationCanvasProps {
   focusAreaId?: string
   onSelectEntity: (id?: string) => void
   selectedEntityIds: string[]
-}
-
-interface CoordinateTransformer {
-  toVector3: (point: GeoPoint, y?: number) => THREE.Vector3
-  toFlat: (point: GeoPoint) => {x: number; z: number}
-  origin: GeoPoint
-}
-
-type WorldEntity =
-  | {type: 'area'; entity: AreaEntity; points: THREE.Vector3[]; dimmed: boolean}
-  | {
-      type: 'wall'
-      entity: WallEntity
-      start: THREE.Vector3
-      end: THREE.Vector3
-      length: number
-      dimmed: boolean
-    }
-  | {
-      type: 'shape'
-      entity: ShapeEntity
-      points: THREE.Vector3[]
-      dimmed: boolean
-    }
-  | {
-      type: 'person'
-      entity: PersonEntity
-      position: THREE.Vector3
-      dimmed: boolean
-    }
-  | {
-      type: 'camera'
-      entity: CameraEntity
-      position: THREE.Vector3
-      dimmed: boolean
-    }
-
-const closeRingCoords = (coordinates: GeoPoint[]) => {
-  if (coordinates.length === 0) {
-    return coordinates
-  }
-  const first = coordinates[0]
-  const last = coordinates[coordinates.length - 1]
-  if (first[0] === last[0] && first[1] === last[1]) {
-    return coordinates
-  }
-  return [...coordinates, first]
-}
-
-const getAreaCenter = (area: AreaEntity): GeoPoint => {
-  const coords = closeRingCoords(area.geometry.coordinates)
-  const bounds = computeBounds(coords)
-  if (bounds) {
-    return getBoundsCenter(bounds)
-  }
-  const sum = coords.reduce(
-    (acc, [lng, lat]) => ({lng: acc.lng + lng, lat: acc.lat + lat}),
-    {lng: 0, lat: 0},
-  )
-  const count = coords.length || 1
-  return [sum.lng / count, sum.lat / count]
-}
-
-const computeSceneOrigin = (
-  scene: SceneRoot,
-  focusAreaId?: string,
-): GeoPoint => {
-  const targetedArea =
-    (focusAreaId && scene.areas.find((area) => area.id === focusAreaId)) ??
-    scene.areas[0]
-  if (targetedArea) {
-    return getAreaCenter(targetedArea)
-  }
-  return [scene.origin.lng, scene.origin.lat]
-}
-
-const createCoordinateTransformer = (
-  origin: GeoPoint,
-): CoordinateTransformer => {
-  const metersPerLng = distance(origin, [origin[0] + 1, origin[1]]) * 1000
-  const metersPerLat = distance(origin, [origin[0], origin[1] + 1]) * 1000
-  const toFlat = (point: GeoPoint) => ({
-    x: (point[0] - origin[0]) * metersPerLng,
-    z: (point[1] - origin[1]) * metersPerLat,
-  })
-  const toVector3 = (point: GeoPoint, y = 0) => {
-    const flat = toFlat(point)
-    return new THREE.Vector3(flat.x, y, flat.z)
-  }
-  return {toVector3, toFlat, origin}
 }
 
 const createGridTexture = () => {
@@ -294,7 +204,7 @@ const WallMesh: React.FC<{
   onSelect: (id?: string) => void
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selected: boolean
-}> = ({data, onSelect, onFocus, selected}) => {
+}> = ({data, onSelect, onFocus, selected: _selected}) => {
   const midpoint = data.start.clone().add(data.end).multiplyScalar(0.5)
   const angle = Math.atan2(data.end.z - data.start.z, data.end.x - data.start.x)
   return (
@@ -315,12 +225,10 @@ const WallMesh: React.FC<{
         />
         <meshStandardMaterial
           color={data.entity.color}
-          roughness={0.8}
-          metalness={0.1}
-          opacity={data.dimmed ? 0.35 : 1}
+          roughness={0.9}
+          metalness={0}
           transparent={data.dimmed}
-          emissive={selected ? '#60A5FA' : '#000000'}
-          emissiveIntensity={selected ? 0.2 : 0}
+          opacity={data.dimmed ? 0.5 : 1}
         />
       </mesh>
     </group>
@@ -332,124 +240,33 @@ const ShapeMesh: React.FC<{
   onSelect: (id?: string) => void
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selected: boolean
-}> = ({data, onSelect, onFocus, selected}) => {
-  const {entity, points, dimmed} = data
+}> = ({data, onSelect, onFocus, selected: _selected}) => {
+  const {entity, points} = data
   if (points.length < 2) {
     return null
   }
-  const xs = points.map((p) => p.x)
-  const zs = points.map((p) => p.z)
-  const minX = Math.min(...xs)
-  const maxX = Math.max(...xs)
-  const minZ = Math.min(...zs)
-  const maxZ = Math.max(...zs)
-  const width = maxX - minX
-  const depth = maxZ - minZ
-  const center = new THREE.Vector3(
-    (minX + maxX) / 2,
-    entity.height / 2 + 0.1,
-    (minZ + maxZ) / 2,
-  )
 
+  const renderHeight = Math.max(entity.height ?? 0, 0.05)
+  const polygonPoints = closeRingVectors(points)
+  const bounds = new THREE.Box3().setFromPoints(points)
+  const center = bounds
+    .getCenter(new THREE.Vector3())
+    .setY(renderHeight / 2 + 0.1)
+  const size = bounds.getSize(new THREE.Vector3())
+
+  const shapeColor = parseColorAndAlpha(entity.color)
   const commonMaterial = (
     <meshStandardMaterial
-      color={entity.color}
-      roughness={0.7}
-      metalness={0.1}
-      transparent={dimmed}
-      opacity={dimmed ? 0.4 : 1}
-      emissive={selected ? entity.color : '#000000'}
-      emissiveIntensity={selected ? 0.3 : 0}
+      color={shapeColor.color}
+      roughness={0.9}
+      metalness={0}
+      transparent
+      opacity={shapeColor.alpha}
       polygonOffset
-      polygonOffsetFactor={2}
-      polygonOffsetUnits={2}
-      depthWrite={false}
+      polygonOffsetFactor={4}
+      polygonOffsetUnits={4}
     />
   )
-
-  if (entity.shapeType === 'rectangle') {
-    return (
-      <mesh
-        position={center}
-        castShadow
-        receiveShadow
-        onClick={(event) => {
-          event.stopPropagation()
-          onSelect(entity.id)
-          if (event.detail === 2) {
-            onFocus(
-              center.clone(),
-              Math.max(width, depth, entity.height * 2, 10),
-            )
-          }
-        }}
-      >
-        <boxGeometry
-          args={[Math.max(width, 0.1), entity.height, Math.max(depth, 0.1)]}
-        />
-        {commonMaterial}
-      </mesh>
-    )
-  }
-
-  if (entity.shapeType === 'circle') {
-    const radius = entity.radius ?? Math.max(width, depth) / 2
-    return (
-      <mesh
-        position={center}
-        castShadow
-        receiveShadow
-        onClick={(event) => {
-          event.stopPropagation()
-          onSelect(entity.id)
-          if (event.detail === 2) {
-            onFocus(
-              center.clone().setY(entity.height / 2),
-              Math.max(radius * 2.5, 8),
-            )
-          }
-        }}
-      >
-        <cylinderGeometry args={[radius, radius, entity.height, 32]} />
-        {commonMaterial}
-      </mesh>
-    )
-  }
-
-  if (entity.shapeType === 'triangle' && points.length >= 3) {
-    const shape = new THREE.Shape()
-    shape.moveTo(points[0].x, points[0].z)
-    shape.lineTo(points[1].x, points[1].z)
-    shape.lineTo(points[2].x, points[2].z)
-    shape.lineTo(points[0].x, points[0].z)
-    const geometry = new THREE.ExtrudeGeometry(shape, {
-      depth: entity.height,
-      bevelEnabled: false,
-    })
-    geometry.rotateX(-Math.PI / 2)
-    geometry.translate(0, 0.1, 0)
-    return (
-      <mesh
-        geometry={geometry}
-        position={[0, 0, 0]}
-        castShadow
-        receiveShadow
-        renderOrder={2}
-        onClick={(event) => {
-          event.stopPropagation()
-          onSelect(entity.id)
-          if (event.detail === 2) {
-            const focusPoint = new THREE.Box3()
-              .setFromPoints(points)
-              .getCenter(new THREE.Vector3())
-            onFocus(focusPoint, Math.max(entity.height * 2, 10))
-          }
-        }}
-      >
-        {commonMaterial}
-      </mesh>
-    )
-  }
 
   if (entity.shapeType === 'line' && points.length >= 2) {
     const start = points[0]
@@ -468,16 +285,49 @@ const ShapeMesh: React.FC<{
             event.stopPropagation()
             onSelect(entity.id)
             if (event.detail === 2) {
-              onFocus(midpoint.clone(), Math.max(length, entity.height * 2, 10))
+              onFocus(midpoint.clone(), Math.max(length, renderHeight * 2, 10))
             }
           }}
         >
-          <boxGeometry args={[length, entity.height, thickness]} />
+          <boxGeometry args={[length, renderHeight, thickness]} />
           {commonMaterial}
         </mesh>
       </group>
     )
   }
+
+  const shape2d = new THREE.Shape()
+  polygonPoints.forEach((pt, index) => {
+    if (index === 0) {
+      shape2d.moveTo(pt.x, pt.z)
+    } else {
+      shape2d.lineTo(pt.x, pt.z)
+    }
+  })
+  const geometry = new THREE.ExtrudeGeometry(shape2d, {
+    depth: renderHeight,
+    bevelEnabled: false,
+  })
+  geometry.rotateX(-Math.PI / 2)
+  geometry.translate(0, 0.1, 0)
+
+  return (
+    <mesh
+      geometry={geometry}
+      castShadow
+      receiveShadow
+      renderOrder={data.renderOrder}
+      onClick={(event) => {
+        event.stopPropagation()
+        onSelect(entity.id)
+        if (event.detail === 2) {
+          onFocus(center.clone(), Math.max(size.x, size.z, entity.height * 2, 10))
+        }
+      }}
+    >
+      {commonMaterial}
+    </mesh>
+  )
 
   return null
 }
@@ -487,7 +337,7 @@ const AreaMesh: React.FC<{
   onSelect: (id?: string) => void
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selected: boolean
-}> = ({data, onSelect, onFocus, selected}) => {
+}> = ({data, onSelect, onFocus}) => {
   if (data.points.length < 3) {
     return null
   }
@@ -500,17 +350,21 @@ const AreaMesh: React.FC<{
     }
   })
   const extrude = new THREE.ExtrudeGeometry(shape, {
-    depth: 0.5,
+    depth: 0.02,
     bevelEnabled: false,
   })
   extrude.rotateX(-Math.PI / 2)
+  const fillColorParsed = parseColorAndAlpha(data.entity.style.fillColor ?? data.entity.color)
+  const baseOpacity = data.entity.style.fillOpacity ?? 1
+  const appliedOpacity = baseOpacity * fillColorParsed.alpha
+  const fillColor = fillColorParsed.color
   return (
     <mesh
       geometry={extrude}
-      position={[0, 0.12, 0]}
+      position={[0, 0.01, 0]}
       castShadow
       receiveShadow
-      renderOrder={1}
+      renderOrder={0}
       onClick={(event) => {
         event.stopPropagation()
         onSelect(data.entity.id)
@@ -525,19 +379,14 @@ const AreaMesh: React.FC<{
         }
       }}
     >
-      <meshStandardMaterial
-        color={data.entity.color}
+      <meshBasicMaterial
+        color={fillColor}
         transparent
-        opacity={data.dimmed ? 0.2 : 0.25}
-        roughness={0.6}
+        opacity={appliedOpacity}
         side={THREE.DoubleSide}
-        emissive={selected ? data.entity.color : '#000000'}
-        emissiveIntensity={selected ? 0.25 : 0}
         polygonOffset
         polygonOffsetFactor={3}
         polygonOffsetUnits={3}
-        depthWrite={false}
-        depthTest
       />
     </mesh>
   )
@@ -883,8 +732,8 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
 }) => {
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
   const originPoint = React.useMemo(
-    () => computeSceneOrigin(scene, focusAreaId),
-    [focusAreaId, scene],
+    () => computeSceneOrigin(scene),
+    [scene],
   )
   const transformer = React.useMemo(
     () => createCoordinateTransformer(originPoint),
@@ -894,72 +743,15 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
   const gridTexture = React.useMemo(() => createGridTexture(), [])
   const mapTexture = React.useMemo(() => createMapTexture(), [])
 
-  const entities: WorldEntity[] = React.useMemo(() => {
-    const dimId = focusAreaId
-    const isDimmed = (areaId?: string) =>
-      Boolean(dimId && areaId && dimId !== areaId)
-
-    const areaEntities: WorldEntity[] = scene.areas.map((area) => ({
-      type: 'area',
-      entity: area,
-      points: closeRing(area.geometry.coordinates).map((pt) =>
-        transformer.toVector3(pt),
+  const entities: WorldEntity[] = React.useMemo(
+    () =>
+      transformFeatureCollectionsToThreeJSShapes(
+        scene,
+        transformer,
+        focusAreaId,
       ),
-      dimmed: isDimmed(area.id),
-    }))
-
-    const wallEntities: WorldEntity[] = scene.walls
-      .filter((wall) => wall.points.length >= 2)
-      .map((wall) => {
-        const start = transformer.toVector3(wall.points[0])
-        const end = transformer.toVector3(wall.points[wall.points.length - 1])
-        return {
-          type: 'wall',
-          entity: wall,
-          start,
-          end,
-          length: start.distanceTo(end),
-          dimmed: isDimmed(wall.areaId),
-        } satisfies WorldEntity
-      })
-
-    const shapeEntities: WorldEntity[] = scene.shapes.map((shape) => ({
-      type: 'shape',
-      entity: shape,
-      points: shape.geometry.map((point) => transformer.toVector3(point)),
-      dimmed: isDimmed(shape.areaId),
-    }))
-
-    const personEntities: WorldEntity[] = scene.people.map((person) => ({
-      type: 'person',
-      entity: person,
-      position: transformer.toVector3([person.x, person.y], person.height / 2),
-      dimmed: isDimmed(person.areaId),
-    }))
-
-    const cameraEntities: WorldEntity[] = scene.cameras.map((camera) => ({
-      type: 'camera',
-      entity: camera,
-      position: transformer.toVector3([camera.x, camera.y], 0),
-      dimmed: isDimmed(camera.areaId),
-    }))
-
-    return [
-      ...areaEntities,
-      ...wallEntities,
-      ...shapeEntities,
-      ...cameraEntities,
-      ...personEntities,
-    ]
-  }, [
-    focusAreaId,
-    scene.areas,
-    scene.cameras,
-    scene.people,
-    scene.shapes,
-    scene.walls,
-    transformer,
-  ])
+    [focusAreaId, scene, transformer],
+  )
 
   const bounds = React.useMemo(() => {
     const points = entities
@@ -1137,6 +929,7 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = (props) => {
       gl={{antialias: true, alpha: true, logarithmicDepthBuffer: true}}
       onCreated={({gl}) => {
         gl.outputColorSpace = THREE.SRGBColorSpace
+        gl.toneMapping = THREE.NoToneMapping
         gl.shadowMap.enabled = true
         gl.shadowMap.type = THREE.PCFSoftShadowMap
       }}
