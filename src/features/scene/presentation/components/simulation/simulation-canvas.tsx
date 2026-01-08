@@ -276,109 +276,6 @@ const WallMesh: React.FC<{
   )
 }
 
-const ShapeMesh: React.FC<{
-  data: Extract<WorldEntity, {type: 'shape'}>
-  onSelect: (id?: string) => void
-  onFocus: (point: THREE.Vector3, distance?: number) => void
-  selected: boolean
-}> = ({data, onSelect, onFocus, selected: _selected}) => {
-  const {entity, points} = data
-  if (points.length < 2) {
-    return null
-  }
-
-  const renderHeight = Math.max(entity.height ?? 0, 0.05)
-  const polygonPoints = closeRingVectors(points)
-  const bounds = new THREE.Box3().setFromPoints(points)
-  const center = bounds
-    .getCenter(new THREE.Vector3())
-    .setY(renderHeight / 2 + 0.1)
-  const size = bounds.getSize(new THREE.Vector3())
-
-  const shapeColor = parseColorAndAlpha(entity.color)
-  const commonMaterial = (
-    <meshStandardMaterial
-      color={shapeColor.color}
-      roughness={0.9}
-      metalness={0}
-      transparent
-      opacity={shapeColor.alpha * SHAPE_BASE_OPACITY}
-      polygonOffset
-      polygonOffsetFactor={4}
-      polygonOffsetUnits={4}
-    />
-  )
-
-  if (entity.shapeType === 'line' && points.length >= 2) {
-    const start = points[0]
-    const end = points[1]
-    const length = start.distanceTo(end)
-    const thickness = entity.thickness ?? 0.2
-    const midpoint = start.clone().add(end).multiplyScalar(0.5)
-    const angle = Math.atan2(end.z - start.z, end.x - start.x)
-    return (
-      <group
-        position={midpoint.clone().setY(midpoint.y + 0.1)}
-        rotation={[0, angle, 0]}
-      >
-        <mesh
-          castShadow
-          receiveShadow
-          renderOrder={2}
-          onClick={(event) => {
-            event.stopPropagation()
-            onSelect(entity.id)
-            if (event.detail === 2) {
-              onFocus(midpoint.clone(), Math.max(length, renderHeight * 2, 10))
-            }
-          }}
-        >
-          <boxGeometry args={[length, renderHeight, thickness]} />
-          {commonMaterial}
-        </mesh>
-      </group>
-    )
-  }
-
-  const shape2d = new THREE.Shape()
-  polygonPoints.forEach((pt, index) => {
-    if (index === 0) {
-      shape2d.moveTo(pt.x, pt.z)
-    } else {
-      shape2d.lineTo(pt.x, pt.z)
-    }
-  })
-  const geometry = new THREE.ExtrudeGeometry(shape2d, {
-    depth: renderHeight,
-    bevelEnabled: false,
-  })
-  geometry.rotateX(-Math.PI / 2)
-  geometry.translate(0, 0.1, 0)
-
-  return (
-    <mesh
-      geometry={geometry}
-      castShadow
-      receiveShadow
-      renderOrder={data.renderOrder}
-      onClick={(event) => {
-        event.stopPropagation()
-        onSelect(entity.id)
-        if (event.detail === 2) {
-          onFocus(
-            center.clone(),
-            Math.max(size.x, size.z, entity.height * 2, 10),
-          )
-        }
-      }}
-    >
-      {commonMaterial}
-    </mesh>
-  )
-
-  return null
-}
-
 const AreaMesh: React.FC<{
   data: Extract<WorldEntity, {type: 'area'}>
   onSelect: (id?: string) => void
@@ -1004,17 +901,6 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
           return (
             <WallMesh
               key={`${entity.entity.id}-${entity.segmentIndex}`}
-              data={entity}
-              onSelect={onSelectEntity}
-              onFocus={requestFocus}
-              selected={selectedEntityIds.includes(entity.entity.id)}
-            />
-          )
-        }
-        if (entity.type === 'shape') {
-          return (
-            <ShapeMesh
-              key={entity.entity.id}
               data={entity}
               onSelect={onSelectEntity}
               onFocus={requestFocus}
