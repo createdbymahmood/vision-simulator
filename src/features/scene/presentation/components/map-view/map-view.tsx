@@ -63,6 +63,7 @@ import {
 } from '@/features/scene/presentation/components/map-view/use-selection-transform'
 import {useShapeDrawing} from '@/features/scene/presentation/components/map-view/use-shape-drawing'
 import {useWallDrawing} from '@/features/scene/presentation/components/map-view/use-wall-drawing'
+import {useFlyToActiveArea} from '@/features/scene/presentation/components/map-view/use-fly-to-active-area'
 
 interface DrawingState {
   isActive: boolean
@@ -695,6 +696,8 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     () => buildAreaFeatureCollection(areas, activeAreaId),
     [areas, activeAreaId],
   )
+
+  useFlyToActiveArea({mapRef, mapLoaded, activeAreaId, areas})
 
   const overlapFeatures = React.useMemo(
     () => buildOverlapFeatures(areas),

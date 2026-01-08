@@ -1,6 +1,4 @@
 import * as THREE from 'three'
-import {distance} from '@turf/turf'
-
 import type {
   AreaEntity,
   CameraEntity,
@@ -101,12 +99,22 @@ export const computeSceneOrigin = (scene: SceneRoot): GeoPoint => {
 export const createCoordinateTransformer = (
   origin: GeoPoint,
 ): CoordinateTransformer => {
-  const metersPerLng = distance(origin, [origin[0] + 1, origin[1]]) * 1000
-  const metersPerLat = distance(origin, [origin[0], origin[1] + 1]) * 1000
-  const toFlat = (point: GeoPoint) => ({
-    x: (point[0] - origin[0]) * metersPerLng,
-    z: (point[1] - origin[1]) * metersPerLat,
-  })
+  const EARTH_RADIUS = 6378137
+  const lngLatToMercator = (point: GeoPoint) => {
+    const [lng, lat] = point
+    const x = (lng * Math.PI * EARTH_RADIUS) / 180
+    const y =
+      Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) * EARTH_RADIUS
+    return {x, y}
+  }
+  const originMerc = lngLatToMercator(origin)
+  const toFlat = (point: GeoPoint) => {
+    const merc = lngLatToMercator(point)
+    return {
+      x: merc.x - originMerc.x,
+      z: merc.y - originMerc.y,
+    }
+  }
   const toVector3 = (point: GeoPoint, y = 0) => {
     const flat = toFlat(point)
     return new THREE.Vector3(flat.x, y, flat.z)
