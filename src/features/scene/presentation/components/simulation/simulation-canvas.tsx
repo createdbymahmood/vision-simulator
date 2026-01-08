@@ -1,5 +1,5 @@
 import React from 'react'
-import {Canvas, useFrame, useThree} from '@react-three/fiber'
+import {Canvas, useFrame, useThree, type ThreeEvent} from '@react-three/fiber'
 import {OrbitControls} from '@react-three/drei'
 import * as THREE from 'three'
 import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
@@ -13,7 +13,6 @@ import type {
 
 import {
   type WorldEntity,
-  closeRingVectors,
   computeSceneOrigin,
   createCoordinateTransformer,
   parseColorAndAlpha,
@@ -23,6 +22,9 @@ import {computeBounds} from '../map-view/selection-geometry'
 
 const WALL_BASE_OPACITY = 0.8
 const SHAPE_BASE_OPACITY = 0.8
+const SHAPE_SURFACE_OFFSET = 0.02
+const MIN_SHAPE_HEIGHT = 0.05
+const DEFAULT_LINE_THICKNESS = 0.1
 
 interface SimulationCanvasProps {
   scene: SceneRoot
@@ -367,6 +369,212 @@ const PersonMesh: React.FC<{
           emissiveIntensity={selected ? 0.4 : 0}
           transparent={data.dimmed}
           opacity={data.dimmed ? 0.5 : 1}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+const ShapeMesh: React.FC<{
+  data: Extract<WorldEntity, {type: 'shape'}>
+  onSelect: (id?: string) => void
+  onFocus: (point: THREE.Vector3, distance?: number) => void
+  selected: boolean
+}> = ({data, onSelect, onFocus, selected}) => {
+  const {entity, points, dimmed} = data
+  const color = entity.color ?? '#94A3B8'
+  const shapeHeight = Math.max(entity.height ?? 0, MIN_SHAPE_HEIGHT)
+  const lineThickness = Math.max(
+    (entity as {thickness?: number}).thickness ?? DEFAULT_LINE_THICKNESS,
+    0.02,
+  )
+
+  const shapeData = React.useMemo(() => {
+    const removeClosingPoint = (pts: THREE.Vector3[]) => {
+      if (pts.length < 2) return pts
+      const first = pts[0]
+      const last = pts[pts.length - 1]
+      if (first.x === last.x && first.z === last.z) {
+        return pts.slice(0, -1)
+      }
+      return pts
+    }
+
+    if (entity.shapeType === 'line') {
+      if (points.length < 2) {
+        return null
+      }
+      const start = points[0]
+      const end = points[points.length - 1]
+      const center = start.clone().add(end).multiplyScalar(0.5)
+      const length = start.distanceTo(end)
+      return {
+        kind: 'line' as const,
+        position: new THREE.Vector3(
+          center.x,
+          shapeHeight / 2 + SHAPE_SURFACE_OFFSET,
+          center.z,
+        ),
+        rotationY: Math.atan2(end.z - start.z, end.x - start.x),
+        length,
+        thickness: lineThickness,
+        focusPoint: new THREE.Vector3(
+          center.x,
+          shapeHeight / 2 + SHAPE_SURFACE_OFFSET,
+          center.z,
+        ),
+        focusDistance: Math.max(length, shapeHeight, lineThickness) * 1.6,
+      }
+    }
+
+    const sanitized = removeClosingPoint(points)
+    if (entity.shapeType === 'circle') {
+      if (sanitized.length < 2) {
+        return null
+      }
+      const bounds = new THREE.Box3().setFromPoints(sanitized)
+      const size = bounds.getSize(new THREE.Vector3())
+      const center = bounds.getCenter(new THREE.Vector3())
+      const radius = Math.max(size.x, size.z) / 2 || 0.1
+      return {
+        kind: 'cylinder' as const,
+        position: new THREE.Vector3(
+          center.x,
+          shapeHeight / 2 + SHAPE_SURFACE_OFFSET,
+          center.z,
+        ),
+        radius,
+        focusPoint: new THREE.Vector3(
+          center.x,
+          shapeHeight / 2 + SHAPE_SURFACE_OFFSET,
+          center.z,
+        ),
+        focusDistance: Math.max(radius * 2, shapeHeight) * 2,
+      }
+    }
+
+    if (sanitized.length < 3) {
+      return null
+    }
+    const bounds = new THREE.Box3().setFromPoints(sanitized)
+    const size = bounds.getSize(new THREE.Vector3())
+    const center = bounds.getCenter(new THREE.Vector3())
+    const shape = new THREE.Shape()
+    sanitized.forEach((point, index) => {
+      const x = point.x - center.x
+      const y = -(point.z - center.z)
+      if (index === 0) {
+        shape.moveTo(x, y)
+      } else {
+        shape.lineTo(x, y)
+      }
+    })
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: shapeHeight,
+      bevelEnabled: false,
+    })
+    geometry.rotateX(-Math.PI / 2)
+    geometry.translate(0, -shapeHeight / 2, 0)
+
+    return {
+      kind: 'extrude' as const,
+      geometry,
+      position: new THREE.Vector3(
+        center.x,
+        shapeHeight / 2 + SHAPE_SURFACE_OFFSET,
+        center.z,
+      ),
+      focusPoint: new THREE.Vector3(
+        center.x,
+        shapeHeight / 2 + SHAPE_SURFACE_OFFSET,
+        center.z,
+      ),
+      focusDistance: Math.max(size.x, size.z, shapeHeight) * 1.6,
+    }
+  }, [entity.shapeType, lineThickness, points, shapeHeight])
+
+  React.useEffect(() => {
+    const extrudeGeometry = shapeData?.kind === 'extrude' ? shapeData.geometry : null
+    return () => {
+      extrudeGeometry?.dispose()
+    }
+  }, [shapeData])
+
+  if (!shapeData) {
+    return null
+  }
+
+  const baseOpacity = dimmed ? SHAPE_BASE_OPACITY * 0.5 : SHAPE_BASE_OPACITY
+
+  const handleSelect = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation()
+    onSelect(entity.id)
+    if (event.detail === 2) {
+      onFocus(shapeData.focusPoint.clone(), shapeData.focusDistance)
+    }
+  }
+
+  if (shapeData.kind === 'line') {
+    return (
+      <group position={shapeData.position} rotation={[0, shapeData.rotationY, 0]}>
+        <mesh castShadow receiveShadow onClick={handleSelect}>
+          <boxGeometry
+            args={[shapeData.length, shapeHeight, shapeData.thickness]}
+          />
+          <meshStandardMaterial
+            color={color}
+            roughness={0.8}
+            metalness={0.1}
+            transparent
+            opacity={baseOpacity}
+            emissive={selected ? color : '#000000'}
+            emissiveIntensity={selected ? 0.3 : 0}
+          />
+        </mesh>
+      </group>
+    )
+  }
+
+  if (shapeData.kind === 'cylinder') {
+    return (
+      <group position={shapeData.position}>
+        <mesh castShadow receiveShadow onClick={handleSelect}>
+          <cylinderGeometry
+            args={[shapeData.radius, shapeData.radius, shapeHeight, 48]}
+          />
+          <meshStandardMaterial
+            color={color}
+            roughness={0.8}
+            metalness={0.1}
+            transparent
+            opacity={baseOpacity}
+            emissive={selected ? color : '#000000'}
+            emissiveIntensity={selected ? 0.3 : 0}
+          />
+        </mesh>
+      </group>
+    )
+  }
+
+  return (
+    <group position={shapeData.position}>
+      <mesh
+        castShadow
+        receiveShadow
+        geometry={shapeData.geometry}
+        onClick={handleSelect}
+      >
+        <meshStandardMaterial
+          color={color}
+          roughness={0.8}
+          metalness={0.1}
+          transparent
+          opacity={baseOpacity}
+          emissive={selected ? color : '#000000'}
+          emissiveIntensity={selected ? 0.3 : 0}
+          polygonOffset
+          polygonOffsetFactor={2}
+          polygonOffsetUnits={2}
         />
       </mesh>
     </group>
@@ -911,6 +1119,17 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
         if (entity.type === 'person') {
           return (
             <PersonMesh
+              key={entity.entity.id}
+              data={entity}
+              onSelect={onSelectEntity}
+              onFocus={requestFocus}
+              selected={selectedEntityIds.includes(entity.entity.id)}
+            />
+          )
+        }
+        if (entity.type === 'shape') {
+          return (
+            <ShapeMesh
               key={entity.entity.id}
               data={entity}
               onSelect={onSelectEntity}

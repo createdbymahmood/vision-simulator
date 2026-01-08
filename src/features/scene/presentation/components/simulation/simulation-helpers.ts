@@ -190,7 +190,10 @@ export const transformShapeFeatureCollectionsToThreeJSShapes = (
     .map((shape, index) => ({
       type: 'shape',
       entity: shape,
-      points: closeRing(shape.geometry).map((point) => transformer.toVector3(point)),
+      points:
+        shape.shapeType === 'line'
+          ? shape.geometry.map((point) => transformer.toVector3(point))
+          : closeRing(shape.geometry).map((point) => transformer.toVector3(point)),
       dimmed: isDimmed(shape.areaId),
       renderOrder: 10 + index,
     }))
