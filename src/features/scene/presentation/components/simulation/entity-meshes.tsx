@@ -146,12 +146,8 @@ export const PersonMesh: React.FC<{
   )
 }
 
-const buildFrustumGeometry = (
-  camera: CameraEntity,
-  origin: THREE.Vector3,
-  panOverride?: number,
-) => {
-  const yaw = panOverride ?? degToRad(camera.ptz?.pan ?? camera.direction)
+const buildFrustumGeometry = (camera: CameraEntity) => {
+  const yaw = 0 // yaw comes from parent group rotation
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
   const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
   const near = Math.max(camera.nearClipping, 0.1)
@@ -163,6 +159,7 @@ const buildFrustumGeometry = (
   const right = new THREE.Vector3(1, 0, 0).applyEuler(rotation).normalize()
   const up = new THREE.Vector3(0, 1, 0).applyEuler(rotation).normalize()
 
+  const origin = new THREE.Vector3(0, 0, 0)
   const nearCenter = origin.clone().add(forward.clone().multiplyScalar(near))
   const farCenter = origin.clone().add(forward.clone().multiplyScalar(far))
   const nearSize = Math.tan(halfFov) * near
@@ -226,20 +223,17 @@ export const CameraMesh: React.FC<{
   const standHeight = Math.max(entity.height - bodyHeight, 0.4)
   const color = entity.color
   const opticHeight = standHeight + bodyHeight * 0.5
+  const yaw = degToRad((entity.ptz?.pan ?? entity.direction) - 90)
   const frustum = React.useMemo(
     () =>
-      buildFrustumGeometry(
-        entity,
-        new THREE.Vector3(position.x, position.y + opticHeight, position.z),
-        0,
-      ),
-    [entity, opticHeight, position.x, position.y, position.z],
+      buildFrustumGeometry(entity),
+    [entity],
   )
 
   return (
     <group
       position={position}
-      rotation={[0, degToRad(entity.ptz?.pan ?? entity.direction), 0]}
+      rotation={[0, yaw, 0]}
     >
       <mesh
         castShadow
@@ -299,10 +293,7 @@ export const CameraMesh: React.FC<{
         <meshStandardMaterial color='#334155' roughness={0.5} metalness={0.2} />
       </mesh>
 
-      <mesh
-        geometry={frustum.surfaceGeometry}
-        position={[0, standHeight + bodyHeight * 0.5, 0]}
-      >
+      <mesh geometry={frustum.surfaceGeometry} position={[0, opticHeight, 0]}>
         <meshBasicMaterial
           color={color}
           transparent
@@ -313,7 +304,7 @@ export const CameraMesh: React.FC<{
       </mesh>
       <lineSegments
         geometry={frustum.lineGeometry}
-        position={[0, standHeight + bodyHeight * 0.5, 0]}
+        position={[0, opticHeight, 0]}
       >
         <lineBasicMaterial
           color={color}
