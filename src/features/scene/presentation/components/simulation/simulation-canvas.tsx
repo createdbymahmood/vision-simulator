@@ -208,10 +208,7 @@ const GroundPlane: React.FC<{
 
   return (
     <>
-      <mesh
-        position={[0, mapOffset, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      >
+      <mesh position={[0, mapOffset, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[mapPlaneSize.width, mapPlaneSize.height]} />
         <meshBasicMaterial
           map={mapTexture ?? undefined}
@@ -223,10 +220,7 @@ const GroundPlane: React.FC<{
           polygonOffsetUnits={1}
         />
       </mesh>
-      <mesh
-        position={[0, gridOffset, 0]}
-        rotation={[-Math.PI / 2, 0, 0]}
-      >
+      <mesh position={[0, gridOffset, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[gridPlaneSize.width, gridPlaneSize.height]} />
         <meshBasicMaterial
           map={gridTexture ?? undefined}
@@ -816,8 +810,8 @@ const SimulationScene: React.FC<SimulationCanvasProps> = ({
     const maxZFlat = transformer.toFlat([geoBounds.minLng, geoBounds.maxLat])
     const width = Math.abs(maxXFlat.x - minFlat.x)
     const height = Math.abs(maxZFlat.z - minFlat.z)
-    const paddingMultiplier = 1.1
-    const paddingAbsolute = 50
+    const paddingMultiplier = 1
+    const paddingAbsolute = 0
     return {
       width: Math.max(width * paddingMultiplier, width + paddingAbsolute, 200),
       height: Math.max(

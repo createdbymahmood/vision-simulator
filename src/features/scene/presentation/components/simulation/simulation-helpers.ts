@@ -10,7 +10,9 @@ import type {
 } from '@/features/scene/domain/types'
 
 import {closeRing} from '../map-view/map-view-helpers'
-import {computeBounds, getBoundsCenter} from '../map-view/selection-geometry'
+import {computeBounds} from '../map-view/selection-geometry'
+
+const EARTH_RADIUS = 6378137
 
 export interface CoordinateTransformer {
   toVector3: (point: GeoPoint, y?: number) => THREE.Vector3
@@ -91,7 +93,25 @@ export const computeSceneOrigin = (scene: SceneRoot): GeoPoint => {
   scene.cameras.forEach((camera) => points.push([camera.x, camera.y]))
   const bounds = computeBounds(points)
   if (bounds) {
-    return getBoundsCenter(bounds)
+    const toMeters = (point: GeoPoint) => {
+      const [lng, lat] = point
+      const x = (EARTH_RADIUS * lng * Math.PI) / 180
+      const y = EARTH_RADIUS * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))
+      return {x, y}
+    }
+    const fromMeters = (x: number, y: number): GeoPoint => {
+      const lng = (x / EARTH_RADIUS) * (180 / Math.PI)
+      const lat =
+        (2 * Math.atan(Math.exp(y / EARTH_RADIUS)) - Math.PI / 2) * (180 / Math.PI)
+      return [lng, lat]
+    }
+    const minMeters = toMeters([bounds.minLng, bounds.minLat])
+    const maxMeters = toMeters([bounds.maxLng, bounds.maxLat])
+    const centerMeters = {
+      x: (minMeters.x + maxMeters.x) / 2,
+      y: (minMeters.y + maxMeters.y) / 2,
+    }
+    return fromMeters(centerMeters.x, centerMeters.y)
   }
   return [scene.origin.lng, scene.origin.lat]
 }
@@ -99,7 +119,6 @@ export const computeSceneOrigin = (scene: SceneRoot): GeoPoint => {
 export const createCoordinateTransformer = (
   origin: GeoPoint,
 ): CoordinateTransformer => {
-  const EARTH_RADIUS = 6378137
   const lngLatToMeters = (point: GeoPoint) => {
     const [lng, lat] = point
     const x = (EARTH_RADIUS * lng * Math.PI) / 180
