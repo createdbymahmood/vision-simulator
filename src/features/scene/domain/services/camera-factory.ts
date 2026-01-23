@@ -1,7 +1,7 @@
 import type {CameraEntity, GeoPoint, PtzState} from '../types'
 
-import {assignCameraColor} from './color-assignment'
 import {getCameraPreset} from '../constants/camera-presets'
+import {assignCameraColor} from './color-assignment'
 
 export interface CreateCameraParams {
   id: string

@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+
 import type {
   AreaEntity,
   CameraEntity,
@@ -23,13 +24,16 @@ export interface CoordinateTransformer {
 export type WorldEntity =
   | {type: 'area'; entity: AreaEntity; points: THREE.Vector3[]; dimmed: boolean}
   | {
-      type: 'wall'
-      entity: WallEntity
-      start: THREE.Vector3
-      end: THREE.Vector3
-      length: number
+      type: 'camera'
+      entity: CameraEntity
+      position: THREE.Vector3
       dimmed: boolean
-      segmentIndex: number
+    }
+  | {
+      type: 'person'
+      entity: PersonEntity
+      position: THREE.Vector3
+      dimmed: boolean
     }
   | {
       type: 'shape'
@@ -39,16 +43,13 @@ export type WorldEntity =
       renderOrder: number
     }
   | {
-      type: 'person'
-      entity: PersonEntity
-      position: THREE.Vector3
+      type: 'wall'
+      entity: WallEntity
+      start: THREE.Vector3
+      end: THREE.Vector3
+      length: number
       dimmed: boolean
-    }
-  | {
-      type: 'camera'
-      entity: CameraEntity
-      position: THREE.Vector3
-      dimmed: boolean
+      segmentIndex: number
     }
 
 export const closeRingVectors = (points: THREE.Vector3[]) => {
@@ -63,7 +64,9 @@ export const closeRingVectors = (points: THREE.Vector3[]) => {
   return [...points, first.clone()]
 }
 
-export const parseColorAndAlpha = (value?: string): {color?: string; alpha: number} => {
+export const parseColorAndAlpha = (
+  value?: string,
+): {color?: string; alpha: number} => {
   if (!value) {
     return {color: undefined, alpha: 1}
   }
@@ -79,7 +82,10 @@ export const parseColorAndAlpha = (value?: string): {color?: string; alpha: numb
   if (rgba) {
     const [, r, g, b, a] = rgba
     const alpha = a ? Number.parseFloat(a) : 1
-    return {color: `rgb(${r}, ${g}, ${b})`, alpha: Number.isFinite(alpha) ? alpha : 1}
+    return {
+      color: `rgb(${r}, ${g}, ${b})`,
+      alpha: Number.isFinite(alpha) ? alpha : 1,
+    }
   }
   return {color: value, alpha: 1}
 }
@@ -96,13 +102,15 @@ export const computeSceneOrigin = (scene: SceneRoot): GeoPoint => {
     const toMeters = (point: GeoPoint) => {
       const [lng, lat] = point
       const x = (EARTH_RADIUS * lng * Math.PI) / 180
-      const y = EARTH_RADIUS * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))
+      const y =
+        EARTH_RADIUS * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))
       return {x, y}
     }
     const fromMeters = (x: number, y: number): GeoPoint => {
       const lng = (x / EARTH_RADIUS) * (180 / Math.PI)
       const lat =
-        (2 * Math.atan(Math.exp(y / EARTH_RADIUS)) - Math.PI / 2) * (180 / Math.PI)
+        (2 * Math.atan(Math.exp(y / EARTH_RADIUS)) - Math.PI / 2) *
+        (180 / Math.PI)
       return [lng, lat]
     }
     const minMeters = toMeters([bounds.minLng, bounds.minLat])
@@ -149,7 +157,9 @@ export const transformAreaFeatureCollectionsToThreeJSShapes = (
   scene.areas.map((area) => ({
     type: 'area',
     entity: area,
-    points: closeRing(area.geometry.coordinates).map((pt) => transformer.toVector3(pt)),
+    points: closeRing(area.geometry.coordinates).map((pt) =>
+      transformer.toVector3(pt),
+    ),
     dimmed: isDimmed(area.id),
   }))
 
@@ -193,7 +203,9 @@ export const transformShapeFeatureCollectionsToThreeJSShapes = (
       points:
         shape.shapeType === 'line'
           ? shape.geometry.map((point) => transformer.toVector3(point))
-          : closeRing(shape.geometry).map((point) => transformer.toVector3(point)),
+          : closeRing(shape.geometry).map((point) =>
+              transformer.toVector3(point),
+            ),
       dimmed: isDimmed(shape.areaId),
       renderOrder: 10 + index,
     }))
@@ -232,13 +244,34 @@ export const transformFeatureCollectionsToThreeJSShapes = (
   focusAreaId?: string,
 ): WorldEntity[] => {
   const dimId = focusAreaId
-  const isDimmed = (areaId?: string) => Boolean(dimId && areaId && dimId !== areaId)
+  const isDimmed = (areaId?: string) =>
+    Boolean(dimId && areaId && dimId !== areaId)
 
   return [
-    ...transformAreaFeatureCollectionsToThreeJSShapes(scene, transformer, isDimmed),
-    ...transformWallFeatureCollectionsToThreeJSShapes(scene, transformer, isDimmed),
-    ...transformShapeFeatureCollectionsToThreeJSShapes(scene, transformer, isDimmed),
-    ...transformCameraFeatureCollectionsToThreeJSShape(scene, transformer, isDimmed),
-    ...transformPeopleFeatureCollectionsToThreeJSShape(scene, transformer, isDimmed),
+    ...transformAreaFeatureCollectionsToThreeJSShapes(
+      scene,
+      transformer,
+      isDimmed,
+    ),
+    ...transformWallFeatureCollectionsToThreeJSShapes(
+      scene,
+      transformer,
+      isDimmed,
+    ),
+    ...transformShapeFeatureCollectionsToThreeJSShapes(
+      scene,
+      transformer,
+      isDimmed,
+    ),
+    ...transformCameraFeatureCollectionsToThreeJSShape(
+      scene,
+      transformer,
+      isDimmed,
+    ),
+    ...transformPeopleFeatureCollectionsToThreeJSShape(
+      scene,
+      transformer,
+      isDimmed,
+    ),
   ]
 }

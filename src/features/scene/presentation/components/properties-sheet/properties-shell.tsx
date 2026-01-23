@@ -8,7 +8,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-
 import {cn} from '@/lib/utils'
 
 interface PropertiesShellProps {
@@ -34,10 +33,10 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
   actions,
   children,
 }) => (
-  <Sheet open={open} onOpenChange={onOpenChange}>
+  <Sheet onOpenChange={onOpenChange} open={open}>
     <SheetContent
-      side='right'
       className='w-[360px] gap-0 border-l bg-background px-0 backdrop-blur'
+      side='right'
       style={{width: 360}}
     >
       <SheetHeader className='border-b px-4 py-3'>

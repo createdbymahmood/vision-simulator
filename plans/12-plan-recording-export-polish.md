@@ -317,3 +317,6 @@ Implement recording functionality (video capture of 3D view), snapshot export, J
 10. **Trail history buffer size**: 600 positions (20s × 30FPS) - verify memory usage
 
 
+
+
+

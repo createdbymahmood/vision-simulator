@@ -60,15 +60,14 @@ export const DevicesDialog: React.FC<DevicesDialogProps> = ({
             ) : (
               cameras.map((camera) => (
                 <button
-                  key={camera.id}
                   className='flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition hover:bg-muted/60'
+                  key={camera.id}
+                  type='button'
                   onClick={() => handleSelectCamera(camera.id)}
                 >
                   <div className='flex items-center gap-3'>
                     <Avatar className='h-8 w-8 border'>
-                      <AvatarFallback
-                        style={{backgroundColor: camera.color}}
-                      />
+                      <AvatarFallback style={{backgroundColor: camera.color}} />
                     </Avatar>
                     <div className='flex flex-col'>
                       <span className='font-medium'>{camera.typePreset}</span>

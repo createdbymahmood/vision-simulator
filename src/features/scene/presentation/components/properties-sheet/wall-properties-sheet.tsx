@@ -1,10 +1,9 @@
-import React from 'react'
 import {lineString, length as turfLength} from '@turf/turf'
+import React from 'react'
 
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Slider} from '@/components/ui/slider'
-
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'
@@ -80,13 +79,13 @@ export const WallPropertiesSheet: React.FC = () => {
 
   return (
     <PropertiesShell
-      open={isOpen}
+      entityId={selectedWall?.id}
+      title='Wall Properties'
+      accentColor={selectedWall?.color}
       onOpenChange={(open) =>
         open ? openPanel('wall-properties') : closePanel('wall-properties')
       }
-      title='Wall Properties'
-      entityId={selectedWall?.id}
-      accentColor={selectedWall?.color}
+      open={isOpen}
     >
       {selectedWall ? (
         <div className='space-y-6'>
@@ -122,9 +121,9 @@ export const WallPropertiesSheet: React.FC = () => {
               <div className='space-y-2'>
                 <Label className='sr-only'>Thickness input</Label>
                 <Input
-                  type='number'
                   min={0.05}
                   step={0.01}
+                  type='number'
                   value={selectedWall.thickness.toFixed(2)}
                   onChange={(event) =>
                     handleNumericInput(event, (value) =>
@@ -149,9 +148,9 @@ export const WallPropertiesSheet: React.FC = () => {
               <div className='space-y-2'>
                 <Label className='sr-only'>Height input</Label>
                 <Input
-                  type='number'
                   min={0.5}
                   step={0.1}
+                  type='number'
                   value={selectedWall.height.toFixed(2)}
                   onChange={(event) =>
                     handleNumericInput(event, (value) =>

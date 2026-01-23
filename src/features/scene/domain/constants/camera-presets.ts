@@ -10,7 +10,7 @@ export interface CameraPreset {
   nearClipping: number
   height: number
   resolution: Resolution
-  type: 'static' | 'ptz'
+  type: 'ptz' | 'static'
   fovRange?: string
   depthRange?: string
 }

@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {Badge} from '@/components/ui/badge'
 import {
   CommandDialog,
   CommandEmpty,
@@ -8,7 +9,6 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import {Badge} from '@/components/ui/badge'
 import {CAMERA_PRESETS} from '@/features/scene/domain/constants/camera-presets'
 
 interface PlaceDeviceDialogProps {

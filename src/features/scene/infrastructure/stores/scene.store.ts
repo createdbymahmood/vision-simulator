@@ -3,22 +3,22 @@ import type {StateCreator, StoreApi} from 'zustand'
 import {produce} from 'immer'
 
 import type {
+  CameraEntity,
+  PersonEntity,
   PolygonGeometry,
   SceneMode,
   SceneRoot,
   ShapeEntity,
-  CameraEntity,
-  PersonEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
 
 import {createZustandContextStore} from '@/components/shared/zustand'
+import {createDefaultPerson} from '@/features/scene/domain/constants/person-defaults'
 import {createDefaultShape} from '@/features/scene/domain/constants/shape-style'
 import {createDefaultWall} from '@/features/scene/domain/constants/wall-style'
 import {createAreaEntity} from '@/features/scene/domain/services/area-factory'
 import {createCameraEntity} from '@/features/scene/domain/services/camera-factory'
 import {createInitialScene} from '@/features/scene/domain/services/scene-factory'
-import {createDefaultPerson} from '@/features/scene/domain/constants/person-defaults'
 
 export interface SceneState {
   scene: SceneRoot
@@ -38,7 +38,7 @@ export interface SceneState {
   addWall: (wall: Omit<WallEntity, 'id'>) => SceneRoot
   addShape: (shape: Omit<ShapeEntity, 'id'>) => SceneRoot
   addCamera: (
-    camera: Omit<CameraEntity, 'id' | 'type' | 'ptz' | 'ptzPresets'>,
+    camera: Omit<CameraEntity, 'id' | 'ptz' | 'ptzPresets' | 'type'>,
   ) => SceneRoot
   updateCamera: (
     id: string,
@@ -291,10 +291,13 @@ const addShape = (
 const addCamera = (
   set: SetState,
   get: GetState,
-  camera: Omit<CameraEntity, 'id' | 'type' | 'ptz' | 'ptzPresets'>,
+  camera: Omit<CameraEntity, 'id' | 'ptz' | 'ptzPresets' | 'type'>,
 ) => {
   const nextValue = produce<SceneState>((state) => {
-    const id = getNextId(state.scene.cameras.map((item) => item.id), 'camera')
+    const id = getNextId(
+      state.scene.cameras.map((item) => item.id),
+      'camera',
+    )
     const newCamera = createCameraEntity(
       {
         id,
@@ -333,7 +336,10 @@ const addPerson = (
   person: Omit<PersonEntity, 'id' | 'type'>,
 ) => {
   const nextValue = produce<SceneState>((state) => {
-    const id = getNextId(state.scene.people.map((item) => item.id), 'person')
+    const id = getNextId(
+      state.scene.people.map((item) => item.id),
+      'person',
+    )
     const base = createDefaultPerson(person.areaId, [person.x, person.y], id)
     state.scene.people.push({
       ...base,

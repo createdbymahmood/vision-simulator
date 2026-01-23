@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   ArrowDown,
   ArrowLeft,
@@ -7,6 +6,9 @@ import {
   Plus,
   RotateCcw,
 } from 'lucide-react'
+import React from 'react'
+
+import type {PtzPreset} from '@/features/scene/domain/types'
 
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
@@ -20,9 +22,7 @@ import {
 } from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
 import {Switch} from '@/components/ui/switch'
-
 import {CAMERA_PRESETS} from '@/features/scene/domain/constants/camera-presets'
-import type {PtzPreset} from '@/features/scene/domain/types'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'
@@ -108,7 +108,7 @@ export const CameraPropertiesSheet: React.FC = () => {
     })
   }
 
-  const handleResolutionChange = (key: 'width' | 'height', value: string) => {
+  const handleResolutionChange = (key: 'height' | 'width', value: string) => {
     const next = Number.parseInt(value, 10)
     if (!Number.isFinite(next) || next <= 0) {
       return
@@ -230,14 +230,14 @@ export const CameraPropertiesSheet: React.FC = () => {
 
   return (
     <PropertiesShell
-      open={isOpen}
+      entityId={selectedCamera?.id}
+      entityName={selectedCamera?.name}
+      title='Camera Properties'
+      accentColor={selectedCamera?.color}
       onOpenChange={(open) =>
         open ? openPanel('camera-properties') : closePanel('camera-properties')
       }
-      title='Camera Properties'
-      entityId={selectedCamera?.id}
-      entityName={selectedCamera?.name}
-      accentColor={selectedCamera?.color}
+      open={isOpen}
     >
       {selectedCamera ? (
         <div className='space-y-6'>
@@ -358,23 +358,23 @@ export const CameraPropertiesSheet: React.FC = () => {
               <Label>Resolution</Label>
               <div className='flex items-center gap-2'>
                 <Input
-                  type='number'
+                  aria-label='Resolution width'
                   min={1}
+                  type='number'
                   value={selectedCamera.resolution.width}
                   onChange={(event) =>
                     handleResolutionChange('width', event.target.value)
                   }
-                  aria-label='Resolution width'
                 />
                 <div className='px-2 text-sm text-muted-foreground'>×</div>
                 <Input
-                  type='number'
+                  aria-label='Resolution height'
                   min={1}
+                  type='number'
                   value={selectedCamera.resolution.height}
                   onChange={(event) =>
                     handleResolutionChange('height', event.target.value)
                   }
-                  aria-label='Resolution height'
                 />
               </div>
             </div>
@@ -421,7 +421,7 @@ export const CameraPropertiesSheet: React.FC = () => {
               />
             </div>
             <div className='flex items-center gap-2'>
-              <Button variant='outline' size='sm' onClick={handleResetPtz}>
+              <Button size='sm' variant='outline' onClick={handleResetPtz}>
                 <RotateCcw className='mr-2 size-4' />
                 Reset
               </Button>
@@ -443,15 +443,15 @@ export const CameraPropertiesSheet: React.FC = () => {
             </div>
             <div className='flex items-center gap-2'>
               <Input
-                placeholder='Save preset name'
                 value={presetName}
                 onChange={(event) => setPresetName(event.target.value)}
+                placeholder='Save preset name'
               />
               <Button
-                variant='secondary'
                 size='icon'
-                onClick={handleSavePreset}
                 disabled={!presetName.trim()}
+                variant='secondary'
+                onClick={handleSavePreset}
               >
                 <Plus className='size-4' />
               </Button>
@@ -496,14 +496,14 @@ const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
   <div className='grid grid-cols-3 gap-2 rounded-md border p-3 '>
     <div />
     <div className='flex items-center justify-center'>
-      <Button variant='secondary' size='icon' onClick={() => onTilt(5)}>
+      <Button size='icon' variant='secondary' onClick={() => onTilt(5)}>
         <ArrowUp className='size-4' />
       </Button>
     </div>
     <div />
 
     <div className='flex items-center justify-center'>
-      <Button variant='secondary' size='icon' onClick={() => onPan(-5)}>
+      <Button size='icon' variant='secondary' onClick={() => onPan(-5)}>
         <ArrowLeft className='size-4' />
       </Button>
     </div>
@@ -516,7 +516,7 @@ const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
     </div>
 
     <div className='flex items-center justify-center'>
-      <Button variant='secondary' size='icon' onClick={() => onPan(5)}>
+      <Button size='icon' variant='secondary' onClick={() => onPan(5)}>
         <ArrowRight className='size-4' />
       </Button>
     </div>
@@ -524,7 +524,7 @@ const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
     <div />
 
     <div className='flex items-center justify-center'>
-      <Button variant='secondary' size='icon' onClick={() => onTilt(-5)}>
+      <Button size='icon' variant='secondary' onClick={() => onTilt(-5)}>
         <ArrowDown className='size-4' />
       </Button>
     </div>

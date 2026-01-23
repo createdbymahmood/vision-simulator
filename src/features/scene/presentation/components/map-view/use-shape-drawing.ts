@@ -20,9 +20,9 @@ import {
   createLineGeometry,
   createRectangleRing,
   createTriangleRing,
-  formatMeters,
-  doesShapeHitPerson,
   doesShapeCollideWithWalls,
+  doesShapeHitPerson,
+  formatMeters,
 } from './map-view-helpers'
 
 interface ShapeDrawingState {
@@ -160,7 +160,12 @@ export const useShapeDrawing = ({
             },
           }
         }
-        if (doesShapeHitPerson({geometry: preview, shapeType: 'rectangle'} as ShapeEntity, people)) {
+        if (
+          doesShapeHitPerson(
+            {geometry: preview, shapeType: 'rectangle'} as ShapeEntity,
+            people,
+          )
+        ) {
           setShapePreview(null)
           return {
             cursor: 'not-allowed',
@@ -215,7 +220,12 @@ export const useShapeDrawing = ({
             },
           }
         }
-        if (doesShapeHitPerson({geometry: preview, shapeType: 'circle'} as ShapeEntity, people)) {
+        if (
+          doesShapeHitPerson(
+            {geometry: preview, shapeType: 'circle'} as ShapeEntity,
+            people,
+          )
+        ) {
           setShapePreview(null)
           return {
             cursor: 'not-allowed',
@@ -269,7 +279,12 @@ export const useShapeDrawing = ({
             },
           }
         }
-        if (doesShapeHitPerson({geometry: preview, shapeType: 'line'} as ShapeEntity, people)) {
+        if (
+          doesShapeHitPerson(
+            {geometry: preview, shapeType: 'line'} as ShapeEntity,
+            people,
+          )
+        ) {
           setShapePreview(null)
           return {
             cursor: 'not-allowed',
@@ -299,10 +314,15 @@ export const useShapeDrawing = ({
         if (points.length === 3) {
           preview = createTriangleRing(points)
         }
-        const isValid = preview ? isGeometryInsideArea(preview, targetArea) : true
+        const isValid = preview
+          ? isGeometryInsideArea(preview, targetArea)
+          : true
         const hitsPerson =
           preview &&
-          doesShapeHitPerson({geometry: preview, shapeType: 'triangle'} as ShapeEntity, people)
+          doesShapeHitPerson(
+            {geometry: preview, shapeType: 'triangle'} as ShapeEntity,
+            people,
+          )
         const hitsWall =
           preview &&
           doesShapeCollideWithWalls(
@@ -317,7 +337,8 @@ export const useShapeDrawing = ({
             y: screen.y + 12,
             visible: true,
           },
-          cursor: isValid && !hitsPerson && !hitsWall ? undefined : 'not-allowed',
+          cursor:
+            isValid && !hitsPerson && !hitsWall ? undefined : 'not-allowed',
         }
       }
 
@@ -372,23 +393,35 @@ export const useShapeDrawing = ({
         resetShapeDrawing()
         return false
       }
-    const peopleInArea = people.filter((person) => person.areaId === targetArea.id)
-    const wallsInArea = walls.filter((wall) => wall.areaId === targetArea.id)
-    if (doesShapeCollideWithWalls({geometry, shapeType: shapeMode} as ShapeEntity, wallsInArea)) {
-      toast.error('Cannot draw shapes over walls')
-      resetShapeDrawing()
-      return false
-    }
-    if (doesShapeHitPerson({geometry, shapeType: shapeMode} as ShapeEntity, peopleInArea)) {
-      toast.error('Cannot draw shapes over people')
-      resetShapeDrawing()
-      return false
-    }
+      const peopleInArea = people.filter(
+        (person) => person.areaId === targetArea.id,
+      )
+      const wallsInArea = walls.filter((wall) => wall.areaId === targetArea.id)
+      if (
+        doesShapeCollideWithWalls(
+          {geometry, shapeType: shapeMode} as ShapeEntity,
+          wallsInArea,
+        )
+      ) {
+        toast.error('Cannot draw shapes over walls')
+        resetShapeDrawing()
+        return false
+      }
+      if (
+        doesShapeHitPerson(
+          {geometry, shapeType: shapeMode} as ShapeEntity,
+          peopleInArea,
+        )
+      ) {
+        toast.error('Cannot draw shapes over people')
+        resetShapeDrawing()
+        return false
+      }
 
-    addShape({
-      areaId: targetArea.id,
-      geometry,
-      shapeType: shapeMode,
+      addShape({
+        areaId: targetArea.id,
+        geometry,
+        shapeType: shapeMode,
         height: 0,
         color: strokeColor,
         type: 'shape',

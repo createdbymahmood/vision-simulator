@@ -1,8 +1,7 @@
-import React from 'react'
-
 import type {FeatureCollection, LineString, Point, Polygon} from 'geojson'
 import type {MapMouseEvent} from 'react-map-gl/mapbox'
 
+import React from 'react'
 import {toast} from 'sonner'
 
 import type {
@@ -14,6 +13,9 @@ import type {
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {TooltipState} from '@/features/scene/presentation/components/map-view/map-view-types'
 
+import {getCameraPreset} from '@/features/scene/domain/constants/camera-presets'
+import {assignCameraColor} from '@/features/scene/domain/services/color-assignment'
+
 import {
   createCircleRing,
   createFovRing,
@@ -21,8 +23,6 @@ import {
   isPointInsideArea,
   projectPoint,
 } from './map-view-helpers'
-import {getCameraPreset} from '@/features/scene/domain/constants/camera-presets'
-import {assignCameraColor} from '@/features/scene/domain/services/color-assignment'
 
 type MapLayerMouseEvent = MapMouseEvent
 
@@ -40,7 +40,7 @@ interface UseCameraPlacementParams {
   setCameraPlacement: (presetId: string | null, color: string | null) => void
   clearCameraPlacement: () => void
   addCamera: (
-    camera: Omit<CameraEntity, 'id' | 'type' | 'ptz' | 'ptzPresets'>,
+    camera: Omit<CameraEntity, 'id' | 'ptz' | 'ptzPresets' | 'type'>,
   ) => SceneRoot
   setSelection: (ids: string[]) => void
   setActiveTool: (tool: EditorTool) => void
@@ -66,8 +66,14 @@ interface UseCameraPlacementResult {
 const createEmptyPreview = (): CameraPreviewData => ({
   point: {type: 'FeatureCollection', features: []} as FeatureCollection<Point>,
   fov: {type: 'FeatureCollection', features: []} as FeatureCollection<Polygon>,
-  direction: {type: 'FeatureCollection', features: []} as FeatureCollection<LineString>,
-  range: {type: 'FeatureCollection', features: []} as FeatureCollection<LineString>,
+  direction: {
+    type: 'FeatureCollection',
+    features: [],
+  } as FeatureCollection<LineString>,
+  range: {
+    type: 'FeatureCollection',
+    features: [],
+  } as FeatureCollection<LineString>,
   isValid: false,
 })
 
@@ -107,7 +113,12 @@ export const useCameraPlacement = ({
     const nextColor = assignCameraColor(cameras.length)
     setCameraPlacement(cameraPlacement.presetId, nextColor)
     return nextColor
-  }, [cameraPlacement.color, cameraPlacement.presetId, cameras.length, setCameraPlacement])
+  }, [
+    cameraPlacement.color,
+    cameraPlacement.presetId,
+    cameras.length,
+    setCameraPlacement,
+  ])
 
   const updatePreview = React.useCallback(
     (point: GeoPoint) => {
@@ -208,9 +219,7 @@ export const useCameraPlacement = ({
       }
       setCursorOverride('none')
       setTooltip({
-        text: `Camera • Range: ${formatMeters(
-          resolvePreset()?.depth ?? 0,
-        )}`,
+        text: `Camera • Range: ${formatMeters(resolvePreset()?.depth ?? 0)}`,
         x: event.point.x + 12,
         y: event.point.y + 12,
         visible: true,

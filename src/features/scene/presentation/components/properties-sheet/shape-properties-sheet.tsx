@@ -1,24 +1,24 @@
+import {lineString, length as turfLength} from '@turf/turf'
 import React from 'react'
-import {length as turfLength, lineString} from '@turf/turf'
+
+import type {ShapeEntity} from '@/features/scene/domain/types'
 
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Slider} from '@/components/ui/slider'
-
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {
   computeAngleDeg,
   computeSegmentLength,
-  formatMeters,
   createCircleRing,
+  formatMeters,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
 import {
   computeBounds,
   getBoundsCenter,
   scalePoints,
 } from '@/features/scene/presentation/components/map-view/selection-geometry'
-import type {ShapeEntity} from '@/features/scene/domain/types'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
@@ -42,7 +42,9 @@ export const ShapePropertiesSheet: React.FC = () => {
     (updater: (shape: (typeof shapes)[number]) => void) => {
       if (!selectedShape) return
       updateScene((scene) => {
-        const target = scene.shapes.find((shape) => shape.id === selectedShape.id)
+        const target = scene.shapes.find(
+          (shape) => shape.id === selectedShape.id,
+        )
         if (target) {
           updater(target)
         }
@@ -152,18 +154,19 @@ export const ShapePropertiesSheet: React.FC = () => {
 
   return (
     <PropertiesShell
-      open={isOpen}
+      entityId={selectedShape?.id}
+      title='Shape Properties'
+      accentColor={selectedShape?.color}
       onOpenChange={(open) =>
         open ? openPanel('shape-properties') : closePanel('shape-properties')
       }
-      title='Shape Properties'
-      entityId={selectedShape?.id}
-      accentColor={selectedShape?.color}
+      open={isOpen}
     >
       {selectedShape ? (
         <div className='space-y-6'>
           <p className='text-xs text-muted-foreground'>
-            Position and rotation adjustments are disabled here to prevent shapes from exceeding area bounds.
+            Position and rotation adjustments are disabled here to prevent
+            shapes from exceeding area bounds.
           </p>
 
           <PropertiesSection title='Appearance'>
@@ -191,19 +194,26 @@ export const ShapePropertiesSheet: React.FC = () => {
           {selectedShape.shapeType === 'rectangle' ? (
             <PropertiesSection title='Rectangle'>
               <div className='grid grid-cols-2 gap-3'>
-                <Metric label='Width' value={formatMeters(rectDimensions.width)} />
-                <Metric label='Height' value={formatMeters(rectDimensions.height)} />
+                <Metric
+                  label='Width'
+                  value={formatMeters(rectDimensions.width)}
+                />
+                <Metric
+                  label='Height'
+                  value={formatMeters(rectDimensions.height)}
+                />
               </div>
               <div className='grid grid-cols-2 gap-3'>
                 <div className='space-y-2'>
                   <Label>Width (m)</Label>
                   <Input
                     type='number'
-                    inputMode='decimal'
                     value={rectDimensions.width.toFixed(2)}
+                    inputMode='decimal'
                     onChange={(event) => {
                       const next = Number.parseFloat(event.target.value)
-                      if (!Number.isFinite(next) || rectDimensions.width === 0) return
+                      if (!Number.isFinite(next) || rectDimensions.width === 0)
+                        return
                       handleScale(next / rectDimensions.width, 1)
                     }}
                   />
@@ -212,11 +222,12 @@ export const ShapePropertiesSheet: React.FC = () => {
                   <Label>Height (m)</Label>
                   <Input
                     type='number'
-                    inputMode='decimal'
                     value={rectDimensions.height.toFixed(2)}
+                    inputMode='decimal'
                     onChange={(event) => {
                       const next = Number.parseFloat(event.target.value)
-                      if (!Number.isFinite(next) || rectDimensions.height === 0) return
+                      if (!Number.isFinite(next) || rectDimensions.height === 0)
+                        return
                       handleScale(1, next / rectDimensions.height)
                     }}
                   />
@@ -229,14 +240,17 @@ export const ShapePropertiesSheet: React.FC = () => {
             <PropertiesSection title='Circle'>
               <div className='grid grid-cols-2 gap-3'>
                 <Metric label='Radius' value={formatMeters(circleRadius)} />
-                <Metric label='Diameter' value={formatMeters(circleRadius * 2)} />
+                <Metric
+                  label='Diameter'
+                  value={formatMeters(circleRadius * 2)}
+                />
               </div>
               <div className='space-y-2'>
                 <Label>Radius (m)</Label>
                 <Input
                   type='number'
-                  inputMode='decimal'
                   value={circleRadius.toFixed(2)}
+                  inputMode='decimal'
                   onChange={(event) => {
                     const next = Number.parseFloat(event.target.value)
                     if (!Number.isFinite(next) || !center) return
@@ -252,8 +266,14 @@ export const ShapePropertiesSheet: React.FC = () => {
           {selectedShape.shapeType === 'triangle' ? (
             <PropertiesSection title='Triangle'>
               <div className='grid grid-cols-2 gap-3'>
-                <Metric label='Base' value={formatMeters(triangleBaseHeight.base)} />
-                <Metric label='Height' value={formatMeters(triangleBaseHeight.height)} />
+                <Metric
+                  label='Base'
+                  value={formatMeters(triangleBaseHeight.base)}
+                />
+                <Metric
+                  label='Height'
+                  value={formatMeters(triangleBaseHeight.height)}
+                />
               </div>
             </PropertiesSection>
           ) : null}
@@ -261,8 +281,14 @@ export const ShapePropertiesSheet: React.FC = () => {
           {selectedShape.shapeType === 'line' ? (
             <PropertiesSection title='Line'>
               <div className='grid grid-cols-2 gap-3'>
-                <Metric label='Length' value={formatMeters(lineMetrics.length)} />
-                <Metric label='Angle' value={`${lineMetrics.angle.toFixed(0)}°`} />
+                <Metric
+                  label='Length'
+                  value={formatMeters(lineMetrics.length)}
+                />
+                <Metric
+                  label='Angle'
+                  value={`${lineMetrics.angle.toFixed(0)}°`}
+                />
               </div>
               <div className='space-y-2'>
                 <Label>Thickness ({lineMetrics.thickness.toFixed(2)} m)</Label>

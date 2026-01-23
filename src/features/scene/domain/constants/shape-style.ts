@@ -30,13 +30,17 @@ export const createDefaultShape = (
     return {
       ...base,
       shapeType: 'triangle',
-      points: geometry as [typeof geometry[number], typeof geometry[number], typeof geometry[number]],
+      points: geometry as [
+        (typeof geometry)[number],
+        (typeof geometry)[number],
+        (typeof geometry)[number],
+      ],
     }
   }
 
   return {
     ...base,
     shapeType: 'line',
-    points: geometry as [typeof geometry[number], typeof geometry[number]],
+    points: geometry as [(typeof geometry)[number], (typeof geometry)[number]],
   }
 }

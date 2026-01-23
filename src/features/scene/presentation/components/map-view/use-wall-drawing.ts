@@ -20,9 +20,9 @@ import {
   computeAngleDeg,
   computePerimeter,
   computeSegmentLength,
-  formatMeters,
-  doesWallPathHitPerson,
   doesWallCollideWithShapes,
+  doesWallPathHitPerson,
+  formatMeters,
 } from './map-view-helpers'
 
 interface WallDrawingState {
@@ -101,7 +101,9 @@ export const useWallDrawing = ({
       resetWallDrawing()
       return false
     }
-    if (doesWallPathHitPerson(wallDrawing.points, people, DEFAULT_WALL_THICKNESS)) {
+    if (
+      doesWallPathHitPerson(wallDrawing.points, people, DEFAULT_WALL_THICKNESS)
+    ) {
       toast.error('Cannot draw walls over people')
       resetWallDrawing()
       return false

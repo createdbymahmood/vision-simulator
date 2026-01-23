@@ -1,12 +1,14 @@
 import React from 'react'
 import * as THREE from 'three'
 
-import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 import type {CameraEntity} from '@/features/scene/domain/types'
 
-import {parseColorAndAlpha} from './simulation-helpers'
+import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
+
 import type {WorldEntity} from './simulation-helpers'
+
 import {ShapeMesh} from './shape-mesh'
+import {parseColorAndAlpha} from './simulation-helpers'
 
 const WALL_BASE_OPACITY = 0.8
 
@@ -25,7 +27,6 @@ export const WallMesh: React.FC<{
     <group position={midpoint} rotation={[0, angle, 0]}>
       <mesh
         castShadow
-        receiveShadow
         onClick={(event) => {
           event.stopPropagation()
           onSelect(data.entity.id)
@@ -33,16 +34,17 @@ export const WallMesh: React.FC<{
             onFocus(midpoint.clone(), Math.max(data.length, 8))
           }
         }}
+        receiveShadow
       >
         <boxGeometry
           args={[data.length, data.entity.height, data.entity.thickness]}
         />
         <meshStandardMaterial
-          color={data.entity.color}
-          roughness={0.9}
-          metalness={0}
           transparent
+          metalness={0}
+          color={data.entity.color}
           opacity={data.dimmed ? WALL_BASE_OPACITY * 0.5 : WALL_BASE_OPACITY}
+          roughness={0.9}
         />
       </mesh>
     </group>
@@ -79,11 +81,9 @@ export const AreaMesh: React.FC<{
   const fillColor = fillColorParsed.color
   return (
     <mesh
-      geometry={extrude}
-      position={[0, 0.01, 0]}
-      castShadow
-      receiveShadow
       renderOrder={0}
+      castShadow
+      geometry={extrude}
       onClick={(event) => {
         event.stopPropagation()
         onSelect(data.entity.id)
@@ -97,12 +97,14 @@ export const AreaMesh: React.FC<{
           onFocus(focusPoint, Math.max(size.x, size.z, 20))
         }
       }}
+      position={[0, 0.01, 0]}
+      receiveShadow
     >
       <meshBasicMaterial
-        color={fillColor}
         transparent
-        opacity={appliedOpacity}
         side={THREE.DoubleSide}
+        color={fillColor}
+        opacity={appliedOpacity}
         polygonOffset
         polygonOffsetFactor={3}
         polygonOffsetUnits={3}
@@ -124,7 +126,6 @@ export const PersonMesh: React.FC<{
     <group position={data.position}>
       <mesh
         castShadow
-        receiveShadow
         onClick={(event) => {
           event.stopPropagation()
           onSelect(data.entity.id)
@@ -132,13 +133,14 @@ export const PersonMesh: React.FC<{
             onFocus(data.position.clone(), Math.max(data.entity.height * 2, 8))
           }
         }}
+        receiveShadow
       >
         <capsuleGeometry args={[radius, bodyHeight, 8, 16]} />
         <meshStandardMaterial
-          color={color}
           emissive={selected ? '#F7DC6F' : '#000000'}
           emissiveIntensity={selected ? 0.4 : 0}
           transparent={data.dimmed}
+          color={color}
           opacity={data.dimmed ? 0.5 : 1}
         />
       </mesh>
@@ -200,6 +202,11 @@ const buildFrustumGeometry = (
     if (vertex.y >= minLocalY) {
       return vertex
     }
+    if (vertex.y === 0) {
+      const clamped = vertex.clone()
+      clamped.y = minLocalY
+      return clamped
+    }
     const scale = minLocalY / vertex.y
     return vertex.clone().multiplyScalar(scale)
   }
@@ -250,14 +257,9 @@ export const CameraMesh: React.FC<{
   )
 
   return (
-    <group
-      position={position}
-      rotation={[0, yaw, 0]}
-    >
+    <group position={position} rotation={[0, yaw, 0]}>
       <mesh
         castShadow
-        receiveShadow
-        position={[0, standHeight / 2, 0]}
         onClick={(event) => {
           event.stopPropagation()
           onSelect(entity.id)
@@ -268,15 +270,15 @@ export const CameraMesh: React.FC<{
             )
           }
         }}
+        position={[0, standHeight / 2, 0]}
+        receiveShadow
       >
         <cylinderGeometry args={[0.12, 0.12, standHeight, 12]} />
-        <meshStandardMaterial color='#94A3B8' roughness={0.8} metalness={0.2} />
+        <meshStandardMaterial metalness={0.2} color='#94A3B8' roughness={0.8} />
       </mesh>
 
       <mesh
-        position={[0, standHeight + bodyHeight / 2, 0]}
         castShadow
-        receiveShadow
         onClick={(event) => {
           event.stopPropagation()
           onSelect(entity.id)
@@ -287,48 +289,57 @@ export const CameraMesh: React.FC<{
             )
           }
         }}
+        position={[0, standHeight + bodyHeight / 2, 0]}
+        receiveShadow
       >
         <boxGeometry args={[0.45, bodyHeight, 0.35]} />
         <meshStandardMaterial
-          color={color}
           emissive={color}
           emissiveIntensity={0.25}
-          roughness={0.6}
           metalness={0.15}
           transparent={dimmed}
+          color={color}
           opacity={dimmed ? 0.65 : 1}
+          roughness={0.6}
         />
       </mesh>
 
       <mesh
-        position={[0, standHeight + bodyHeight * 0.8, 0.28]}
         castShadow
         onClick={(event) => {
           event.stopPropagation()
           onSelect(entity.id)
         }}
+        position={[0, standHeight + bodyHeight * 0.8, 0.28]}
       >
         <coneGeometry args={[0.14, 0.25, 16]} />
-        <meshStandardMaterial color='#334155' roughness={0.5} metalness={0.2} />
+        <meshStandardMaterial metalness={0.2} color='#334155' roughness={0.5} />
       </mesh>
 
-      <mesh geometry={frustum.surfaceGeometry} position={[0, opticHeight, 0]}>
+      <mesh
+        renderOrder={200}
+        geometry={frustum.surfaceGeometry}
+        position={[0, opticHeight, 0]}
+      >
         <meshBasicMaterial
-          color={color}
           transparent
-          opacity={dimmed ? 0.05 : 0.12}
-          side={THREE.DoubleSide}
           blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+          color={color}
+          opacity={dimmed ? 0.05 : 0.12}
         />
       </mesh>
       <lineSegments
+        renderOrder={201}
         geometry={frustum.lineGeometry}
         position={[0, opticHeight, 0]}
       >
         <lineBasicMaterial
-          color={color}
-          linewidth={2}
           transparent
+          linewidth={2}
+          depthWrite={false}
+          color={color}
           opacity={dimmed ? 0.3 : 0.8}
         />
       </lineSegments>
@@ -336,7 +347,7 @@ export const CameraMesh: React.FC<{
       {selected ? (
         <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.35, 0.45, 32]} />
-          <meshBasicMaterial color={color} transparent opacity={0.35} />
+          <meshBasicMaterial transparent color={color} opacity={0.35} />
         </mesh>
       ) : null}
     </group>
@@ -349,62 +360,68 @@ export const EntitiesMesh: React.FC<{
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selectedEntityIds: string[]
   maxFrustumDepth?: number
-}> = ({entities, onSelectEntity, onFocus, selectedEntityIds, maxFrustumDepth}) => (
+}> = ({
+  entities,
+  onSelectEntity,
+  onFocus,
+  selectedEntityIds,
+  maxFrustumDepth,
+}) => (
   <>
     {entities.map((entity) => {
       if (entity.type === 'area') {
         return (
           <AreaMesh
-            key={entity.entity.id}
             data={entity}
-            onSelect={onSelectEntity}
-            onFocus={onFocus}
+            key={entity.entity.id}
             selected={selectedEntityIds.includes(entity.entity.id)}
+            onFocus={onFocus}
+            onSelect={onSelectEntity}
           />
         )
       }
       if (entity.type === 'wall') {
         return (
           <WallMesh
-            key={`${entity.entity.id}-${entity.segmentIndex}`}
             data={entity}
-            onSelect={onSelectEntity}
-            onFocus={onFocus}
+            key={`${entity.entity.id}-${entity.segmentIndex}`}
             selected={selectedEntityIds.includes(entity.entity.id)}
+            onFocus={onFocus}
+            onSelect={onSelectEntity}
           />
         )
       }
       if (entity.type === 'person') {
         return (
           <PersonMesh
-            key={entity.entity.id}
             data={entity}
-            onSelect={onSelectEntity}
-            onFocus={onFocus}
+            key={entity.entity.id}
             selected={selectedEntityIds.includes(entity.entity.id)}
+            onFocus={onFocus}
+            onSelect={onSelectEntity}
           />
         )
       }
       if (entity.type === 'shape') {
         return (
           <ShapeMesh
-            key={entity.entity.id}
             data={entity}
-            onSelect={onSelectEntity}
-            onFocus={onFocus}
+            key={entity.entity.id}
             selected={selectedEntityIds.includes(entity.entity.id)}
+            onFocus={onFocus}
+            onSelect={onSelectEntity}
           />
         )
       }
       if (entity.type === 'camera') {
         return (
           <CameraMesh
-            key={entity.entity.id}
             data={entity}
-            onSelect={onSelectEntity}
-            onFocus={onFocus}
-            selected={selectedEntityIds.includes(entity.entity.id)}
+            key={entity.entity.id}
             maxFrustumDepth={maxFrustumDepth}
+            selected={selectedEntityIds.includes(entity.entity.id)}
+            onFocus={onFocus}
+            onSelect={onSelectEntity}
           />
         )
       }

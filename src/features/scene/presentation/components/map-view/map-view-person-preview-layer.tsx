@@ -9,11 +9,9 @@ interface MapViewPersonPreviewLayerProps {
   isValid: boolean
 }
 
-export const MapViewPersonPreviewLayer: React.FC<MapViewPersonPreviewLayerProps> = ({
-  circle,
-  point,
-  isValid,
-}) => {
+export const MapViewPersonPreviewLayer: React.FC<
+  MapViewPersonPreviewLayerProps
+> = ({circle, point, isValid}) => {
   const color = isValid ? '#4ECDC4' : '#EF4444'
 
   return (

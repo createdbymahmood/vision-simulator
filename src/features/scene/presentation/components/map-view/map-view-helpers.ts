@@ -3,8 +3,8 @@ import type {
   FeatureCollection,
   GeoJsonProperties,
   Geometry,
-  MultiPolygon,
   LineString,
+  MultiPolygon,
   Point,
   Polygon,
 } from 'geojson'
@@ -14,14 +14,14 @@ import {
   destination,
   featureCollection,
   intersect,
+  lineIntersect,
   lineString,
   point,
+  pointToLineDistance,
   polygon,
   area as turfArea,
-  length as turfLength,
-  pointToLineDistance,
-  lineIntersect,
   distance as turfDistance,
+  length as turfLength,
 } from '@turf/turf'
 
 import type {
@@ -33,20 +33,18 @@ import type {
   ShapeEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
+import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
 import {
   AREA_COLORS,
   DEFAULT_AREA_STYLE,
 } from '@/features/scene/domain/constants/area-style'
-import {
-  DEFAULT_PERSON_RADIUS,
-} from '@/features/scene/domain/constants/person-defaults'
+import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 import {SHAPE_STROKE_COLOR} from '@/features/scene/domain/constants/shape-style'
 import {
   DEFAULT_WALL_COLOR,
   DEFAULT_WALL_THICKNESS,
 } from '@/features/scene/domain/constants/wall-style'
-import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
 export const getBaseCursor = (
   activeTool: EditorTool,
@@ -264,7 +262,11 @@ export const getSafeRing = (coordinates: GeoPoint[]) => {
   return closeRing(coordinates)
 }
 
-export const distanceToSegment = (point: GeoPoint, a: GeoPoint, b: GeoPoint) => {
+export const distanceToSegment = (
+  point: GeoPoint,
+  a: GeoPoint,
+  b: GeoPoint,
+) => {
   const [px, py] = point
   const [ax, ay] = a
   const [bx, by] = b
@@ -310,10 +312,10 @@ export const buildOverlapFeatures = (
 
       try {
         const overlap = intersect(
-          featureCollection([
-            base,
-            other,
-          ]) as FeatureCollection<Polygon | MultiPolygon, GeoJsonProperties>,
+          featureCollection([base, other]) as FeatureCollection<
+            MultiPolygon | Polygon,
+            GeoJsonProperties
+          >,
         )
         if (overlap) {
           features.push(overlap as Feature)
@@ -435,7 +437,9 @@ export interface CameraLayerData {
   directions: FeatureCollection<LineString>
 }
 
-export const buildCameraLayerData = (cameras: CameraEntity[]): CameraLayerData => {
+export const buildCameraLayerData = (
+  cameras: CameraEntity[],
+): CameraLayerData => {
   const pointFeatures: Feature<Point>[] = []
   const fovFeatures: Feature<Polygon>[] = []
   const directionFeatures: Feature<LineString>[] = []
@@ -444,8 +448,17 @@ export const buildCameraLayerData = (cameras: CameraEntity[]): CameraLayerData =
     const origin: GeoPoint = [camera.x, camera.y]
     const effectivePan = camera.ptz?.pan ?? camera.direction
     const effectiveFov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
-    const fovRing = createFovRing(origin, effectivePan, effectiveFov, camera.depth)
-    const directionPoint = projectPoint(origin, effectivePan, camera.depth * 0.6)
+    const fovRing = createFovRing(
+      origin,
+      effectivePan,
+      effectiveFov,
+      camera.depth,
+    )
+    const directionPoint = projectPoint(
+      origin,
+      effectivePan,
+      camera.depth * 0.6,
+    )
 
     pointFeatures.push({
       type: 'Feature',
@@ -523,7 +536,7 @@ export const buildPersonFeatures = (
   })),
 })
 
-export type PersonCollisionType = 'person' | 'wall' | 'shape'
+export type PersonCollisionType = 'person' | 'shape' | 'wall'
 
 interface PersonCollisionParams {
   candidate: GeoPoint
@@ -709,7 +722,12 @@ export const doesShapeHitPerson = (
   })
 }
 
-const segmentDistanceMeters = (a: GeoPoint, b: GeoPoint, c: GeoPoint, d: GeoPoint) => {
+const segmentDistanceMeters = (
+  a: GeoPoint,
+  b: GeoPoint,
+  c: GeoPoint,
+  d: GeoPoint,
+) => {
   const segA = lineString([a, b])
   const segB = lineString([c, d])
   const intersects = lineIntersect(segA, segB)
@@ -787,9 +805,7 @@ export const doesWallCollideWithShapes = (
           return false
         }
         const ringNext = ring[ringIndex + 1]
-        return (
-          segmentDistanceMeters(pt, next, ringPt, ringNext) < thickness
-        )
+        return segmentDistanceMeters(pt, next, ringPt, ringNext) < thickness
       })
     })
   })

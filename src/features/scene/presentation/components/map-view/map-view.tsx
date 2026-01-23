@@ -27,17 +27,12 @@ import {MapViewAreaLayers} from '@/features/scene/presentation/components/map-vi
 import {MapViewCameraLayers} from '@/features/scene/presentation/components/map-view/map-view-camera-layers'
 import {MapViewCameraPreviewLayer} from '@/features/scene/presentation/components/map-view/map-view-camera-preview-layer'
 import {MapViewCursorOverlay} from '@/features/scene/presentation/components/map-view/map-view-cursor-overlay'
-import {MapViewPersonPreviewLayer} from '@/features/scene/presentation/components/map-view/map-view-person-preview-layer'
-import {MapViewRotationHandleLayer} from '@/features/scene/presentation/components/map-view/map-view-rotation-handle-layer'
-import {MapViewSelectionBoundsLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-bounds-layer'
-import {MapViewSelectionHandlesLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-handles-layer'
 import {
   buildAreaFeatureCollection,
   buildCameraLayerData,
   buildOverlapFeatures,
   buildPersonFeatures,
   buildShapeFeatures,
-  getBaseCursor,
   buildWallFeatures,
   computeArea,
   computePerimeter,
@@ -45,17 +40,23 @@ import {
   createPolygonGeometry,
   formatArea,
   formatMeters,
+  getBaseCursor,
   getNextAreaColor,
   isPointInsideArea,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
-import {useCameraPlacement} from '@/features/scene/presentation/components/map-view/use-camera-placement'
 import {MapViewPeopleLayers} from '@/features/scene/presentation/components/map-view/map-view-people-layers'
+import {MapViewPersonPreviewLayer} from '@/features/scene/presentation/components/map-view/map-view-person-preview-layer'
+import {MapViewRotationHandleLayer} from '@/features/scene/presentation/components/map-view/map-view-rotation-handle-layer'
+import {MapViewSelectionBoundsLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-bounds-layer'
+import {MapViewSelectionHandlesLayer} from '@/features/scene/presentation/components/map-view/map-view-selection-handles-layer'
 import {MapViewShapeLayers} from '@/features/scene/presentation/components/map-view/map-view-shape-layers'
 import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/map-view-tooltip'
 import {MapViewWallLayers} from '@/features/scene/presentation/components/map-view/map-view-wall-layers'
 import {SelectionOverlay} from '@/features/scene/presentation/components/map-view/selection-overlay'
-import {usePersonPlacement} from '@/features/scene/presentation/components/map-view/use-person-placement'
+import {useCameraPlacement} from '@/features/scene/presentation/components/map-view/use-camera-placement'
+import {useFlyToActiveArea} from '@/features/scene/presentation/components/map-view/use-fly-to-active-area'
 import {useMapViewHotkeys} from '@/features/scene/presentation/components/map-view/use-map-view-hotkeys'
+import {usePersonPlacement} from '@/features/scene/presentation/components/map-view/use-person-placement'
 import {
   ENTITY_LAYER_IDS,
   HANDLE_LAYER_IDS,
@@ -63,7 +64,6 @@ import {
 } from '@/features/scene/presentation/components/map-view/use-selection-transform'
 import {useShapeDrawing} from '@/features/scene/presentation/components/map-view/use-shape-drawing'
 import {useWallDrawing} from '@/features/scene/presentation/components/map-view/use-wall-drawing'
-import {useFlyToActiveArea} from '@/features/scene/presentation/components/map-view/use-fly-to-active-area'
 
 interface DrawingState {
   isActive: boolean
@@ -852,11 +852,11 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
 
         {cameraPreview ? (
           <MapViewCameraPreviewLayer
+            isValid={cameraPreview.isValid}
+            previewRange={cameraPreview.range}
             previewDirection={cameraPreview.direction}
             previewFov={cameraPreview.fov}
             previewPoint={cameraPreview.point}
-            previewRange={cameraPreview.range}
-            isValid={cameraPreview.isValid}
           />
         ) : null}
 
@@ -876,8 +876,8 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
       </Mapbox>
 
       <SelectionOverlay
-        isEditMode={isEditMode}
         count={selectionCount}
+        isEditMode={isEditMode}
         onDelete={onDeleteSelection}
       />
 

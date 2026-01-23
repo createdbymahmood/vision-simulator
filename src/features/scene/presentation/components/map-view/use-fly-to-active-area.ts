@@ -1,5 +1,6 @@
-import React from 'react'
 import type {MapRef} from 'react-map-gl/mapbox'
+
+import React from 'react'
 
 import type {AreaEntity} from '@/features/scene/domain/types'
 

@@ -6,18 +6,13 @@ import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {TopPanel} from '@/features/scene/presentation/components/top-panel'
 
-import {assignCameraColor} from '../../domain/services/color-assignment'
 import type {SceneMode} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
+import {assignCameraColor} from '../../domain/services/color-assignment'
 import {createInitialScene} from '../../domain/services/scene-factory'
 import {useEditorShortcuts} from '../hooks/use-editor-shortcuts'
 import {BottomNavigation} from './bottom-navigation'
-import {AreaPropertiesSheet} from './properties-sheet/area-properties-sheet'
-import {CameraPropertiesSheet} from './properties-sheet/camera-properties-sheet'
-import {PersonPropertiesSheet} from './properties-sheet/person-properties-sheet'
-import {ShapePropertiesSheet} from './properties-sheet/shape-properties-sheet'
-import {SimulationAnalysisView} from './simulation/simulation-analysis-view'
 import {
   AreaManagementDialog,
   DevicesDialog,
@@ -25,9 +20,14 @@ import {
   PlaceDeviceDialog,
   SearchLocationDialog,
 } from './editor-dialogs'
-import {RightRail} from './right-rail'
-import {ViewportShell} from './viewport-shell'
+import {AreaPropertiesSheet} from './properties-sheet/area-properties-sheet'
+import {CameraPropertiesSheet} from './properties-sheet/camera-properties-sheet'
+import {PersonPropertiesSheet} from './properties-sheet/person-properties-sheet'
+import {ShapePropertiesSheet} from './properties-sheet/shape-properties-sheet'
 import {WallPropertiesSheet} from './properties-sheet/wall-properties-sheet'
+import {RightRail} from './right-rail'
+import {SimulationAnalysisView} from './simulation/simulation-analysis-view'
+import {ViewportShell} from './viewport-shell'
 
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const EditorLayout: React.FC = () => {
@@ -256,9 +256,9 @@ export const EditorLayout: React.FC = () => {
           />
 
           <PlaceDeviceDialog
+            nextColor={nextCameraColor}
             onOpenChange={setPlaceDeviceOpen}
             onSelectDevice={handleSelectDevicePreset}
-            nextColor={nextCameraColor}
             open={placeDeviceOpen}
           />
 

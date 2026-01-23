@@ -18,7 +18,7 @@ export const MapViewCameraLayers: React.FC<MapViewCameraLayersProps> = ({
 
   return (
     <>
-      <Source data={data.fovs} id='camera-fovs' promoteId='id' type='geojson'>
+      <Source data={data.fovs} id='camera-fovs' type='geojson' promoteId='id'>
         <Layer
           id='camera-fov-fill'
           type='fill'
@@ -63,8 +63,8 @@ export const MapViewCameraLayers: React.FC<MapViewCameraLayersProps> = ({
       <Source
         data={data.directions}
         id='camera-directions'
-        promoteId='id'
         type='geojson'
+        promoteId='id'
       >
         <Layer
           id='camera-direction'
@@ -86,7 +86,7 @@ export const MapViewCameraLayers: React.FC<MapViewCameraLayersProps> = ({
         />
       </Source>
 
-      <Source data={data.points} id='cameras' promoteId='id' type='geojson'>
+      <Source data={data.points} id='cameras' type='geojson' promoteId='id'>
         <Layer
           id='camera-outline'
           type='circle'

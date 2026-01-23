@@ -1,7 +1,7 @@
+import type {FeatureCollection, LineString, Point, Polygon} from 'geojson'
+
 import React from 'react'
 import {Layer, Source} from 'react-map-gl/mapbox'
-
-import type {FeatureCollection, LineString, Point, Polygon} from 'geojson'
 
 interface MapViewCameraPreviewLayerProps {
   previewPoint: FeatureCollection<Point>
@@ -13,13 +13,7 @@ interface MapViewCameraPreviewLayerProps {
 
 export const MapViewCameraPreviewLayer: React.FC<
   MapViewCameraPreviewLayerProps
-> = ({
-  previewPoint,
-  previewFov,
-  previewDirection,
-  previewRange,
-  isValid,
-}) => {
+> = ({previewPoint, previewFov, previewDirection, previewRange, isValid}) => {
   const hasPreview = previewPoint.features.length > 0
   if (!hasPreview) {
     return null
@@ -72,7 +66,11 @@ export const MapViewCameraPreviewLayer: React.FC<
         />
       </Source>
 
-      <Source data={previewDirection} id='camera-preview-direction' type='geojson'>
+      <Source
+        data={previewDirection}
+        id='camera-preview-direction'
+        type='geojson'
+      >
         <Layer
           id='camera-preview-direction-line'
           type='line'

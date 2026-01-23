@@ -15,7 +15,7 @@ export const MapViewPeopleLayers: React.FC<MapViewPeopleLayersProps> = ({
   }
 
   return (
-    <Source data={personFeatures} id='people' promoteId='id' type='geojson'>
+    <Source data={personFeatures} id='people' type='geojson' promoteId='id'>
       <Layer
         id='people-outline'
         type='circle'

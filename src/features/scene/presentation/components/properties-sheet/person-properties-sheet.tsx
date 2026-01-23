@@ -3,7 +3,6 @@ import React from 'react'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Slider} from '@/components/ui/slider'
-
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
@@ -25,8 +24,11 @@ export const PersonPropertiesSheet: React.FC = () => {
     return people.find((person) => person.id === personId) ?? null
   }, [people, selectedEntityIds])
 
-  const personName =
-    (selectedPerson?.name ?? selectedPerson?.id ?? '').toString()
+  const personName = (
+    selectedPerson?.name ??
+    selectedPerson?.id ??
+    ''
+  ).toString()
 
   const updateSelectedPerson = React.useCallback(
     (updater: (person: (typeof people)[number]) => void) => {
@@ -59,13 +61,13 @@ export const PersonPropertiesSheet: React.FC = () => {
 
   return (
     <PropertiesShell
-      open={isOpen}
+      entityId={selectedPerson?.id}
+      entityName={selectedPerson?.name}
+      title='Person Properties'
       onOpenChange={(open) =>
         open ? openPanel('person-properties') : closePanel('person-properties')
       }
-      title='Person Properties'
-      entityId={selectedPerson?.id}
-      entityName={selectedPerson?.name}
+      open={isOpen}
     >
       {selectedPerson ? (
         <div className='space-y-6'>

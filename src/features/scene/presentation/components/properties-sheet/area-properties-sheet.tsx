@@ -2,15 +2,26 @@ import React from 'react'
 
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
-
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
-import {computeArea, computePerimeter, formatArea, formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {
+  computeArea,
+  computePerimeter,
+  formatArea,
+  formatMeters,
+} from '@/features/scene/presentation/components/map-view/map-view-helpers'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
+// eslint-disable-next-line max-lines-per-function
 export const AreaPropertiesSheet: React.FC = () => {
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
@@ -81,14 +92,14 @@ export const AreaPropertiesSheet: React.FC = () => {
 
   return (
     <PropertiesShell
-      open={isOpen}
+      entityId={selectedArea?.id}
+      entityName={selectedArea?.name}
+      title='Area Properties'
+      accentColor={selectedArea?.style.fillColor}
       onOpenChange={(open) =>
         open ? openPanel('area-properties') : closePanel('area-properties')
       }
-      title='Area Properties'
-      entityId={selectedArea?.id}
-      entityName={selectedArea?.name}
-      accentColor={selectedArea?.style.fillColor}
+      open={isOpen}
     >
       {selectedArea ? (
         <div className='space-y-6'>
@@ -148,7 +159,9 @@ export const AreaPropertiesSheet: React.FC = () => {
                   id='area-border'
                   type='color'
                   value={selectedArea.style.borderColor}
-                  onChange={(event) => handleBorderColorChange(event.target.value)}
+                  onChange={(event) =>
+                    handleBorderColorChange(event.target.value)
+                  }
                 />
               </div>
             </div>

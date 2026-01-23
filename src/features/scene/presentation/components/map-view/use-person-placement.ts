@@ -1,20 +1,25 @@
-import React from 'react'
-
 import type {FeatureCollection, Point, Polygon} from 'geojson'
 import type {MapMouseEvent, MapRef} from 'react-map-gl/mapbox'
 
+import React from 'react'
 import {toast} from 'sonner'
 
 import type {
   AreaEntity,
   GeoPoint,
   PersonEntity,
-  ShapeEntity,
   SceneRoot,
+  ShapeEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {TooltipState} from '@/features/scene/presentation/components/map-view/map-view-types'
+
+import {
+  DEFAULT_PERSON_HEIGHT,
+  DEFAULT_PERSON_RADIUS,
+  DEFAULT_PERSON_SPEED,
+} from '@/features/scene/domain/constants/person-defaults'
 
 import {
   createCircleRing,
@@ -22,11 +27,6 @@ import {
   getPersonCollision,
   isPointInsideArea,
 } from './map-view-helpers'
-import {
-  DEFAULT_PERSON_RADIUS,
-  DEFAULT_PERSON_HEIGHT,
-  DEFAULT_PERSON_SPEED,
-} from '@/features/scene/domain/constants/person-defaults'
 
 type MapLayerMouseEvent = MapMouseEvent
 
@@ -61,7 +61,10 @@ interface UsePersonPlacementResult {
 }
 
 const createEmptyPreview = (): PersonPreviewData => ({
-  circle: {type: 'FeatureCollection', features: []} as FeatureCollection<Polygon>,
+  circle: {
+    type: 'FeatureCollection',
+    features: [],
+  } as FeatureCollection<Polygon>,
   point: {type: 'FeatureCollection', features: []} as FeatureCollection<Point>,
   isValid: false,
   color: '#4ECDC4',
@@ -246,7 +249,7 @@ export const usePersonPlacement = ({
         const reason =
           validation.reason === 'Outside area boundary'
             ? 'Cannot place object outside area boundaries'
-            : validation.reason ?? 'Cannot place person here'
+            : (validation.reason ?? 'Cannot place person here')
         toast.error(reason)
         return true
       }

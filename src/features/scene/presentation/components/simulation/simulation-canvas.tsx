@@ -1,16 +1,17 @@
-import React from 'react'
 import {Canvas} from '@react-three/fiber'
+import React from 'react'
 import * as THREE from 'three'
 
-import {SimulationScene, type SimulationSceneProps} from './simulation-scene'
+import type {SimulationSceneProps} from './simulation-scene'
+
+import {SimulationScene} from './simulation-scene'
 
 export interface SimulationCanvasProps extends SimulationSceneProps {}
 
 export const SimulationCanvas: React.FC<SimulationCanvasProps> = (props) => (
   <Canvas
-    className='h-full w-full'
-    shadows
     camera={{fov: 50, position: [40, 30, 40], near: 0.5, far: 1200}}
+    className='h-full w-full'
     gl={{antialias: true, alpha: true, logarithmicDepthBuffer: true}}
     onCreated={({gl}) => {
       gl.outputColorSpace = THREE.SRGBColorSpace
@@ -18,6 +19,7 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = (props) => (
       gl.shadowMap.enabled = true
       gl.shadowMap.type = THREE.PCFSoftShadowMap
     }}
+    shadows
   >
     <SimulationScene {...props} />
   </Canvas>

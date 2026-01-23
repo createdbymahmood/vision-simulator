@@ -1,5 +1,7 @@
-import React from 'react'
 import {ArrowLeft, Film, Image, Map, MapPin, ToggleLeft} from 'lucide-react'
+import React from 'react'
+
+import type {SceneEntity, SceneMode} from '@/features/scene/domain/types'
 
 import {Button} from '@/components/ui/button'
 import {
@@ -9,10 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
-import type {SceneEntity, SceneMode} from '@/features/scene/domain/types'
 
 import {SimulationCanvas} from './simulation-canvas'
 
@@ -74,8 +74,8 @@ export const SimulationAnalysisView: React.FC = () => {
           <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
             <Button
               size='sm'
-              variant={scene.mode === 'map' ? 'default' : 'ghost'}
               className='rounded-full'
+              variant={scene.mode === 'map' ? 'default' : 'ghost'}
               onClick={() => handleSceneModeChange('map')}
             >
               <Map className='mr-2 h-4 w-4' />
@@ -83,8 +83,8 @@ export const SimulationAnalysisView: React.FC = () => {
             </Button>
             <Button
               size='sm'
-              variant={scene.mode === 'canvas' ? 'default' : 'ghost'}
               className='rounded-full'
+              variant={scene.mode === 'canvas' ? 'default' : 'ghost'}
               onClick={() => handleSceneModeChange('canvas')}
             >
               <ToggleLeft className='mr-2 h-4 w-4' />
@@ -153,13 +153,15 @@ export const SimulationAnalysisView: React.FC = () => {
         <div className='absolute inset-0'>
           <SimulationCanvas
             scene={scene}
+            selectedEntityIds={selectedEntityIds}
             focusAreaId={scene.activeAreaId}
+            onSelectEntity={(id) => setSelection(id ? [id] : [])}
             sceneMode={scene.mode}
             showMapTexture={
-              scene.mode === 'canvas' ? true : scene.mapVisible && scene.mode === 'map'
+              scene.mode === 'canvas'
+                ? true
+                : scene.mapVisible && scene.mode === 'map'
             }
-            selectedEntityIds={selectedEntityIds}
-            onSelectEntity={(id) => setSelection(id ? [id] : [])}
           />
         </div>
       </div>

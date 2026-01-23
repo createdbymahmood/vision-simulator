@@ -41,7 +41,10 @@ export interface UiState {
   ) => Record<string, boolean>
   closeAllPanels: () => Record<string, boolean>
   closeAllPopovers: () => Record<string, boolean>
-  setCameraPlacement: (presetId: string | null, color: string | null) => {
+  setCameraPlacement: (
+    presetId: string | null,
+    color: string | null,
+  ) => {
     presetId: string | null
     color: string | null
   }

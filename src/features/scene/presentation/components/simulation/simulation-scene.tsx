@@ -1,16 +1,23 @@
-import React from 'react'
+import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
+
 import {OrbitControls} from '@react-three/drei'
 import {useFrame, useThree} from '@react-three/fiber'
+import React from 'react'
 import * as THREE from 'three'
-import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
 
 import type {SceneMode, SceneRoot} from '@/features/scene/domain/types'
 
-import {computeSceneOrigin, createCoordinateTransformer, transformFeatureCollectionsToThreeJSShapes, type WorldEntity} from './simulation-helpers'
-import {createGridTexture, createMapTexture} from './simulation-textures'
-import {GroundPlane} from './ground-plane'
-import {EntitiesMesh} from './entity-meshes'
+import type {WorldEntity} from './simulation-helpers'
+
 import {computeBounds} from '../map-view/selection-geometry'
+import {EntitiesMesh} from './entity-meshes'
+import {GroundPlane} from './ground-plane'
+import {
+  computeSceneOrigin,
+  createCoordinateTransformer,
+  transformFeatureCollectionsToThreeJSShapes,
+} from './simulation-helpers'
+import {createGridTexture, createMapTexture} from './simulation-textures'
 
 interface FocusRequest {
   point: THREE.Vector3
@@ -31,12 +38,12 @@ const Lights: React.FC = () => (
     <hemisphereLight args={['#cdeaff', '#e2e8f0', 0.35]} />
     <ambientLight intensity={0.25} />
     <directionalLight
-      color='#f8fafc'
       intensity={0.9}
-      position={[120, 180, 80]}
       castShadow
-      shadow-mapSize-width={2048}
+      color='#f8fafc'
+      position={[120, 180, 80]}
       shadow-mapSize-height={2048}
+      shadow-mapSize-width={2048}
     />
   </>
 )
@@ -84,7 +91,7 @@ const FocusController: React.FC<{
       const elapsed = performance.now() - focusRef.current.start
       const duration = 800
       const t = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
+      const eased = 1 - (1 - t) ** 3
       camera.position
         .copy(focusRef.current.fromPos)
         .lerp(focusRef.current.toPos, eased)
@@ -315,33 +322,33 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
 
   return (
     <>
-      <color attach='background' args={['#E0F2FE']} />
-      <fog attach='fog' args={['#E0F2FE', 150, 1200]} />
+      <color args={['#E0F2FE']} attach='background' />
+      <fog args={['#E0F2FE', 150, 1200]} attach='fog' />
       <Lights />
       <GroundPlane
-        showMapTexture={showMapTexture}
-        gridTexture={gridTexture}
-        mapTexture={staticMapTexture ?? fallbackMapTexture}
-        mapPlaneSize={mapPlaneSize}
         gridPlaneSize={gridPlaneSize}
+        gridTexture={gridTexture}
         isStaticMap={Boolean(staticMapTexture && isStaticMapReady)}
+        mapPlaneSize={mapPlaneSize}
+        mapTexture={staticMapTexture ?? fallbackMapTexture}
+        showMapTexture={showMapTexture}
       />
 
       <EntitiesMesh
         entities={entities}
-        onSelectEntity={onSelectEntity}
-        onFocus={requestFocus}
-        selectedEntityIds={selectedEntityIds}
         maxFrustumDepth={maxFrustumDepth}
+        selectedEntityIds={selectedEntityIds}
+        onFocus={requestFocus}
+        onSelectEntity={onSelectEntity}
       />
 
       <OrbitControls
-        ref={controlsRef}
         enableDamping
-        dampingFactor={0.08}
-        minDistance={5}
         maxDistance={500}
+        minDistance={5}
+        ref={controlsRef}
         target={[0, 0, 0]}
+        dampingFactor={0.08}
       />
       <FocusController request={focusRequest} controlsRef={controlsRef} />
     </>

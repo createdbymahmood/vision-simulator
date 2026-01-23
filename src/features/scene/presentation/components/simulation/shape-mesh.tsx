@@ -1,5 +1,6 @@
+import type {ThreeEvent} from '@react-three/fiber'
+
 import React from 'react'
-import {type ThreeEvent} from '@react-three/fiber'
 import * as THREE from 'three'
 
 import type {WorldEntity} from './simulation-helpers'
@@ -9,7 +10,7 @@ const SHAPE_SURFACE_OFFSET = 0.02
 const MIN_SHAPE_HEIGHT = 0.05
 const DEFAULT_LINE_THICKNESS = 0.1
 
-type LineShapeData = {
+interface LineShapeData {
   kind: 'line'
   position: THREE.Vector3
   rotationY: number
@@ -19,7 +20,7 @@ type LineShapeData = {
   focusDistance: number
 }
 
-type CylinderShapeData = {
+interface CylinderShapeData {
   kind: 'cylinder'
   position: THREE.Vector3
   radius: number
@@ -27,7 +28,7 @@ type CylinderShapeData = {
   focusDistance: number
 }
 
-type ExtrudeShapeData = {
+interface ExtrudeShapeData {
   kind: 'extrude'
   position: THREE.Vector3
   geometry: THREE.ExtrudeGeometry
@@ -35,7 +36,7 @@ type ExtrudeShapeData = {
   focusDistance: number
 }
 
-type ShapeData = LineShapeData | CylinderShapeData | ExtrudeShapeData
+type ShapeData = CylinderShapeData | ExtrudeShapeData | LineShapeData
 
 const stripClosingPoint = (points: THREE.Vector3[]) => {
   if (points.length < 2) {
@@ -179,7 +180,8 @@ export const ShapeMesh: React.FC<{
   const shapeData = useShapeData(entity, points, shapeHeight, lineThickness)
 
   React.useEffect(() => {
-    const extrudeGeometry = shapeData?.kind === 'extrude' ? shapeData.geometry : null
+    const extrudeGeometry =
+      shapeData?.kind === 'extrude' ? shapeData.geometry : null
     return () => {
       extrudeGeometry?.dispose()
     }
@@ -202,23 +204,30 @@ export const ShapeMesh: React.FC<{
   if (shapeData.kind === 'line') {
     return (
       <group
+        renderOrder={renderOrder}
         position={shapeData.position}
         rotation={[0, shapeData.rotationY, 0]}
-        renderOrder={renderOrder}
       >
-        <mesh castShadow receiveShadow onClick={handleSelect} renderOrder={renderOrder}>
+        <mesh
+          renderOrder={renderOrder}
+          castShadow
+          onClick={handleSelect}
+          receiveShadow
+        >
           <boxGeometry
             args={[shapeData.length, shapeHeight, shapeData.thickness]}
           />
           <meshStandardMaterial
-            color={color}
-            roughness={0.8}
-            metalness={0.1}
             transparent
-            opacity={baseOpacity}
             emissive={selected ? color : '#000000'}
             emissiveIntensity={selected ? 0.3 : 0}
-            depthWrite={false}
+            metalness={0.1}
+            color={color}
+            opacity={baseOpacity}
+            polygonOffset
+            polygonOffsetFactor={1}
+            polygonOffsetUnits={1}
+            roughness={0.8}
           />
         </mesh>
       </group>
@@ -227,20 +236,27 @@ export const ShapeMesh: React.FC<{
 
   if (shapeData.kind === 'cylinder') {
     return (
-      <group position={shapeData.position} renderOrder={renderOrder}>
-        <mesh castShadow receiveShadow onClick={handleSelect} renderOrder={renderOrder}>
+      <group renderOrder={renderOrder} position={shapeData.position}>
+        <mesh
+          renderOrder={renderOrder}
+          castShadow
+          onClick={handleSelect}
+          receiveShadow
+        >
           <cylinderGeometry
             args={[shapeData.radius, shapeData.radius, shapeHeight, 48]}
           />
           <meshStandardMaterial
-            color={color}
-            roughness={0.8}
-            metalness={0.1}
             transparent
-            opacity={baseOpacity}
             emissive={selected ? color : '#000000'}
             emissiveIntensity={selected ? 0.3 : 0}
-            depthWrite={false}
+            metalness={0.1}
+            color={color}
+            opacity={baseOpacity}
+            polygonOffset
+            polygonOffsetFactor={1}
+            polygonOffsetUnits={1}
+            roughness={0.8}
           />
         </mesh>
       </group>
@@ -248,26 +264,25 @@ export const ShapeMesh: React.FC<{
   }
 
   return (
-    <group position={shapeData.position} renderOrder={renderOrder}>
+    <group renderOrder={renderOrder} position={shapeData.position}>
       <mesh
+        renderOrder={renderOrder}
         castShadow
-        receiveShadow
         geometry={shapeData.geometry}
         onClick={handleSelect}
-        renderOrder={renderOrder}
+        receiveShadow
       >
         <meshStandardMaterial
-          color={color}
-          roughness={0.8}
-          metalness={0.1}
           transparent
-          opacity={baseOpacity}
           emissive={selected ? color : '#000000'}
           emissiveIntensity={selected ? 0.3 : 0}
+          metalness={0.1}
+          color={color}
+          opacity={baseOpacity}
           polygonOffset
           polygonOffsetFactor={2}
           polygonOffsetUnits={2}
-          depthWrite={false}
+          roughness={0.8}
         />
       </mesh>
     </group>

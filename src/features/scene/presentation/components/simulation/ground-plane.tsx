@@ -34,7 +34,7 @@ export const GroundPlane: React.FC<GroundPlaneProps> = ({
     const step = () => {
       const elapsed = performance.now() - start
       const t = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - t, 3)
+      const eased = 1 - (1 - t) ** 3
       setMapOpacity(initialMap + (targetMap - initialMap) * eased)
       setGridOpacity(initialGrid + (targetGrid - initialGrid) * eased)
       if (t < 1) {
@@ -56,10 +56,7 @@ export const GroundPlane: React.FC<GroundPlaneProps> = ({
       } else {
         mapTexture.wrapS = THREE.RepeatWrapping
         mapTexture.wrapT = THREE.RepeatWrapping
-        mapTexture.repeat.set(
-          mapPlaneSize.width / 16,
-          mapPlaneSize.height / 16,
-        )
+        mapTexture.repeat.set(mapPlaneSize.width / 16, mapPlaneSize.height / 16)
         mapTexture.offset.set(0, 0)
         mapTexture.flipY = true
       }
@@ -84,9 +81,9 @@ export const GroundPlane: React.FC<GroundPlaneProps> = ({
       <mesh position={[0, mapOffset, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[mapPlaneSize.width, mapPlaneSize.height]} />
         <meshBasicMaterial
+          transparent
           map={mapTexture ?? undefined}
           color={mapTexture ? undefined : '#E5E7EB'}
-          transparent
           opacity={mapOpacity}
           polygonOffset
           polygonOffsetFactor={1}
@@ -96,9 +93,9 @@ export const GroundPlane: React.FC<GroundPlaneProps> = ({
       <mesh position={[0, gridOffset, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[gridPlaneSize.width, gridPlaneSize.height]} />
         <meshBasicMaterial
+          transparent
           map={gridTexture ?? undefined}
           color={gridTexture ? undefined : '#F8FAFC'}
-          transparent
           opacity={gridOpacity}
           polygonOffset
           polygonOffsetFactor={1}
