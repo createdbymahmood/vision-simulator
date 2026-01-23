@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
+import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
 interface AreaManagementDialogProps {
   open: boolean
@@ -30,6 +31,9 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
   const setActiveArea = useSceneStore((state) => state.setActiveArea)
   const updateAreaName = useSceneStore((state) => state.updateAreaName)
   const deleteArea = useSceneStore((state) => state.deleteArea)
+  const triggerFlyToActiveArea = useUiStore(
+    (state) => state.triggerFlyToActiveArea,
+  )
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
@@ -81,7 +85,11 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
                     <Button
                       size='sm'
                       variant={area.id === activeAreaId ? 'default' : 'outline'}
-                      onClick={() => setActiveArea(area.id)}
+                      onClick={() => {
+                        setActiveArea(area.id)
+                        triggerFlyToActiveArea()
+                        onOpenChange(false)
+                      }}
                     >
                       {area.id === activeAreaId ? 'Active' : 'Select'}
                     </Button>

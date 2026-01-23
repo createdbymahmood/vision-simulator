@@ -26,6 +26,7 @@ export interface UiState {
     presetId: string | null
     color: string | null
   }
+  flyToActiveAreaTick: number
 
   setViewMode: (mode: ViewMode) => ViewMode
   toggleViewMode: () => ViewMode
@@ -52,6 +53,7 @@ export interface UiState {
     presetId: string | null
     color: string | null
   }
+  triggerFlyToActiveArea: () => number
   resetUi: () => UiState
 }
 
@@ -177,6 +179,16 @@ const resetUi = (set: SetState, get: GetState) => {
     state.openPanels = {}
     state.openPopovers = {}
     state.cameraPlacement = {presetId: null, color: null}
+    state.flyToActiveAreaTick = 0
+  })
+
+  set(nextValue)
+  return get()
+}
+
+const triggerFlyToActiveArea = (set: SetState, get: GetState) => {
+  const nextValue = produce<UiState>((state) => {
+    state.flyToActiveAreaTick += 1
   })
 
   set(nextValue)
@@ -195,6 +207,7 @@ const createUiStore: (
     presetId: null,
     color: null,
   },
+  flyToActiveAreaTick: initialValues?.flyToActiveAreaTick ?? 0,
   setViewMode: (mode) => setViewMode(set, get, mode),
   toggleViewMode: () => toggleViewMode(set, get),
   setActiveTool: (tool) => setActiveTool(set, get, tool),
@@ -221,6 +234,7 @@ const createUiStore: (
     set(nextValue)
     return get().cameraPlacement
   },
+  triggerFlyToActiveArea: () => triggerFlyToActiveArea(set, get),
   resetUi: () => resetUi(set, get),
   ...initialValues,
 })

@@ -174,7 +174,7 @@ export const EditorLayout: React.FC = () => {
   }, [closeTransientUi, setEditMode, viewMode])
 
   useEditorShortcuts({
-    enabled: viewMode === 'editor',
+    enabled: /* viewMode === 'editor' */ false,
     isEditMode,
     hasAreas,
     isMapMode: sceneMode === 'map',

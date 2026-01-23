@@ -11,6 +11,7 @@ interface UseFlyToActiveAreaParams {
   mapLoaded: boolean
   activeAreaId?: string
   areas: AreaEntity[]
+  flyToActiveAreaTick?: number
 }
 
 export const useFlyToActiveArea = ({
@@ -18,8 +19,8 @@ export const useFlyToActiveArea = ({
   mapLoaded,
   activeAreaId,
   areas,
+  flyToActiveAreaTick = 0,
 }: UseFlyToActiveAreaParams) => {
-  const flownIdsRef = React.useRef<Set<string>>(new Set())
   const areasRef = React.useRef<AreaEntity[]>(areas)
 
   React.useEffect(() => {
@@ -28,9 +29,6 @@ export const useFlyToActiveArea = ({
 
   React.useEffect(() => {
     if (!mapLoaded || !mapRef.current || !activeAreaId) {
-      return
-    }
-    if (flownIdsRef.current.has(activeAreaId)) {
       return
     }
     const activeArea = areasRef.current.find((area) => area.id === activeAreaId)
@@ -57,6 +55,5 @@ export const useFlyToActiveArea = ({
         duration: 600,
       })
     }
-    flownIdsRef.current.add(activeAreaId)
-  }, [activeAreaId, mapLoaded, mapRef])
+  }, [activeAreaId, flyToActiveAreaTick, mapLoaded, mapRef])
 }

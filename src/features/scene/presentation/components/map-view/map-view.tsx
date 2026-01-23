@@ -118,6 +118,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   const setCameraPlacement = useUiStore((state) => state.setCameraPlacement)
   const clearCameraPlacement = useUiStore((state) => state.clearCameraPlacement)
   const openPanel = useUiStore((state) => state.openPanel)
+  const flyToActiveAreaTick = useUiStore((state) => state.flyToActiveAreaTick)
 
   const getAreaAtPoint = React.useCallback(
     (point: GeoPoint) =>
@@ -697,7 +698,13 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     [areas, activeAreaId],
   )
 
-  useFlyToActiveArea({mapRef, mapLoaded, activeAreaId, areas})
+  useFlyToActiveArea({
+    mapRef,
+    mapLoaded,
+    activeAreaId,
+    areas,
+    flyToActiveAreaTick,
+  })
 
   const overlapFeatures = React.useMemo(
     () => buildOverlapFeatures(areas),
