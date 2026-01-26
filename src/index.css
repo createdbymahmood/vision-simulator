@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @theme {
   --color-background: var(--background);
@@ -106,9 +106,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased overflow-hidden;
     font-family: Geist, sans-serif;
   }
+
   ::selection {
     @apply bg-muted-foreground/10 text-muted-foreground;
   }

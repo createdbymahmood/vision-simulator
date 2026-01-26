@@ -93,18 +93,13 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   const handleCameraHover = useCallbackRef((cameraId?: string) => {
     setHoveredCameraId(cameraId ?? null)
   })
-  const {
-    handleDragStart,
-    handlePanStart,
-    handleResizeStart,
-    handleWheel,
-    panelRef,
-    panelStyle,
-  } = useRadarInteractions({
-    radarSettings,
-    setRadarSettings,
-    containerRef,
-  })
+  const {handlePanStart, handleResizeStart, handleWheel} = useRadarInteractions(
+    {
+      radarSettings,
+      setRadarSettings,
+      containerRef,
+    },
+  )
 
   const pingPoint = React.useMemo(() => {
     if (!pingPersonId) {
@@ -118,25 +113,20 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   }, [peopleWorld, pingPersonId, toRadar])
 
   return (
-    <div
-      className='pointer-events-auto absolute'
-      ref={panelRef}
-      style={panelStyle}
-    >
+    <div className='pointer-events-auto w-full'>
       <div
         className={`${radarSettings.isMinimized ? 'w-full' : 'h-full w-full'} `}
       >
-        <Card style={{width: radarSettings.size.width}}>
+        <Card className='w-full'>
           <SimulationRadarHeader
             isMinimized={radarSettings.isMinimized}
-            onDragStart={handleDragStart}
             onToggleMinimize={handleToggleMinimize}
           />
           {!radarSettings.isMinimized ? (
             <>
-              <CardContent className='p-0'>
+              <CardContent className='p-0 overflow-hidden'>
                 <div
-                  className='relative'
+                  className='relative overflow-hidden'
                   onPointerDown={handlePanStart}
                   onWheel={handleWheel}
                 >

@@ -43,6 +43,7 @@ export const SimulationAnalysisView: React.FC = () => {
   const setActiveCameraId = useUiStore((state) => state.setActiveCameraId)
   const cycleActiveCamera = useUiStore((state) => state.cycleActiveCamera)
   const cameraFeedGrid = useUiStore((state) => state.cameraFeedGrid)
+  const radarSize = useUiStore((state) => state.radarSettings.size)
 
   const areaOptions: AreaOption[] = React.useMemo(() => {
     const getCount = (areaId: string) =>
@@ -72,7 +73,8 @@ export const SimulationAnalysisView: React.FC = () => {
     () => selectedEntityIds.find((id) => id.startsWith('camera-')),
     [selectedEntityIds],
   )
-  const overlayRef = React.useRef<HTMLDivElement>(null)
+  const sidebarPadding = 16
+  const sidebarWidth = radarSize.width + sidebarPadding * 2
   const feedTargets = useCameraFeedTargets({
     cameras: scene.cameras,
     grid: cameraFeedGrid,
@@ -130,7 +132,7 @@ export const SimulationAnalysisView: React.FC = () => {
   }, [onCycleCamera])
 
   return (
-    <div className='flex min-h-0 flex-1 flex-col'>
+    <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'>
       <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
         <div className='flex items-center gap-4'>
           <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
@@ -211,8 +213,8 @@ export const SimulationAnalysisView: React.FC = () => {
         </Button>
       </div>
 
-      <div className='relative flex-1 min-h-[520px] overflow-hidden shadow-inner'>
-        <div className='absolute inset-0'>
+      <div className='flex flex-1 min-h-0 overflow-hidden'>
+        <div className='relative min-h-0 min-w-0 flex-1 overflow-hidden'>
           <SimulationCanvas
             cameraFeedTargets={feedTargets}
             scene={scene}
@@ -227,11 +229,13 @@ export const SimulationAnalysisView: React.FC = () => {
             }
           />
         </div>
-        <div className='absolute inset-0 pointer-events-none' ref={overlayRef}>
+        <div
+          className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto border-l'
+          style={{width: sidebarWidth, padding: sidebarPadding}}
+        >
           <SimulationRadar
             scene={scene}
             selectedEntityIds={selectedEntityIds}
-            containerRef={overlayRef}
             onSelectEntity={handleSelectEntity}
           />
           {scene.cameras.length > 0 ? (

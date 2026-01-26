@@ -285,7 +285,7 @@ const resetUi = (set: SetState, get: GetState) => {
       isMinimized: false,
       zoom: 1,
       position: {x: 16, y: 16},
-      size: {width: 360, height: 360},
+      size: {width: 300, height: 120},
       pan: {x: 0, y: 0},
     }
     state.cameraFeedGrid = '2x2'
@@ -328,7 +328,7 @@ const createUiStore: (
     isMinimized: false,
     zoom: 1,
     position: {x: 16, y: 16},
-    size: {width: 360, height: 360},
+    size: {width: 300, height: 120},
     pan: {x: 0, y: 0},
   },
   cameraFeedGrid: initialValues?.cameraFeedGrid ?? '2x2',

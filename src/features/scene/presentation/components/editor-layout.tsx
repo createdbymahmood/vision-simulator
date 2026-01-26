@@ -191,7 +191,9 @@ export const EditorLayout: React.FC = () => {
   })
 
   return (
-    <div className='min-h-screen w-full flex flex-col'>
+    <div
+      className={`min-h-screen w-full flex flex-col ${viewMode === 'preview' ? 'overflow-hidden h-[100svh]' : ''}`}
+    >
       {viewMode === 'editor' ? (
         <TopPanel
           canRedo={canRedo}
@@ -210,7 +212,7 @@ export const EditorLayout: React.FC = () => {
       ) : null}
 
       <main
-        className={`mx-auto flex min-h-0 flex-1 flex-col gap-4 size-full ${viewMode === 'editor' ? 'pt-14' : ''}`}
+        className={`mx-auto flex min-h-0 flex-1 flex-col gap-4 size-full ${viewMode === 'editor' ? 'pt-14' : ''} ${viewMode === 'preview' ? 'overflow-hidden h-[100svh]' : ''}`}
       >
         {viewMode === 'editor' ? (
           <ViewportShell

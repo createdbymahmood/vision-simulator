@@ -7,7 +7,7 @@ import {CardAction, CardHeader, CardTitle} from '@/components/ui/card'
 interface SimulationRadarHeaderProps {
   isMinimized: boolean
   onToggleMinimize: () => void
-  onDragStart: (event: React.PointerEvent) => void
+  onDragStart?: (event: React.PointerEvent) => void
 }
 
 export const SimulationRadarHeader: React.FC<SimulationRadarHeaderProps> = ({
