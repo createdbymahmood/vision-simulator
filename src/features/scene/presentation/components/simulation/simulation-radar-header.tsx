@@ -1,5 +1,5 @@
-import React from 'react'
 import {Maximize2, Minus} from 'lucide-react'
+import React from 'react'
 
 import {Button} from '@/components/ui/button'
 import {CardAction, CardHeader, CardTitle} from '@/components/ui/card'
@@ -15,7 +15,10 @@ export const SimulationRadarHeader: React.FC<SimulationRadarHeaderProps> = ({
   onToggleMinimize,
   onDragStart,
 }) => (
-  <CardHeader onPointerDown={onDragStart}>
+  <CardHeader
+    // className='items-center flex justify-between p-0 bg-blue-200'
+    onPointerDown={onDragStart}
+  >
     <CardTitle>RADAR</CardTitle>
     <CardAction>
       <Button size='icon' variant='ghost' onClick={onToggleMinimize}>

@@ -209,11 +209,7 @@ const closeAllPopovers = (set: SetState, get: GetState) => {
   return get().openPopovers
 }
 
-const setActiveCameraId = (
-  set: SetState,
-  get: GetState,
-  cameraId?: string,
-) => {
+const setActiveCameraId = (set: SetState, get: GetState, cameraId?: string) => {
   const nextValue = produce<UiState>((state) => {
     state.activeCameraId = cameraId
   })
@@ -248,11 +244,7 @@ const setCameraFeedGrid = (
   return get().cameraFeedGrid
 }
 
-const setVisionState = (
-  set: SetState,
-  get: GetState,
-  state: VisionState,
-) => {
+const setVisionState = (set: SetState, get: GetState, state: VisionState) => {
   const nextValue = produce<UiState>((draft) => {
     draft.visionState = state
   })
@@ -275,9 +267,7 @@ const cycleActiveCamera = (
       (id) => id === state.activeCameraId,
     )
     const nextIndex =
-      currentIndex === -1
-        ? 0
-        : (currentIndex + 1) % cameraIds.length
+      currentIndex === -1 ? 0 : (currentIndex + 1) % cameraIds.length
     state.activeCameraId = cameraIds[nextIndex]
   })
 
@@ -303,7 +293,7 @@ const resetUi = (set: SetState, get: GetState) => {
       showWedges: true,
       zoom: 1,
       position: {x: 16, y: 16},
-      size: {width: 300, height: 300},
+      size: {width: 400, height: 400},
       pan: {x: 0, y: 0},
     }
     state.cameraFeedGrid = '2x2'

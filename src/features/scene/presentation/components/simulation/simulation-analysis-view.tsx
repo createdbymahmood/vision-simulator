@@ -1,6 +1,6 @@
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {ArrowLeft, Film, Image, Map, MapPin, ToggleLeft} from 'lucide-react'
 import React from 'react'
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 
 import type {SceneEntity, SceneMode} from '@/features/scene/domain/types'
 
@@ -15,8 +15,8 @@ import {
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
-import {SimulationCanvas} from './simulation-canvas'
 import {SimulationCameraSidebar} from './simulation-camera-sidebar'
+import {SimulationCanvas} from './simulation-canvas'
 import {SimulationRadar} from './simulation-radar'
 import {useCameraFeedTargets} from './use-camera-feed-targets'
 
@@ -29,6 +29,7 @@ interface AreaOption {
 const formatAreaLabel = (name: string, count: number) =>
   `${name} (${count} objects)`
 
+// eslint-disable-next-line max-lines-per-function
 export const SimulationAnalysisView: React.FC = () => {
   const scene = useSceneStore((state) => state.scene)
   const setSceneMode = useSceneStore((state) => state.setMode)
@@ -213,6 +214,7 @@ export const SimulationAnalysisView: React.FC = () => {
       <div className='relative flex-1 min-h-[520px] overflow-hidden shadow-inner'>
         <div className='absolute inset-0'>
           <SimulationCanvas
+            cameraFeedTargets={feedTargets}
             scene={scene}
             selectedEntityIds={selectedEntityIds}
             focusAreaId={scene.activeAreaId}
@@ -223,24 +225,17 @@ export const SimulationAnalysisView: React.FC = () => {
                 ? true
                 : scene.mapVisible && scene.mode === 'map'
             }
-            cameraFeedTargets={feedTargets}
           />
         </div>
-        <div
-          ref={overlayRef}
-          className='absolute inset-0 pointer-events-none'
-        >
+        <div className='absolute inset-0 pointer-events-none' ref={overlayRef}>
           <SimulationRadar
             scene={scene}
             selectedEntityIds={selectedEntityIds}
-            onSelectEntity={handleSelectEntity}
             containerRef={overlayRef}
+            onSelectEntity={handleSelectEntity}
           />
           {scene.cameras.length > 0 ? (
-            <SimulationCameraSidebar
-              scene={scene}
-              feedTargets={feedTargets}
-            />
+            <SimulationCameraSidebar feedTargets={feedTargets} scene={scene} />
           ) : null}
         </div>
       </div>
