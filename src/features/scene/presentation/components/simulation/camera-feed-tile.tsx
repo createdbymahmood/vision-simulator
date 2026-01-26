@@ -1,4 +1,3 @@
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import * as THREE from 'three'
 
@@ -26,8 +25,6 @@ interface CameraFeedTileProps {
   feedTarget: CameraFeedTarget
   peopleIds: string[]
   peopleWorld: Record<string, {x: number; y: number; z: number; height: number}>
-  isActive: boolean
-  onActivate: () => void
   transformer: ReturnType<typeof createCoordinateTransformer>
 }
 
@@ -143,8 +140,6 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   feedTarget,
   peopleIds,
   peopleWorld,
-  isActive,
-  onActivate,
   transformer,
 }) => {
   const size = useElementSize(feedTarget.ref)
@@ -160,18 +155,15 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
     [camera, peopleIds, peopleWorld, size.height, size.width, transformer],
   )
 
-  const handleActivate = useCallbackRef(() => onActivate())
   const detectionCount = peopleIds.length
 
   return (
     <div
       className='rounded-xl'
-      onClick={handleActivate}
       style={{
         borderColor: camera.color,
         borderStyle: 'solid',
-        borderWidth: isActive ? 4 : 3,
-        boxShadow: isActive ? `0 0 12px ${camera.color}` : undefined,
+        borderWidth: 3,
       }}
     >
       <Card>

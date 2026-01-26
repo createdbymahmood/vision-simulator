@@ -39,35 +39,8 @@ export const SimulationCameraSidebar: React.FC<
   const detectionsByCamera = visionState.visibleByCameraId
   const peopleWorld = visionState.peopleWorld
 
-  const handleActivateCamera = useCallbackRef((cameraId: string) => {
-    setActiveCameraId(cameraId)
-    setSelection([cameraId])
-  })
-
   return (
     <div className='flex flex-col gap-4 size-full'>
-      <Card>
-        <CardHeader>
-          <CardTitle>Cameras</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='flex flex-col gap-2'>
-            {scene.cameras.map((camera) => (
-              <Button
-                key={camera.id}
-                variant={activeCameraId === camera.id ? 'default' : 'outline'}
-                onClick={() => handleActivateCamera(camera.id)}
-              >
-                <span className='flex w-full items-center justify-between text-xs'>
-                  <span>{camera.name}</span>
-                  <Badge>{detectionsByCamera[camera.id]?.length ?? 0}</Badge>
-                </span>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>Camera Feeds</CardTitle>
@@ -84,9 +57,7 @@ export const SimulationCameraSidebar: React.FC<
                 <CameraFeedTile
                   camera={camera}
                   feedTarget={target}
-                  isActive={activeCameraId === camera.id}
                   key={camera.id}
-                  onActivate={() => handleActivateCamera(camera.id)}
                   peopleIds={peopleIds}
                   peopleWorld={peopleWorld}
                   transformer={transformer}
