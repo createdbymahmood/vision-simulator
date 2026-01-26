@@ -340,7 +340,7 @@ const createUiStore: (
     showWedges: true,
     zoom: 1,
     position: {x: 16, y: 16},
-    size: {width: 300, height: 300},
+    size: {width: 400, height: 400},
     pan: {x: 0, y: 0},
   },
   cameraFeedGrid: initialValues?.cameraFeedGrid ?? '2x2',

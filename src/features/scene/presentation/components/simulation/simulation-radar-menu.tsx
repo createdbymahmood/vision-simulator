@@ -1,4 +1,5 @@
 import React from 'react'
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 
 import {
   ContextMenuCheckboxItem,
@@ -17,40 +18,54 @@ export const SimulationRadarMenu: React.FC<SimulationRadarMenuProps> = ({
   radarSettings,
   onUpdateSettings,
   onResetZoom,
-}) => (
-  <ContextMenuContent>
-    <ContextMenuCheckboxItem
-      checked={radarSettings.showWedges}
-      onCheckedChange={(value) =>
-        onUpdateSettings({showWedges: Boolean(value)})
-      }
-    >
-      Show Camera FOV
-    </ContextMenuCheckboxItem>
-    <ContextMenuCheckboxItem
-      checked={radarSettings.showTrails}
-      onCheckedChange={(value) =>
-        onUpdateSettings({showTrails: Boolean(value)})
-      }
-    >
-      Show Trails
-    </ContextMenuCheckboxItem>
-    <ContextMenuCheckboxItem
-      checked={radarSettings.showGrid}
-      onCheckedChange={(value) =>
-        onUpdateSettings({showGrid: Boolean(value)})
-      }
-    >
-      Show Grid
-    </ContextMenuCheckboxItem>
-    <ContextMenuCheckboxItem
-      checked={radarSettings.isLocked}
-      onCheckedChange={(value) =>
-        onUpdateSettings({isLocked: Boolean(value)})
-      }
-    >
-      Lock Position
-    </ContextMenuCheckboxItem>
-    <ContextMenuItem onClick={onResetZoom}>Reset Zoom</ContextMenuItem>
-  </ContextMenuContent>
-)
+}) => {
+  const handleToggleWedges = useCallbackRef((event: Event) => {
+    event.preventDefault()
+    onUpdateSettings({showWedges: !radarSettings.showWedges})
+  })
+
+  const handleToggleTrails = useCallbackRef((event: Event) => {
+    event.preventDefault()
+    onUpdateSettings({showTrails: !radarSettings.showTrails})
+  })
+
+  const handleToggleGrid = useCallbackRef((event: Event) => {
+    event.preventDefault()
+    onUpdateSettings({showGrid: !radarSettings.showGrid})
+  })
+
+  const handleToggleLock = useCallbackRef((event: Event) => {
+    event.preventDefault()
+    onUpdateSettings({isLocked: !radarSettings.isLocked})
+  })
+
+  return (
+    <ContextMenuContent>
+      <ContextMenuCheckboxItem
+        checked={radarSettings.showWedges}
+        onSelect={handleToggleWedges}
+      >
+        Show Camera FOV
+      </ContextMenuCheckboxItem>
+      <ContextMenuCheckboxItem
+        checked={radarSettings.showTrails}
+        onSelect={handleToggleTrails}
+      >
+        Show Trails
+      </ContextMenuCheckboxItem>
+      <ContextMenuCheckboxItem
+        checked={radarSettings.showGrid}
+        onSelect={handleToggleGrid}
+      >
+        Show Grid
+      </ContextMenuCheckboxItem>
+      <ContextMenuCheckboxItem
+        checked={radarSettings.isLocked}
+        onSelect={handleToggleLock}
+      >
+        Lock Position
+      </ContextMenuCheckboxItem>
+      <ContextMenuItem onClick={onResetZoom}>Reset Zoom</ContextMenuItem>
+    </ContextMenuContent>
+  )
+}
