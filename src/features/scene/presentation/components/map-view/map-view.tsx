@@ -255,6 +255,8 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     isEditMode,
     areas,
     cameras,
+    walls,
+    shapes,
     cameraPlacement,
     setCameraPlacement,
     clearCameraPlacement,
@@ -738,8 +740,8 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
   )
 
   const cameraLayerData = React.useMemo(
-    () => buildCameraLayerData(cameras),
-    [cameras],
+    () => buildCameraLayerData(cameras, areas, walls, shapes),
+    [areas, cameras, shapes, walls],
   )
 
   const personFeatures = React.useMemo(

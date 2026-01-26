@@ -4,6 +4,7 @@ import type {
   GeoJsonProperties,
   Geometry,
   LineString,
+  MultiLineString,
   MultiPolygon,
   Point,
   Polygon,
@@ -11,6 +12,7 @@ import type {
 
 import {
   booleanPointInPolygon,
+  buffer,
   destination,
   featureCollection,
   intersect,
@@ -19,6 +21,7 @@ import {
   point,
   pointToLineDistance,
   polygon,
+  polygonToLine,
   area as turfArea,
   distance as turfDistance,
   length as turfLength,
@@ -45,6 +48,11 @@ import {
   DEFAULT_WALL_COLOR,
   DEFAULT_WALL_THICKNESS,
 } from '@/features/scene/domain/constants/wall-style'
+
+const DEFAULT_FOV_SEGMENTS = 24
+const DEFAULT_LINE_SHAPE_THICKNESS = 0.1
+const MIN_FOV_DISTANCE = 0
+const MIN_INTERSECTION_DISTANCE = 0.05
 
 export const getBaseCursor = (
   activeTool: EditorTool,
@@ -202,7 +210,7 @@ export const createFovRing = (
   direction: number,
   fov: number,
   depth: number,
-  segments = 24,
+  segments = DEFAULT_FOV_SEGMENTS,
 ) => {
   const halfFov = fov / 2
   const start = direction - halfFov
@@ -212,6 +220,160 @@ export const createFovRing = (
   for (let i = 0; i <= segments; i += 1) {
     const bearing = start + step * i
     ring.push(projectPoint(origin, bearing, depth))
+  }
+
+  ring.push(origin)
+  return closeRing(ring)
+}
+
+interface FovOcclusionObstacle {
+  boundary: Feature<LineString | MultiLineString>
+  height: number
+}
+
+const getIntersectionDistance = (
+  origin: GeoPoint,
+  ray: Feature<LineString>,
+  boundary: Feature<LineString | MultiLineString>,
+) => {
+  const intersections = lineIntersect(ray, boundary)
+  if (!intersections.features.length) {
+    return null
+  }
+  let closest = Infinity
+  intersections.features.forEach((feature) => {
+    const coords = feature.geometry.coordinates as GeoPoint
+    const meters =
+      turfDistance(point(origin), point(coords), {units: 'kilometers'}) * 1000
+    if (meters > MIN_INTERSECTION_DISTANCE && meters < closest) {
+      closest = meters
+    }
+  })
+  return Number.isFinite(closest) ? closest : null
+}
+
+const buildLineBuffer = (points: GeoPoint[], thickness: number) => {
+  if (points.length < 2) {
+    return null
+  }
+  try {
+    return buffer(lineString(points), thickness / 2, {
+      units: 'meters',
+    }) as Feature<MultiPolygon | Polygon>
+  } catch {
+    return null
+  }
+}
+
+const buildPolygonObstacle = (
+  points: GeoPoint[],
+): Feature<MultiPolygon | Polygon> | null => {
+  if (points.length < 3) {
+    return null
+  }
+  return polygon([closeRing(points)])
+}
+
+export const buildFovOcclusionObstacles = (
+  walls: WallEntity[],
+  shapes: ShapeEntity[],
+): FovOcclusionObstacle[] => {
+  const obstacles: FovOcclusionObstacle[] = []
+
+  walls.forEach((wall) => {
+    const buffered = buildLineBuffer(
+      wall.points,
+      wall.thickness ?? DEFAULT_WALL_THICKNESS,
+    )
+    if (!buffered) {
+      return
+    }
+    const boundary = polygonToLine(buffered) as Feature<
+      LineString | MultiLineString
+    >
+    obstacles.push({boundary, height: wall.height ?? 0})
+  })
+
+  shapes.forEach((shape) => {
+    let polygonFeature: Feature<MultiPolygon | Polygon> | null = null
+    if (shape.shapeType === 'line') {
+      const thickness =
+        (shape as ShapeEntity & {thickness?: number}).thickness ??
+        DEFAULT_LINE_SHAPE_THICKNESS
+      polygonFeature = buildLineBuffer(shape.geometry, thickness)
+    } else {
+      polygonFeature = buildPolygonObstacle(shape.geometry)
+    }
+    if (!polygonFeature) {
+      return
+    }
+    const boundary = polygonToLine(polygonFeature) as Feature<
+      LineString | MultiLineString
+    >
+    obstacles.push({boundary, height: shape.height ?? 0})
+  })
+
+  return obstacles
+}
+
+export const buildOccludedFovRing = ({
+  origin,
+  direction,
+  fov,
+  depth,
+  cameraHeight,
+  area,
+  obstacles,
+  segments = DEFAULT_FOV_SEGMENTS,
+}: {
+  origin: GeoPoint
+  direction: number
+  fov: number
+  depth: number
+  cameraHeight: number
+  area?: AreaEntity | null
+  obstacles: FovOcclusionObstacle[]
+  segments?: number
+}) => {
+  const halfFov = fov / 2
+  const start = direction - halfFov
+  const step = fov / segments
+  const ring: GeoPoint[] = [origin]
+  const areaBoundary = area
+    ? (polygonToLine(
+        polygon([closeRing(area.geometry.coordinates)]),
+      ) as Feature<LineString | MultiLineString>)
+    : null
+
+  for (let i = 0; i <= segments; i += 1) {
+    const bearing = start + step * i
+    const rayEnd = projectPoint(origin, bearing, depth)
+    const ray = lineString([origin, rayEnd]) as Feature<LineString>
+    let maxDistance = depth
+
+    if (areaBoundary) {
+      const boundaryHit = getIntersectionDistance(origin, ray, areaBoundary)
+      if (boundaryHit !== null && boundaryHit < maxDistance) {
+        maxDistance = boundaryHit
+      }
+    }
+
+    obstacles.forEach((obstacle) => {
+      if (cameraHeight > obstacle.height) {
+        return
+      }
+      const hitDistance = getIntersectionDistance(
+        origin,
+        ray,
+        obstacle.boundary,
+      )
+      if (hitDistance !== null && hitDistance < maxDistance) {
+        maxDistance = hitDistance
+      }
+    })
+
+    const appliedDistance = Math.max(maxDistance, MIN_FOV_DISTANCE)
+    ring.push(projectPoint(origin, bearing, appliedDistance))
   }
 
   ring.push(origin)
@@ -439,21 +601,51 @@ export interface CameraLayerData {
 
 export const buildCameraLayerData = (
   cameras: CameraEntity[],
+  areas: AreaEntity[],
+  walls: WallEntity[],
+  shapes: ShapeEntity[],
 ): CameraLayerData => {
   const pointFeatures: Feature<Point>[] = []
   const fovFeatures: Feature<Polygon>[] = []
   const directionFeatures: Feature<LineString>[] = []
+  const areaMap = new Map(areas.map((area) => [area.id, area]))
+  const wallGroups = new Map<string, WallEntity[]>()
+  const shapeGroups = new Map<string, ShapeEntity[]>()
+  const obstacleGroups = new Map<string, FovOcclusionObstacle[]>()
+
+  walls.forEach((wall) => {
+    const group = wallGroups.get(wall.areaId) ?? []
+    group.push(wall)
+    wallGroups.set(wall.areaId, group)
+  })
+
+  shapes.forEach((shape) => {
+    const group = shapeGroups.get(shape.areaId) ?? []
+    group.push(shape)
+    shapeGroups.set(shape.areaId, group)
+  })
 
   cameras.forEach((camera) => {
     const origin: GeoPoint = [camera.x, camera.y]
     const effectivePan = camera.ptz?.pan ?? camera.direction
     const effectiveFov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
-    const fovRing = createFovRing(
+    const area = areaMap.get(camera.areaId)
+    const obstacles =
+      obstacleGroups.get(camera.areaId) ??
+      buildFovOcclusionObstacles(
+        wallGroups.get(camera.areaId) ?? [],
+        shapeGroups.get(camera.areaId) ?? [],
+      )
+    obstacleGroups.set(camera.areaId, obstacles)
+    const fovRing = buildOccludedFovRing({
       origin,
-      effectivePan,
-      effectiveFov,
-      camera.depth,
-    )
+      direction: effectivePan,
+      fov: effectiveFov,
+      depth: camera.depth,
+      cameraHeight: camera.height,
+      area,
+      obstacles,
+    })
     const directionPoint = projectPoint(
       origin,
       effectivePan,

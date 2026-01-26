@@ -9,6 +9,8 @@ import type {
   CameraEntity,
   GeoPoint,
   SceneRoot,
+  ShapeEntity,
+  WallEntity,
 } from '@/features/scene/domain/types'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {TooltipState} from '@/features/scene/presentation/components/map-view/map-view-types'
@@ -17,8 +19,10 @@ import {getCameraPreset} from '@/features/scene/domain/constants/camera-presets'
 import {assignCameraColor} from '@/features/scene/domain/services/color-assignment'
 
 import {
+  buildFovOcclusionObstacles,
+  buildOccludedFovRing,
+  computeArea,
   createCircleRing,
-  createFovRing,
   formatMeters,
   isPointInsideArea,
   projectPoint,
@@ -36,6 +40,8 @@ interface UseCameraPlacementParams {
   isEditMode: boolean
   areas: AreaEntity[]
   cameras: CameraEntity[]
+  walls: WallEntity[]
+  shapes: ShapeEntity[]
   cameraPlacement: CameraPlacementState
   setCameraPlacement: (presetId: string | null, color: string | null) => void
   clearCameraPlacement: () => void
@@ -55,6 +61,7 @@ interface CameraPreviewData {
   direction: FeatureCollection<LineString>
   range: FeatureCollection<LineString>
   isValid: boolean
+  isBlocked: boolean
 }
 
 interface UseCameraPlacementResult {
@@ -75,13 +82,19 @@ const createEmptyPreview = (): CameraPreviewData => ({
     features: [],
   } as FeatureCollection<LineString>,
   isValid: false,
+  isBlocked: false,
 })
 
+const MIN_FOV_PREVIEW_AREA = 0.5
+
+// eslint-disable-next-line max-lines-per-function
 export const useCameraPlacement = ({
   activeTool,
   isEditMode,
   areas,
   cameras,
+  walls,
+  shapes,
   cameraPlacement,
   setCameraPlacement,
   clearCameraPlacement,
@@ -120,6 +133,16 @@ export const useCameraPlacement = ({
     setCameraPlacement,
   ])
 
+  const occlusionObstaclesByArea = React.useMemo(() => {
+    const map = new Map<string, ReturnType<typeof buildFovOcclusionObstacles>>()
+    areas.forEach((area) => {
+      const areaWalls = walls.filter((wall) => wall.areaId === area.id)
+      const areaShapes = shapes.filter((shape) => shape.areaId === area.id)
+      map.set(area.id, buildFovOcclusionObstacles(areaWalls, areaShapes))
+    })
+    return map
+  }, [areas, shapes, walls])
+
   const updatePreview = React.useCallback(
     (point: GeoPoint) => {
       const preset = resolvePreset()
@@ -127,10 +150,24 @@ export const useCameraPlacement = ({
         return createEmptyPreview()
       }
       const color = ensurePlacementColor()
-      const ring = createFovRing(point, 0, preset.fov, preset.depth)
+      const areaForPoint = getAreaAtPoint(point)
+      const obstacles = areaForPoint
+        ? (occlusionObstaclesByArea.get(areaForPoint.id) ?? [])
+        : []
+      const ring = buildOccludedFovRing({
+        origin: point,
+        direction: 0,
+        fov: preset.fov,
+        depth: preset.depth,
+        cameraHeight: preset.height ?? 3,
+        area: areaForPoint,
+        obstacles,
+      })
       const directionPoint = projectPoint(point, 0, preset.depth * 0.6)
       const rangeRing = createCircleRing(point, preset.depth, 72)
-      const areaForPoint = getAreaAtPoint(point)
+      const fovArea = computeArea(ring)
+      const hasVisibleFov = fovArea > MIN_FOV_PREVIEW_AREA
+      const isBlocked = Boolean(areaForPoint) && !hasVisibleFov
 
       return {
         point: {
@@ -183,10 +220,16 @@ export const useCameraPlacement = ({
             },
           ],
         } as FeatureCollection<LineString>,
-        isValid: Boolean(areaForPoint),
+        isValid: Boolean(areaForPoint && hasVisibleFov),
+        isBlocked,
       }
     },
-    [ensurePlacementColor, getAreaAtPoint, resolvePreset],
+    [
+      ensurePlacementColor,
+      getAreaAtPoint,
+      occlusionObstaclesByArea,
+      resolvePreset,
+    ],
   )
 
   const onPointerMove = React.useCallback(
@@ -208,6 +251,16 @@ export const useCameraPlacement = ({
         return true
       }
       if (!nextPreview.isValid) {
+        if (nextPreview.isBlocked) {
+          setTooltip({
+            text: 'Camera FOV is blocked by obstacles',
+            x: event.point.x + 12,
+            y: event.point.y + 12,
+            visible: true,
+          })
+          setCursorOverride('not-allowed')
+          return true
+        }
         setTooltip({
           text: 'Cannot place camera outside area',
           x: event.point.x + 12,
@@ -253,6 +306,21 @@ export const useCameraPlacement = ({
         setCursorOverride('not-allowed')
         return true
       }
+      const obstacles = occlusionObstaclesByArea.get(areaForPlacement.id) ?? []
+      const fovRing = buildOccludedFovRing({
+        origin: mapPoint,
+        direction: 0,
+        fov: preset?.fov ?? 90,
+        depth: preset?.depth ?? 20,
+        cameraHeight: preset?.height ?? 3,
+        area: areaForPlacement,
+        obstacles,
+      })
+      if (computeArea(fovRing) <= MIN_FOV_PREVIEW_AREA) {
+        toast.error('Camera FOV is blocked by obstacles')
+        setCursorOverride('not-allowed')
+        return true
+      }
 
       const updatedScene = addCamera({
         typePreset: preset?.id ?? 'static-hd',
@@ -287,6 +355,7 @@ export const useCameraPlacement = ({
       clearCameraPlacement,
       ensurePlacementColor,
       isEditMode,
+      occlusionObstaclesByArea,
       openCameraPanel,
       resolvePreset,
       getAreaAtPoint,
