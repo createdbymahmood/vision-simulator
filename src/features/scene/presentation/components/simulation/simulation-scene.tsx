@@ -1,20 +1,27 @@
 import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
 
-import {OrbitControls} from '@react-three/drei'
+import {OrbitControls, PerspectiveCamera, View} from '@react-three/drei'
 import {useFrame, useThree} from '@react-three/fiber'
 import React from 'react'
 import * as THREE from 'three'
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 
 import type {SceneMode, SceneRoot} from '@/features/scene/domain/types'
 
 import type {WorldEntity} from './simulation-helpers'
 
 import {computeBounds} from '../map-view/selection-geometry'
+import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {EntitiesMesh} from './entity-meshes'
 import {CameraCollisionSurfaces} from './camera-collision-surfaces'
 import {CameraFovFootprints} from './camera-fov-footprints'
 import {GroundPlane} from './ground-plane'
 import {PersonTrail} from './person-trail'
+import {getCameraOpticHeight} from './camera-collision-utils'
+import {
+  buildObstacleSegmentsByArea,
+  computeCameraVisionState,
+} from './camera-vision'
 import {useSimulatedPeople} from './use-simulated-people'
 import {
   computeSceneOrigin,
@@ -28,6 +35,8 @@ interface FocusRequest {
   distance: number
 }
 
+const degToRad = (deg: number) => (deg * Math.PI) / 180
+
 export interface SimulationSceneProps {
   scene: SceneRoot
   sceneMode: SceneMode
@@ -35,6 +44,12 @@ export interface SimulationSceneProps {
   focusAreaId?: string
   onSelectEntity: (id?: string) => void
   selectedEntityIds: string[]
+  cameraFeedTargets?: CameraFeedTarget[]
+}
+
+export interface CameraFeedTarget {
+  id: string
+  ref: React.RefObject<HTMLDivElement>
 }
 
 const Lights: React.FC = () => (
@@ -120,7 +135,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   focusAreaId,
   onSelectEntity,
   selectedEntityIds,
+  cameraFeedTargets,
 }) => {
+  const setVisionState = useUiStore((state) => state.setVisionState)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
   const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
   const transformer = React.useMemo(
@@ -232,6 +249,13 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     [focusAreaId, scene, transformer],
   )
   const simulatedPeoplePositions = useSimulatedPeople({scene, transformer})
+  const obstaclesByArea = React.useMemo(
+    () => buildObstacleSegmentsByArea(scene, transformer),
+    [scene, transformer],
+  )
+  const lastVisionTick = React.useRef(0)
+  const handleFeedSelect = useCallbackRef(() => undefined)
+  const handleFeedFocus = useCallbackRef(() => undefined)
 
   const renderedEntities = React.useMemo(() => {
     if (simulatedPeoplePositions.size === 0) {
@@ -255,6 +279,10 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   )
 
   const collisionCameras = React.useMemo(() => scene.cameras, [scene.cameras])
+  const camerasById = React.useMemo(
+    () => new Map(scene.cameras.map((camera) => [camera.id, camera])),
+    [scene.cameras],
+  )
 
   const bounds = React.useMemo(() => {
     const points = entities
@@ -348,6 +376,21 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     controlsRef.current.update()
   }, [bounds])
 
+  useFrame(({clock}) => {
+    if (clock.elapsedTime - lastVisionTick.current < 1 / 30) {
+      return
+    }
+    lastVisionTick.current = clock.elapsedTime
+    setVisionState(
+      computeCameraVisionState({
+        scene,
+        transformer,
+        simulatedPeoplePositions,
+        obstaclesByArea,
+      }),
+    )
+  })
+
   return (
     <>
       <color args={['#E0F2FE']} attach='background' />
@@ -386,6 +429,51 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
           />
         </>
       ) : null}
+
+      {cameraFeedTargets?.map((target, index) => {
+        const camera = camerasById.get(target.id)
+        if (!camera) {
+          return null
+        }
+        const basePosition = transformer.toVector3([camera.x, camera.y], 0)
+        const opticHeight = getCameraOpticHeight(camera)
+        const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+        const near = Math.max(camera.nearClipping ?? 0.1, 0.1)
+        const far = Math.max(camera.depth, near + 0.1)
+        const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)
+        const tilt = degToRad(camera.ptz?.tilt ?? 0)
+
+        return (
+          <View key={target.id} track={target.ref} index={20 + index}>
+            <PerspectiveCamera
+              makeDefault
+              position={[basePosition.x, opticHeight, basePosition.z]}
+              rotation={[tilt, yaw, 0]}
+              fov={fov}
+              near={near}
+              far={far}
+            />
+            <color args={['#111827']} attach='background' />
+            <Lights />
+            <GroundPlane
+              gridPlaneSize={gridPlaneSize}
+              gridTexture={gridTexture}
+              isStaticMap={Boolean(staticMapTexture && isStaticMapReady)}
+              mapPlaneSize={mapPlaneSize}
+              mapTexture={staticMapTexture ?? fallbackMapTexture}
+              showMapTexture={showMapTexture}
+            />
+            <EntitiesMesh
+              entities={renderedEntities}
+              maxFrustumDepth={maxFrustumDepth}
+              selectedEntityIds={selectedEntityIds}
+              onFocus={handleFeedFocus}
+              onSelectEntity={handleFeedSelect}
+              showCameraFrustums={false}
+            />
+          </View>
+        )
+      })}
 
       <OrbitControls
         enableDamping

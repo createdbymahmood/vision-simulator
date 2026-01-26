@@ -16,6 +16,9 @@ import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
 import {SimulationCanvas} from './simulation-canvas'
+import {SimulationCameraSidebar} from './simulation-camera-sidebar'
+import {SimulationRadar} from './simulation-radar'
+import {useCameraFeedTargets} from './use-camera-feed-targets'
 
 interface AreaOption {
   id: string
@@ -38,6 +41,7 @@ export const SimulationAnalysisView: React.FC = () => {
   const activeCameraId = useUiStore((state) => state.activeCameraId)
   const setActiveCameraId = useUiStore((state) => state.setActiveCameraId)
   const cycleActiveCamera = useUiStore((state) => state.cycleActiveCamera)
+  const cameraFeedGrid = useUiStore((state) => state.cameraFeedGrid)
 
   const areaOptions: AreaOption[] = React.useMemo(() => {
     const getCount = (areaId: string) =>
@@ -67,6 +71,12 @@ export const SimulationAnalysisView: React.FC = () => {
     () => selectedEntityIds.find((id) => id.startsWith('camera-')),
     [selectedEntityIds],
   )
+  const overlayRef = React.useRef<HTMLDivElement>(null)
+  const feedTargets = useCameraFeedTargets({
+    cameras: scene.cameras,
+    grid: cameraFeedGrid,
+    activeCameraId,
+  })
 
   const handleAreaChange = (value: string) => {
     const nextArea = value === 'all' ? undefined : value
@@ -96,6 +106,10 @@ export const SimulationAnalysisView: React.FC = () => {
     if (nextId) {
       setSelection([nextId])
     }
+  })
+
+  const handleSelectEntity = useCallbackRef((id?: string) => {
+    setSelection(id ? [id] : [])
   })
 
   React.useEffect(() => {
@@ -202,14 +216,32 @@ export const SimulationAnalysisView: React.FC = () => {
             scene={scene}
             selectedEntityIds={selectedEntityIds}
             focusAreaId={scene.activeAreaId}
-            onSelectEntity={(id) => setSelection(id ? [id] : [])}
+            onSelectEntity={handleSelectEntity}
             sceneMode={scene.mode}
             showMapTexture={
               scene.mode === 'canvas'
                 ? true
                 : scene.mapVisible && scene.mode === 'map'
             }
+            cameraFeedTargets={feedTargets}
           />
+        </div>
+        <div
+          ref={overlayRef}
+          className='absolute inset-0 pointer-events-none'
+        >
+          <SimulationRadar
+            scene={scene}
+            selectedEntityIds={selectedEntityIds}
+            onSelectEntity={handleSelectEntity}
+            containerRef={overlayRef}
+          />
+          {scene.cameras.length > 0 ? (
+            <SimulationCameraSidebar
+              scene={scene}
+              feedTargets={feedTargets}
+            />
+          ) : null}
         </div>
       </div>
     </div>

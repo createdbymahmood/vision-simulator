@@ -249,7 +249,15 @@ export const CameraMesh: React.FC<{
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selected: boolean
   maxFrustumDepth?: number
-}> = ({data, onSelect, onFocus, selected, maxFrustumDepth}) => {
+  showFrustum?: boolean
+}> = ({
+  data,
+  onSelect,
+  onFocus,
+  selected,
+  maxFrustumDepth,
+  showFrustum = true,
+}) => {
   const {entity, position, dimmed} = data
   const bodyHeight = 0.6
   const standHeight = Math.max(entity.height - bodyHeight, 0.4)
@@ -260,10 +268,12 @@ export const CameraMesh: React.FC<{
     () => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
     [],
   )
-  const frustum = React.useMemo(
-    () => buildFrustumGeometry(entity, opticHeight, maxFrustumDepth),
-    [entity, maxFrustumDepth, opticHeight],
-  )
+  const frustum = React.useMemo(() => {
+    if (!showFrustum) {
+      return null
+    }
+    return buildFrustumGeometry(entity, opticHeight, maxFrustumDepth)
+  }, [entity, maxFrustumDepth, opticHeight, showFrustum])
 
   return (
     <group position={position} rotation={[0, yaw, 0]}>
@@ -325,35 +335,39 @@ export const CameraMesh: React.FC<{
         <meshStandardMaterial metalness={0.2} color='#334155' roughness={0.5} />
       </mesh>
 
-      <mesh
-        renderOrder={200}
-        geometry={frustum.surfaceGeometry}
-        position={[0, opticHeight, 0]}
-      >
-        <meshBasicMaterial
-          transparent
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          side={THREE.DoubleSide}
-          color={color}
-          opacity={dimmed ? 0.05 : 0.12}
-          clippingPlanes={[groundPlane]}
-        />
-      </mesh>
-      <lineSegments
-        renderOrder={201}
-        geometry={frustum.lineGeometry}
-        position={[0, opticHeight, 0]}
-      >
-        <lineBasicMaterial
-          transparent
-          linewidth={2}
-          depthWrite={false}
-          color={color}
-          opacity={dimmed ? 0.3 : 0.8}
-          clippingPlanes={[groundPlane]}
-        />
-      </lineSegments>
+      {frustum ? (
+        <>
+          <mesh
+            renderOrder={200}
+            geometry={frustum.surfaceGeometry}
+            position={[0, opticHeight, 0]}
+          >
+            <meshBasicMaterial
+              transparent
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              side={THREE.DoubleSide}
+              color={color}
+              opacity={dimmed ? 0.05 : 0.12}
+              clippingPlanes={[groundPlane]}
+            />
+          </mesh>
+          <lineSegments
+            renderOrder={201}
+            geometry={frustum.lineGeometry}
+            position={[0, opticHeight, 0]}
+          >
+            <lineBasicMaterial
+              transparent
+              linewidth={2}
+              depthWrite={false}
+              color={color}
+              opacity={dimmed ? 0.3 : 0.8}
+              clippingPlanes={[groundPlane]}
+            />
+          </lineSegments>
+        </>
+      ) : null}
 
       {selected ? (
         <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -371,12 +385,14 @@ export const EntitiesMesh: React.FC<{
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selectedEntityIds: string[]
   maxFrustumDepth?: number
+  showCameraFrustums?: boolean
 }> = ({
   entities,
   onSelectEntity,
   onFocus,
   selectedEntityIds,
   maxFrustumDepth,
+  showCameraFrustums = true,
 }) => (
   <>
     {entities.map((entity) => {
@@ -430,6 +446,7 @@ export const EntitiesMesh: React.FC<{
             data={entity}
             key={entity.entity.id}
             maxFrustumDepth={maxFrustumDepth}
+            showFrustum={showCameraFrustums}
             selected={selectedEntityIds.includes(entity.entity.id)}
             onFocus={onFocus}
             onSelect={onSelectEntity}

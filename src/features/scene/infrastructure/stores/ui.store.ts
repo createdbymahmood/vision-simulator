@@ -16,6 +16,35 @@ export type EditorTool =
   | 'place-person'
   | 'select'
 
+export type CameraFeedGrid = '2x2' | '3x3' | '4x4'
+
+export interface RadarSettings {
+  isMinimized: boolean
+  isLocked: boolean
+  showGrid: boolean
+  showTrails: boolean
+  showWedges: boolean
+  zoom: number
+  position: {x: number; y: number}
+  size: {width: number; height: number}
+  pan: {x: number; y: number}
+}
+
+export interface VisionPersonState {
+  x: number
+  y: number
+  z: number
+  height: number
+  areaId: string
+}
+
+export interface VisionState {
+  peopleWorld: Record<string, VisionPersonState>
+  visibleByCameraId: Record<string, string[]>
+  detectionsCount: number
+  updatedAt: number
+}
+
 export interface UiState {
   viewMode: ViewMode
   activeTool: EditorTool
@@ -28,6 +57,9 @@ export interface UiState {
   }
   flyToActiveAreaTick: number
   activeCameraId?: string
+  radarSettings: RadarSettings
+  cameraFeedGrid: CameraFeedGrid
+  visionState: VisionState
 
   setViewMode: (mode: ViewMode) => ViewMode
   toggleViewMode: () => ViewMode
@@ -57,6 +89,9 @@ export interface UiState {
   triggerFlyToActiveArea: () => number
   setActiveCameraId: (cameraId?: string) => string | undefined
   cycleActiveCamera: (cameraIds: string[]) => string | undefined
+  setRadarSettings: (settings: Partial<RadarSettings>) => RadarSettings
+  setCameraFeedGrid: (grid: CameraFeedGrid) => CameraFeedGrid
+  setVisionState: (state: VisionState) => VisionState
   resetUi: () => UiState
 }
 
@@ -187,6 +222,45 @@ const setActiveCameraId = (
   return get().activeCameraId
 }
 
+const setRadarSettings = (
+  set: SetState,
+  get: GetState,
+  settings: Partial<RadarSettings>,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    state.radarSettings = {...state.radarSettings, ...settings}
+  })
+
+  set(nextValue)
+  return get().radarSettings
+}
+
+const setCameraFeedGrid = (
+  set: SetState,
+  get: GetState,
+  grid: CameraFeedGrid,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    state.cameraFeedGrid = grid
+  })
+
+  set(nextValue)
+  return get().cameraFeedGrid
+}
+
+const setVisionState = (
+  set: SetState,
+  get: GetState,
+  state: VisionState,
+) => {
+  const nextValue = produce<UiState>((draft) => {
+    draft.visionState = state
+  })
+
+  set(nextValue)
+  return get().visionState
+}
+
 const cycleActiveCamera = (
   set: SetState,
   get: GetState,
@@ -221,6 +295,24 @@ const resetUi = (set: SetState, get: GetState) => {
     state.cameraPlacement = {presetId: null, color: null}
     state.flyToActiveAreaTick = 0
     state.activeCameraId = undefined
+    state.radarSettings = {
+      isMinimized: false,
+      isLocked: false,
+      showGrid: true,
+      showTrails: false,
+      showWedges: true,
+      zoom: 1,
+      position: {x: 16, y: 16},
+      size: {width: 300, height: 300},
+      pan: {x: 0, y: 0},
+    }
+    state.cameraFeedGrid = '2x2'
+    state.visionState = {
+      peopleWorld: {},
+      visibleByCameraId: {},
+      detectionsCount: 0,
+      updatedAt: 0,
+    }
   })
 
   set(nextValue)
@@ -250,6 +342,24 @@ const createUiStore: (
   },
   flyToActiveAreaTick: initialValues?.flyToActiveAreaTick ?? 0,
   activeCameraId: initialValues?.activeCameraId,
+  radarSettings: initialValues?.radarSettings ?? {
+    isMinimized: false,
+    isLocked: false,
+    showGrid: true,
+    showTrails: false,
+    showWedges: true,
+    zoom: 1,
+    position: {x: 16, y: 16},
+    size: {width: 300, height: 300},
+    pan: {x: 0, y: 0},
+  },
+  cameraFeedGrid: initialValues?.cameraFeedGrid ?? '2x2',
+  visionState: initialValues?.visionState ?? {
+    peopleWorld: {},
+    visibleByCameraId: {},
+    detectionsCount: 0,
+    updatedAt: 0,
+  },
   setViewMode: (mode) => setViewMode(set, get, mode),
   toggleViewMode: () => toggleViewMode(set, get),
   setActiveTool: (tool) => setActiveTool(set, get, tool),
@@ -279,6 +389,9 @@ const createUiStore: (
   triggerFlyToActiveArea: () => triggerFlyToActiveArea(set, get),
   setActiveCameraId: (cameraId) => setActiveCameraId(set, get, cameraId),
   cycleActiveCamera: (cameraIds) => cycleActiveCamera(set, get, cameraIds),
+  setRadarSettings: (settings) => setRadarSettings(set, get, settings),
+  setCameraFeedGrid: (grid) => setCameraFeedGrid(set, get, grid),
+  setVisionState: (state) => setVisionState(set, get, state),
   resetUi: () => resetUi(set, get),
   ...initialValues,
 })
