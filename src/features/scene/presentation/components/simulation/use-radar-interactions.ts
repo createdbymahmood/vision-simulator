@@ -85,9 +85,6 @@ export const useRadarInteractions = ({
   })
 
   const handleDragStart = useCallbackRef((event: React.PointerEvent) => {
-    if (radarSettings.isLocked) {
-      return
-    }
     dragRef.current = {
       startX: event.clientX,
       startY: event.clientY,
@@ -115,9 +112,6 @@ export const useRadarInteractions = ({
   })
 
   const handleResizeStart = useCallbackRef((event: React.PointerEvent) => {
-    if (radarSettings.isLocked) {
-      return
-    }
     resizeRef.current = {
       startX: event.clientX,
       startY: event.clientY,

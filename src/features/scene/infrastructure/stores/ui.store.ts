@@ -20,10 +20,6 @@ export type CameraFeedGrid = '2x2' | '3x3' | '4x4'
 
 export interface RadarSettings {
   isMinimized: boolean
-  isLocked: boolean
-  showGrid: boolean
-  showTrails: boolean
-  showWedges: boolean
   zoom: number
   position: {x: number; y: number}
   size: {width: number; height: number}
@@ -287,10 +283,6 @@ const resetUi = (set: SetState, get: GetState) => {
     state.activeCameraId = undefined
     state.radarSettings = {
       isMinimized: false,
-      isLocked: false,
-      showGrid: true,
-      showTrails: false,
-      showWedges: true,
       zoom: 1,
       position: {x: 16, y: 16},
       size: {width: 400, height: 400},
@@ -334,10 +326,6 @@ const createUiStore: (
   activeCameraId: initialValues?.activeCameraId,
   radarSettings: initialValues?.radarSettings ?? {
     isMinimized: false,
-    isLocked: false,
-    showGrid: true,
-    showTrails: false,
-    showWedges: true,
     zoom: 1,
     position: {x: 16, y: 16},
     size: {width: 400, height: 400},

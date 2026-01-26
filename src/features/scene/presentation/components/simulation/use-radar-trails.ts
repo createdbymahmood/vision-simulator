@@ -7,7 +7,6 @@ import type {RadarPoint, RadarTrailPath} from './simulation-radar-svg'
 
 interface UseRadarTrailsInput {
   scene: SceneRoot
-  enabled: boolean
   peopleWorld: VisionState['peopleWorld']
   updatedAt: number
   toRadar: (point: {x: number; z: number}) => RadarPoint
@@ -15,7 +14,6 @@ interface UseRadarTrailsInput {
 
 export const useRadarTrails = ({
   scene,
-  enabled,
   peopleWorld,
   updatedAt,
   toRadar,
@@ -26,11 +24,6 @@ export const useRadarTrails = ({
   >(new Map())
 
   React.useEffect(() => {
-    if (!enabled) {
-      trailsRef.current.clear()
-      setTrailTick((prev) => prev + 1)
-      return
-    }
     const now = performance.now()
     scene.people.forEach((person) => {
       const world = peopleWorld[person.id]
@@ -43,12 +36,9 @@ export const useRadarTrails = ({
       trailsRef.current.set(person.id, entry)
     })
     setTrailTick((prev) => prev + 1)
-  }, [enabled, peopleWorld, scene.people, updatedAt])
+  }, [peopleWorld, scene.people, updatedAt])
 
   const trailPaths = React.useMemo<RadarTrailPath[]>(() => {
-    if (!enabled) {
-      return []
-    }
     const paths: RadarTrailPath[] = []
     trailsRef.current.forEach((trail, id) => {
       if (trail.points.length < 2) {
@@ -63,7 +53,7 @@ export const useRadarTrails = ({
       paths.push({id, path})
     })
     return paths
-  }, [enabled, toRadar, trailTick])
+  }, [toRadar, trailTick])
 
   return trailPaths
 }

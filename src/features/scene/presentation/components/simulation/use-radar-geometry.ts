@@ -140,9 +140,6 @@ export const useRadarGeometry = ({
   )
 
   const wedges = React.useMemo<RadarWedge[]>(() => {
-    if (!radarSettings.showWedges) {
-      return []
-    }
     return scene.cameras.map((camera) => {
       const opticHeight = getCameraOpticHeight(camera)
       const ring = buildFovGroundRing({
@@ -157,7 +154,7 @@ export const useRadarGeometry = ({
       const origin = toRadar({x: originWorld.x, z: originWorld.z})
       return {camera, origin, points}
     })
-  }, [radarSettings.showWedges, scene.cameras, toRadar, transformer])
+  }, [scene.cameras, toRadar, transformer])
 
   const connections = React.useMemo<RadarConnectionLine[]>(() => {
     const lines: RadarConnectionLine[] = []
@@ -184,9 +181,6 @@ export const useRadarGeometry = ({
   }, [cameraDetections, peopleWorld, scene.cameras, toRadar, transformer])
 
   const gridLines = React.useMemo<RadarGridLine[]>(() => {
-    if (!radarSettings.showGrid) {
-      return []
-    }
     const step = 5
     const lines: RadarGridLine[] = []
     for (
@@ -208,7 +202,7 @@ export const useRadarGeometry = ({
       lines.push({start, end})
     }
     return lines
-  }, [radarSettings.showGrid, toRadar, worldBounds])
+  }, [toRadar, worldBounds])
 
   const areaPaths = React.useMemo<RadarAreaPath[]>(
     () =>

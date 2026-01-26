@@ -4,7 +4,6 @@ import React from 'react'
 import type {SceneRoot} from '@/features/scene/domain/types'
 
 import {Card, CardContent, CardFooter} from '@/components/ui/card'
-import {ContextMenu, ContextMenuTrigger} from '@/components/ui/context-menu'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
 import {
@@ -12,7 +11,6 @@ import {
   createCoordinateTransformer,
 } from './simulation-helpers'
 import {SimulationRadarHeader} from './simulation-radar-header'
-import {SimulationRadarMenu} from './simulation-radar-menu'
 import {SimulationRadarSvg} from './simulation-radar-svg'
 import {useRadarGeometry} from './use-radar-geometry'
 import {useRadarInteractions} from './use-radar-interactions'
@@ -70,7 +68,6 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
 
   const trailPaths = useRadarTrails({
     scene,
-    enabled: radarSettings.showTrails,
     peopleWorld,
     updatedAt: visionState.updatedAt,
     toRadar,
@@ -91,10 +88,6 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
 
   const handleToggleMinimize = useCallbackRef(() => {
     setRadarSettings({isMinimized: !radarSettings.isMinimized})
-  })
-
-  const handleResetZoom = useCallbackRef(() => {
-    setRadarSettings({zoom: 1, pan: {x: 0, y: 0}})
   })
 
   const handleCameraHover = useCallbackRef((cameraId?: string) => {
@@ -133,71 +126,62 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
       <div
         className={`${radarSettings.isMinimized ? 'w-full' : 'h-full w-full'} `}
       >
-        <ContextMenu>
-          <ContextMenuTrigger asChild>
-            <Card className='w-[400px]'>
-              <SimulationRadarHeader
-                isMinimized={radarSettings.isMinimized}
-                onDragStart={handleDragStart}
-                onToggleMinimize={handleToggleMinimize}
-              />
-              {!radarSettings.isMinimized ? (
-                <>
-                  <CardContent className='p-0'>
-                    <div
-                      className='relative'
-                      onPointerDown={handlePanStart}
-                      onWheel={handleWheel}
-                    >
-                      <SimulationRadarSvg
-                        size={radarSettings.size}
-                        activeCameraId={activeCameraId}
-                        areaPaths={areaPaths}
-                        cameraMarkers={cameraMarkers}
-                        gridLines={gridLines}
-                        pingKey={pingKey}
-                        trailPaths={trailPaths}
-                        wedges={wedges}
-                        connections={connections}
-                        hoveredCameraId={hoveredCameraId ?? undefined}
-                        onHoverCamera={handleCameraHover}
-                        onSelectCamera={(cameraId) => {
-                          setActiveCameraId(cameraId)
-                          onSelectEntity(cameraId)
-                        }}
-                        onSelectPerson={(personId) => {
-                          onSelectEntity(personId)
-                          setPingPersonId(personId)
-                          setPingKey((prev) => prev + 1)
-                        }}
-                        peopleMarkers={peopleMarkers}
-                        pingPoint={pingPoint}
-                        selectedPersonId={selectedPersonId}
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
-                      <span>People: {scene.people.length}</span>
-                      <span>Cameras: {scene.cameras.length}</span>
-                      <span>Detections: {visionState.detectionsCount}</span>
-                      <span>Update: 30 FPS</span>
-                    </div>
-                  </CardFooter>
-                  <div
-                    className='absolute bottom-2 right-2 size-3 cursor-se-resize'
-                    onPointerDown={handleResizeStart}
-                  />
-                </>
-              ) : null}
-            </Card>
-          </ContextMenuTrigger>
-          <SimulationRadarMenu
-            radarSettings={radarSettings}
-            onResetZoom={handleResetZoom}
-            onUpdateSettings={setRadarSettings}
+        <Card className='w-[400px]'>
+          <SimulationRadarHeader
+            isMinimized={radarSettings.isMinimized}
+            onDragStart={handleDragStart}
+            onToggleMinimize={handleToggleMinimize}
           />
-        </ContextMenu>
+          {!radarSettings.isMinimized ? (
+            <>
+              <CardContent className='p-0'>
+                <div
+                  className='relative'
+                  onPointerDown={handlePanStart}
+                  onWheel={handleWheel}
+                >
+                  <SimulationRadarSvg
+                    size={radarSettings.size}
+                    activeCameraId={activeCameraId}
+                    areaPaths={areaPaths}
+                    cameraMarkers={cameraMarkers}
+                    gridLines={gridLines}
+                    pingKey={pingKey}
+                    trailPaths={trailPaths}
+                    wedges={wedges}
+                    connections={connections}
+                    hoveredCameraId={hoveredCameraId ?? undefined}
+                    onHoverCamera={handleCameraHover}
+                    onSelectCamera={(cameraId) => {
+                      setActiveCameraId(cameraId)
+                      onSelectEntity(cameraId)
+                    }}
+                    onSelectPerson={(personId) => {
+                      onSelectEntity(personId)
+                      setPingPersonId(personId)
+                      setPingKey((prev) => prev + 1)
+                    }}
+                    peopleMarkers={peopleMarkers}
+                    pingPoint={pingPoint}
+                    selectedPersonId={selectedPersonId}
+                  />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
+                  <span>People: {scene.people.length}</span>
+                  <span>Cameras: {scene.cameras.length}</span>
+                  <span>Detections: {visionState.detectionsCount}</span>
+                  <span>Update: 30 FPS</span>
+                </div>
+              </CardFooter>
+              <div
+                className='absolute bottom-2 right-2 size-3 cursor-se-resize'
+                onPointerDown={handleResizeStart}
+              />
+            </>
+          ) : null}
+        </Card>
       </div>
     </div>
   )
