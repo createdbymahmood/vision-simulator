@@ -1,6 +1,6 @@
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import * as THREE from 'three'
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
 
@@ -8,9 +8,10 @@ import {Badge} from '@/components/ui/badge'
 import {Card, CardContent, CardFooter} from '@/components/ui/card'
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 
-import {getCameraOpticHeight} from './camera-collision-utils'
+import type {createCoordinateTransformer} from './simulation-helpers'
 import type {CameraFeedTarget} from './simulation-scene'
-import {createCoordinateTransformer} from './simulation-helpers'
+
+import {getCameraOpticHeight} from './camera-collision-utils'
 
 interface BoundingBox {
   id: string
@@ -176,12 +177,12 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
       <Card>
         <CardContent>
           <div className='relative w-full aspect-video bg-muted overflow-hidden'>
-            <div ref={feedTarget.ref} className='absolute inset-0' />
+            <div className='absolute inset-0' ref={feedTarget.ref} />
             <div className='pointer-events-none absolute inset-0'>
               {boxes.map((box) => (
                 <div
-                  key={box.id}
                   className='absolute border-2 border-yellow-300'
+                  key={box.id}
                   style={{
                     left: `${box.left * 100}%`,
                     top: `${box.top * 100}%`,

@@ -126,7 +126,7 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
       <div
         className={`${radarSettings.isMinimized ? 'w-full' : 'h-full w-full'} `}
       >
-        <Card className='w-[400px]'>
+        <Card style={{width: radarSettings.size.width}}>
           <SimulationRadarHeader
             isMinimized={radarSettings.isMinimized}
             onDragStart={handleDragStart}
