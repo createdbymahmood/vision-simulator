@@ -1,33 +1,38 @@
-import type {CameraEntity} from '@/features/scene/domain/types'
+import type {CameraEntity, GeoPoint} from '@/features/scene/domain/types'
+
+import {projectPoint} from '../map-view/map-view-helpers'
 
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
 
 export const degToRad = (deg: number) => (deg * Math.PI) / 180
 
-export const buildFovRing = ({
+export const buildFovGroundRing = ({
   camera,
   origin,
+  opticHeight,
   segments = 20,
 }: {
   camera: CameraEntity
-  origin: {x: number; z: number}
+  origin: GeoPoint
+  opticHeight: number
   segments?: number
 }) => {
-  const yaw = -(degToRad(camera.ptz?.pan ?? camera.direction))
-  const fov = degToRad(camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001))
+  const pan = camera.ptz?.pan ?? camera.direction
+  const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
   const halfFov = fov / 2
-  const start = yaw - halfFov
+  const start = pan - halfFov
   const step = fov / segments
-  const points: {x: number; z: number}[] = []
+  const tilt = degToRad(camera.ptz?.tilt ?? 0)
+  const sinTilt = Math.sin(tilt)
+  let distance = camera.depth
+  if (sinTilt < -1e-4) {
+    distance = Math.min(distance, opticHeight / -sinTilt)
+  }
+  const points: GeoPoint[] = []
   for (let i = 0; i <= segments; i += 1) {
-    const angle = start + step * i
-    const dx = Math.sin(angle)
-    const dz = -Math.cos(angle)
-    points.push({
-      x: origin.x + dx * camera.depth,
-      z: origin.z + dz * camera.depth,
-    })
+    const bearing = start + step * i
+    points.push(projectPoint(origin, bearing, distance))
   }
   return points
 }

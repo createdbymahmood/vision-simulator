@@ -17,7 +17,7 @@ import {
 import {stepPeopleSimulation, type SimPersonState} from './simulation-people-engine'
 
 const FIXED_STEP = 1 / 30
-const PUBLISH_INTERVAL = 0.1
+const PUBLISH_INTERVAL = FIXED_STEP
 export const useSimulatedPeople = ({
   scene,
   transformer,

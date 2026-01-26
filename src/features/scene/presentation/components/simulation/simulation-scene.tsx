@@ -1,34 +1,35 @@
 import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
 
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {OrbitControls, PerspectiveCamera, View} from '@react-three/drei'
 import {useFrame, useThree} from '@react-three/fiber'
 import React from 'react'
 import * as THREE from 'three'
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 
 import type {SceneMode, SceneRoot} from '@/features/scene/domain/types'
+
+import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
 import type {WorldEntity} from './simulation-helpers'
 
 import {computeBounds} from '../map-view/selection-geometry'
-import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
-import {EntitiesMesh} from './entity-meshes'
 import {CameraCollisionSurfaces} from './camera-collision-surfaces'
-import {CameraFovFootprints} from './camera-fov-footprints'
-import {GroundPlane} from './ground-plane'
-import {PersonTrail} from './person-trail'
 import {getCameraOpticHeight} from './camera-collision-utils'
+import {CameraFovFootprints} from './camera-fov-footprints'
 import {
   buildObstacleSegmentsByArea,
   computeCameraVisionState,
 } from './camera-vision'
-import {useSimulatedPeople} from './use-simulated-people'
+import {EntitiesMesh} from './entity-meshes'
+import {GroundPlane} from './ground-plane'
+import {PersonTrail} from './person-trail'
 import {
   computeSceneOrigin,
   createCoordinateTransformer,
   transformFeatureCollectionsToThreeJSShapes,
 } from './simulation-helpers'
 import {createGridTexture, createMapTexture} from './simulation-textures'
+import {useSimulatedPeople} from './use-simulated-people'
 
 interface FocusRequest {
   point: THREE.Vector3
@@ -420,8 +421,8 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
         onSelectEntity={onSelectEntity}
       />
       <PersonTrail
-        selectedPersonId={selectedPersonId}
         positions={simulatedPeoplePositions}
+        selectedPersonId={selectedPersonId}
       />
       {collisionCameras.length > 0 ? (
         <>
@@ -451,14 +452,14 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
         const tilt = degToRad(camera.ptz?.tilt ?? 0)
 
         return (
-          <View key={target.id} track={target.ref} index={20 + index}>
+          <View index={20 + index} key={target.id} track={target.ref}>
             <PerspectiveCamera
               makeDefault
+              far={far}
+              near={near}
+              fov={fov}
               position={[basePosition.x, opticHeight, basePosition.z]}
               rotation={[tilt, yaw, 0]}
-              fov={fov}
-              near={near}
-              far={far}
             />
             <color args={['#111827']} attach='background' />
             <Lights />

@@ -1,4 +1,3 @@
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 
 import type {SceneRoot} from '@/features/scene/domain/types'
@@ -18,8 +17,9 @@ import type {
   RadarWedge,
 } from './simulation-radar-svg'
 
-import {closeRing} from '../map-view/map-view-helpers'
-import {buildFovRing, degToRad} from './simulation-radar-helpers'
+import {closeRing, projectPoint} from '../map-view/map-view-helpers'
+import {getCameraOpticHeight} from './camera-collision-utils'
+import {buildFovGroundRing} from './simulation-radar-helpers'
 
 interface UseRadarGeometryInput {
   scene: SceneRoot
@@ -89,29 +89,39 @@ export const useRadarGeometry = ({
     [worldBounds],
   )
 
-  const toRadar = useCallbackRef((point: {x: number; z: number}) => ({
-    x:
-      (point.x - center.x) * scale +
-      radarSettings.size.width / 2 +
-      radarSettings.pan.x,
-    y:
-      (point.z - center.z) * scale +
-      radarSettings.size.height / 2 +
-      radarSettings.pan.y,
-  }))
+  const toRadar = React.useMemo(() => {
+    const offsetX =
+      radarSettings.size.width / 2 + radarSettings.pan.x
+    const offsetY =
+      radarSettings.size.height / 2 + radarSettings.pan.y
+    return (point: {x: number; z: number}) => ({
+      x: (point.x - center.x) * scale + offsetX,
+      y: (point.z - center.z) * scale + offsetY,
+    })
+  }, [
+    center.x,
+    center.z,
+    radarSettings.pan.x,
+    radarSettings.pan.y,
+    radarSettings.size.height,
+    radarSettings.size.width,
+    scale,
+  ])
 
   const cameraMarkers = React.useMemo<RadarCameraMarker[]>(
     () =>
       scene.cameras.map((camera) => {
         const world = transformer.toVector3([camera.x, camera.y])
         const point = toRadar({x: world.x, z: world.z})
-        const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)
-        const arrowLength = 2
-        const arrowWorld = {
-          x: world.x + Math.sin(yaw) * arrowLength,
-          z: world.z - Math.cos(yaw) * arrowLength,
-        }
-        const arrowPoint = toRadar(arrowWorld)
+        const pan = camera.ptz?.pan ?? camera.direction
+        const arrowDistance = Math.max(camera.depth * 0.15, 2)
+        const directionGeo = projectPoint(
+          [camera.x, camera.y],
+          pan,
+          arrowDistance,
+        )
+        const directionWorld = transformer.toVector3(directionGeo)
+        const arrowPoint = toRadar({x: directionWorld.x, z: directionWorld.z})
         return {camera, point, arrowPoint}
       }),
     [scene.cameras, toRadar, transformer],
@@ -134,10 +144,17 @@ export const useRadarGeometry = ({
       return []
     }
     return scene.cameras.map((camera) => {
-      const world = transformer.toVector3([camera.x, camera.y])
-      const ring = buildFovRing({camera, origin: {x: world.x, z: world.z}})
-      const points = ring.map((point) => toRadar(point))
-      const origin = toRadar({x: world.x, z: world.z})
+      const opticHeight = getCameraOpticHeight(camera)
+      const ring = buildFovGroundRing({
+        camera,
+        origin: [camera.x, camera.y],
+        opticHeight,
+      })
+      const points = ring
+        .map((point) => transformer.toVector3(point))
+        .map((point) => toRadar({x: point.x, z: point.z}))
+      const originWorld = transformer.toVector3([camera.x, camera.y])
+      const origin = toRadar({x: originWorld.x, z: originWorld.z})
       return {camera, origin, points}
     })
   }, [radarSettings.showWedges, scene.cameras, toRadar, transformer])
