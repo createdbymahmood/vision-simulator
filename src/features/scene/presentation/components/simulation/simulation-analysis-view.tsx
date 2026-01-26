@@ -1,5 +1,6 @@
 import {ArrowLeft, Film, Image, Map, MapPin, ToggleLeft} from 'lucide-react'
 import React from 'react'
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 
 import type {SceneEntity, SceneMode} from '@/features/scene/domain/types'
 
@@ -34,6 +35,9 @@ export const SimulationAnalysisView: React.FC = () => {
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
 
   const setViewMode = useUiStore((state) => state.setViewMode)
+  const activeCameraId = useUiStore((state) => state.activeCameraId)
+  const setActiveCameraId = useUiStore((state) => state.setActiveCameraId)
+  const cycleActiveCamera = useUiStore((state) => state.cycleActiveCamera)
 
   const areaOptions: AreaOption[] = React.useMemo(() => {
     const getCount = (areaId: string) =>
@@ -55,6 +59,14 @@ export const SimulationAnalysisView: React.FC = () => {
 
   const hasMultipleAreas = areaOptions.length > 1
   const activeAreaId = scene.activeAreaId ?? 'all'
+  const cameraIds = React.useMemo(
+    () => scene.cameras.map((camera) => camera.id),
+    [scene.cameras],
+  )
+  const selectedCameraId = React.useMemo(
+    () => selectedEntityIds.find((id) => id.startsWith('camera-')),
+    [selectedEntityIds],
+  )
 
   const handleAreaChange = (value: string) => {
     const nextArea = value === 'all' ? undefined : value
@@ -66,6 +78,41 @@ export const SimulationAnalysisView: React.FC = () => {
     setSceneMode(mode)
     setMapVisibility(mode === 'map')
   }
+
+  React.useEffect(() => {
+    if (selectedCameraId) {
+      setActiveCameraId(selectedCameraId)
+    }
+  }, [selectedCameraId, setActiveCameraId])
+
+  React.useEffect(() => {
+    if (!activeCameraId && cameraIds.length > 0) {
+      setActiveCameraId(cameraIds[0])
+    }
+  }, [activeCameraId, cameraIds, setActiveCameraId])
+
+  const onCycleCamera = useCallbackRef(() => {
+    const nextId = cycleActiveCamera(cameraIds)
+    if (nextId) {
+      setSelection([nextId])
+    }
+  })
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') {
+        return
+      }
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, select')) {
+        return
+      }
+      event.preventDefault()
+      onCycleCamera()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onCycleCamera])
 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>

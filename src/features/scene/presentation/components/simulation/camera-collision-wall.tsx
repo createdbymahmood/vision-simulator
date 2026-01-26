@@ -1,0 +1,56 @@
+import React from 'react'
+import {useFrame} from '@react-three/fiber'
+import * as THREE from 'three'
+
+import type {WorldEntity} from './simulation-helpers'
+
+interface WallCollisionSurfaceProps {
+  data: Extract<WorldEntity, {type: 'wall'}>
+  planes: THREE.Plane[]
+  color: string
+  opacity: number
+}
+
+export const WallCollisionSurface: React.FC<WallCollisionSurfaceProps> = ({
+  data,
+  planes,
+  color,
+  opacity,
+}) => {
+  const midpoint = data.start.clone().add(data.end).multiplyScalar(0.5)
+  midpoint.y = data.entity.height / 2
+  const angle = Math.atan2(data.end.z - data.start.z, data.end.x - data.start.x)
+  const materialRef = React.useRef<THREE.MeshBasicMaterial | null>(null)
+
+  useFrame(({clock}) => {
+    if (!materialRef.current) {
+      return
+    }
+    const pulse = 0.85 + 0.15 * Math.sin(clock.elapsedTime * Math.PI)
+    materialRef.current.opacity = opacity * pulse
+  })
+
+  return (
+    <group position={midpoint} rotation={[0, angle, 0]}>
+      <mesh renderOrder={300}>
+        <boxGeometry
+          args={[data.length, data.entity.height, data.entity.thickness]}
+        />
+        <meshBasicMaterial
+          ref={materialRef}
+          color={color}
+          transparent
+          opacity={opacity}
+          side={THREE.DoubleSide}
+          clippingPlanes={planes}
+          clipIntersection
+          polygonOffset
+          polygonOffsetFactor={2}
+          polygonOffsetUnits={2}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+    </group>
+  )
+}

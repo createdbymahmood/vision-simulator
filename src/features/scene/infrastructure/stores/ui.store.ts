@@ -27,6 +27,7 @@ export interface UiState {
     color: string | null
   }
   flyToActiveAreaTick: number
+  activeCameraId?: string
 
   setViewMode: (mode: ViewMode) => ViewMode
   toggleViewMode: () => ViewMode
@@ -54,6 +55,8 @@ export interface UiState {
     color: string | null
   }
   triggerFlyToActiveArea: () => number
+  setActiveCameraId: (cameraId?: string) => string | undefined
+  cycleActiveCamera: (cameraIds: string[]) => string | undefined
   resetUi: () => UiState
 }
 
@@ -171,6 +174,43 @@ const closeAllPopovers = (set: SetState, get: GetState) => {
   return get().openPopovers
 }
 
+const setActiveCameraId = (
+  set: SetState,
+  get: GetState,
+  cameraId?: string,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    state.activeCameraId = cameraId
+  })
+
+  set(nextValue)
+  return get().activeCameraId
+}
+
+const cycleActiveCamera = (
+  set: SetState,
+  get: GetState,
+  cameraIds: string[],
+) => {
+  const nextValue = produce<UiState>((state) => {
+    if (cameraIds.length === 0) {
+      state.activeCameraId = undefined
+      return
+    }
+    const currentIndex = cameraIds.findIndex(
+      (id) => id === state.activeCameraId,
+    )
+    const nextIndex =
+      currentIndex === -1
+        ? 0
+        : (currentIndex + 1) % cameraIds.length
+    state.activeCameraId = cameraIds[nextIndex]
+  })
+
+  set(nextValue)
+  return get().activeCameraId
+}
+
 const resetUi = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.viewMode = 'editor'
@@ -180,6 +220,7 @@ const resetUi = (set: SetState, get: GetState) => {
     state.openPopovers = {}
     state.cameraPlacement = {presetId: null, color: null}
     state.flyToActiveAreaTick = 0
+    state.activeCameraId = undefined
   })
 
   set(nextValue)
@@ -208,6 +249,7 @@ const createUiStore: (
     color: null,
   },
   flyToActiveAreaTick: initialValues?.flyToActiveAreaTick ?? 0,
+  activeCameraId: initialValues?.activeCameraId,
   setViewMode: (mode) => setViewMode(set, get, mode),
   toggleViewMode: () => toggleViewMode(set, get),
   setActiveTool: (tool) => setActiveTool(set, get, tool),
@@ -235,6 +277,8 @@ const createUiStore: (
     return get().cameraPlacement
   },
   triggerFlyToActiveArea: () => triggerFlyToActiveArea(set, get),
+  setActiveCameraId: (cameraId) => setActiveCameraId(set, get, cameraId),
+  cycleActiveCamera: (cameraIds) => cycleActiveCamera(set, get, cameraIds),
   resetUi: () => resetUi(set, get),
   ...initialValues,
 })

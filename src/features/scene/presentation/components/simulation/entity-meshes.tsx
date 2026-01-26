@@ -157,12 +157,13 @@ const buildFrustumGeometry = (
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
   const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
   const near = Math.max(camera.nearClipping, 0.1)
-  const unclampedFar = Math.max(camera.depth * 1.05, near + 0.1)
+  const unclampedFar = Math.max(camera.depth, near + 0.1)
   const far = Math.max(
     near + 0.1,
     Math.min(maxFrustumDepth ?? unclampedFar, unclampedFar),
   )
   const halfFov = degToRad(fov) / 2
+  const radialSegments = 32
 
   const rotation = new THREE.Euler(tilt, yaw, 0, 'YXZ')
   const forward = new THREE.Vector3(0, 0, -1).applyEuler(rotation).normalize()
@@ -172,57 +173,60 @@ const buildFrustumGeometry = (
   const origin = new THREE.Vector3(0, 0, 0)
   const nearCenter = origin.clone().add(forward.clone().multiplyScalar(near))
   const farCenter = origin.clone().add(forward.clone().multiplyScalar(far))
-  const nearSize = Math.tan(halfFov) * near
-  const farSize = Math.tan(halfFov) * far
+  const nearRadius = Math.tan(halfFov) * near
+  const farRadius = Math.tan(halfFov) * far
 
-  const buildCorners = (center: THREE.Vector3, size: number) => [
-    center
+  const nearVertices: THREE.Vector3[] = []
+  const farVertices: THREE.Vector3[] = []
+  for (let i = 0; i < radialSegments; i += 1) {
+    const angle = (i / radialSegments) * Math.PI * 2
+    const offset = right
       .clone()
-      .add(up.clone().multiplyScalar(size))
-      .sub(right.clone().multiplyScalar(size)),
-    center
-      .clone()
-      .add(up.clone().multiplyScalar(size))
-      .add(right.clone().multiplyScalar(size)),
-    center
-      .clone()
-      .sub(up.clone().multiplyScalar(size))
-      .add(right.clone().multiplyScalar(size)),
-    center
-      .clone()
-      .sub(up.clone().multiplyScalar(size))
-      .sub(right.clone().multiplyScalar(size)),
-  ]
-
-  const nearCorners = buildCorners(nearCenter, nearSize)
-  const farCorners = buildCorners(farCenter, farSize)
-  const groundClearance = 0.01
-  const minLocalY = -opticHeight + groundClearance
-  const clampToGround = (vertex: THREE.Vector3) => {
-    if (vertex.y >= minLocalY) {
-      return vertex
-    }
-    if (vertex.y === 0) {
-      const clamped = vertex.clone()
-      clamped.y = minLocalY
-      return clamped
-    }
-    const scale = minLocalY / vertex.y
-    return vertex.clone().multiplyScalar(scale)
+      .multiplyScalar(Math.cos(angle))
+      .add(up.clone().multiplyScalar(Math.sin(angle)))
+    nearVertices.push(
+      nearCenter.clone().add(offset.clone().multiplyScalar(nearRadius)),
+    )
+    farVertices.push(
+      farCenter.clone().add(offset.clone().multiplyScalar(farRadius)),
+    )
   }
-  const vertices = [...nearCorners, ...farCorners].map(clampToGround)
+
+  const vertices = [
+    ...nearVertices,
+    ...farVertices,
+    nearCenter.clone(),
+    farCenter.clone(),
+  ]
   const positions = new Float32Array(
     vertices.flatMap((vertex) => [vertex.x, vertex.y, vertex.z]),
   )
 
-  const indices = [
-    0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5, 2,
-    3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7,
-  ]
+  const indices: number[] = []
+  for (let i = 0; i < radialSegments; i += 1) {
+    const next = (i + 1) % radialSegments
+    const nearA = i
+    const nearB = next
+    const farA = i + radialSegments
+    const farB = next + radialSegments
+    indices.push(nearA, farA, farB, nearA, farB, nearB)
+  }
 
-  const lineIndices = [
-    0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7,
-  ]
+  const nearCenterIndex = radialSegments * 2
+  const farCenterIndex = radialSegments * 2 + 1
+  for (let i = 0; i < radialSegments; i += 1) {
+    const next = (i + 1) % radialSegments
+    indices.push(nearCenterIndex, next, i)
+    indices.push(farCenterIndex, i + radialSegments, next + radialSegments)
+  }
+
+  const lineIndices: number[] = []
+  for (let i = 0; i < radialSegments; i += 1) {
+    const next = (i + 1) % radialSegments
+    lineIndices.push(i, next)
+    lineIndices.push(i + radialSegments, next + radialSegments)
+    lineIndices.push(i, i + radialSegments)
+  }
 
   const surfaceGeometry = new THREE.BufferGeometry()
   surfaceGeometry.setAttribute(
@@ -230,6 +234,7 @@ const buildFrustumGeometry = (
     new THREE.BufferAttribute(positions, 3),
   )
   surfaceGeometry.setIndex(indices)
+  surfaceGeometry.computeVertexNormals()
 
   const lineGeometry = new THREE.BufferGeometry()
   lineGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
@@ -251,6 +256,10 @@ export const CameraMesh: React.FC<{
   const color = entity.color
   const opticHeight = standHeight + bodyHeight * 0.5
   const yaw = -degToRad(entity.ptz?.pan ?? entity.direction)
+  const groundPlane = React.useMemo(
+    () => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
+    [],
+  )
   const frustum = React.useMemo(
     () => buildFrustumGeometry(entity, opticHeight, maxFrustumDepth),
     [entity, maxFrustumDepth, opticHeight],
@@ -328,6 +337,7 @@ export const CameraMesh: React.FC<{
           side={THREE.DoubleSide}
           color={color}
           opacity={dimmed ? 0.05 : 0.12}
+          clippingPlanes={[groundPlane]}
         />
       </mesh>
       <lineSegments
@@ -341,6 +351,7 @@ export const CameraMesh: React.FC<{
           depthWrite={false}
           color={color}
           opacity={dimmed ? 0.3 : 0.8}
+          clippingPlanes={[groundPlane]}
         />
       </lineSegments>
 

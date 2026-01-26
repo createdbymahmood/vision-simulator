@@ -11,7 +11,11 @@ import type {WorldEntity} from './simulation-helpers'
 
 import {computeBounds} from '../map-view/selection-geometry'
 import {EntitiesMesh} from './entity-meshes'
+import {CameraCollisionSurfaces} from './camera-collision-surfaces'
+import {CameraFovFootprints} from './camera-fov-footprints'
 import {GroundPlane} from './ground-plane'
+import {PersonTrail} from './person-trail'
+import {useSimulatedPeople} from './use-simulated-people'
 import {
   computeSceneOrigin,
   createCoordinateTransformer,
@@ -227,6 +231,30 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       ),
     [focusAreaId, scene, transformer],
   )
+  const simulatedPeoplePositions = useSimulatedPeople({scene, transformer})
+
+  const renderedEntities = React.useMemo(() => {
+    if (simulatedPeoplePositions.size === 0) {
+      return entities
+    }
+    return entities.map((entity) => {
+      if (entity.type !== 'person') {
+        return entity
+      }
+      const override = simulatedPeoplePositions.get(entity.entity.id)
+      if (!override) {
+        return entity
+      }
+      return {...entity, position: override.clone()}
+    })
+  }, [entities, simulatedPeoplePositions])
+
+  const selectedPersonId = React.useMemo(
+    () => selectedEntityIds.find((id) => id.startsWith('person-')),
+    [selectedEntityIds],
+  )
+
+  const collisionCameras = React.useMemo(() => scene.cameras, [scene.cameras])
 
   const bounds = React.useMemo(() => {
     const points = entities
@@ -335,12 +363,29 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       />
 
       <EntitiesMesh
-        entities={entities}
+        entities={renderedEntities}
         maxFrustumDepth={maxFrustumDepth}
         selectedEntityIds={selectedEntityIds}
         onFocus={requestFocus}
         onSelectEntity={onSelectEntity}
       />
+      <PersonTrail
+        selectedPersonId={selectedPersonId}
+        positions={simulatedPeoplePositions}
+      />
+      {collisionCameras.length > 0 ? (
+        <>
+          <CameraFovFootprints
+            cameras={collisionCameras}
+            scene={scene}
+            transformer={transformer}
+          />
+          <CameraCollisionSurfaces
+            cameras={collisionCameras}
+            entities={entities}
+          />
+        </>
+      ) : null}
 
       <OrbitControls
         enableDamping

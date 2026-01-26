@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
-import {Switch} from '@/components/ui/switch'
 import {CAMERA_PRESETS} from '@/features/scene/domain/constants/camera-presets'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
@@ -458,24 +457,6 @@ export const CameraPropertiesSheet: React.FC = () => {
             </div>
           </PropertiesSection>
 
-          <PropertiesSection title='Advanced'>
-            <div className='flex items-center justify-between rounded-md border p-3'>
-              <div className='space-y-1'>
-                <p className='text-sm font-medium'>Show Collisions</p>
-                <p className='text-xs text-muted-foreground'>
-                  Toggle collision visualization for this camera.
-                </p>
-              </div>
-              <Switch
-                checked={selectedCamera.showCollisions}
-                onCheckedChange={(checked) =>
-                  updateSelectedCamera((camera) => {
-                    camera.showCollisions = checked
-                  })
-                }
-              />
-            </div>
-          </PropertiesSection>
         </div>
       ) : (
         <p className='text-sm text-muted-foreground'>

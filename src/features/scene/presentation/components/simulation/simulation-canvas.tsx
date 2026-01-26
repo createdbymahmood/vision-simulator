@@ -18,6 +18,7 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = (props) => (
       gl.toneMapping = THREE.NoToneMapping
       gl.shadowMap.enabled = true
       gl.shadowMap.type = THREE.PCFSoftShadowMap
+      gl.localClippingEnabled = true
     }}
     shadows
   >
