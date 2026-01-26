@@ -5,6 +5,7 @@ import type {
   ShapeEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
+import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 
 import type {CoordinateTransformer} from './simulation-helpers'
 
@@ -129,6 +130,34 @@ export const buildWallSegments = (
         b: end,
         thickness: wall.thickness,
         height: wall.height,
+      })
+    }
+  })
+  return segments
+}
+
+export const buildAreaBoundarySegments = (
+  areas: AreaEntity[],
+  transformer: CoordinateTransformer,
+) => {
+  const segments: ObstacleSegment[] = []
+  const boundaryThickness = DEFAULT_PERSON_RADIUS * 2
+  areas.forEach((area) => {
+    const points = area.geometry.coordinates.map((point) =>
+      transformer.toVector3(point, 0),
+    )
+    if (points.length < 2) {
+      return
+    }
+    for (let i = 0; i < points.length; i += 1) {
+      const start = points[i]
+      const end = points[(i + 1) % points.length]
+      segments.push({
+        areaId: area.id,
+        a: start,
+        b: end,
+        thickness: boundaryThickness,
+        height: Number.MAX_SAFE_INTEGER,
       })
     }
   })

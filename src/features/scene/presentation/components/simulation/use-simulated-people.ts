@@ -6,6 +6,7 @@ import type {SceneRoot} from '@/features/scene/domain/types'
 
 import type {CoordinateTransformer} from './simulation-helpers'
 import {
+  buildAreaBoundarySegments,
   buildAreaPolygons,
   buildShapePolygons,
   buildWallSegments,
@@ -37,9 +38,16 @@ export const useSimulatedPeople = ({
     () => buildAreaPolygons(scene.areas, transformer),
     [scene.areas, transformer],
   )
+  const areaBoundarySegments = React.useMemo(
+    () => buildAreaBoundarySegments(scene.areas, transformer),
+    [scene.areas, transformer],
+  )
   const wallSegments = React.useMemo(
-    () => buildWallSegments(scene.walls, transformer),
-    [scene.walls, transformer],
+    () => [
+      ...buildWallSegments(scene.walls, transformer),
+      ...areaBoundarySegments,
+    ],
+    [areaBoundarySegments, scene.walls, transformer],
   )
   const shapePolygons = React.useMemo(
     () => buildShapePolygons(scene.shapes, transformer),

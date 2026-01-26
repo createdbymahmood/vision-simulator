@@ -137,6 +137,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   selectedEntityIds,
   cameraFeedTargets,
 }) => {
+  const {gl, size} = useThree()
   const setVisionState = useUiStore((state) => state.setVisionState)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
   const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
@@ -390,6 +391,12 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       }),
     )
   })
+
+  useFrame((state) => {
+    state.gl.setViewport(0, 0, state.size.width, state.size.height)
+    state.gl.setScissorTest(false)
+    state.gl.render(state.scene, state.camera)
+  }, 1)
 
   return (
     <>
