@@ -2,18 +2,14 @@ import React from 'react'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
 
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {Badge} from '@/components/ui/badge'
 import {Card, CardContent, CardFooter} from '@/components/ui/card'
-import {cn} from '@/lib/utils'
 
-import type {createCoordinateTransformer} from './simulation-helpers'
 import type {CameraFeedTarget} from './camera-feed-types'
+import type {createCoordinateTransformer} from './simulation-helpers'
+
 import {computeFeedRenderConfig} from './camera-feed-helpers'
-import {
-  computeFeedBoundingBoxes,
-  useElementSize,
-} from './camera-feed-utils'
+import {computeFeedBoundingBoxes, useElementSize} from './camera-feed-utils'
 
 interface CameraFeedTileProps {
   camera: CameraEntity
@@ -22,8 +18,7 @@ interface CameraFeedTileProps {
   peopleWorld: Record<string, {x: number; y: number; z: number; height: number}>
   transformer: ReturnType<typeof createCoordinateTransformer>
   feedCount: number
-  isActive: boolean
-  onActivate: (cameraId: string) => void
+  onSelect: (cameraId: string) => void
 }
 
 const ENABLE_FEED_OPTICS = false
@@ -35,8 +30,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   peopleWorld,
   transformer,
   feedCount,
-  isActive,
-  onActivate,
+  onSelect,
 }) => {
   const size = useElementSize(feedTarget.containerRef)
   const boxes = React.useMemo(
@@ -64,31 +58,19 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   }, [feedCount, size.height, size.width])
 
   const detectionCount = peopleIds.length
-  const handleActivate = useCallbackRef(() => {
-    onActivate(camera.id)
-  })
 
   return (
     <div className='border-b'>
       <Card className='border-none rounded-none shadow-none py-4'>
         <CardContent className='px-0'>
           <button
-            className={cn(
-              'relative w-full aspect-video overflow-hidden rounded-md bg-muted text-left',
-              isActive
-                ? 'border-4 shadow-[0_0_16px_rgba(15,23,42,0.35)]'
-                : 'border-2',
-            )}
-            onClick={handleActivate}
+            aria-label={`Select ${camera.name}`}
+            className='relative w-full aspect-video overflow-hidden rounded-md bg-muted text-left border-2'
             style={{borderColor: camera.color}}
             type='button'
-            aria-pressed={isActive}
-            aria-label={`Activate ${camera.name}`}
+            onClick={() => onSelect(camera.id)}
           >
-            <div
-              className='absolute inset-0'
-              ref={feedTarget.containerRef}
-            />
+            <div className='absolute inset-0' ref={feedTarget.containerRef} />
             <canvas
               className='absolute inset-0 h-full w-full'
               ref={feedTarget.canvasRef}
@@ -127,9 +109,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
           <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
             <span>{camera.name}</span>
             <div className='flex items-center gap-2'>
-              <Badge variant='secondary'>
-                {feedConfig?.label ?? '---'}
-              </Badge>
+              <Badge variant='secondary'>{feedConfig?.label ?? '---'}</Badge>
               <Badge variant={detectionCount > 0 ? 'destructive' : 'secondary'}>
                 {detectionCount} detections
               </Badge>

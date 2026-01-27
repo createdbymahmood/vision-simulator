@@ -32,8 +32,6 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   const radarSettings = useUiStore((state) => state.radarSettings)
   const setRadarSettings = useUiStore((state) => state.setRadarSettings)
   const visionState = useUiStore((state) => state.visionState)
-  const activeCameraId = useUiStore((state) => state.activeCameraId)
-  const setActiveCameraId = useUiStore((state) => state.setActiveCameraId)
 
   const selectedPersonId = React.useMemo(
     () => selectedEntityIds.find((id) => id.startsWith('person-')),
@@ -118,7 +116,6 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
             >
               <SimulationRadarSvg
                 size={size}
-                activeCameraId={activeCameraId}
                 areaPaths={areaPaths}
                 cameraMarkers={cameraMarkers}
                 gridLines={gridLines}
@@ -129,7 +126,6 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
                 hoveredCameraId={hoveredCameraId ?? undefined}
                 onHoverCamera={handleCameraHover}
                 onSelectCamera={(cameraId) => {
-                  setActiveCameraId(cameraId)
                   onSelectEntity(cameraId)
                 }}
                 onSelectPerson={(personId) => {

@@ -47,7 +47,6 @@ export interface UiState {
     color: string | null
   }
   flyToActiveAreaTick: number
-  activeCameraId?: string
   radarSettings: RadarSettings
   visionState: VisionState
 
@@ -77,8 +76,6 @@ export interface UiState {
     color: string | null
   }
   triggerFlyToActiveArea: () => number
-  setActiveCameraId: (cameraId?: string) => string | undefined
-  cycleActiveCamera: (cameraIds: string[]) => string | undefined
   setRadarSettings: (settings: Partial<RadarSettings>) => RadarSettings
   setVisionState: (state: VisionState) => VisionState
   resetUi: () => UiState
@@ -198,15 +195,6 @@ const closeAllPopovers = (set: SetState, get: GetState) => {
   return get().openPopovers
 }
 
-const setActiveCameraId = (set: SetState, get: GetState, cameraId?: string) => {
-  const nextValue = produce<UiState>((state) => {
-    state.activeCameraId = cameraId
-  })
-
-  set(nextValue)
-  return get().activeCameraId
-}
-
 const setRadarSettings = (
   set: SetState,
   get: GetState,
@@ -229,28 +217,6 @@ const setVisionState = (set: SetState, get: GetState, state: VisionState) => {
   return get().visionState
 }
 
-const cycleActiveCamera = (
-  set: SetState,
-  get: GetState,
-  cameraIds: string[],
-) => {
-  const nextValue = produce<UiState>((state) => {
-    if (cameraIds.length === 0) {
-      state.activeCameraId = undefined
-      return
-    }
-    const currentIndex = cameraIds.findIndex(
-      (id) => id === state.activeCameraId,
-    )
-    const nextIndex =
-      currentIndex === -1 ? 0 : (currentIndex + 1) % cameraIds.length
-    state.activeCameraId = cameraIds[nextIndex]
-  })
-
-  set(nextValue)
-  return get().activeCameraId
-}
-
 const resetUi = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.viewMode = 'editor'
@@ -260,7 +226,6 @@ const resetUi = (set: SetState, get: GetState) => {
     state.openPopovers = {}
     state.cameraPlacement = {presetId: null, color: null}
     state.flyToActiveAreaTick = 0
-    state.activeCameraId = undefined
     state.radarSettings = {
       zoom: 1.1,
       pan: {x: 0, y: 0},
@@ -299,7 +264,6 @@ const createUiStore: (
     color: null,
   },
   flyToActiveAreaTick: initialValues?.flyToActiveAreaTick ?? 0,
-  activeCameraId: initialValues?.activeCameraId,
   radarSettings: initialValues?.radarSettings ?? {
     zoom: 1.1,
     pan: {x: 0, y: 0},
@@ -337,8 +301,6 @@ const createUiStore: (
     return get().cameraPlacement
   },
   triggerFlyToActiveArea: () => triggerFlyToActiveArea(set, get),
-  setActiveCameraId: (cameraId) => setActiveCameraId(set, get, cameraId),
-  cycleActiveCamera: (cameraIds) => cycleActiveCamera(set, get, cameraIds),
   setRadarSettings: (settings) => setRadarSettings(set, get, settings),
   setVisionState: (state) => setVisionState(set, get, state),
   resetUi: () => resetUi(set, get),

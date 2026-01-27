@@ -500,7 +500,7 @@ No client-side routing is used. View switching is handled by state management.
 **Location**:
 
 - **Editor**: Properties panel when camera selected
-- **3D Simulation**: Floating panel for active camera (default: first camera)
+- **3D Simulation**: Floating panel for selected camera (default: first camera)
 
 **Layout** (PTZ Control Panel):
 
@@ -572,21 +572,6 @@ No client-side routing is used. View switching is handled by state management.
   - `0`: Reset PTZ
 
 #### 5.5.4 PTZ Behavior in 3D Simulation
-
-**Active Camera Concept**:
-
-- One camera is "active" for PTZ control at a time
-- Active camera indicated by:
-  - Thicker FOV frustum outline (4px vs 2px)
-  - Pulsing glow on camera model
-  - PTZ panel shows its name
-
-**Switching Active Camera**:
-
-- Click camera model in 3D view
-- Click camera in radar
-- Click camera POV feed tile
-- Keyboard: `Tab` cycles through cameras, `Shift+Tab` reverse
 
 **PTZ Panel in Simulation** (floating, draggable):
 
@@ -771,7 +756,7 @@ elevation = ptz.tilt // vertical angle
 
 **Click Camera Indicator**:
 
-- Sets as active camera for PTZ control
+- Selects camera
 - Highlights camera in 3D view
 - Opens camera properties panel
 
@@ -1565,7 +1550,7 @@ Each area has:
 
 - Position: Bottom-right by default (16px margins)
 - Width: 280px, Height: 320px
-- Shows active camera's PTZ controls (as detailed in 5.5)
+- Shows selected camera's PTZ controls (as detailed in 5.5)
 - Header: Camera name + color dot
 - Minimize: Collapses to small floating button (48px × 48px) with camera icon
 
@@ -1580,12 +1565,12 @@ Each area has:
   ┌────────────────────────────────┐
   │ 🎥 cam-1      [PTZ] [Focus]    │  ← Color dot next to name
   │ FOV: 60° • Depth: 20m          │
-  │ Detections: 2 🟢               │  ← Green = active
+  │ Detections: 2 🟢               │
   └────────────────────────────────┘
   ```
 
   - Click name: Opens properties
-  - Click `[PTZ]`: Sets as active for PTZ control
+  - Click `[PTZ]`: Opens PTZ controls for this camera
   - Click `[Focus]`: Centers 3D view on this camera
   - Grouped by area (if multi-area)
 
@@ -1965,7 +1950,7 @@ mediaRecorder.start()
 **Optional Features**:
 
 - **Timestamp overlay**: Burned into video (top-left, small font)
-- **Camera info overlay**: Shows active camera name when PTZ adjusted
+- **Camera info overlay**: Shows camera name when PTZ adjusted
 - **Quality presets**: 720p/1080p/4K selection before recording
 
 ---

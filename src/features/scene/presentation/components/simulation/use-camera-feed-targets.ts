@@ -3,28 +3,14 @@ import React from 'react'
 import type {CameraEntity} from '@/features/scene/domain/types'
 
 import type {CameraFeedTarget} from './camera-feed-types'
+
 import {MAX_CAMERA_FEEDS} from './camera-feed-helpers'
 
 interface UseCameraFeedTargetsInput {
   cameras: CameraEntity[]
-  activeCameraId?: string
 }
 
-const getOrderedCameraIds = (
-  cameras: CameraEntity[],
-  activeCameraId?: string,
-) => {
-  const ids = cameras.map((camera) => camera.id)
-  if (!activeCameraId || !ids.includes(activeCameraId)) {
-    return ids
-  }
-  return [activeCameraId, ...ids.filter((id) => id !== activeCameraId)]
-}
-
-export const useCameraFeedTargets = ({
-  cameras,
-  activeCameraId,
-}: UseCameraFeedTargetsInput) => {
+export const useCameraFeedTargets = ({cameras}: UseCameraFeedTargetsInput) => {
   const containerRefs = React.useRef(
     new Map<string, React.RefObject<HTMLDivElement>>(),
   )
@@ -33,8 +19,8 @@ export const useCameraFeedTargets = ({
   )
 
   const orderedIds = React.useMemo(
-    () => getOrderedCameraIds(cameras, activeCameraId),
-    [activeCameraId, cameras],
+    () => cameras.map((camera) => camera.id),
+    [cameras],
   )
 
   const targetIds = React.useMemo(

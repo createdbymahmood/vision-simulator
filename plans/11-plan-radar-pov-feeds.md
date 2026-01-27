@@ -15,7 +15,7 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
 - Treat radar and POV feeds as overlays on the existing simulation; no new routing or scene duplication.
 - Implement radar visuals/interactions exactly (draggable, resizable, ping animation, context menu, stats footer); it must be always visible in simulation.
 - Use the camera vision pipeline (frustum culling + occlusion) to drive both radar connection lines and POV bounding boxes—do not fake detections.
-- Bounding boxes in feeds must match camera colors/layout and update in real time; clicking a feed switches the active camera.
+- Bounding boxes in feeds must match camera colors/layout and update in real time; clicking a feed selects that camera.
 - Keep performance guardrails: limit active feeds (4–6) and support resolution adjustments.
 - All toggles (grid, trails, wedges, lock position) should persist during a session to avoid user confusion.
 
@@ -152,7 +152,7 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
   - Updates person properties panel
 
 - [ ] **Click Camera Indicator**:
-  - Sets as active camera for PTZ control
+  - Selects camera
   - Highlights camera in 3D view
   - Opens camera properties panel
 
@@ -231,7 +231,6 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
 
 - [ ] **Tile styling**:
   - Border: 3px solid, camera's color
-  - Active tile (selected camera): 4px border, glow effect
   - Real-time updates: 30 FPS
 
 - [ ] **Bounding boxes**:
@@ -240,14 +239,14 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
   - Label: Person ID (e.g., "P1")
   - Thickness: 2px
 
-- [ ] **Click tile**: Sets camera as active
+- [ ] **Click tile**: Selects camera
 
 ---
 
 ## Dependencies
 
 - Phase 9: 3D Simulation Core (Scene, people, cameras)
-- Phase 10: 3D Advanced Features (PTZ, physics, active camera concept)
+- Phase 10: 3D Advanced Features (PTZ, physics)
 
 ---
 
@@ -275,7 +274,7 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
 - [ ] Feed tiles have colored borders matching camera
 - [ ] Grid size toggle changes feed layout (2×2, 3×3, 4×4)
 - [ ] Detection count badge updates in real-time
-- [ ] Clicking feed tile switches active camera
+- [ ] Clicking feed tile selects the camera
 
 ---
 
@@ -295,7 +294,6 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
 - Section 6.2.3: Top-Left Overlay (Radar position)
 - Section 6.2.5: Right Sidebar (Camera POV Feeds)
 - Section 6.7: Camera Vision Requirements (entire section)
-
 
 
 

@@ -39,9 +39,6 @@ export const SimulationAnalysisView: React.FC = () => {
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
 
   const setViewMode = useUiStore((state) => state.setViewMode)
-  const activeCameraId = useUiStore((state) => state.activeCameraId)
-  const setActiveCameraId = useUiStore((state) => state.setActiveCameraId)
-  const cycleActiveCamera = useUiStore((state) => state.cycleActiveCamera)
 
   const areaOptions: AreaOption[] = React.useMemo(() => {
     const getCount = (areaId: string) =>
@@ -63,20 +60,9 @@ export const SimulationAnalysisView: React.FC = () => {
 
   const hasMultipleAreas = areaOptions.length > 1
   const activeAreaId = scene.activeAreaId ?? 'all'
-  const cameraIds = React.useMemo(
-    () => scene.cameras.map((camera) => camera.id),
-    [scene.cameras],
-  )
-  const selectedCameraId = React.useMemo(
-    () => selectedEntityIds.find((id) => id.startsWith('camera-')),
-    [selectedEntityIds],
-  )
   const radarPanelSize = {width: 360, height: 180}
 
-  const feedTargets = useCameraFeedTargets({
-    cameras: scene.cameras,
-    activeCameraId,
-  })
+  const feedTargets = useCameraFeedTargets({cameras: scene.cameras})
 
   const handleAreaChange = (value: string) => {
     const nextArea = value === 'all' ? undefined : value
@@ -89,44 +75,9 @@ export const SimulationAnalysisView: React.FC = () => {
     setMapVisibility(mode === 'map')
   }
 
-  React.useEffect(() => {
-    if (selectedCameraId) {
-      setActiveCameraId(selectedCameraId)
-    }
-  }, [selectedCameraId, setActiveCameraId])
-
-  React.useEffect(() => {
-    if (!activeCameraId && cameraIds.length > 0) {
-      setActiveCameraId(cameraIds[0])
-    }
-  }, [activeCameraId, cameraIds, setActiveCameraId])
-
-  const onCycleCamera = useCallbackRef(() => {
-    const nextId = cycleActiveCamera(cameraIds)
-    if (nextId) {
-      setSelection([nextId])
-    }
-  })
-
   const handleSelectEntity = useCallbackRef((id?: string) => {
     setSelection(id ? [id] : [])
   })
-
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') {
-        return
-      }
-      const target = event.target as HTMLElement | null
-      if (target?.closest('input, textarea, select')) {
-        return
-      }
-      event.preventDefault()
-      onCycleCamera()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onCycleCamera])
 
   return (
     <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden overscroll-none'>

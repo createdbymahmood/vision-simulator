@@ -55,7 +55,6 @@ interface SimulationRadarSvgProps {
   connections: RadarConnectionLine[]
   cameraMarkers: RadarCameraMarker[]
   peopleMarkers: RadarPersonMarker[]
-  activeCameraId?: string
   hoveredCameraId?: string
   selectedPersonId?: string
   pingPoint?: RadarPoint | null
@@ -74,7 +73,6 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
   connections,
   cameraMarkers,
   peopleMarkers,
-  activeCameraId,
   hoveredCameraId,
   selectedPersonId,
   pingPoint,
@@ -166,8 +164,7 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
     {cameraMarkers.map(({camera, point, arrowPoint}) => {
       const isHovered = hoveredCameraId === camera.id
       const radius = isHovered ? 7 : 6
-      const opacity =
-        camera.id === activeCameraId || isHovered ? 0.95 : 0.6
+      const opacity = isHovered ? 0.95 : 0.6
       return (
         <g key={camera.id}>
           <title>{camera.name}</title>

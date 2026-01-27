@@ -6,17 +6,16 @@
 
 ## Phase Goal
 
-Implement advanced 3D simulation features including FOV collision visualization, people movement with physics/steering behaviors, collision avoidance, PTZ controls in simulation, and the active camera concept. This phase brings the simulation to life with realistic agent motion and camera visibility feedback.
+Implement advanced 3D simulation features including FOV collision visualization, people movement with physics/steering behaviors, collision avoidance, and PTZ controls in simulation. This phase brings the simulation to life with realistic agent motion and camera visibility feedback.
 
 ---
 
 ## How Codex Should Use This Phase
 
 - Build on the Phase 9 scene: add physics/steering, collision visualization, and PTZ-in-3D without altering core schemas.
-- Active camera is a first-class concept; make PTZ panel, frustum thickness, and selection state all reflect the same source of truth.
 - Collision surfaces must follow the rendering rules (opacity, pulsing) and respond to camera/obstacle changes; compute selectively for performance.
 - People movement must be deterministic (seeded RNG + fixed timestep) and respect all area/obstacle/person constraints.
-- PTZ floating panel must mirror editor controls and be draggable/minimizable; Tab cycling between cameras is required.
+- PTZ floating panel must mirror editor controls and be draggable/minimizable.
 - Use toggles (global and per-camera) for collision visualization; do not remove frustum wireframes when disabled.
 
 ---
@@ -29,7 +28,6 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - People movement algorithm (steering behaviors)
 - Collision avoidance (obstacles, people, area boundaries)
 - PTZ controls in 3D simulation (floating panel)
-- Active camera concept and switching
 - Trail visualization for selected person
 - Deterministic simulation (seeded RNG)
 
@@ -175,21 +173,6 @@ Implement advanced 3D simulation features including FOV collision visualization,
 
 ### PTZ Controls in 3D Simulation (Section 5.5.4)
 
-#### Active Camera Concept
-
-- [ ] One camera is "active" for PTZ control at a time
-- [ ] **Active camera indicated by**:
-  - Thicker FOV frustum outline (4px vs 2px)
-  - Pulsing glow on camera model
-  - PTZ panel shows its name
-
-#### Switching Active Camera
-
-- [ ] Click camera model in 3D view
-- [ ] Click camera in radar (Phase 11)
-- [ ] Click camera POV feed tile (Phase 11)
-- [ ] Keyboard: `Tab` cycles through cameras, `Shift+Tab` reverse
-
 #### PTZ Panel in Simulation (Section 5.5.4)
 
 - [ ] **Floating, draggable panel**
@@ -222,7 +205,7 @@ Implement advanced 3D simulation features including FOV collision visualization,
   ```
   - Color dot next to name
   - Click name: Opens properties
-  - Click [PTZ]: Sets as active for PTZ control
+  - Click [PTZ]: Opens PTZ controls for that camera
   - Click [Focus]: Centers 3D view on camera
   - Grouped by area (if multi-area)
 
@@ -269,8 +252,6 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - [ ] Trail fades at older end
 - [ ] PTZ panel is floating and draggable
 - [ ] PTZ panel minimizes to icon
-- [ ] Tab cycles active camera
-- [ ] Active camera has thicker frustum outline
 - [ ] Camera list shows detection count
 - [ ] Focus button centers view on camera
 
@@ -293,7 +274,6 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - Section 6.2.2: Main Viewport (Trail visualization)
 - Section 6.2.5: Right Sidebar (Camera List)
 - Section 6.6: Physics & Movement (entire section)
-
 
 
 

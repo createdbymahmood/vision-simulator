@@ -24,8 +24,6 @@ export const SimulationCameraSidebar: React.FC<
   SimulationCameraSidebarProps
 > = ({scene, feedTargets}) => {
   const setSelection = useSceneStore((state) => state.setSelection)
-  const activeCameraId = useUiStore((state) => state.activeCameraId)
-  const setActiveCameraId = useUiStore((state) => state.setActiveCameraId)
   const visionState = useUiStore((state) => state.visionState)
 
   const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
@@ -36,8 +34,7 @@ export const SimulationCameraSidebar: React.FC<
 
   const detectionsByCamera = visionState.visibleByCameraId
   const peopleWorld = visionState.peopleWorld
-  const handleActivate = useCallbackRef((cameraId: string) => {
-    setActiveCameraId(cameraId)
+  const handleSelect = useCallbackRef((cameraId: string) => {
     setSelection([cameraId])
   })
 
@@ -60,10 +57,9 @@ export const SimulationCameraSidebar: React.FC<
                 <CameraFeedTile
                   camera={camera}
                   feedTarget={target}
-                  feedCount={feedTargets.length}
-                  isActive={camera.id === activeCameraId}
                   key={camera.id}
-                  onActivate={handleActivate}
+                  feedCount={feedTargets.length}
+                  onSelect={handleSelect}
                   peopleIds={peopleIds}
                   peopleWorld={peopleWorld}
                   transformer={transformer}

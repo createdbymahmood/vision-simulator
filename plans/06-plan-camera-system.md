@@ -40,7 +40,6 @@ Implement the complete Camera placement system including the Device Picker CMDK,
 - **Mapbox Expressions**: Use Mapbox expressions for:
   - Dynamic icon coloring based on camera color
   - FOV opacity changes on hover
-  - Active camera highlighting (thicker borders)
 - **Mapbox Paint/Layout Properties**: Use for:
   - Icon rotation based on camera direction
   - FOV fill and line colors from camera palette
@@ -239,17 +238,17 @@ This ensures camera visualizations integrate seamlessly with the map and area sy
 - [ ] Placing outside area shows error and prevents placement
 - [ ] Color picker in properties allows customization
 - [ ] Devices in Use panel lists all cameras with colors
-- [ ] >20 cameras correctly cycles palette with hue shift
+- [ ] > 20 cameras correctly cycles palette with hue shift
 
 ---
 
 ## Risks & Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| Color conflicts with similar shades | Palette carefully selected for distinction; provide color picker |
-| FOV rendering performance with many cameras | Use canvas/WebGL for FOV; only render visible |
-| CMDK search performance | Virtualize list; keep camera types list small |
+| Risk                                        | Mitigation                                                       |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| Color conflicts with similar shades         | Palette carefully selected for distinction; provide color picker |
+| FOV rendering performance with many cameras | Use canvas/WebGL for FOV; only render visible                    |
+| CMDK search performance                     | Virtualize list; keep camera types list small                    |
 
 ---
 
@@ -259,4 +258,3 @@ This ensures camera visualizations integrate seamlessly with the map and area sy
 - Section 5.7.3: Measurement Tooltips (Camera)
 - Section 5.8.2: Camera Placement Cursor
 - Section 5.10.4: Place Camera Tool (Enhanced)
-
