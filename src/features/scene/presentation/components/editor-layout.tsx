@@ -5,6 +5,7 @@ import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.st
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {TopPanel} from '@/features/scene/presentation/components/top-panel'
+import {cn} from '@/lib/utils'
 
 import type {SceneMode} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
@@ -192,7 +193,12 @@ export const EditorLayout: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen w-full flex flex-col ${viewMode === 'preview' ? 'overflow-hidden h-[100svh]' : ''}`}
+      className={cn(
+        'flex w-full flex-col',
+        viewMode === 'preview'
+          ? 'h-svh min-h-0 overflow-hidden'
+          : 'min-h-screen',
+      )}
     >
       {viewMode === 'editor' ? (
         <TopPanel
@@ -212,7 +218,7 @@ export const EditorLayout: React.FC = () => {
       ) : null}
 
       <main
-        className={`mx-auto flex min-h-0 flex-1 flex-col gap-4 size-full ${viewMode === 'editor' ? 'pt-14' : ''} ${viewMode === 'preview' ? 'overflow-hidden h-[100svh]' : ''}`}
+        className={`mx-auto flex min-h-0 flex-1 flex-col gap-4 size-full ${viewMode === 'editor' ? 'pt-14' : ''} ${viewMode === 'preview' ? 'overflow-hidden' : ''}`}
       >
         {viewMode === 'editor' ? (
           <ViewportShell

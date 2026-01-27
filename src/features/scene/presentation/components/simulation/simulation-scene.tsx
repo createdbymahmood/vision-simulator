@@ -129,6 +129,7 @@ const FocusController: React.FC<{
   return null
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const SimulationScene: React.FC<SimulationSceneProps> = ({
   scene,
   sceneMode: _sceneMode,
@@ -138,7 +139,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   selectedEntityIds,
   cameraFeedTargets,
 }) => {
-  const {gl, size} = useThree()
+  const {camera, size} = useThree()
   const setVisionState = useUiStore((state) => state.setVisionState)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
   const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
@@ -352,6 +353,14 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     },
     [],
   )
+
+  React.useEffect(() => {
+    if (camera instanceof THREE.PerspectiveCamera) {
+      const safeHeight = Math.max(size.height, 1)
+      camera.aspect = size.width / safeHeight
+      camera.updateProjectionMatrix()
+    }
+  }, [camera, size.height, size.width])
 
   React.useEffect(() => {
     if (!controlsRef.current) {

@@ -132,7 +132,7 @@ export const SimulationAnalysisView: React.FC = () => {
   }, [onCycleCamera])
 
   return (
-    <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'>
+    <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden overscroll-none'>
       <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
         <div className='flex items-center gap-4'>
           <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
@@ -214,23 +214,25 @@ export const SimulationAnalysisView: React.FC = () => {
       </div>
 
       <div className='flex flex-1 min-h-0 overflow-hidden'>
-        <div className='relative min-h-0 min-w-0 flex-1 overflow-hidden'>
-          <SimulationCanvas
-            cameraFeedTargets={feedTargets}
-            scene={scene}
-            selectedEntityIds={selectedEntityIds}
-            focusAreaId={scene.activeAreaId}
-            onSelectEntity={handleSelectEntity}
-            sceneMode={scene.mode}
-            showMapTexture={
-              scene.mode === 'canvas'
-                ? true
-                : scene.mapVisible && scene.mode === 'map'
-            }
-          />
+        <div className='relative flex-1 overflow-hidden'>
+          <div className='absolute inset-0'>
+            <SimulationCanvas
+              cameraFeedTargets={feedTargets}
+              scene={scene}
+              selectedEntityIds={selectedEntityIds}
+              focusAreaId={scene.activeAreaId}
+              onSelectEntity={handleSelectEntity}
+              sceneMode={scene.mode}
+              showMapTexture={
+                scene.mode === 'canvas'
+                  ? true
+                  : scene.mapVisible && scene.mode === 'map'
+              }
+            />
+          </div>
         </div>
         <div
-          className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto border-l'
+          className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'
           style={{width: sidebarWidth, padding: sidebarPadding}}
         >
           <SimulationRadar
