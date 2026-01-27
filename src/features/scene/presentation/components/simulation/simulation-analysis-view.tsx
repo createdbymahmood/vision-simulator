@@ -42,7 +42,6 @@ export const SimulationAnalysisView: React.FC = () => {
   const activeCameraId = useUiStore((state) => state.activeCameraId)
   const setActiveCameraId = useUiStore((state) => state.setActiveCameraId)
   const cycleActiveCamera = useUiStore((state) => state.cycleActiveCamera)
-  const cameraFeedGrid = useUiStore((state) => state.cameraFeedGrid)
 
   const areaOptions: AreaOption[] = React.useMemo(() => {
     const getCount = (areaId: string) =>
@@ -76,7 +75,6 @@ export const SimulationAnalysisView: React.FC = () => {
 
   const feedTargets = useCameraFeedTargets({
     cameras: scene.cameras,
-    grid: cameraFeedGrid,
     activeCameraId,
   })
 

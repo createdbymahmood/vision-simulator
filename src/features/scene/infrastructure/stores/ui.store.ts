@@ -16,8 +16,6 @@ export type EditorTool =
   | 'place-person'
   | 'select'
 
-export type CameraFeedGrid = '2x2' | '3x3' | '4x4'
-
 export interface RadarSettings {
   zoom: number
   pan: {x: number; y: number}
@@ -51,7 +49,6 @@ export interface UiState {
   flyToActiveAreaTick: number
   activeCameraId?: string
   radarSettings: RadarSettings
-  cameraFeedGrid: CameraFeedGrid
   visionState: VisionState
 
   setViewMode: (mode: ViewMode) => ViewMode
@@ -83,7 +80,6 @@ export interface UiState {
   setActiveCameraId: (cameraId?: string) => string | undefined
   cycleActiveCamera: (cameraIds: string[]) => string | undefined
   setRadarSettings: (settings: Partial<RadarSettings>) => RadarSettings
-  setCameraFeedGrid: (grid: CameraFeedGrid) => CameraFeedGrid
   setVisionState: (state: VisionState) => VisionState
   resetUi: () => UiState
 }
@@ -224,19 +220,6 @@ const setRadarSettings = (
   return get().radarSettings
 }
 
-const setCameraFeedGrid = (
-  set: SetState,
-  get: GetState,
-  grid: CameraFeedGrid,
-) => {
-  const nextValue = produce<UiState>((state) => {
-    state.cameraFeedGrid = grid
-  })
-
-  set(nextValue)
-  return get().cameraFeedGrid
-}
-
 const setVisionState = (set: SetState, get: GetState, state: VisionState) => {
   const nextValue = produce<UiState>((draft) => {
     draft.visionState = state
@@ -279,10 +262,9 @@ const resetUi = (set: SetState, get: GetState) => {
     state.flyToActiveAreaTick = 0
     state.activeCameraId = undefined
     state.radarSettings = {
-      zoom: 1,
+      zoom: 1.1,
       pan: {x: 0, y: 0},
     }
-    state.cameraFeedGrid = '2x2'
     state.visionState = {
       peopleWorld: {},
       visibleByCameraId: {},
@@ -319,10 +301,9 @@ const createUiStore: (
   flyToActiveAreaTick: initialValues?.flyToActiveAreaTick ?? 0,
   activeCameraId: initialValues?.activeCameraId,
   radarSettings: initialValues?.radarSettings ?? {
-    zoom: 1,
+    zoom: 1.1,
     pan: {x: 0, y: 0},
   },
-  cameraFeedGrid: initialValues?.cameraFeedGrid ?? '2x2',
   visionState: initialValues?.visionState ?? {
     peopleWorld: {},
     visibleByCameraId: {},
@@ -359,7 +340,6 @@ const createUiStore: (
   setActiveCameraId: (cameraId) => setActiveCameraId(set, get, cameraId),
   cycleActiveCamera: (cameraIds) => cycleActiveCamera(set, get, cameraIds),
   setRadarSettings: (settings) => setRadarSettings(set, get, settings),
-  setCameraFeedGrid: (grid) => setCameraFeedGrid(set, get, grid),
   setVisionState: (state) => setVisionState(set, get, state),
   resetUi: () => resetUi(set, get),
   ...initialValues,

@@ -14,6 +14,8 @@ export const useRadarInteractions = ({
   radarSettings,
   setRadarSettings,
 }: UseRadarInteractionsInput) => {
+  const zoomMin = 0.5
+  const zoomMax = 10
   const panRef = React.useRef<{
     startX: number
     startY: number
@@ -25,7 +27,7 @@ export const useRadarInteractions = ({
     event.preventDefault()
     const delta = event.deltaY > 0 ? -0.1 : 0.1
     setRadarSettings({
-      zoom: clamp(radarSettings.zoom + delta, 0.5, 3),
+      zoom: clamp(radarSettings.zoom + delta, zoomMin, zoomMax),
     })
   })
 

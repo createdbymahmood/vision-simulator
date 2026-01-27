@@ -1,17 +1,13 @@
 import React from 'react'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
-import type {CameraFeedGrid} from '@/features/scene/infrastructure/stores/ui.store'
 
 import type {CameraFeedTarget} from './simulation-scene'
 
 interface UseCameraFeedTargetsInput {
   cameras: CameraEntity[]
-  grid: CameraFeedGrid
   activeCameraId?: string
 }
-
-const getMaxFeeds = (grid: CameraFeedGrid) => (grid === '2x2' ? 4 : 6)
 
 const getOrderedCameraIds = (
   cameras: CameraEntity[],
@@ -26,22 +22,16 @@ const getOrderedCameraIds = (
 
 export const useCameraFeedTargets = ({
   cameras,
-  grid,
   activeCameraId,
 }: UseCameraFeedTargetsInput) => {
-  const refs = React.useRef(
-    new Map<string, React.RefObject<HTMLDivElement>>(),
-  )
+  const refs = React.useRef(new Map<string, React.RefObject<HTMLDivElement>>())
 
   const orderedIds = React.useMemo(
     () => getOrderedCameraIds(cameras, activeCameraId),
     [activeCameraId, cameras],
   )
 
-  const targetIds = React.useMemo(
-    () => orderedIds.slice(0, getMaxFeeds(grid)),
-    [grid, orderedIds],
-  )
+  const targetIds = orderedIds
 
   return React.useMemo<CameraFeedTarget[]>(
     () =>
