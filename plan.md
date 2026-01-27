@@ -362,7 +362,6 @@ No client-side routing is used. View switching is handled by state management.
   - FOV cone/wedge in editor
   - 3D FOV frustum visualization
   - Camera icon outline
-  - POV feed tile border
   - Radar indicator
 
 #### 5.3.2 Visual Application
@@ -386,8 +385,7 @@ No client-side routing is used. View switching is handled by state management.
 
 **POV Feeds**:
 
-- Tile border: 3px solid border in camera color
-- Active tile (selected): border 4px, glow effect
+- Tile border: 2px solid neutral UI border
 - Detection count badge: background in camera color
 
 **Radar**:
@@ -1589,15 +1587,13 @@ Each area has:
   └─────────────────────────┘
   ```
 
-  - Border: 3px solid, camera's color
-  - Active tile (selected camera): 4px border, glow effect
+  - Border: 2px solid, neutral UI border
   - Real-time updates: 30 FPS
   - Bounding boxes:
     - Rectangle overlays on detected people
     - Color: Yellow (for visibility)
     - Label: Person ID (e.g., "P1")
     - Thickness: 2px
-  - Click tile: Sets camera as active
 
 ---
 
@@ -2180,7 +2176,7 @@ renderer.setSize(originalSize.x, originalSize.y)
 ### Camera Features
 
 - [ ] Each camera has unique color from palette
-- [ ] Camera colors visible in: editor FOV, 3D frustum, POV tile border, radar
+- [ ] Camera colors visible in: editor FOV, 3D frustum, radar
 - [ ] PTZ controls adjust camera direction/tilt/zoom in real-time
 - [ ] PTZ presets save and load correctly
 - [ ] 3D FOV collision surfaces render on walls/shapes

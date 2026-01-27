@@ -18,7 +18,6 @@ interface CameraFeedTileProps {
   peopleWorld: Record<string, {x: number; y: number; z: number; height: number}>
   transformer: ReturnType<typeof createCoordinateTransformer>
   feedCount: number
-  onSelect: (cameraId: string) => void
 }
 
 const ENABLE_FEED_OPTICS = false
@@ -30,7 +29,6 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   peopleWorld,
   transformer,
   feedCount,
-  onSelect,
 }) => {
   const size = useElementSize(feedTarget.containerRef)
   const boxes = React.useMemo(
@@ -63,13 +61,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
     <div className='border-b'>
       <Card className='border-none rounded-none shadow-none py-4'>
         <CardContent className='px-0'>
-          <button
-            aria-label={`Select ${camera.name}`}
-            className='relative w-full aspect-video overflow-hidden rounded-md bg-muted text-left border-2'
-            style={{borderColor: camera.color}}
-            type='button'
-            onClick={() => onSelect(camera.id)}
-          >
+          <div className='relative w-full aspect-video overflow-hidden bg-muted text-left'>
             <div className='absolute inset-0' ref={feedTarget.containerRef} />
             <canvas
               className='absolute inset-0 h-full w-full'
@@ -102,7 +94,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
                 </div>
               ))}
             </div>
-          </button>
+          </div>
         </CardContent>
 
         <CardFooter>

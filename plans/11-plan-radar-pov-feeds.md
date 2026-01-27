@@ -15,7 +15,7 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
 - Treat radar and POV feeds as overlays on the existing simulation; no new routing or scene duplication.
 - Implement radar visuals/interactions exactly (draggable, resizable, ping animation, context menu, stats footer); it must be always visible in simulation.
 - Use the camera vision pipeline (frustum culling + occlusion) to drive both radar connection lines and POV bounding boxes—do not fake detections.
-- Bounding boxes in feeds must match camera colors/layout and update in real time; clicking a feed selects that camera.
+- Bounding boxes in feeds must match camera colors/layout and update in real time.
 - Keep performance guardrails: limit active feeds (4–6) and support resolution adjustments.
 - All toggles (grid, trails, wedges, lock position) should persist during a session to avoid user confusion.
 
@@ -230,7 +230,7 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
   ```
 
 - [ ] **Tile styling**:
-  - Border: 3px solid, camera's color
+  - Border: 2px solid, neutral UI border
   - Real-time updates: 30 FPS
 
 - [ ] **Bounding boxes**:
@@ -239,7 +239,6 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
   - Label: Person ID (e.g., "P1")
   - Thickness: 2px
 
-- [ ] **Click tile**: Selects camera
 
 ---
 
@@ -271,10 +270,9 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
 - [ ] Connection lines show camera-person detection
 - [ ] Camera POV feeds render at 30 FPS
 - [ ] Bounding boxes appear on detected people in feeds
-- [ ] Feed tiles have colored borders matching camera
+- [ ] Feed tiles have neutral borders
 - [ ] Grid size toggle changes feed layout (2×2, 3×3, 4×4)
 - [ ] Detection count badge updates in real-time
-- [ ] Clicking feed tile selects the camera
 
 ---
 
@@ -294,7 +292,4 @@ Implement the Radar feature for tactical 2D overview with ping animations, and t
 - Section 6.2.3: Top-Left Overlay (Radar position)
 - Section 6.2.5: Right Sidebar (Camera POV Feeds)
 - Section 6.7: Camera Vision Requirements (entire section)
-
-
-
 

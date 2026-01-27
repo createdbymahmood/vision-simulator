@@ -218,7 +218,7 @@ Implement recording functionality (video capture of 3D view), snapshot export, J
 #### Camera Features
 
 - [ ] Each camera has unique color from palette
-- [ ] Camera colors visible in: editor FOV, 3D frustum, POV tile border, radar
+- [ ] Camera colors visible in: editor FOV, 3D frustum, radar
 - [ ] PTZ controls adjust camera direction/tilt/zoom in real-time
 - [ ] PTZ presets save and load correctly
 - [ ] 3D FOV collision surfaces render on walls/shapes
@@ -315,7 +315,6 @@ Implement recording functionality (video capture of 3D view), snapshot export, J
 8. **Bezier curve sampling rate**: 1000 points per curve specified - verify if sufficient
 9. **Spatial hash grid cell size**: 10m × 10m specified - verify performance
 10. **Trail history buffer size**: 600 positions (20s × 30FPS) - verify memory usage
-
 
 
 

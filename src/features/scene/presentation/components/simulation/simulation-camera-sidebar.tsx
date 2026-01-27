@@ -1,10 +1,8 @@
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 
 import type {SceneRoot} from '@/features/scene/domain/types'
 
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
 import type {CameraFeedTarget} from './camera-feed-types'
@@ -23,7 +21,6 @@ interface SimulationCameraSidebarProps {
 export const SimulationCameraSidebar: React.FC<
   SimulationCameraSidebarProps
 > = ({scene, feedTargets}) => {
-  const setSelection = useSceneStore((state) => state.setSelection)
   const visionState = useUiStore((state) => state.visionState)
 
   const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
@@ -34,9 +31,6 @@ export const SimulationCameraSidebar: React.FC<
 
   const detectionsByCamera = visionState.visibleByCameraId
   const peopleWorld = visionState.peopleWorld
-  const handleSelect = useCallbackRef((cameraId: string) => {
-    setSelection([cameraId])
-  })
 
   return (
     <div className='flex flex-col gap-4 size-full'>
@@ -59,7 +53,6 @@ export const SimulationCameraSidebar: React.FC<
                   feedTarget={target}
                   key={camera.id}
                   feedCount={feedTargets.length}
-                  onSelect={handleSelect}
                   peopleIds={peopleIds}
                   peopleWorld={peopleWorld}
                   transformer={transformer}
