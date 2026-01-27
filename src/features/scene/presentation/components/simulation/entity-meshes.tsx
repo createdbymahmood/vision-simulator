@@ -9,6 +9,7 @@ import type {WorldEntity} from './simulation-helpers'
 
 import {ShapeMesh} from './shape-mesh'
 import {parseColorAndAlpha} from './simulation-helpers'
+import {DEBUG_LAYER} from './simulation-layers'
 
 const WALL_BASE_OPACITY = 0.8
 
@@ -340,6 +341,7 @@ export const CameraMesh: React.FC<{
           <mesh
             renderOrder={200}
             geometry={frustum.surfaceGeometry}
+            onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
             position={[0, opticHeight, 0]}
           >
             <meshBasicMaterial
@@ -355,6 +357,7 @@ export const CameraMesh: React.FC<{
           <lineSegments
             renderOrder={201}
             geometry={frustum.lineGeometry}
+            onUpdate={(line) => line.layers.set(DEBUG_LAYER)}
             position={[0, opticHeight, 0]}
           >
             <lineBasicMaterial
@@ -370,7 +373,11 @@ export const CameraMesh: React.FC<{
       ) : null}
 
       {selected ? (
-        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh
+          onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+          position={[0, 0.05, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
           <ringGeometry args={[0.35, 0.45, 32]} />
           <meshBasicMaterial transparent color={color} opacity={0.35} />
         </mesh>

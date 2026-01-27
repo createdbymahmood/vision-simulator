@@ -1,24 +1,19 @@
 import React from 'react'
-import * as THREE from 'three'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
 
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {Badge} from '@/components/ui/badge'
 import {Card, CardContent, CardFooter} from '@/components/ui/card'
-import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
+import {cn} from '@/lib/utils'
 
 import type {createCoordinateTransformer} from './simulation-helpers'
-import type {CameraFeedTarget} from './simulation-scene'
-
-import {getCameraOpticHeight} from './camera-collision-utils'
-
-interface BoundingBox {
-  id: string
-  left: number
-  top: number
-  width: number
-  height: number
-}
+import type {CameraFeedTarget} from './camera-feed-types'
+import {computeFeedRenderConfig} from './camera-feed-helpers'
+import {
+  computeFeedBoundingBoxes,
+  useElementSize,
+} from './camera-feed-utils'
 
 interface CameraFeedTileProps {
   camera: CameraEntity
@@ -26,114 +21,12 @@ interface CameraFeedTileProps {
   peopleIds: string[]
   peopleWorld: Record<string, {x: number; y: number; z: number; height: number}>
   transformer: ReturnType<typeof createCoordinateTransformer>
+  feedCount: number
+  isActive: boolean
+  onActivate: (cameraId: string) => void
 }
 
-const degToRad = (deg: number) => (deg * Math.PI) / 180
-
-const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
-
-const useElementSize = (ref: React.RefObject<HTMLDivElement>) => {
-  const [size, setSize] = React.useState({width: 1, height: 1})
-
-  React.useLayoutEffect(() => {
-    if (!ref.current) {
-      return
-    }
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0]
-      if (!entry) {
-        return
-      }
-      const {width, height} = entry.contentRect
-      setSize({width, height})
-    })
-    observer.observe(ref.current)
-    return () => observer.disconnect()
-  }, [ref])
-
-  return size
-}
-
-const computeBoundingBoxes = ({
-  camera,
-  peopleIds,
-  peopleWorld,
-  aspect,
-  transformer,
-}: {
-  camera: CameraEntity
-  peopleIds: string[]
-  peopleWorld: Record<string, {x: number; y: number; z: number; height: number}>
-  aspect: number
-  transformer: ReturnType<typeof createCoordinateTransformer>
-}) => {
-  if (peopleIds.length === 0) {
-    return []
-  }
-  const base = transformer.toVector3([camera.x, camera.y], 0)
-  const opticHeight = getCameraOpticHeight(camera)
-  const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
-  const near = Math.max(camera.nearClipping ?? 0.1, 0.1)
-  const far = Math.max(camera.depth, near + 0.1)
-  const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)
-  const tilt = degToRad(camera.ptz?.tilt ?? 0)
-  const cameraView = new THREE.PerspectiveCamera(fov, aspect || 1, near, far)
-  cameraView.position.set(base.x, opticHeight, base.z)
-  cameraView.rotation.set(tilt, yaw, 0, 'YXZ')
-  cameraView.updateProjectionMatrix()
-  cameraView.updateMatrixWorld()
-
-  const boxes: BoundingBox[] = []
-  peopleIds.forEach((personId) => {
-    const person = peopleWorld[personId]
-    if (!person) {
-      return
-    }
-    const height = Math.max(person.height, DEFAULT_PERSON_RADIUS * 2)
-    const min = new THREE.Vector3(
-      person.x - DEFAULT_PERSON_RADIUS,
-      0,
-      person.z - DEFAULT_PERSON_RADIUS,
-    )
-    const max = new THREE.Vector3(
-      person.x + DEFAULT_PERSON_RADIUS,
-      height,
-      person.z + DEFAULT_PERSON_RADIUS,
-    )
-    const corners = [
-      new THREE.Vector3(min.x, min.y, min.z),
-      new THREE.Vector3(min.x, min.y, max.z),
-      new THREE.Vector3(min.x, max.y, min.z),
-      new THREE.Vector3(min.x, max.y, max.z),
-      new THREE.Vector3(max.x, min.y, min.z),
-      new THREE.Vector3(max.x, min.y, max.z),
-      new THREE.Vector3(max.x, max.y, min.z),
-      new THREE.Vector3(max.x, max.y, max.z),
-    ]
-    let minX = Infinity
-    let maxX = -Infinity
-    let minY = Infinity
-    let maxY = -Infinity
-    corners.forEach((corner) => {
-      const projected = corner.clone().project(cameraView)
-      minX = Math.min(minX, projected.x)
-      maxX = Math.max(maxX, projected.x)
-      minY = Math.min(minY, projected.y)
-      maxY = Math.max(maxY, projected.y)
-    })
-    if (maxX < -1 || minX > 1 || maxY < -1 || minY > 1) {
-      return
-    }
-    const left = clamp01((minX + 1) / 2)
-    const right = clamp01((maxX + 1) / 2)
-    const top = clamp01((1 - maxY) / 2)
-    const bottom = clamp01((1 - minY) / 2)
-    const width = Math.max(right - left, 0)
-    const heightPx = Math.max(bottom - top, 0)
-    boxes.push({id: personId, left, top, width, height: heightPx})
-  })
-  return boxes
-}
+const ENABLE_FEED_OPTICS = false
 
 export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   camera,
@@ -141,11 +34,14 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   peopleIds,
   peopleWorld,
   transformer,
+  feedCount,
+  isActive,
+  onActivate,
 }) => {
-  const size = useElementSize(feedTarget.ref)
+  const size = useElementSize(feedTarget.containerRef)
   const boxes = React.useMemo(
     () =>
-      computeBoundingBoxes({
+      computeFeedBoundingBoxes({
         camera,
         peopleIds,
         peopleWorld,
@@ -155,14 +51,57 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
     [camera, peopleIds, peopleWorld, size.height, size.width, transformer],
   )
 
+  const feedConfig = React.useMemo(() => {
+    if (typeof window === 'undefined') {
+      return null
+    }
+    return computeFeedRenderConfig({
+      feedCount,
+      containerWidth: size.width,
+      containerHeight: size.height,
+      devicePixelRatio: window.devicePixelRatio || 1,
+    })
+  }, [feedCount, size.height, size.width])
+
   const detectionCount = peopleIds.length
+  const handleActivate = useCallbackRef(() => {
+    onActivate(camera.id)
+  })
 
   return (
     <div className='border-b'>
       <Card className='border-none rounded-none shadow-none py-4'>
         <CardContent className='px-0'>
-          <div className='relative w-full aspect-video bg-muted overflow-hidden'>
-            <div className='absolute inset-0' ref={feedTarget.ref} />
+          <button
+            className={cn(
+              'relative w-full aspect-video overflow-hidden rounded-md bg-muted text-left',
+              isActive
+                ? 'border-4 shadow-[0_0_16px_rgba(15,23,42,0.35)]'
+                : 'border-2',
+            )}
+            onClick={handleActivate}
+            style={{borderColor: camera.color}}
+            type='button'
+            aria-pressed={isActive}
+            aria-label={`Activate ${camera.name}`}
+          >
+            <div
+              className='absolute inset-0'
+              ref={feedTarget.containerRef}
+            />
+            <canvas
+              className='absolute inset-0 h-full w-full'
+              ref={feedTarget.canvasRef}
+            />
+            {ENABLE_FEED_OPTICS ? (
+              <div
+                className='absolute inset-0 pointer-events-none'
+                style={{
+                  background:
+                    'radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(15,23,42,0.35) 100%)',
+                }}
+              />
+            ) : null}
             <div className='pointer-events-none absolute inset-0'>
               {boxes.map((box) => (
                 <div
@@ -181,15 +120,20 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
                 </div>
               ))}
             </div>
-          </div>
+          </button>
         </CardContent>
 
         <CardFooter>
           <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
             <span>{camera.name}</span>
-            <Badge variant={detectionCount > 0 ? 'destructive' : 'secondary'}>
-              {detectionCount} detections
-            </Badge>
+            <div className='flex items-center gap-2'>
+              <Badge variant='secondary'>
+                {feedConfig?.label ?? '---'}
+              </Badge>
+              <Badge variant={detectionCount > 0 ? 'destructive' : 'secondary'}>
+                {detectionCount} detections
+              </Badge>
+            </div>
           </div>
         </CardFooter>
       </Card>

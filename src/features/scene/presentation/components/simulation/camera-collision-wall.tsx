@@ -3,6 +3,7 @@ import {useFrame} from '@react-three/fiber'
 import * as THREE from 'three'
 
 import type {WorldEntity} from './simulation-helpers'
+import {DEBUG_LAYER} from './simulation-layers'
 
 interface WallCollisionSurfaceProps {
   data: Extract<WorldEntity, {type: 'wall'}>
@@ -32,7 +33,10 @@ export const WallCollisionSurface: React.FC<WallCollisionSurfaceProps> = ({
 
   return (
     <group position={midpoint} rotation={[0, angle, 0]}>
-      <mesh renderOrder={300}>
+      <mesh
+        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+        renderOrder={300}
+      >
         <boxGeometry
           args={[data.length, data.entity.height, data.entity.thickness]}
         />

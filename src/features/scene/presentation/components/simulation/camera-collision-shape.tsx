@@ -3,6 +3,7 @@ import {useFrame} from '@react-three/fiber'
 import * as THREE from 'three'
 
 import type {WorldEntity} from './simulation-helpers'
+import {DEBUG_LAYER} from './simulation-layers'
 
 const MIN_SHAPE_HEIGHT = 0.05
 const DEFAULT_LINE_THICKNESS = 0.1
@@ -109,7 +110,11 @@ export const ShapeCollisionSurface: React.FC<ShapeCollisionSurfaceProps> = ({
 
   return (
     <group position={geometry.position} rotation={[0, geometry.rotation, 0]}>
-      <mesh geometry={geometry.geometry} renderOrder={300}>
+      <mesh
+        geometry={geometry.geometry}
+        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+        renderOrder={300}
+      >
         <meshBasicMaterial
           ref={materialRef}
           color={color}

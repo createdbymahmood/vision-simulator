@@ -3,13 +3,11 @@ import React from 'react'
 
 import type {SceneRoot} from '@/features/scene/domain/types'
 
-import {Badge} from '@/components/ui/badge'
-import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
-import type {CameraFeedTarget} from './simulation-scene'
+import type {CameraFeedTarget} from './camera-feed-types'
 
 import {CameraFeedTile} from './camera-feed-tile'
 import {
@@ -38,6 +36,10 @@ export const SimulationCameraSidebar: React.FC<
 
   const detectionsByCamera = visionState.visibleByCameraId
   const peopleWorld = visionState.peopleWorld
+  const handleActivate = useCallbackRef((cameraId: string) => {
+    setActiveCameraId(cameraId)
+    setSelection([cameraId])
+  })
 
   return (
     <div className='flex flex-col gap-4 size-full'>
@@ -58,7 +60,10 @@ export const SimulationCameraSidebar: React.FC<
                 <CameraFeedTile
                   camera={camera}
                   feedTarget={target}
+                  feedCount={feedTargets.length}
+                  isActive={camera.id === activeCameraId}
                   key={camera.id}
+                  onActivate={handleActivate}
                   peopleIds={peopleIds}
                   peopleWorld={peopleWorld}
                   transformer={transformer}

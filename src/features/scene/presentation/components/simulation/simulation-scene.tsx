@@ -1,7 +1,6 @@
 import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
 
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
-import {OrbitControls, PerspectiveCamera, View} from '@react-three/drei'
+import {OrbitControls} from '@react-three/drei'
 import {useFrame, useThree} from '@react-three/fiber'
 import React from 'react'
 import * as THREE from 'three'
@@ -14,12 +13,12 @@ import type {WorldEntity} from './simulation-helpers'
 
 import {computeBounds} from '../map-view/selection-geometry'
 import {CameraCollisionSurfaces} from './camera-collision-surfaces'
-import {getCameraOpticHeight} from './camera-collision-utils'
 import {CameraFovFootprints} from './camera-fov-footprints'
 import {
   buildObstacleSegmentsByArea,
   computeCameraVisionState,
 } from './camera-vision'
+import type {CameraFeedTarget} from './camera-feed-types'
 import {EntitiesMesh} from './entity-meshes'
 import {GroundPlane} from './ground-plane'
 import {PersonTrail} from './person-trail'
@@ -28,6 +27,8 @@ import {
   createCoordinateTransformer,
   transformFeatureCollectionsToThreeJSShapes,
 } from './simulation-helpers'
+import {useCameraFeedRenderers} from './use-camera-feed-renderers'
+import {DEBUG_LAYER} from './simulation-layers'
 import {createGridTexture, createMapTexture} from './simulation-textures'
 import {useSimulatedPeople} from './use-simulated-people'
 
@@ -35,8 +36,6 @@ interface FocusRequest {
   point: THREE.Vector3
   distance: number
 }
-
-const degToRad = (deg: number) => (deg * Math.PI) / 180
 
 export interface SimulationSceneProps {
   scene: SceneRoot
@@ -46,11 +45,6 @@ export interface SimulationSceneProps {
   onSelectEntity: (id?: string) => void
   selectedEntityIds: string[]
   cameraFeedTargets?: CameraFeedTarget[]
-}
-
-export interface CameraFeedTarget {
-  id: string
-  ref: React.RefObject<HTMLDivElement>
 }
 
 const Lights: React.FC = () => (
@@ -257,8 +251,6 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     [scene, transformer],
   )
   const lastVisionTick = React.useRef(0)
-  const handleFeedSelect = useCallbackRef(() => undefined)
-  const handleFeedFocus = useCallbackRef(() => undefined)
 
   const renderedEntities = React.useMemo(() => {
     if (simulatedPeoplePositions.size === 0) {
@@ -282,10 +274,6 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   )
 
   const collisionCameras = React.useMemo(() => scene.cameras, [scene.cameras])
-  const camerasById = React.useMemo(
-    () => new Map(scene.cameras.map((camera) => [camera.id, camera])),
-    [scene.cameras],
-  )
 
   const bounds = React.useMemo(() => {
     const points = entities
@@ -363,6 +351,12 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   }, [camera, size.height, size.width])
 
   React.useEffect(() => {
+    if (camera instanceof THREE.Camera) {
+      camera.layers.enable(DEBUG_LAYER)
+    }
+  }, [camera])
+
+  React.useEffect(() => {
     if (!controlsRef.current) {
       return
     }
@@ -408,6 +402,12 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     state.gl.render(state.scene, state.camera)
   }, 1)
 
+  useCameraFeedRenderers({
+    cameraFeedTargets,
+    cameras: scene.cameras,
+    transformer,
+  })
+
   return (
     <>
       <color args={['#E0F2FE']} attach='background' />
@@ -446,51 +446,6 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
           />
         </>
       ) : null}
-
-      {cameraFeedTargets?.map((target, index) => {
-        const camera = camerasById.get(target.id)
-        if (!camera) {
-          return null
-        }
-        const basePosition = transformer.toVector3([camera.x, camera.y], 0)
-        const opticHeight = getCameraOpticHeight(camera)
-        const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
-        const near = Math.max(camera.nearClipping ?? 0.1, 0.1)
-        const far = Math.max(camera.depth, near + 0.1)
-        const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)
-        const tilt = degToRad(camera.ptz?.tilt ?? 0)
-
-        return (
-          <View index={20 + index} key={target.id} track={target.ref}>
-            <PerspectiveCamera
-              makeDefault
-              far={far}
-              near={near}
-              fov={fov}
-              position={[basePosition.x, opticHeight, basePosition.z]}
-              rotation={[tilt, yaw, 0]}
-            />
-            <color args={['#111827']} attach='background' />
-            <Lights />
-            <GroundPlane
-              gridPlaneSize={gridPlaneSize}
-              gridTexture={gridTexture}
-              isStaticMap={Boolean(staticMapTexture && isStaticMapReady)}
-              mapPlaneSize={mapPlaneSize}
-              mapTexture={staticMapTexture ?? fallbackMapTexture}
-              showMapTexture={showMapTexture}
-            />
-            <EntitiesMesh
-              entities={renderedEntities}
-              maxFrustumDepth={maxFrustumDepth}
-              selectedEntityIds={selectedEntityIds}
-              onFocus={handleFeedFocus}
-              onSelectEntity={handleFeedSelect}
-              showCameraFrustums={false}
-            />
-          </View>
-        )
-      })}
 
       <OrbitControls
         enableDamping

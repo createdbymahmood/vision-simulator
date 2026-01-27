@@ -7,6 +7,7 @@ import {
   buildFovOcclusionObstacles,
   buildOccludedFovRing,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {DEBUG_LAYER} from './simulation-layers'
 
 interface FovFootprintMeshProps {
   points: THREE.Vector3[]
@@ -59,7 +60,11 @@ const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({points, color}) => {
 
   return (
     <group>
-      <mesh geometry={surfaceGeometry} position={[0, groundOffset, 0]}>
+      <mesh
+        geometry={surfaceGeometry}
+        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+        position={[0, groundOffset, 0]}
+      >
         <meshBasicMaterial
           color={color}
           transparent
@@ -70,6 +75,7 @@ const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({points, color}) => {
       <lineSegments
         ref={lineRef}
         geometry={lineGeometry}
+        onUpdate={(line) => line.layers.set(DEBUG_LAYER)}
         position={[0, 0.001, 0]}
       >
         <lineDashedMaterial
