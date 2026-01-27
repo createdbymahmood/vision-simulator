@@ -99,6 +99,8 @@ export const MapView: React.FC<MapViewProps> = ({
   const [previewPath, setPreviewPath] = React.useState<GeoPoint[]>([])
 
   const isEditMode = useUiStore((state) => state.isEditMode)
+  const sceneMode = useSceneStore((state) => state.scene.mode)
+  const mapVisible = useSceneStore((state) => state.scene.mapVisible)
 
   const areas = useSceneStore((state) => state.scene.areas)
   const walls = useSceneStore((state) => state.scene.walls)
@@ -826,17 +828,23 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [drawing])
 
+  const mapStyle =
+    sceneMode === 'map' && mapVisible
+      ? 'mapbox://styles/mapbox/streets-v12'
+      : undefined
+  const mapStyleProps = mapStyle ? {mapStyle} : {}
+
   return (
     <div className='relative h-full w-full'>
       <Mapbox
+        preserveDrawingBuffer
         dragPan={activeTool === 'hand'}
         interactiveLayerIds={[...ENTITY_LAYER_IDS, ...HANDLE_LAYER_IDS]}
-        mapStyle='mapbox://styles/mapbox/streets-v12'
+        {...mapStyleProps}
         ref={mapRef}
         style={{height: '100%', width: '100%'}}
         attributionControl={false}
         cursor={cursor}
-        preserveDrawingBuffer
         doubleClickZoom={false}
         dragRotate={false}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}

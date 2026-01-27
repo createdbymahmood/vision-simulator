@@ -1,4 +1,4 @@
-import {Grid, Ruler} from 'lucide-react'
+import {Ruler} from 'lucide-react'
 import type {MapRef} from 'react-map-gl/mapbox'
 import React from 'react'
 
@@ -32,40 +32,36 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
   onToggleMeasurement,
   onMapReady,
 }) => {
+  const showGrid = sceneMode === 'canvas' || !mapVisible
+  const gridStyle = showGrid
+    ? {
+        backgroundImage:
+          'linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(rgba(0,0,0,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.25) 1px, transparent 1px)',
+        backgroundSize:
+          '20px 20px, 20px 20px, 200px 200px, 200px 200px',
+        backgroundPosition: '0 0, 0 0, 0 0, 0 0',
+      }
+    : undefined
+
   return (
     <div
       className='relative w-full overflow-hidden backdrop-blur-lg h-full flex-1'
       onMouseDown={onBlankClick}
     >
-      <div className={cn('absolute inset-0 transition-all duration-200')} />
-
-      <div className='absolute inset-0 flex items-center justify-center'>
-        {sceneMode === 'map' && mapVisible ? (
-          <MapView
-            activeTool={activeTool}
-            shapeMode={shapeMode}
-            onMapReady={onMapReady}
-          />
-        ) : (
-          <div className='relative flex size-full items-center justify-center overflow-hidden'>
-            <div
-              className='absolute inset-0'
-              style={{
-                backgroundImage:
-                  'linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(rgba(0,0,0,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.25) 1px, transparent 1px)',
-                backgroundSize:
-                  '20px 20px, 20px 20px, 200px 200px, 200px 200px',
-                backgroundPosition: '0 0, 0 0, 0 0, 0 0',
-              }}
-            />
-            <div className='relative flex flex-row items-center gap-2 rounded-full bg-white/80 px-3 py-2 shadow'>
-              <Grid className='h-4 w-4' />
-              <span className='text-sm font-medium text-muted-foreground'>
-                Canvas Mode Grid (1m squares)
-              </span>
-            </div>
-          </div>
+      <div
+        className={cn(
+          'absolute inset-0 transition-all duration-200 pointer-events-none',
+          showGrid ? 'opacity-100' : 'opacity-0',
         )}
+        style={gridStyle}
+      />
+
+      <div className='absolute inset-0'>
+        <MapView
+          activeTool={activeTool}
+          shapeMode={shapeMode}
+          onMapReady={onMapReady}
+        />
       </div>
 
       <div
