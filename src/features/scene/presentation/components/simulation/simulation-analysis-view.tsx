@@ -43,7 +43,6 @@ export const SimulationAnalysisView: React.FC = () => {
   const setActiveCameraId = useUiStore((state) => state.setActiveCameraId)
   const cycleActiveCamera = useUiStore((state) => state.cycleActiveCamera)
   const cameraFeedGrid = useUiStore((state) => state.cameraFeedGrid)
-  const radarSize = useUiStore((state) => state.radarSettings.size)
 
   const areaOptions: AreaOption[] = React.useMemo(() => {
     const getCount = (areaId: string) =>
@@ -73,8 +72,8 @@ export const SimulationAnalysisView: React.FC = () => {
     () => selectedEntityIds.find((id) => id.startsWith('camera-')),
     [selectedEntityIds],
   )
-  const sidebarPadding = 16
-  const sidebarWidth = radarSize.width + sidebarPadding * 2
+  const radarPanelSize = {width: 360, height: 180}
+
   const feedTargets = useCameraFeedTargets({
     cameras: scene.cameras,
     grid: cameraFeedGrid,
@@ -231,11 +230,9 @@ export const SimulationAnalysisView: React.FC = () => {
             />
           </div>
         </div>
-        <div
-          className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'
-          style={{width: sidebarWidth, padding: sidebarPadding}}
-        >
+        <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>
           <SimulationRadar
+            size={radarPanelSize}
             scene={scene}
             selectedEntityIds={selectedEntityIds}
             onSelectEntity={handleSelectEntity}

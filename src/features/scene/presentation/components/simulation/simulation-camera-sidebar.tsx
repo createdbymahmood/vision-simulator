@@ -41,11 +41,12 @@ export const SimulationCameraSidebar: React.FC<
 
   return (
     <div className='flex flex-col gap-4 size-full'>
-      <Card>
-        <CardHeader>
+      <Card className='rounded-none border-none p-0 shadow-none gap-0'>
+        <CardHeader className='py-2'>
           <CardTitle>Camera Feeds</CardTitle>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className='px-0'>
           <div className='grid gap-2'>
             {feedTargets.map((target) => {
               const camera = scene.cameras.find((item) => item.id === target.id)

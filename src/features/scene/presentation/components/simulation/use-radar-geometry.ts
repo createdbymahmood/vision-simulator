@@ -24,14 +24,17 @@ import {buildFovGroundRing} from './simulation-radar-helpers'
 interface UseRadarGeometryInput {
   scene: SceneRoot
   radarSettings: RadarSettings
+  size: {width: number; height: number}
   transformer: CoordinateTransformer
   peopleWorld: VisionState['peopleWorld']
   cameraDetections: VisionState['visibleByCameraId']
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const useRadarGeometry = ({
   scene,
   radarSettings,
+  size,
   transformer,
   peopleWorld,
   cameraDetections,
@@ -71,15 +74,9 @@ export const useRadarGeometry = ({
   const scale = React.useMemo(() => {
     const width = Math.max(worldBounds.maxX - worldBounds.minX, 1)
     const height = Math.max(worldBounds.maxZ - worldBounds.minZ, 1)
-    const base =
-      Math.min(radarSettings.size.width, radarSettings.size.height) - 32
+    const base = Math.min(size.width, size.height) - 32
     return (base / Math.max(width, height)) * radarSettings.zoom
-  }, [
-    radarSettings.size.height,
-    radarSettings.size.width,
-    radarSettings.zoom,
-    worldBounds,
-  ])
+  }, [radarSettings.zoom, size.height, size.width, worldBounds])
 
   const center = React.useMemo(
     () => ({
@@ -90,10 +87,8 @@ export const useRadarGeometry = ({
   )
 
   const toRadar = React.useMemo(() => {
-    const offsetX =
-      radarSettings.size.width / 2 + radarSettings.pan.x
-    const offsetY =
-      radarSettings.size.height / 2 + radarSettings.pan.y
+    const offsetX = size.width / 2 + radarSettings.pan.x
+    const offsetY = size.height / 2 + radarSettings.pan.y
     return (point: {x: number; z: number}) => ({
       x: (point.x - center.x) * scale + offsetX,
       y: (point.z - center.z) * scale + offsetY,
@@ -103,8 +98,8 @@ export const useRadarGeometry = ({
     center.z,
     radarSettings.pan.x,
     radarSettings.pan.y,
-    radarSettings.size.height,
-    radarSettings.size.width,
+    size.height,
+    size.width,
     scale,
   ])
 

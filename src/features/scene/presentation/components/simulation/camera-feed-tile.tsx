@@ -158,16 +158,9 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   const detectionCount = peopleIds.length
 
   return (
-    <div
-      className='rounded-xl'
-      style={{
-        borderColor: camera.color,
-        borderStyle: 'solid',
-        borderWidth: 3,
-      }}
-    >
-      <Card>
-        <CardContent>
+    <div className='border-b'>
+      <Card className='border-none rounded-none shadow-none py-4'>
+        <CardContent className='px-0'>
           <div className='relative w-full aspect-video bg-muted overflow-hidden'>
             <div className='absolute inset-0' ref={feedTarget.ref} />
             <div className='pointer-events-none absolute inset-0'>
@@ -190,6 +183,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
             </div>
           </div>
         </CardContent>
+
         <CardFooter>
           <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
             <span>{camera.name}</span>

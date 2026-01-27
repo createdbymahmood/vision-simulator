@@ -19,10 +19,7 @@ export type EditorTool =
 export type CameraFeedGrid = '2x2' | '3x3' | '4x4'
 
 export interface RadarSettings {
-  isMinimized: boolean
   zoom: number
-  position: {x: number; y: number}
-  size: {width: number; height: number}
   pan: {x: number; y: number}
 }
 
@@ -282,10 +279,7 @@ const resetUi = (set: SetState, get: GetState) => {
     state.flyToActiveAreaTick = 0
     state.activeCameraId = undefined
     state.radarSettings = {
-      isMinimized: false,
       zoom: 1,
-      position: {x: 16, y: 16},
-      size: {width: 300, height: 120},
       pan: {x: 0, y: 0},
     }
     state.cameraFeedGrid = '2x2'
@@ -325,10 +319,7 @@ const createUiStore: (
   flyToActiveAreaTick: initialValues?.flyToActiveAreaTick ?? 0,
   activeCameraId: initialValues?.activeCameraId,
   radarSettings: initialValues?.radarSettings ?? {
-    isMinimized: false,
     zoom: 1,
-    position: {x: 16, y: 16},
-    size: {width: 300, height: 120},
     pan: {x: 0, y: 0},
   },
   cameraFeedGrid: initialValues?.cameraFeedGrid ?? '2x2',

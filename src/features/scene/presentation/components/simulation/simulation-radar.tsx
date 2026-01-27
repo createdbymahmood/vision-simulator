@@ -18,17 +18,16 @@ import {useRadarTrails} from './use-radar-trails'
 
 interface SimulationRadarProps {
   scene: SceneRoot
+  size: {width: number; height: number}
   selectedEntityIds: string[]
   onSelectEntity: (id?: string) => void
-  containerRef?: React.RefObject<HTMLDivElement>
 }
 
-// eslint-disable-next-line max-lines-per-function
 export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   scene,
+  size,
   selectedEntityIds,
   onSelectEntity,
-  containerRef,
 }) => {
   const radarSettings = useUiStore((state) => state.radarSettings)
   const setRadarSettings = useUiStore((state) => state.setRadarSettings)
@@ -61,6 +60,7 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   } = useRadarGeometry({
     scene,
     radarSettings,
+    size,
     transformer,
     peopleWorld,
     cameraDetections,
@@ -86,20 +86,13 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     }
   }, [selectedPersonId])
 
-  const handleToggleMinimize = useCallbackRef(() => {
-    setRadarSettings({isMinimized: !radarSettings.isMinimized})
-  })
-
   const handleCameraHover = useCallbackRef((cameraId?: string) => {
     setHoveredCameraId(cameraId ?? null)
   })
-  const {handlePanStart, handleResizeStart, handleWheel} = useRadarInteractions(
-    {
-      radarSettings,
-      setRadarSettings,
-      containerRef,
-    },
-  )
+  const {handlePanStart, handleWheel} = useRadarInteractions({
+    radarSettings,
+    setRadarSettings,
+  })
 
   const pingPoint = React.useMemo(() => {
     if (!pingPersonId) {
@@ -114,63 +107,50 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
 
   return (
     <div className='pointer-events-auto w-full'>
-      <div
-        className={`${radarSettings.isMinimized ? 'w-full' : 'h-full w-full'} `}
-      >
-        <Card className='w-full'>
-          <SimulationRadarHeader
-            isMinimized={radarSettings.isMinimized}
-            onToggleMinimize={handleToggleMinimize}
-          />
-          {!radarSettings.isMinimized ? (
-            <>
-              <CardContent className='p-0 overflow-hidden'>
-                <div
-                  className='relative overflow-hidden'
-                  onPointerDown={handlePanStart}
-                  onWheel={handleWheel}
-                >
-                  <SimulationRadarSvg
-                    size={radarSettings.size}
-                    activeCameraId={activeCameraId}
-                    areaPaths={areaPaths}
-                    cameraMarkers={cameraMarkers}
-                    gridLines={gridLines}
-                    pingKey={pingKey}
-                    trailPaths={trailPaths}
-                    wedges={wedges}
-                    connections={connections}
-                    hoveredCameraId={hoveredCameraId ?? undefined}
-                    onHoverCamera={handleCameraHover}
-                    onSelectCamera={(cameraId) => {
-                      setActiveCameraId(cameraId)
-                      onSelectEntity(cameraId)
-                    }}
-                    onSelectPerson={(personId) => {
-                      onSelectEntity(personId)
-                      setPingPersonId(personId)
-                      setPingKey((prev) => prev + 1)
-                    }}
-                    peopleMarkers={peopleMarkers}
-                    pingPoint={pingPoint}
-                    selectedPersonId={selectedPersonId}
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
-                  <span>People: {scene.people.length}</span>
-                  <span>Cameras: {scene.cameras.length}</span>
-                  <span>Detections: {visionState.detectionsCount}</span>
-                  <span>Update: 30 FPS</span>
-                </div>
-              </CardFooter>
-              <div
-                className='absolute bottom-2 right-2 size-3 cursor-se-resize'
-                onPointerDown={handleResizeStart}
+      <div className='size-full'>
+        <Card className='w-full rounded-none border-none'>
+          <SimulationRadarHeader />
+          <CardContent className='p-0 overflow-hidden'>
+            <div
+              className='relative overflow-hidden'
+              onPointerDown={handlePanStart}
+              onWheel={handleWheel}
+            >
+              <SimulationRadarSvg
+                size={size}
+                activeCameraId={activeCameraId}
+                areaPaths={areaPaths}
+                cameraMarkers={cameraMarkers}
+                gridLines={gridLines}
+                pingKey={pingKey}
+                trailPaths={trailPaths}
+                wedges={wedges}
+                connections={connections}
+                hoveredCameraId={hoveredCameraId ?? undefined}
+                onHoverCamera={handleCameraHover}
+                onSelectCamera={(cameraId) => {
+                  setActiveCameraId(cameraId)
+                  onSelectEntity(cameraId)
+                }}
+                onSelectPerson={(personId) => {
+                  onSelectEntity(personId)
+                  setPingPersonId(personId)
+                  setPingKey((prev) => prev + 1)
+                }}
+                peopleMarkers={peopleMarkers}
+                pingPoint={pingPoint}
+                selectedPersonId={selectedPersonId}
               />
-            </>
-          ) : null}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
+              <span>People: {scene.people.length}</span>
+              <span>Cameras: {scene.cameras.length}</span>
+              <span>Detections: {visionState.detectionsCount}</span>
+              <span>Update: 30 FPS</span>
+            </div>
+          </CardFooter>
         </Card>
       </div>
     </div>
