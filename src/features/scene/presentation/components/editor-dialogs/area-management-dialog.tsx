@@ -51,8 +51,6 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
           <Badge variant='secondary'>{areaCount}</Badge>
         </div>
 
-        <Separator className='my-4' />
-
         <div className='space-y-3'>
           <Label className='text-xs uppercase text-muted-foreground'>
             Areas

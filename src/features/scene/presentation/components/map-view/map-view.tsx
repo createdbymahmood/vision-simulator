@@ -8,7 +8,11 @@ import React from 'react'
 import Mapbox from 'react-map-gl/mapbox'
 import {toast} from 'sonner'
 
-import type {AreaEntity, GeoPoint} from '@/features/scene/domain/types'
+import type {
+  AreaEntity,
+  GeoPoint,
+  SceneMapStyle,
+} from '@/features/scene/domain/types'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {
   CursorPoint,
@@ -76,6 +80,13 @@ interface MapViewProps {
   onMapReady?: (map: MapRef | null) => void
 }
 
+const MAP_STYLE_URLS: Record<SceneMapStyle, string> = {
+  street: 'mapbox://styles/mapbox/streets-v12',
+  satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
+  traffic: 'mapbox://styles/mapbox/traffic-day-v2',
+  osm: 'mapbox://styles/mapbox/outdoors-v12',
+}
+
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const MapView: React.FC<MapViewProps> = ({
   activeTool,
@@ -101,6 +112,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const isEditMode = useUiStore((state) => state.isEditMode)
   const sceneMode = useSceneStore((state) => state.scene.mode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
+  const mapStyleSetting = useSceneStore((state) => state.scene.meta.mapStyle)
 
   const areas = useSceneStore((state) => state.scene.areas)
   const walls = useSceneStore((state) => state.scene.walls)
@@ -830,7 +842,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const mapStyle =
     sceneMode === 'map' && mapVisible
-      ? 'mapbox://styles/mapbox/streets-v12'
+      ? MAP_STYLE_URLS[mapStyleSetting]
       : undefined
   const mapStyleProps = mapStyle ? {mapStyle} : {}
 

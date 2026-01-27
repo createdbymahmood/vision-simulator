@@ -7,6 +7,7 @@ import type {
   PersonEntity,
   PolygonGeometry,
   SceneMode,
+  SceneMapStyle,
   SceneRoot,
   ShapeEntity,
   WallEntity,
@@ -28,6 +29,7 @@ export interface SceneState {
   updateScene: (updater: (scene: SceneRoot) => void) => SceneRoot
   setMode: (mode: SceneMode) => SceneRoot
   setMapVisibility: (visible: boolean) => SceneRoot
+  setMapStyle: (style: SceneMapStyle) => SceneRoot
   setSimulationSeed: (seed: number) => SceneRoot
   setSelection: (ids: string[]) => string[]
   clearSelection: () => string[]
@@ -129,6 +131,18 @@ const setMode = (set: SetState, get: GetState, mode: SceneMode) => {
 const setMapVisibility = (set: SetState, get: GetState, visible: boolean) => {
   const nextValue = produce<SceneState>((state) => {
     state.scene.mapVisible = visible
+    state.scene.meta.updatedAt = new Date().toISOString()
+  })
+
+  set(nextValue)
+  const updated = get().scene
+  persistScene(updated)
+  return updated
+}
+
+const setMapStyle = (set: SetState, get: GetState, style: SceneMapStyle) => {
+  const nextValue = produce<SceneState>((state) => {
+    state.scene.meta.mapStyle = style
     state.scene.meta.updatedAt = new Date().toISOString()
   })
 
@@ -473,9 +487,10 @@ const createSceneStore: (
   selectedEntityIds: initialValues?.selectedEntityIds ?? [],
   setScene: (scene) => setScene(set, get, scene),
   updateScene: (updater) => updateScene(set, get, updater),
-  setMode: (mode) => setMode(set, get, mode),
-  setMapVisibility: (visible) => setMapVisibility(set, get, visible),
-  setSimulationSeed: (seed) => setSimulationSeed(set, get, seed),
+    setMode: (mode) => setMode(set, get, mode),
+    setMapVisibility: (visible) => setMapVisibility(set, get, visible),
+    setMapStyle: (style) => setMapStyle(set, get, style),
+    setSimulationSeed: (seed) => setSimulationSeed(set, get, seed),
   setSelection: (ids) => setSelection(set, get, ids),
   clearSelection: () => clearSelection(set, get),
   addArea: (geometry) => addArea(set, get, geometry),

@@ -16,7 +16,7 @@ import {
 } from '@/features/scene/presentation/utils/scene-export'
 import {cn} from '@/lib/utils'
 
-import type {SceneMode} from '../../domain/types'
+import type {SceneMapStyle, SceneMode} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {assignCameraColor} from '../../domain/services/color-assignment'
@@ -55,12 +55,14 @@ export const EditorLayout: React.FC = () => {
 
   const sceneMode = useSceneStore((state) => state.scene.mode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
+  const mapStyle = useSceneStore((state) => state.scene.meta.mapStyle)
   const areas = useSceneStore((state) => state.scene.areas)
   const cameras = useSceneStore((state) => state.scene.cameras)
   const scene = useSceneStore((state) => state.scene)
   const setScene = useSceneStore((state) => state.setScene)
   const setSceneMode = useSceneStore((state) => state.setMode)
   const setMapVisibility = useSceneStore((state) => state.setMapVisibility)
+  const setMapStyle = useSceneStore((state) => state.setMapStyle)
   const clearSelection = useSceneStore((state) => state.clearSelection)
 
   const activeTool = useUiStore((state) => state.activeTool)
@@ -166,6 +168,11 @@ export const EditorLayout: React.FC = () => {
     } catch {
       toast.error('Scene image export failed')
     }
+  })
+
+  const handleMapStyleChange = useCallbackRef((style: SceneMapStyle) => {
+    setMapStyle(style)
+    setMapStyleOpen(false)
   })
 
   const historyDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -331,7 +338,12 @@ export const EditorLayout: React.FC = () => {
           <PersonPropertiesSheet />
           <CameraPropertiesSheet />
 
-          <MapStyleDialog onOpenChange={setMapStyleOpen} open={mapStyleOpen} />
+          <MapStyleDialog
+            onOpenChange={setMapStyleOpen}
+            onValueChange={handleMapStyleChange}
+            open={mapStyleOpen}
+            value={mapStyle}
+          />
         </>
       ) : null}
     </div>
