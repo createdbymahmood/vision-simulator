@@ -81,13 +81,10 @@ This phase sets up the Mapbox foundation that Phases 3-7 will build upon for dra
   - **Clear Board** button
     - Icon: trash
     - Confirmation modal on click
-  - **Undo** button (⌘Z / Ctrl+Z)
+  - **Undo** button
     - Icon: rotate-ccw
-    - Disabled state when history empty
-    - Tooltip shows last action
-  - **Redo** button (⌘⇧Z / Ctrl+Shift+Z)
+  - **Redo** button
     - Icon: rotate-cw
-    - Disabled state when future history empty
 - [ ] **Right Section**:
   - **Export** dropdown
     - Scene JSON
@@ -207,8 +204,6 @@ This phase sets up the Mapbox foundation that Phases 3-7 will build upon for dra
 - [ ] `⌘K` / `Ctrl+K` - Search Location
 - [ ] `⌘⇧A` / `Ctrl+Shift+A` - Area Management
 - [ ] `⌘⇧D` / `Ctrl+Shift+D` - Devices in Use
-- [ ] `⌘Z` / `Ctrl+Z` - Undo
-- [ ] `⌘⇧Z` / `Ctrl+Shift+Z` - Redo
 - [ ] `ESC` - Cancel current action / close panels
 
 ---
@@ -232,7 +227,6 @@ This phase sets up the Mapbox foundation that Phases 3-7 will build upon for dra
 - [ ] Coordinate display updates in real-time on cursor move
 - [ ] Clear Board button shows confirmation modal
 - [ ] Live Preview button switches to Preview View (no routing/navigation)
-- [ ] Undo/Redo buttons show correct disabled states
 - [ ] Area-dependent tools (Wall, Shapes, Devices, People) disabled when no areas exist
 
 ---

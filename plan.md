@@ -73,7 +73,6 @@ We are building an interactive simulation tool that lets users:
 - **Per-camera PTZ controls** (pan, tilt, zoom) in editor and simulation
 - **Radar mini-map** with person ping animations
 - Full selection + property editing (instant apply)
-- Undo/redo for _all_ edits
 - Live preview / simulation:
   - **3D view** (default) with colored camera FOVs and collision visualization
   - **Map visibility toggle** (shows/hides map tiles)
@@ -128,7 +127,6 @@ We are building an interactive simulation tool that lets users:
 - Control: PTZ camera adjustments
 - Simulate: run live preview with radar tracking
 - Export: record/snapshot/scene export
-- History: undo/redo
 
 ---
 
@@ -172,13 +170,10 @@ No client-side routing is used. View switching is handled by state management.
      - **Clear Board** button
        - Icon: trash
        - Confirmation modal on click
-     - **Undo** button (⌘Z / Ctrl+Z)
-       - Icon: rotate-ccw
-       - Disabled state when history empty
-       - Tooltip shows last action
-     - **Redo** button (⌘⇧Z / Ctrl+Shift+Z)
-       - Icon: rotate-cw
-       - Disabled state when future history empty
+    - **Undo** button
+      - Icon: rotate-ccw
+    - **Redo** button
+      - Icon: rotate-cw
    - **Right Section**:
      - **Export** dropdown
        - Scene JSON
@@ -2134,7 +2129,6 @@ renderer.setSize(originalSize.x, originalSize.y)
 - [ ] Wall/shape drawing with enhanced cursors
 - [ ] Object placement with validation
 - [ ] Properties panels
-- [ ] Undo/redo system
 
 ### Phase 2: Camera System (Weeks 4-5)
 

@@ -13,7 +13,7 @@ Establish the foundational architecture, data models, routing structure, and sta
 ## How Codex Should Use This Phase
 
 - Implement all TypeScript schemas and utilities first; they are the contracts every later phase consumes.
-- Wire scene/history/UI stores before UI; verify undo/redo and view switching with unit tests or a lightweight harness.
+- Wire scene/UI stores before UI; verify view switching with unit tests or a lightweight harness.
 - Respect the no-routing rule: view switching is state only (no React Router/history changes).
 - Enforce meters everywhere and auto IDs/color palette via helpers so later phases cannot bypass rules.
 - Deliver persistence ports/adapters early so other phases can save/load scenes without refactors.
@@ -31,7 +31,6 @@ Establish the foundational architecture, data models, routing structure, and sta
 - Routing configuration (`/editor`, `/editor/preview`)
 - State management setup (Zustand stores)
 - Scene persistence port and adapters
-- Undo/redo history infrastructure
 - Coordinate system utilities (meters-based)
 - ID generation utilities (auto-naming: area-1, camera-1, person-1, etc.)
 - Color palette constants for cameras (20 colors from Section 5.3.1)
@@ -106,9 +105,8 @@ Establish the foundational architecture, data models, routing structure, and sta
   - No React Router, no browser history manipulation
 
 - [ ] **State Management**
-  - Scene store (entities, mode, selections)
-  - History store (undo/redo stack)
-  - UI state store (active tool, popovers, panels, **current view mode**)
+- Scene store (entities, mode, selections)
+- UI state store (active tool, popovers, panels, **current view mode**)
 
 - [ ] **Persistence Layer** (Section 7)
   - Scene persistence port interface
@@ -156,7 +154,6 @@ Establish the foundational architecture, data models, routing structure, and sta
 
 - [ ] All entity TypeScript interfaces/types match Section 7 schemas exactly
 - [ ] Scene can be serialized to JSON and deserialized without data loss
-- [ ] Undo/redo infrastructure supports all edit operations (per Section 3.3)
 - [ ] View mode switching works correctly between Editor and Preview views
 - [ ] Camera color assignment correctly cycles through 20-color palette
 - [ ] ID generation produces correct format (area-1, camera-1, person-1, etc.)
@@ -169,7 +166,6 @@ Establish the foundational architecture, data models, routing structure, and sta
 | Risk                                          | Mitigation                                                                 |
 | --------------------------------------------- | -------------------------------------------------------------------------- |
 | Data model changes required later             | Design schemas with extensibility in mind; version field allows migrations |
-| History stack memory issues with large scenes | Implement history pruning with configurable max depth                      |
 | State synchronization bugs                    | Comprehensive unit tests for all state mutations                           |
 
 ---

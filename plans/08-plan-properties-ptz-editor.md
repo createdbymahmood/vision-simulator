@@ -215,13 +215,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 
 - [ ] Coordinate and rotation adjustments are map-only; properties sheets show derived metrics instead of manual X/Y inputs
 
-### History Integration
-
-- [ ] All property changes create undo/redo entries
-- [ ] Debounce: 300ms (batch rapid slider movements)
-- [ ] Tooltip on undo button shows last action
-
----
 
 ## Dependencies
 
@@ -243,7 +236,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - [ ] Properties panel slides in from right on object selection
 - [ ] Panel closes on ESC, outside click, or tool switch
 - [ ] All inputs update entity instantly (no save button)
-- [ ] Undo/redo captures property changes
 - [ ] Camera color picker updates FOV wedge color in real-time
 - [ ] D-pad buttons adjust pan/tilt with visual feedback
 - [ ] Slider handles show camera color
@@ -259,7 +251,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 
 | Risk                                      | Mitigation                                           |
 | ----------------------------------------- | ---------------------------------------------------- |
-| History stack overflow from rapid updates | Debounce at 300ms; merge similar consecutive changes |
 | Circular slider interaction complexity    | Provide linear slider alternative; test thoroughly   |
 | Preset management UX confusion            | Clear UI for save/apply/delete presets               |
 
@@ -272,6 +263,5 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - Section 5.5.2: PTZ UI Component (Always Available)
 - Section 5.5.3: PTZ Behavior in Editor
 - Section 5.5.5: PTZ Data Model (presets)
-
 
 
