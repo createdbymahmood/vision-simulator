@@ -1,10 +1,19 @@
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import type {MapRef} from 'react-map-gl/mapbox'
 import React from 'react'
+import {toast} from 'sonner'
 
+import {serializeScene} from '@/features/scene/application/utils/scene-serializer'
 import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {TopPanel} from '@/features/scene/presentation/components/top-panel'
+import {
+  createSceneImageFilename,
+  createSceneJsonFilename,
+  downloadBlob,
+  downloadDataUrl,
+} from '@/features/scene/presentation/utils/scene-export'
 import {cn} from '@/lib/utils'
 
 import type {SceneMode} from '../../domain/types'
@@ -40,6 +49,7 @@ export const EditorLayout: React.FC = () => {
   const [areaPanelOpen, setAreaPanelOpen] = React.useState(false)
   const [devicesPanelOpen, setDevicesPanelOpen] = React.useState(false)
   const [mapStyleOpen, setMapStyleOpen] = React.useState(false)
+  const [mapRef, setMapRef] = React.useState<MapRef | null>(null)
   const applyingHistoryRef = React.useRef(false)
   const hasRecordedInitialRef = React.useRef(false)
 
@@ -90,6 +100,10 @@ export const EditorLayout: React.FC = () => {
     closeAllPopovers()
   })
 
+  const handleMapReady = useCallbackRef((nextMap: MapRef | null) => {
+    setMapRef(nextMap)
+  })
+
   const handleSceneModeChange = (mode: SceneMode) => {
     setSceneMode(mode)
     setMapVisibility(mode === 'map')
@@ -127,6 +141,32 @@ export const EditorLayout: React.FC = () => {
   const handleBlankClick = () => {
     closeTransientUi()
   }
+
+  const handleExportSceneJson = useCallbackRef(() => {
+    const payload = serializeScene(scene)
+    const blob = new Blob([payload], {type: 'application/json'})
+    downloadBlob(blob, createSceneJsonFilename())
+    toast.success('Scene JSON exported')
+  })
+
+  const handleExportSceneImage = useCallbackRef(() => {
+    if (sceneMode !== 'map' || !mapVisible) {
+      toast.info('Switch to Map mode to export a scene image')
+      return
+    }
+    const map = mapRef?.getMap?.()
+    if (!map) {
+      toast.error('Scene image export unavailable')
+      return
+    }
+    try {
+      const dataUrl = map.getCanvas().toDataURL('image/png')
+      downloadDataUrl(dataUrl, createSceneImageFilename())
+      toast.success('Scene image saved')
+    } catch {
+      toast.error('Scene image export failed')
+    }
+  })
 
   const historyDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -208,6 +248,8 @@ export const EditorLayout: React.FC = () => {
           lastActionDescription={lastActionDescription}
           onClearBoard={handleClearBoard}
           onEditModeChange={setEditMode}
+          onExportSceneImage={handleExportSceneImage}
+          onExportSceneJson={handleExportSceneJson}
           onRedo={handleRedo}
           onSceneModeChange={handleSceneModeChange}
           onTogglePreview={() => setViewMode('preview')}
@@ -227,6 +269,7 @@ export const EditorLayout: React.FC = () => {
             activeTool={activeTool}
             onBlankClick={handleBlankClick}
             onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
+            onMapReady={handleMapReady}
             sceneMode={sceneMode}
             shapeMode={shapeMode}
           />

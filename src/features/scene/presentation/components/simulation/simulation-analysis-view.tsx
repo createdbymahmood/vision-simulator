@@ -1,30 +1,27 @@
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
-import {ArrowLeft, Film, Image, Map, MapPin, ToggleLeft} from 'lucide-react'
 import React from 'react'
+import {toast} from 'sonner'
 
 import type {SceneEntity, SceneMode} from '@/features/scene/domain/types'
 
-import {Button} from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {
+  createSnapshotFilename,
+  downloadDataUrl,
+} from '@/features/scene/presentation/utils/scene-export'
 
+import type {SimulationCaptureApi} from './simulation-capture'
 import {SimulationCameraSidebar} from './simulation-camera-sidebar'
 import {SimulationCanvas} from './simulation-canvas'
 import {SimulationRadar} from './simulation-radar'
+import {
+  SimulationTopBar,
+  type SimulationAreaOption,
+} from './simulation-top-bar'
+import {SimulationViewport} from './simulation-viewport'
 import {useCameraFeedTargets} from './use-camera-feed-targets'
-
-interface AreaOption {
-  id: string
-  label: string
-  objects: number
-}
+import {useSimulationRecording} from './use-simulation-recording'
 
 const formatAreaLabel = (name: string, count: number) =>
   `${name} (${count} objects)`
@@ -40,7 +37,21 @@ export const SimulationAnalysisView: React.FC = () => {
 
   const setViewMode = useUiStore((state) => state.setViewMode)
 
-  const areaOptions: AreaOption[] = React.useMemo(() => {
+  const captureRef = React.useRef<SimulationCaptureApi | null>(null)
+  const handleCaptureReady = useCallbackRef((api: SimulationCaptureApi) => {
+    captureRef.current = api
+  })
+
+  const {
+    isRecording,
+    formattedTime,
+    fps,
+    isLowFps,
+    startRecording,
+    stopRecording,
+  } = useSimulationRecording({captureRef})
+
+  const areaOptions: SimulationAreaOption[] = React.useMemo(() => {
     const getCount = (areaId: string) =>
       [
         ...scene.walls,
@@ -58,127 +69,108 @@ export const SimulationAnalysisView: React.FC = () => {
     }))
   }, [scene.cameras, scene.people, scene.shapes, scene.walls, scene.areas])
 
-  const hasMultipleAreas = areaOptions.length > 1
   const activeAreaId = scene.activeAreaId ?? 'all'
   const radarPanelSize = {width: 360, height: 180}
 
   const feedTargets = useCameraFeedTargets({cameras: scene.cameras})
 
-  const handleAreaChange = (value: string) => {
+  const handleAreaChange = useCallbackRef((value: string) => {
     const nextArea = value === 'all' ? undefined : value
     setActiveArea(nextArea)
     setSelection([])
-  }
+  })
 
-  const handleSceneModeChange = (mode: SceneMode) => {
+  const handleSceneModeChange = useCallbackRef((mode: SceneMode) => {
     setSceneMode(mode)
     setMapVisibility(mode === 'map')
-  }
+  })
 
   const handleSelectEntity = useCallbackRef((id?: string) => {
     setSelection(id ? [id] : [])
   })
 
+  const [flashActive, setFlashActive] = React.useState(false)
+  const flashTimeoutRef = React.useRef<number | null>(null)
+
+  const triggerFlash = useCallbackRef(() => {
+    if (flashTimeoutRef.current !== null) {
+      window.clearTimeout(flashTimeoutRef.current)
+    }
+    setFlashActive(true)
+    flashTimeoutRef.current = window.setTimeout(() => {
+      setFlashActive(false)
+      flashTimeoutRef.current = null
+    }, 100)
+  })
+
+  const handleSnapshot = useCallbackRef(() => {
+    const captureApi = captureRef.current
+    if (!captureApi) {
+      toast.error('Snapshot unavailable: 3D view not ready')
+      return
+    }
+    const dataUrl = captureApi.captureFrame(2)
+    if (!dataUrl) {
+      toast.error('Snapshot failed')
+      return
+    }
+    downloadDataUrl(dataUrl, createSnapshotFilename())
+    triggerFlash()
+    toast.success('✓ Snapshot saved')
+  })
+
+  const handleBackToEditor = useCallbackRef(() => {
+    setViewMode('editor')
+  })
+
+  React.useEffect(
+    () => () => {
+      if (flashTimeoutRef.current !== null) {
+        window.clearTimeout(flashTimeoutRef.current)
+      }
+    },
+    [],
+  )
+
   return (
     <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden overscroll-none'>
-      <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
-        <div className='flex items-center gap-4'>
-          <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
-            <Button
-              size='sm'
-              className='rounded-full'
-              variant={scene.mode === 'map' ? 'default' : 'ghost'}
-              onClick={() => handleSceneModeChange('map')}
-            >
-              <Map className='mr-2 h-4 w-4' />
-              Map
-            </Button>
-            <Button
-              size='sm'
-              className='rounded-full'
-              variant={scene.mode === 'canvas' ? 'default' : 'ghost'}
-              onClick={() => handleSceneModeChange('canvas')}
-            >
-              <ToggleLeft className='mr-2 h-4 w-4' />
-              Canvas
-            </Button>
-          </div>
-        </div>
-
-        <div className='flex items-center gap-3'>
-          {hasMultipleAreas ? (
-            <Select value={activeAreaId} onValueChange={handleAreaChange}>
-              <SelectTrigger className='w-[200px]'>
-                <SelectValue placeholder='All Areas' />
-              </SelectTrigger>
-              <SelectContent align='center'>
-                <SelectItem value='all'>All Areas</SelectItem>
-                <div className='my-1 h-px bg-border' />
-                {areaOptions.map((area) => (
-                  <SelectItem key={area.id} value={area.id}>
-                    <div className='flex items-center gap-2'>
-                      <span
-                        className='inline-block size-2.5 rounded-full'
-                        style={{
-                          backgroundColor:
-                            area.id === scene.activeAreaId
-                              ? '#0EA5E9'
-                              : '#9CA3AF',
-                        }}
-                      />
-                      {area.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-              <MapPin className='h-4 w-4' />
-              {areaOptions[0]?.label ?? 'All Areas'}
-            </div>
-          )}
-        </div>
-
-        <div className='flex items-center gap-2 ml-auto'>
-          <Button size='sm' variant='outline'>
-            <Film className='mr-2 h-4 w-4' />
-            Start Recording
-          </Button>
-          <Button size='sm' variant='outline'>
-            <Image className='mr-2 h-4 w-4' />
-            Export Snapshot
-          </Button>
-        </div>
-
-        <Button
-          size='sm'
-          variant='outline'
-          onClick={() => setViewMode('editor')}
-        >
-          <ArrowLeft className='mr-2 h-4 w-4' />
-          Back to Editor
-        </Button>
-      </div>
+      <SimulationTopBar
+        activeAreaId={activeAreaId}
+        areaOptions={areaOptions}
+        isRecording={isRecording}
+        recordingLabel={`REC ${formattedTime}`}
+        onAreaChange={handleAreaChange}
+        onBackToEditor={handleBackToEditor}
+        onSceneModeChange={handleSceneModeChange}
+        onSnapshot={handleSnapshot}
+        onStartRecording={startRecording}
+        onStopRecording={stopRecording}
+        sceneMode={scene.mode}
+      />
 
       <div className='flex flex-1 min-h-0 overflow-hidden'>
-        <div className='relative flex-1 overflow-hidden'>
-          <div className='absolute inset-0'>
-            <SimulationCanvas
-              cameraFeedTargets={feedTargets}
-              scene={scene}
-              selectedEntityIds={selectedEntityIds}
-              focusAreaId={scene.activeAreaId}
-              onSelectEntity={handleSelectEntity}
-              sceneMode={scene.mode}
-              showMapTexture={
-                scene.mode === 'canvas'
-                  ? true
-                  : scene.mapVisible && scene.mode === 'map'
-              }
-            />
-          </div>
-        </div>
+        <SimulationViewport
+          fps={fps}
+          isLowFps={isLowFps}
+          isRecording={isRecording}
+          recordingLabel={`REC ${formattedTime}`}
+          showFlash={flashActive}
+        >
+          <SimulationCanvas
+            cameraFeedTargets={feedTargets}
+            scene={scene}
+            selectedEntityIds={selectedEntityIds}
+            focusAreaId={scene.activeAreaId}
+            onSelectEntity={handleSelectEntity}
+            sceneMode={scene.mode}
+            showMapTexture={
+              scene.mode === 'canvas'
+                ? true
+                : scene.mapVisible && scene.mode === 'map'
+            }
+            onCaptureReady={handleCaptureReady}
+          />
+        </SimulationViewport>
         <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>
           <SimulationRadar
             size={radarPanelSize}

@@ -24,7 +24,7 @@ export const MapViewCursorOverlay: React.FC<MapViewCursorOverlayProps> = ({
           <div className='absolute left-1/2 top-1/2 h-6 w-px -translate-x-1/2 -translate-y-1/2 bg-emerald-500/80 shadow' />
           <div className='absolute left-1/2 top-1/2 h-px w-6 -translate-x-1/2 -translate-y-1/2 bg-emerald-500/80 shadow' />
           <div
-            className='size-3 rounded-full shadow-md'
+            className='size-3 rounded-full shadow-md cursor-dot'
             style={{
               backgroundColor: color,
               opacity: 0.8,

@@ -1,4 +1,5 @@
 import {Grid, Ruler} from 'lucide-react'
+import type {MapRef} from 'react-map-gl/mapbox'
 import React from 'react'
 
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
@@ -19,6 +20,7 @@ interface ViewportShellProps {
   shapeMode: ShapeDrawMode
   onBlankClick: () => void
   onToggleMeasurement: () => void
+  onMapReady?: (map: MapRef | null) => void
 }
 export const ViewportShell: React.FC<ViewportShellProps> = ({
   sceneMode,
@@ -28,6 +30,7 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
   shapeMode,
   onBlankClick,
   onToggleMeasurement,
+  onMapReady,
 }) => {
   return (
     <div
@@ -38,7 +41,11 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
 
       <div className='absolute inset-0 flex items-center justify-center'>
         {sceneMode === 'map' && mapVisible ? (
-          <MapView activeTool={activeTool} shapeMode={shapeMode} />
+          <MapView
+            activeTool={activeTool}
+            shapeMode={shapeMode}
+            onMapReady={onMapReady}
+          />
         ) : (
           <div className='relative flex size-full items-center justify-center overflow-hidden'>
             <div

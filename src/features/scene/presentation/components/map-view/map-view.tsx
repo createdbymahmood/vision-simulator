@@ -73,10 +73,15 @@ interface DrawingState {
 interface MapViewProps {
   activeTool: EditorTool
   shapeMode: ShapeDrawMode
+  onMapReady?: (map: MapRef | null) => void
 }
 
 // eslint-disable-next-line max-lines-per-function, max-statements
-export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
+export const MapView: React.FC<MapViewProps> = ({
+  activeTool,
+  shapeMode,
+  onMapReady,
+}) => {
   const mapRef = React.useRef<MapRef | null>(null)
   const [drawing, setDrawing] = React.useState<DrawingState>({
     isActive: false,
@@ -672,6 +677,22 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
     handleSelectionMapLoad()
   }, [handleSelectionMapLoad])
 
+  React.useEffect(() => {
+    if (!onMapReady || !mapLoaded) {
+      return
+    }
+    onMapReady(mapRef.current)
+  }, [mapLoaded, onMapReady])
+
+  React.useEffect(
+    () => () => {
+      if (onMapReady) {
+        onMapReady(null)
+      }
+    },
+    [onMapReady],
+  )
+
   const handleDoubleClick = (event: MapLayerMouseEvent) => {
     event.preventDefault()
     if (activeTool === 'draw-wall') {
@@ -815,6 +836,7 @@ export const MapView: React.FC<MapViewProps> = ({activeTool, shapeMode}) => {
         style={{height: '100%', width: '100%'}}
         attributionControl={false}
         cursor={cursor}
+        preserveDrawingBuffer
         doubleClickZoom={false}
         dragRotate={false}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}

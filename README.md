@@ -1,5 +1,13 @@
 # React + TypeScript + Vite
 
+## Documentation
+
+- `docs/user-guide.md`
+- `docs/keyboard-shortcuts.md`
+- `docs/scene-json-schema.md`
+- `docs/developer-setup.md`
+- `docs/known-limitations.md`
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

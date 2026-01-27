@@ -2,6 +2,7 @@ import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
 
 import {OrbitControls} from '@react-three/drei'
 import {useFrame, useThree} from '@react-three/fiber'
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import * as THREE from 'three'
 
@@ -11,6 +12,7 @@ import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
 import type {WorldEntity} from './simulation-helpers'
 
+import type {SimulationCaptureApi} from './simulation-capture'
 import {computeBounds} from '../map-view/selection-geometry'
 import {CameraCollisionSurfaces} from './camera-collision-surfaces'
 import {CameraFovFootprints} from './camera-fov-footprints'
@@ -45,6 +47,7 @@ export interface SimulationSceneProps {
   onSelectEntity: (id?: string) => void
   selectedEntityIds: string[]
   cameraFeedTargets?: CameraFeedTarget[]
+  onCaptureReady?: (api: SimulationCaptureApi) => void
 }
 
 const Lights: React.FC = () => (
@@ -132,8 +135,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   onSelectEntity,
   selectedEntityIds,
   cameraFeedTargets,
+  onCaptureReady,
 }) => {
-  const {camera, size} = useThree()
+  const {camera, gl, scene: threeScene, size} = useThree()
   const setVisionState = useUiStore((state) => state.setVisionState)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
   const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
@@ -141,6 +145,55 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     () => createCoordinateTransformer(originPoint),
     [originPoint],
   )
+  const notifyCaptureReady = useCallbackRef(onCaptureReady ?? (() => {}))
+
+  React.useEffect(() => {
+    if (!onCaptureReady) {
+      return
+    }
+
+    const captureFrame = (scale = 2) => {
+      if (!gl?.domElement) {
+        return null
+      }
+      const safeScale = Math.max(scale, 1)
+      const previousSize = new THREE.Vector2()
+      gl.getSize(previousSize)
+      const previousPixelRatio = gl.getPixelRatio()
+      const targetWidth = Math.max(1, Math.round(previousSize.x * safeScale))
+      const targetHeight = Math.max(1, Math.round(previousSize.y * safeScale))
+      const previousAspect =
+        camera instanceof THREE.PerspectiveCamera ? camera.aspect : null
+
+      try {
+        gl.setPixelRatio(1)
+        gl.setSize(targetWidth, targetHeight, false)
+        if (camera instanceof THREE.PerspectiveCamera) {
+          camera.aspect = targetWidth / Math.max(targetHeight, 1)
+          camera.updateProjectionMatrix()
+        }
+        gl.render(threeScene, camera)
+        return gl.domElement.toDataURL('image/png')
+      } finally {
+        gl.setPixelRatio(previousPixelRatio)
+        gl.setSize(previousSize.x, previousSize.y, false)
+        if (
+          camera instanceof THREE.PerspectiveCamera &&
+          previousAspect !== null
+        ) {
+          camera.aspect = previousAspect
+          camera.updateProjectionMatrix()
+        }
+      }
+    }
+
+    const api: SimulationCaptureApi = {
+      getCanvas: () => gl.domElement ?? null,
+      captureFrame,
+    }
+
+    notifyCaptureReady(api)
+  }, [camera, gl, notifyCaptureReady, onCaptureReady, threeScene])
 
   const gridTexture = React.useMemo(() => createGridTexture(), [])
   const fallbackMapTexture = React.useMemo(() => createMapTexture(), [])
@@ -335,11 +388,10 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     }
   }, [areaFocus, focusAreaId])
 
-  const requestFocus = React.useCallback(
+  const requestFocus = useCallbackRef(
     (point: THREE.Vector3, distance = 10) => {
       setFocusRequest({point, distance})
     },
-    [],
   )
 
   React.useEffect(() => {

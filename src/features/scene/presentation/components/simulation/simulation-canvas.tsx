@@ -2,13 +2,19 @@ import {Canvas} from '@react-three/fiber'
 import React from 'react'
 import * as THREE from 'three'
 
+import type {SimulationCaptureApi} from './simulation-capture'
 import type {SimulationSceneProps} from './simulation-scene'
 
 import {SimulationScene} from './simulation-scene'
 
-export interface SimulationCanvasProps extends SimulationSceneProps {}
+export interface SimulationCanvasProps extends SimulationSceneProps {
+  onCaptureReady?: (api: SimulationCaptureApi) => void
+}
 
-export const SimulationCanvas: React.FC<SimulationCanvasProps> = (props) => (
+export const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
+  onCaptureReady,
+  ...props
+}) => (
   <Canvas
     camera={{fov: 50, position: [40, 30, 40], near: 0.5, far: 1200}}
     className='h-full w-full'
@@ -22,6 +28,6 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = (props) => (
     }}
     shadows
   >
-    <SimulationScene {...props} />
+    <SimulationScene {...props} onCaptureReady={onCaptureReady} />
   </Canvas>
 )

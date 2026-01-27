@@ -49,6 +49,8 @@ interface TopPanelProps {
   onUndo: () => void
   onRedo: () => void
   onClearBoard: () => void
+  onExportSceneJson: () => void
+  onExportSceneImage: () => void
 }
 
 export const TopPanel: React.FC<TopPanelProps> = ({
@@ -64,6 +66,8 @@ export const TopPanel: React.FC<TopPanelProps> = ({
   onUndo,
   onRedo,
   onClearBoard,
+  onExportSceneJson,
+  onExportSceneImage,
 }) => {
   return (
     <div className='fixed left-0 right-0 top-0 z-40 h-14 border-b backdrop-blur'>
@@ -184,8 +188,12 @@ export const TopPanel: React.FC<TopPanelProps> = ({
             <DropdownMenuContent align='end'>
               <DropdownMenuLabel>Export as</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Scene JSON</DropdownMenuItem>
-              <DropdownMenuItem>Scene Image</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onExportSceneJson}>
+                Scene JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onExportSceneImage}>
+                Scene Image
+              </DropdownMenuItem>
               <DropdownMenuItem disabled>Bundle (soon)</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
