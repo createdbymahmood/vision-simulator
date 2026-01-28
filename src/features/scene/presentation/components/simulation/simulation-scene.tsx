@@ -317,7 +317,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       if (!override) {
         return entity
       }
-      return {...entity, position: override.clone()}
+      const nextPosition = override.clone()
+      nextPosition.y = entity.position.y
+      return {...entity, position: nextPosition}
     })
   }, [entities, simulatedPeoplePositions])
 

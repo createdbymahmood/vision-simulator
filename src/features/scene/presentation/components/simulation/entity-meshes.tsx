@@ -12,8 +12,29 @@ import {parseColorAndAlpha} from './simulation-helpers'
 import {DEBUG_LAYER} from './simulation-layers'
 
 const WALL_BASE_OPACITY = 0.8
+const MAX_RENDER_FOV_DEG = 150
+const MAX_RENDER_VERTICAL_FOV_DEG = 70
 
 const degToRad = (deg: number) => (deg * Math.PI) / 180
+
+const getCameraAspect = (camera: CameraEntity) => {
+  const width = Math.max(camera.resolution?.width ?? 16, 1)
+  const height = Math.max(camera.resolution?.height ?? 9, 1)
+  return width / height
+}
+
+const getCameraFovAngles = (camera: CameraEntity) => {
+  const zoom = Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+  const aspect = getCameraAspect(camera)
+  const clampedFov = Math.min(camera.fov / zoom, MAX_RENDER_FOV_DEG)
+  const diagonal = degToRad(clampedFov)
+  const tanDiagonal = Math.tan(diagonal / 2)
+  const tanVertical = tanDiagonal / Math.sqrt(1 + aspect * aspect)
+  let vertical = 2 * Math.atan(tanVertical)
+  vertical = Math.min(vertical, degToRad(MAX_RENDER_VERTICAL_FOV_DEG))
+  const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * aspect)
+  return {horizontal, vertical}
+}
 
 export const WallMesh: React.FC<{
   data: Extract<WorldEntity, {type: 'wall'}>
@@ -156,14 +177,14 @@ const buildFrustumGeometry = (
 ) => {
   const yaw = 0 // yaw comes from parent group rotation
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
-  const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+  const {horizontal} = getCameraFovAngles(camera)
   const near = Math.max(camera.nearClipping, 0.1)
   const unclampedFar = Math.max(camera.depth, near + 0.1)
   const far = Math.max(
     near + 0.1,
     Math.min(maxFrustumDepth ?? unclampedFar, unclampedFar),
   )
-  const halfFov = degToRad(fov) / 2
+  const halfFov = horizontal / 2
   const radialSegments = 32
 
   const rotation = new THREE.Euler(tilt, yaw, 0, 'YXZ')
@@ -181,15 +202,19 @@ const buildFrustumGeometry = (
   const farVertices: THREE.Vector3[] = []
   for (let i = 0; i < radialSegments; i += 1) {
     const angle = (i / radialSegments) * Math.PI * 2
-    const offset = right
-      .clone()
-      .multiplyScalar(Math.cos(angle))
-      .add(up.clone().multiplyScalar(Math.sin(angle)))
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
     nearVertices.push(
-      nearCenter.clone().add(offset.clone().multiplyScalar(nearRadius)),
+      nearCenter
+        .clone()
+        .add(right.clone().multiplyScalar(cos * nearRadius))
+        .add(up.clone().multiplyScalar(sin * nearRadius)),
     )
     farVertices.push(
-      farCenter.clone().add(offset.clone().multiplyScalar(farRadius)),
+      farCenter
+        .clone()
+        .add(right.clone().multiplyScalar(cos * farRadius))
+        .add(up.clone().multiplyScalar(sin * farRadius)),
     )
   }
 
