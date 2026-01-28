@@ -6,12 +6,15 @@ import type {
   AreaEntity,
   GeoPoint,
   PersonEntity,
+  SceneRoot,
   ShapeEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
 import type {ShapeDrawMode} from '@/features/scene/presentation/types'
 
 import type {TooltipState} from './map-view-types'
+
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {
   computeAngleDeg,
@@ -42,7 +45,7 @@ interface Modifiers {
 }
 
 interface UseShapeDrawingParams {
-  addShape: (shape: Omit<ShapeEntity, 'id'>) => unknown
+  addShape: (shape: Omit<ShapeEntity, 'id'>) => SceneRoot
   getAreaForPoint: (point: GeoPoint) => AreaEntity | null
   isGeometryInsideArea: (points: GeoPoint[], area: AreaEntity | null) => boolean
   strokeColor: string
@@ -63,6 +66,7 @@ export const useShapeDrawing = ({
   people,
   walls,
 }: UseShapeDrawingParams) => {
+  const {recordAction} = useHistoryRecorder()
   const [shapeDrawing, setShapeDrawing] = React.useState<ShapeDrawingState>({
     isActive: false,
     start: undefined,
@@ -351,7 +355,7 @@ export const useShapeDrawing = ({
   const finalizeShape = React.useCallback(
     (end: GeoPoint, shapeMode: ShapeDrawMode) => {
       if (!shapeDrawing.isActive || !shapeDrawing.start || !targetArea) {
-        return false
+        return null
       }
       let geometry: GeoPoint[] = []
       const previewGeometry = shapePreview
@@ -376,7 +380,7 @@ export const useShapeDrawing = ({
               start: shapeDrawing.start,
               points: nextPoints,
             })
-            return false
+            return null
           }
           const ring = createTriangleRing(nextPoints.slice(0, 3))
           geometry = ring ?? []
@@ -385,13 +389,13 @@ export const useShapeDrawing = ({
 
       if (geometry.length === 0) {
         setShapeDrawing({isActive: false, start: undefined, points: []})
-        return false
+        return null
       }
 
       if (!isGeometryInsideArea(geometry, targetArea)) {
         toast.error('Shapes must stay inside an area')
         resetShapeDrawing()
-        return false
+        return null
       }
       const peopleInArea = people.filter(
         (person) => person.areaId === targetArea.id,
@@ -405,7 +409,7 @@ export const useShapeDrawing = ({
       ) {
         toast.error('Cannot draw shapes over walls')
         resetShapeDrawing()
-        return false
+        return null
       }
       if (
         doesShapeHitPerson(
@@ -415,10 +419,10 @@ export const useShapeDrawing = ({
       ) {
         toast.error('Cannot draw shapes over people')
         resetShapeDrawing()
-        return false
+        return null
       }
 
-      addShape({
+      const updated = addShape({
         areaId: targetArea.id,
         geometry,
         shapeType: shapeMode,
@@ -426,13 +430,15 @@ export const useShapeDrawing = ({
         color: strokeColor,
         type: 'shape',
       })
+      recordAction({type: 'add', entity: 'shape'}, updated)
       resetShapeDrawing()
-      return true
+      return updated
     },
     [
       addShape,
       isGeometryInsideArea,
       people,
+      recordAction,
       resetShapeDrawing,
       shapeDrawing.isActive,
       shapeDrawing.points,
@@ -440,6 +446,7 @@ export const useShapeDrawing = ({
       shapePreview,
       strokeColor,
       targetArea,
+      walls,
     ],
   )
 

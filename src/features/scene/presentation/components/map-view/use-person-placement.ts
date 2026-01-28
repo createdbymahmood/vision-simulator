@@ -28,6 +28,8 @@ import {
   isPointInsideArea,
 } from './map-view-helpers'
 
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
+
 type MapLayerMouseEvent = MapMouseEvent
 
 interface PersonPreviewData {
@@ -86,6 +88,7 @@ export const usePersonPlacement = ({
   setCursorOverride,
 }: UsePersonPlacementParams): UsePersonPlacementResult => {
   const [preview, setPreview] = React.useState<PersonPreviewData | null>(null)
+  const {recordAction} = useHistoryRecorder()
 
   const getAreaAtPoint = React.useCallback(
     (point: GeoPoint) =>
@@ -262,6 +265,7 @@ export const usePersonPlacement = ({
         height: DEFAULT_PERSON_HEIGHT,
         speed: DEFAULT_PERSON_SPEED,
       })
+      recordAction({type: 'add', entity: 'person'}, updated)
 
       const newPersonId = updated?.people?.at(-1)?.id
       if (newPersonId) {
@@ -283,6 +287,7 @@ export const usePersonPlacement = ({
       setCursorOverride,
       setSelection,
       validatePlacement,
+      recordAction,
     ],
   )
 

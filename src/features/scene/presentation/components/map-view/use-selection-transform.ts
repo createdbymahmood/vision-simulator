@@ -19,7 +19,10 @@ import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {TooltipState} from '@/features/scene/presentation/components/map-view/map-view-types'
 import type {Bounds} from '@/features/scene/presentation/components/map-view/selection-geometry'
 
+import type {HistoryEntity} from '@/features/scene/application/history/history-actions'
+
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 import {
   closeRing,
   distanceToSegment,
@@ -136,8 +139,8 @@ interface UseSelectionTransformParams {
   selectedEntityIds: string[]
   setSelection: (ids: string[]) => void
   clearSelection: () => void
-  updateScene: (updater: (scene: SceneRoot) => void) => void
-  deleteEntities: (ids: string[]) => void
+  updateScene: (updater: (scene: SceneRoot) => void) => SceneRoot
+  deleteEntities: (ids: string[]) => SceneRoot
   setTooltip: (tooltip: TooltipState | null) => void
   setCursorOverride: (cursor?: string) => void
   baseCursor: string | undefined
@@ -947,6 +950,7 @@ export const useSelectionTransform = ({
     null,
   )
   const dragStartedRef = React.useRef(false)
+  const lastSceneRef = React.useRef<SceneRoot | null>(null)
   const [handleFeatures, setHandleFeatures] =
     React.useState<FeatureCollection<Point> | null>(null)
   const [rotationHandle, setRotationHandle] =
@@ -962,6 +966,8 @@ export const useSelectionTransform = ({
     selected: {id: string; source: string}[]
     constraint?: {id: string; source: string}
   }>({selected: []})
+
+  const {recordAction} = useHistoryRecorder()
 
   const getMapInstance = React.useCallback(
     (): MapboxMap | null => mapRef.current?.getMap?.() ?? null,
@@ -1317,12 +1323,14 @@ export const useSelectionTransform = ({
       }
 
       if (Object.keys(result.updates).length > 0) {
-        updateScene((scene) => {
+        const updated = updateScene((scene) => {
           Object.entries(result.updates).forEach(([id, points]) => {
             applyPointsToScene(scene, id, points as GeoPoint[])
           })
           scene.meta.updatedAt = new Date().toISOString()
         })
+        lastSceneRef.current = updated
+        dragStartedRef.current = true
       }
     },
     [applyPointsToScene, setCursorOverride, setTooltip, updateScene],
@@ -1338,6 +1346,9 @@ export const useSelectionTransform = ({
       if (entities.length === 0) {
         return
       }
+
+      dragStartedRef.current = false
+      lastSceneRef.current = null
 
       const originalGeometries: Record<string, GeoPoint[]> = {}
       entities.forEach((entity) => {
@@ -1409,7 +1420,6 @@ export const useSelectionTransform = ({
           people,
         })
         applyTransformResult(result, event)
-        dragStartedRef.current = true
         return
       }
 
@@ -1665,6 +1675,10 @@ export const useSelectionTransform = ({
   )
 
   const onMouseUp = React.useCallback(() => {
+    const session = transformSession
+    const didMove = dragStartedRef.current
+    const latestScene = lastSceneRef.current
+
     if (transformSession) {
       if (transformSession.type === 'rotate') {
         setTooltip(null)
@@ -1672,16 +1686,50 @@ export const useSelectionTransform = ({
       setTransformSession(null)
       setConstraintAreaId(null)
     }
+
+    if (session && didMove && latestScene) {
+      const entityTypes = new Set(selectedEntities.map((entity) => entity.type))
+      const entity =
+        entityTypes.size === 1
+          ? (selectedEntities[0]?.type as HistoryEntity)
+          : ('selection' as HistoryEntity)
+      recordAction(
+        {
+          type: 'transform',
+          transform: session.type,
+          entity,
+          count: selectedEntities.length,
+        },
+        latestScene,
+      )
+    }
+
     dragStartedRef.current = false
-  }, [setTooltip, transformSession])
+    lastSceneRef.current = null
+  }, [recordAction, selectedEntities, setTooltip, transformSession])
 
   const onDeleteSelection = React.useCallback(() => {
     if (!selectedEntityIds.length) {
       return
     }
-    deleteEntities(selectedEntityIds)
+    const updated = deleteEntities(selectedEntityIds)
+    const entityTypes = new Set(selectedEntities.map((entity) => entity.type))
+    const entity =
+      entityTypes.size === 1
+        ? (selectedEntities[0]?.type as HistoryEntity)
+        : ('selection' as HistoryEntity)
+    recordAction(
+      {type: 'delete', entity, count: selectedEntityIds.length},
+      updated,
+    )
     clearSelection()
-  }, [clearSelection, deleteEntities, selectedEntityIds])
+  }, [
+    clearSelection,
+    deleteEntities,
+    recordAction,
+    selectedEntities,
+    selectedEntityIds,
+  ])
 
   const selectionCount = selectedEntityIds.length
 

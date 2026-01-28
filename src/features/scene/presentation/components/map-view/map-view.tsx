@@ -68,6 +68,7 @@ import {
 } from '@/features/scene/presentation/components/map-view/use-selection-transform'
 import {useShapeDrawing} from '@/features/scene/presentation/components/map-view/use-shape-drawing'
 import {useWallDrawing} from '@/features/scene/presentation/components/map-view/use-wall-drawing'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 interface DrawingState {
   isActive: boolean
@@ -108,6 +109,7 @@ export const MapView: React.FC<MapViewProps> = ({
     getNextAreaColor(initialAreas),
   )
   const [previewPath, setPreviewPath] = React.useState<GeoPoint[]>([])
+  const {recordAction} = useHistoryRecorder()
 
   const isEditMode = useUiStore((state) => state.isEditMode)
   const sceneMode = useSceneStore((state) => state.scene.mode)
@@ -530,6 +532,7 @@ export const MapView: React.FC<MapViewProps> = ({
     const areaValue = computeArea(geometry.coordinates)
 
     const updatedScene = addArea(geometry)
+    recordAction({type: 'add', entity: 'area'}, updatedScene)
     const lastArea = updatedScene.areas.at(-1)
     if (lastArea) {
       setActiveArea(lastArea.id)
@@ -543,7 +546,7 @@ export const MapView: React.FC<MapViewProps> = ({
     toast.success(message)
 
     resetDrawing()
-  }, [addArea, areas.length, drawing, resetDrawing, setActiveArea])
+  }, [addArea, areas.length, drawing, recordAction, resetDrawing, setActiveArea])
 
   useMapViewHotkeys({
     activeTool,

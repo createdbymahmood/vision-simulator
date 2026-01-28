@@ -30,6 +30,17 @@ const shapeByKey: Record<string, ShapeDrawMode> = {
   l: 'line',
 }
 
+const isEditableTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+  const tag = target.tagName.toLowerCase()
+  if (target.isContentEditable) {
+    return true
+  }
+  return tag === 'input' || tag === 'textarea' || tag === 'select'
+}
+
 export const useEditorShortcuts = ({
   enabled = true,
   isEditMode,
@@ -153,7 +164,11 @@ export const useEditorShortcuts = ({
   }
 
   const handleKeyDown = useCallbackRef((event: KeyboardEvent) => {
-    if (!enabled) {
+    if (!enabled || !isEditMode) {
+      return
+    }
+
+    if (isEditableTarget(event.target)) {
       return
     }
 

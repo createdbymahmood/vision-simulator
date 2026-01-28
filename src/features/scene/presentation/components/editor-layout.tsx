@@ -16,12 +16,13 @@ import {
 } from '@/features/scene/presentation/utils/scene-export'
 import {cn} from '@/lib/utils'
 
-import type {SceneMapStyle, SceneMode} from '../../domain/types'
+import type {SceneMapStyle, SceneMode, SceneRoot} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {assignCameraColor} from '../../domain/services/color-assignment'
 import {createInitialScene} from '../../domain/services/scene-factory'
 import {useEditorShortcuts} from '../hooks/use-editor-shortcuts'
+import {useHistoryRecorder} from '../hooks/use-history-recorder'
 import {BottomNavigation} from './bottom-navigation'
 import {
   AreaManagementDialog,
@@ -50,8 +51,7 @@ export const EditorLayout: React.FC = () => {
   const [devicesPanelOpen, setDevicesPanelOpen] = React.useState(false)
   const [mapStyleOpen, setMapStyleOpen] = React.useState(false)
   const [mapRef, setMapRef] = React.useState<MapRef | null>(null)
-  const applyingHistoryRef = React.useRef(false)
-  const hasRecordedInitialRef = React.useRef(false)
+  const hasSeededHistoryRef = React.useRef(false)
 
   const sceneMode = useSceneStore((state) => state.scene.mode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
@@ -63,6 +63,8 @@ export const EditorLayout: React.FC = () => {
   const setSceneMode = useSceneStore((state) => state.setMode)
   const setMapVisibility = useSceneStore((state) => state.setMapVisibility)
   const setMapStyle = useSceneStore((state) => state.setMapStyle)
+  const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
+  const setSelection = useSceneStore((state) => state.setSelection)
   const clearSelection = useSceneStore((state) => state.clearSelection)
 
   const activeTool = useUiStore((state) => state.activeTool)
@@ -79,11 +81,14 @@ export const EditorLayout: React.FC = () => {
   const futureEntries = useHistoryStore((state) => state.future)
   const undoScene = useHistoryStore((state) => state.undo)
   const redoScene = useHistoryStore((state) => state.redo)
-  const clearHistory = useHistoryStore((state) => state.clear)
-  const recordHistory = useHistoryStore((state) => state.record)
+  const seedHistory = useHistoryStore((state) => state.seed)
+  const setHistoryApplying = useHistoryStore((state) => state.setApplying)
 
-  const lastActionDescription = pastEntries.at(-1)?.description
-  const canUndo = pastEntries.length > 0
+  const {recordAction} = useHistoryRecorder()
+
+  const lastUndoDescription = pastEntries.at(-1)?.description
+  const lastRedoDescription = futureEntries.at(-1)?.description
+  const canUndo = pastEntries.length > 1
   const canRedo = futureEntries.length > 0
   const hasAreas = areas.length > 0
   const deviceCount = cameras.length
@@ -91,6 +96,24 @@ export const EditorLayout: React.FC = () => {
     () => assignCameraColor(cameras.length),
     [cameras.length],
   )
+
+  const syncSelectionForScene = useCallbackRef((nextScene: SceneRoot) => {
+    if (selectedEntityIds.length === 0) {
+      return
+    }
+    const ids = new Set<string>()
+    nextScene.areas.forEach((area) => ids.add(area.id))
+    nextScene.walls.forEach((wall) => ids.add(wall.id))
+    nextScene.shapes.forEach((shape) => ids.add(shape.id))
+    nextScene.cameras.forEach((camera) => ids.add(camera.id))
+    nextScene.people.forEach((person) => ids.add(person.id))
+
+    const nextSelection = selectedEntityIds.filter((id) => ids.has(id))
+    if (nextSelection.length === selectedEntityIds.length) {
+      return
+    }
+    setSelection([])
+  })
 
   const closeTransientUi = useCallbackRef(() => {
     setPlaceDeviceOpen(false)
@@ -108,30 +131,36 @@ export const EditorLayout: React.FC = () => {
 
   const handleSceneModeChange = (mode: SceneMode) => {
     setSceneMode(mode)
-    setMapVisibility(mode === 'map')
+    const nextScene = setMapVisibility(mode === 'map')
+    recordAction({type: 'map-visibility', visible: mode === 'map'}, nextScene)
   }
 
   const handleUndo = () => {
     const entry = undoScene(scene)
     if (entry) {
-      applyingHistoryRef.current = true
+      setHistoryApplying(true)
       setScene(entry.scene)
+      syncSelectionForScene(entry.scene)
+      setHistoryApplying(false)
     }
   }
 
   const handleRedo = () => {
     const entry = redoScene(scene)
     if (entry) {
-      applyingHistoryRef.current = true
+      setHistoryApplying(true)
       setScene(entry.scene)
+      syncSelectionForScene(entry.scene)
+      setHistoryApplying(false)
     }
   }
 
   const handleClearBoard = () => {
-    clearHistory()
-    setScene(createInitialScene())
+    const nextScene = createInitialScene()
+    setScene(nextScene)
     clearSelection()
     setActiveTool('select')
+    seedHistory(nextScene)
   }
 
   const handleSelectDevicePreset = (presetId: string) => {
@@ -171,41 +200,22 @@ export const EditorLayout: React.FC = () => {
   })
 
   const handleMapStyleChange = useCallbackRef((style: SceneMapStyle) => {
-    setMapStyle(style)
+    const nextScene = setMapStyle(style)
+    recordAction({type: 'update', entity: 'map style'}, nextScene)
     setMapStyleOpen(false)
   })
 
-  const historyDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  )
-
   React.useEffect(() => {
-    if (historyDebounceRef.current) {
-      clearTimeout(historyDebounceRef.current)
-    }
-
-    if (applyingHistoryRef.current) {
-      applyingHistoryRef.current = false
+    if (hasSeededHistoryRef.current) {
       return
     }
-    if (!hasRecordedInitialRef.current) {
-      hasRecordedInitialRef.current = true
+    if (pastEntries.length > 0) {
+      hasSeededHistoryRef.current = true
       return
     }
-
-    historyDebounceRef.current = setTimeout(() => {
-      recordHistory(scene)
-    }, 300)
-  }, [recordHistory, scene])
-
-  React.useEffect(
-    () => () => {
-      if (historyDebounceRef.current) {
-        clearTimeout(historyDebounceRef.current)
-      }
-    },
-    [],
-  )
+    seedHistory(scene)
+    hasSeededHistoryRef.current = true
+  }, [pastEntries.length, scene, seedHistory])
 
   React.useEffect(() => {
     closeAllPanels()
@@ -222,7 +232,7 @@ export const EditorLayout: React.FC = () => {
   }, [closeTransientUi, setEditMode, viewMode])
 
   useEditorShortcuts({
-    enabled: /* viewMode === 'editor' */ false,
+    enabled: viewMode === 'editor',
     isEditMode,
     hasAreas,
     isMapMode: sceneMode === 'map',
@@ -252,7 +262,8 @@ export const EditorLayout: React.FC = () => {
           canRedo={canRedo}
           canUndo={canUndo}
           isEditMode={isEditMode}
-          lastActionDescription={lastActionDescription}
+          lastRedoDescription={lastRedoDescription}
+          lastUndoDescription={lastUndoDescription}
           onClearBoard={handleClearBoard}
           onEditModeChange={setEditMode}
           onExportSceneImage={handleExportSceneImage}

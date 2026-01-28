@@ -42,7 +42,8 @@ interface TopPanelProps {
   isEditMode: boolean
   canUndo: boolean
   canRedo: boolean
-  lastActionDescription?: string
+  lastUndoDescription?: string
+  lastRedoDescription?: string
   onSceneModeChange: (mode: SceneMode) => void
   onTogglePreview: () => void
   onEditModeChange: (enabled: boolean) => void
@@ -59,7 +60,8 @@ export const TopPanel: React.FC<TopPanelProps> = ({
   isEditMode,
   canUndo,
   canRedo,
-  lastActionDescription,
+  lastUndoDescription,
+  lastRedoDescription,
   onSceneModeChange,
   onTogglePreview,
   onEditModeChange,
@@ -155,7 +157,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                Undo {lastActionDescription ? `(${lastActionDescription})` : ''}
+                Undo{lastUndoDescription ? ` (${lastUndoDescription})` : ''}
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -171,7 +173,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                Redo {lastActionDescription ? `(${lastActionDescription})` : ''}
+                Redo{lastRedoDescription ? ` (${lastRedoDescription})` : ''}
               </TooltipContent>
             </Tooltip>
           </div>

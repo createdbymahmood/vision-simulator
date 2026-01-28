@@ -5,10 +5,12 @@ import {Label} from '@/components/ui/label'
 import {Slider} from '@/components/ui/slider'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
 export const PersonPropertiesSheet: React.FC = () => {
+  const {recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
@@ -33,7 +35,7 @@ export const PersonPropertiesSheet: React.FC = () => {
   const updateSelectedPerson = React.useCallback(
     (updater: (person: (typeof people)[number]) => void) => {
       if (!selectedPerson) return
-      updateScene((scene) => {
+      return updateScene((scene) => {
         const target = scene.people.find(
           (person) => person.id === selectedPerson.id,
         )
@@ -47,16 +49,30 @@ export const PersonPropertiesSheet: React.FC = () => {
 
   const handleHeightChange = (values: number[]) => {
     const [height] = values
-    updateSelectedPerson((person) => {
+    const updated = updateSelectedPerson((person) => {
       person.height = height
     })
+    if (updated && selectedPerson) {
+      recordActionDebounced(
+        `person-${selectedPerson.id}`,
+        {type: 'update', entity: 'person'},
+        updated,
+      )
+    }
   }
 
   const handleSpeedChange = (values: number[]) => {
     const [speed] = values
-    updateSelectedPerson((person) => {
+    const updated = updateSelectedPerson((person) => {
       person.speed = speed
     })
+    if (updated && selectedPerson) {
+      recordActionDebounced(
+        `person-${selectedPerson.id}`,
+        {type: 'update', entity: 'person'},
+        updated,
+      )
+    }
   }
 
   return (
@@ -77,11 +93,18 @@ export const PersonPropertiesSheet: React.FC = () => {
               <Input
                 id='person-name'
                 value={personName}
-                onChange={(event) =>
-                  updateSelectedPerson((person) => {
+                onChange={(event) => {
+                  const updated = updateSelectedPerson((person) => {
                     person.name = event.target.value
                   })
-                }
+                  if (updated && selectedPerson) {
+                    recordActionDebounced(
+                      `person-${selectedPerson.id}`,
+                      {type: 'update', entity: 'person'},
+                      updated,
+                    )
+                  }
+                }}
               />
             </div>
           </PropertiesSection>

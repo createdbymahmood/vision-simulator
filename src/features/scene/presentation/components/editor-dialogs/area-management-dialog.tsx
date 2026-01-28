@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/sheet'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 interface AreaManagementDialogProps {
   open: boolean
@@ -26,6 +27,7 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
   onOpenChange,
   areaCount,
 }) => {
+  const {recordAction} = useHistoryRecorder()
   const areas = useSceneStore((state) => state.scene.areas)
   const activeAreaId = useSceneStore((state) => state.scene.activeAreaId)
   const setActiveArea = useSceneStore((state) => state.setActiveArea)
@@ -74,9 +76,14 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
                   <Input
                     className='h-9'
                     defaultValue={area.name}
-                    onBlur={(event) =>
-                      updateAreaName(area.id, event.target.value)
-                    }
+                    onBlur={(event) => {
+                      const nextName = event.target.value
+                      if (nextName === area.name) {
+                        return
+                      }
+                      const updated = updateAreaName(area.id, nextName)
+                      recordAction({type: 'update', entity: 'area'}, updated)
+                    }}
                   />
                   <div className='flex items-center gap-2'>
                     <Badge variant='outline'>{area.pointCount} pts</Badge>
@@ -94,7 +101,10 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
                     <Button
                       size='icon'
                       variant='ghost'
-                      onClick={() => deleteArea(area.id)}
+                      onClick={() => {
+                        const updated = deleteArea(area.id)
+                        recordAction({type: 'delete', entity: 'area'}, updated)
+                      }}
                     >
                       ×
                     </Button>

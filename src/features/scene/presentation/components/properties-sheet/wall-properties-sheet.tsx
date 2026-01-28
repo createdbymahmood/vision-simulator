@@ -7,10 +7,12 @@ import {Slider} from '@/components/ui/slider'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
 export const WallPropertiesSheet: React.FC = () => {
+  const {recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
@@ -29,7 +31,7 @@ export const WallPropertiesSheet: React.FC = () => {
   const updateSelectedWall = React.useCallback(
     (updater: (wall: (typeof walls)[number]) => void) => {
       if (!selectedWall) return
-      updateScene((scene) => {
+      return updateScene((scene) => {
         const target = scene.walls.find((wall) => wall.id === selectedWall.id)
         if (target) {
           updater(target)
@@ -40,23 +42,44 @@ export const WallPropertiesSheet: React.FC = () => {
   )
 
   const handleColorChange = (value: string) => {
-    updateSelectedWall((wall) => {
+    const updated = updateSelectedWall((wall) => {
       wall.color = value
     })
+    if (updated && selectedWall) {
+      recordActionDebounced(
+        `wall-${selectedWall.id}`,
+        {type: 'update', entity: 'wall'},
+        updated,
+      )
+    }
   }
 
   const handleThicknessChange = (values: number[]) => {
     const [thickness] = values
-    updateSelectedWall((wall) => {
+    const updated = updateSelectedWall((wall) => {
       wall.thickness = thickness
     })
+    if (updated && selectedWall) {
+      recordActionDebounced(
+        `wall-${selectedWall.id}`,
+        {type: 'update', entity: 'wall'},
+        updated,
+      )
+    }
   }
 
   const handleHeightChange = (values: number[]) => {
     const [height] = values
-    updateSelectedWall((wall) => {
+    const updated = updateSelectedWall((wall) => {
       wall.height = height
     })
+    if (updated && selectedWall) {
+      recordActionDebounced(
+        `wall-${selectedWall.id}`,
+        {type: 'update', entity: 'wall'},
+        updated,
+      )
+    }
   }
 
   const handleNumericInput = (

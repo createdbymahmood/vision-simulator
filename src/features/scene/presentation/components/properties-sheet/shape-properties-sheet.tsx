@@ -19,10 +19,12 @@ import {
   getBoundsCenter,
   scalePoints,
 } from '@/features/scene/presentation/components/map-view/selection-geometry'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
 export const ShapePropertiesSheet: React.FC = () => {
+  const {recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
@@ -41,7 +43,7 @@ export const ShapePropertiesSheet: React.FC = () => {
   const updateSelectedShape = React.useCallback(
     (updater: (shape: (typeof shapes)[number]) => void) => {
       if (!selectedShape) return
-      updateScene((scene) => {
+      return updateScene((scene) => {
         const target = scene.shapes.find(
           (shape) => shape.id === selectedShape.id,
         )
@@ -63,32 +65,60 @@ export const ShapePropertiesSheet: React.FC = () => {
 
   const handleHeightChange = (values: number[]) => {
     const [height] = values
-    updateSelectedShape((shape) => {
+    const updated = updateSelectedShape((shape) => {
       shape.height = height
     })
+    if (updated && selectedShape) {
+      recordActionDebounced(
+        `shape-${selectedShape.id}`,
+        {type: 'update', entity: 'shape'},
+        updated,
+      )
+    }
   }
 
   const handleColorChange = (value: string) => {
-    updateSelectedShape((shape) => {
+    const updated = updateSelectedShape((shape) => {
       shape.color = value
     })
+    if (updated && selectedShape) {
+      recordActionDebounced(
+        `shape-${selectedShape.id}`,
+        {type: 'update', entity: 'shape'},
+        updated,
+      )
+    }
   }
 
   const handleScale = (scaleX: number, scaleY: number) => {
     if (!selectedShape) return
     const center = getCenter(selectedShape)
-    updateSelectedShape((shape) => {
+    const updated = updateSelectedShape((shape) => {
       shape.geometry = scalePoints(shape.geometry, center, scaleX, scaleY)
     })
+    if (updated && selectedShape) {
+      recordActionDebounced(
+        `shape-${selectedShape.id}`,
+        {type: 'update', entity: 'shape'},
+        updated,
+      )
+    }
   }
 
   const handleThicknessChange = (values: number[]) => {
     const [thickness] = values
-    updateSelectedShape((shape) => {
+    const updated = updateSelectedShape((shape) => {
       if (shape.shapeType === 'line') {
         ;(shape as {thickness?: number}).thickness = thickness
       }
     })
+    if (updated && selectedShape) {
+      recordActionDebounced(
+        `shape-${selectedShape.id}`,
+        {type: 'update', entity: 'shape'},
+        updated,
+      )
+    }
   }
 
   const bounds = selectedShape ? computeBounds(selectedShape.geometry) : null
@@ -254,9 +284,16 @@ export const ShapePropertiesSheet: React.FC = () => {
                   onChange={(event) => {
                     const next = Number.parseFloat(event.target.value)
                     if (!Number.isFinite(next) || !center) return
-                    updateSelectedShape((shape) => {
+                    const updated = updateSelectedShape((shape) => {
                       shape.geometry = createCircleRing(center, next)
                     })
+                    if (updated && selectedShape) {
+                      recordActionDebounced(
+                        `shape-${selectedShape.id}`,
+                        {type: 'update', entity: 'shape'},
+                        updated,
+                      )
+                    }
                   }}
                 />
               </div>

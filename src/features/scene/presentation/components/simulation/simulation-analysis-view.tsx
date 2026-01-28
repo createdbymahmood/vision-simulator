@@ -12,13 +12,12 @@ import {
 } from '@/features/scene/presentation/utils/scene-export'
 
 import type {SimulationCaptureApi} from './simulation-capture'
+import type {SimulationAreaOption} from './simulation-top-bar'
+
 import {SimulationCameraSidebar} from './simulation-camera-sidebar'
 import {SimulationCanvas} from './simulation-canvas'
 import {SimulationRadar} from './simulation-radar'
-import {
-  SimulationTopBar,
-  type SimulationAreaOption,
-} from './simulation-top-bar'
+import {SimulationTopBar} from './simulation-top-bar'
 import {SimulationViewport} from './simulation-viewport'
 import {useCameraFeedTargets} from './use-camera-feed-targets'
 import {useSimulationRecording} from './use-simulation-recording'
@@ -138,13 +137,13 @@ export const SimulationAnalysisView: React.FC = () => {
         activeAreaId={activeAreaId}
         areaOptions={areaOptions}
         isRecording={isRecording}
-        recordingLabel={`REC ${formattedTime}`}
         onAreaChange={handleAreaChange}
         onBackToEditor={handleBackToEditor}
         onSceneModeChange={handleSceneModeChange}
         onSnapshot={handleSnapshot}
         onStartRecording={startRecording}
         onStopRecording={stopRecording}
+        recordingLabel={`REC ${formattedTime}`}
         sceneMode={scene.mode}
       />
 
@@ -161,6 +160,7 @@ export const SimulationAnalysisView: React.FC = () => {
             scene={scene}
             selectedEntityIds={selectedEntityIds}
             focusAreaId={scene.activeAreaId}
+            onCaptureReady={handleCaptureReady}
             onSelectEntity={handleSelectEntity}
             sceneMode={scene.mode}
             showMapTexture={
@@ -168,7 +168,6 @@ export const SimulationAnalysisView: React.FC = () => {
                 ? true
                 : scene.mapVisible && scene.mode === 'map'
             }
-            onCaptureReady={handleCaptureReady}
           />
         </SimulationViewport>
         <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>

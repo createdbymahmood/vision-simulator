@@ -18,11 +18,13 @@ import {
   formatArea,
   formatMeters,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
 // eslint-disable-next-line max-lines-per-function
 export const AreaPropertiesSheet: React.FC = () => {
+  const {recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
@@ -42,7 +44,7 @@ export const AreaPropertiesSheet: React.FC = () => {
   const updateSelectedArea = React.useCallback(
     (updater: (area: (typeof areas)[number]) => void) => {
       if (!selectedArea) return
-      updateScene((scene) => {
+      return updateScene((scene) => {
         const target = scene.areas.find((area) => area.id === selectedArea.id)
         if (target) {
           updater(target)
@@ -54,33 +56,66 @@ export const AreaPropertiesSheet: React.FC = () => {
 
   const handleNameChange = (value: string) => {
     if (!selectedArea) return
-    updateAreaName(selectedArea.id, value)
+    const updated = updateAreaName(selectedArea.id, value)
+    recordActionDebounced(
+      `area-${selectedArea.id}`,
+      {type: 'update', entity: 'area'},
+      updated,
+    )
   }
 
   const handleFillChange = (value: string) => {
-    updateSelectedArea((area) => {
+    const updated = updateSelectedArea((area) => {
       area.style.fillColor = value
     })
+    if (updated && selectedArea) {
+      recordActionDebounced(
+        `area-${selectedArea.id}`,
+        {type: 'update', entity: 'area'},
+        updated,
+      )
+    }
   }
 
   const handleBorderColorChange = (value: string) => {
-    updateSelectedArea((area) => {
+    const updated = updateSelectedArea((area) => {
       area.style.borderColor = value
     })
+    if (updated && selectedArea) {
+      recordActionDebounced(
+        `area-${selectedArea.id}`,
+        {type: 'update', entity: 'area'},
+        updated,
+      )
+    }
   }
 
   const handleFillOpacityChange = (values: number[]) => {
     const [opacity] = values
-    updateSelectedArea((area) => {
+    const updated = updateSelectedArea((area) => {
       area.style.fillOpacity = opacity
     })
+    if (updated && selectedArea) {
+      recordActionDebounced(
+        `area-${selectedArea.id}`,
+        {type: 'update', entity: 'area'},
+        updated,
+      )
+    }
   }
 
   const handleBorderWidthChange = (values: number[]) => {
     const [width] = values
-    updateSelectedArea((area) => {
+    const updated = updateSelectedArea((area) => {
       area.style.borderWidth = width
     })
+    if (updated && selectedArea) {
+      recordActionDebounced(
+        `area-${selectedArea.id}`,
+        {type: 'update', entity: 'area'},
+        updated,
+      )
+    }
   }
 
   const perimeter = selectedArea
@@ -121,11 +156,18 @@ export const AreaPropertiesSheet: React.FC = () => {
                 <p className='text-xs text-muted-foreground'>Boundary Mode</p>
                 <Select
                   value={selectedArea.boundaryMode}
-                  onValueChange={(value) =>
-                    updateSelectedArea((area) => {
+                  onValueChange={(value) => {
+                    const updated = updateSelectedArea((area) => {
                       area.boundaryMode = value as typeof area.boundaryMode
                     })
-                  }
+                    if (updated && selectedArea) {
+                      recordActionDebounced(
+                        `area-${selectedArea.id}`,
+                        {type: 'update', entity: 'area'},
+                        updated,
+                      )
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='Boundary mode' />

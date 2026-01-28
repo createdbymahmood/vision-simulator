@@ -68,9 +68,7 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
         </div>
       </SheetHeader>
 
-      <ScrollArea className='h-[calc(100vh-56px)] px-4 py-4'>
-        {children}
-      </ScrollArea>
+      <ScrollArea className='h-[calc(100vh-56px)] p-4'>{children}</ScrollArea>
     </SheetContent>
   </Sheet>
 )

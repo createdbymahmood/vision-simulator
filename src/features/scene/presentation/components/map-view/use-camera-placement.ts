@@ -18,6 +18,8 @@ import type {TooltipState} from '@/features/scene/presentation/components/map-vi
 import {getCameraPreset} from '@/features/scene/domain/constants/camera-presets'
 import {assignCameraColor} from '@/features/scene/domain/services/color-assignment'
 
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
+
 import {
   buildFovOcclusionObstacles,
   buildOccludedFovRing,
@@ -106,6 +108,7 @@ export const useCameraPlacement = ({
   setCursorOverride,
 }: UseCameraPlacementParams): UseCameraPlacementResult => {
   const [preview, setPreview] = React.useState<CameraPreviewData | null>(null)
+  const {recordAction} = useHistoryRecorder()
 
   const getAreaAtPoint = React.useCallback(
     (point: GeoPoint) =>
@@ -338,6 +341,7 @@ export const useCameraPlacement = ({
         color,
         showCollisions: true,
       })
+      recordAction({type: 'add', entity: 'camera'}, updatedScene)
 
       const newCameraId = updatedScene.cameras.at(-1)?.id
       if (newCameraId) {
@@ -362,6 +366,7 @@ export const useCameraPlacement = ({
       setActiveTool,
       setSelection,
       setCursorOverride,
+      recordAction,
     ],
   )
 

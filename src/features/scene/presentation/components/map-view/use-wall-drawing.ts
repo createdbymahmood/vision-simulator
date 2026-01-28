@@ -5,9 +5,12 @@ import type {
   AreaEntity,
   GeoPoint,
   PersonEntity,
+  SceneRoot,
   ShapeEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
+
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {
   DEFAULT_WALL_COLOR,
@@ -36,7 +39,7 @@ interface PointerPosition {
 }
 
 interface UseWallDrawingParams {
-  addWall: (wall: Omit<WallEntity, 'id'>) => unknown
+  addWall: (wall: Omit<WallEntity, 'id'>) => SceneRoot
   getAreaForPoint: (point: GeoPoint) => AreaEntity | null
   isGeometryInsideArea: (points: GeoPoint[], area: AreaEntity | null) => boolean
   people: PersonEntity[]
@@ -55,6 +58,7 @@ export const useWallDrawing = ({
   people,
   shapes,
 }: UseWallDrawingParams) => {
+  const {recordAction} = useHistoryRecorder()
   const [wallDrawing, setWallDrawing] = React.useState<WallDrawingState>({
     isActive: false,
     points: [],
@@ -94,19 +98,19 @@ export const useWallDrawing = ({
 
   const finalizeWall = React.useCallback(() => {
     if (!wallDrawing.isActive || wallDrawing.points.length < 2 || !targetArea) {
-      return false
+      return null
     }
     if (!isGeometryInsideArea(wallDrawing.points, targetArea)) {
       toast.error('Walls must stay inside an area')
       resetWallDrawing()
-      return false
+      return null
     }
     if (
       doesWallPathHitPerson(wallDrawing.points, people, DEFAULT_WALL_THICKNESS)
     ) {
       toast.error('Cannot draw walls over people')
       resetWallDrawing()
-      return false
+      return null
     }
     if (
       doesWallCollideWithShapes(
@@ -117,9 +121,9 @@ export const useWallDrawing = ({
     ) {
       toast.error('Cannot draw walls over shapes')
       resetWallDrawing()
-      return false
+      return null
     }
-    addWall({
+    const updated = addWall({
       areaId: targetArea.id,
       points: wallDrawing.points,
       color: DEFAULT_WALL_COLOR,
@@ -127,12 +131,16 @@ export const useWallDrawing = ({
       thickness: DEFAULT_WALL_THICKNESS,
       type: 'wall',
     })
+    recordAction({type: 'add', entity: 'wall'}, updated)
     resetWallDrawing()
-    return true
+    return updated
   }, [
     addWall,
     isGeometryInsideArea,
+    people,
+    recordAction,
     resetWallDrawing,
+    shapes,
     targetArea,
     wallDrawing.isActive,
     wallDrawing.points,
