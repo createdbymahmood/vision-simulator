@@ -108,7 +108,7 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
 
       <div className='flex items-center gap-2 ml-auto'>
         {isRecording ? (
-          <div className='flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600'>
+          <div className='flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600 tabular-nums'>
             <span className='recording-dot size-2 rounded-full bg-red-500' />
             {recordingLabel}
           </div>
