@@ -5,6 +5,7 @@ import type {CameraEntity} from '@/features/scene/domain/types'
 import type {CoordinateTransformer} from './simulation-helpers'
 
 import {getCameraOpticHeight} from './camera-collision-utils'
+import {getFeedVerticalFov} from './camera-feed-fov'
 
 const degToRad = (deg: number) => (deg * Math.PI) / 180
 
@@ -36,7 +37,7 @@ export const updateFeedCamera = ({
 }) => {
   const base = transformer.toVector3([cameraEntity.x, cameraEntity.y], 0)
   const opticHeight = getCameraOpticHeight(cameraEntity)
-  const fov = cameraEntity.fov / Math.max(cameraEntity.ptz?.zoom ?? 1, 0.0001)
+  const fov = getFeedVerticalFov(cameraEntity)
   const near = Math.max(cameraEntity.nearClipping ?? 0.1, 0.1)
   const far = Math.max(cameraEntity.depth, near + 0.1)
   const yaw = -degToRad(cameraEntity.ptz?.pan ?? cameraEntity.direction)

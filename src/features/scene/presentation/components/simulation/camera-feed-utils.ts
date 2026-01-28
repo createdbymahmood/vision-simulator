@@ -8,6 +8,7 @@ import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-de
 import type {createCoordinateTransformer} from './simulation-helpers'
 
 import {getCameraOpticHeight} from './camera-collision-utils'
+import {getFeedVerticalFov} from './camera-feed-fov'
 
 export interface FeedBoundingBox {
   id: string
@@ -61,7 +62,7 @@ export const computeFeedBoundingBoxes = ({
   }
   const base = transformer.toVector3([camera.x, camera.y], 0)
   const opticHeight = getCameraOpticHeight(camera)
-  const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+  const fov = getFeedVerticalFov(camera)
   const near = Math.max(camera.nearClipping ?? 0.1, 0.1)
   const far = Math.max(camera.depth, near + 0.1)
   const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)

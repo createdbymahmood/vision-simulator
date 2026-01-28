@@ -180,6 +180,75 @@ export const buildObstacleSegmentsByArea = (
   return segmentsByArea
 }
 
+const isPersonVisibleAtHeight = ({
+  camera,
+  cameraOrigin,
+  forward,
+  obstacles,
+  person,
+  targetHeight,
+}: {
+  camera: CameraEntity
+  cameraOrigin: THREE.Vector3
+  forward: THREE.Vector3
+  obstacles: ObstacleSegment[]
+  person: VisionPersonState
+  targetHeight: number
+}) => {
+  const personTarget = new THREE.Vector3(
+    person.x,
+    person.y + targetHeight,
+    person.z,
+  )
+  const toPerson = personTarget.clone().sub(cameraOrigin)
+  const distance = toPerson.length()
+  const near = Math.max(camera.nearClipping ?? 0.1, 0.1)
+  const far = Math.max(camera.depth, near + 0.1)
+  if (distance < near || distance > far) {
+    return false
+  }
+  const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+  const halfFov = degToRad(fov) / 2
+  const direction = toPerson.clone().normalize()
+  if (direction.dot(forward) < Math.cos(halfFov)) {
+    return false
+  }
+  const origin2d = new THREE.Vector2(cameraOrigin.x, cameraOrigin.z)
+  const target2d = new THREE.Vector2(person.x, person.z)
+  const targetDistance = origin2d.distanceTo(target2d)
+  if (targetDistance < EPSILON) {
+    return true
+  }
+  for (const obstacle of obstacles) {
+    const t = intersectSegments(
+      origin2d,
+      target2d,
+      obstacle.start,
+      obstacle.end,
+    )
+    if (t === null || t <= EPSILON) {
+      continue
+    }
+    if (obstacle.height === Number.MAX_SAFE_INTEGER) {
+      const tolerance = Math.min(
+        0.05,
+        (DEFAULT_PERSON_RADIUS * 1.25) / Math.max(targetDistance, 0.01),
+      )
+      if (t >= 1 - tolerance) {
+        continue
+      }
+    } else if (t >= 1 - EPSILON) {
+      continue
+    }
+    const rayHeight =
+      cameraOrigin.y + (personTarget.y - cameraOrigin.y) * t
+    if (obstacle.height >= rayHeight) {
+      return false
+    }
+  }
+  return true
+}
+
 const isPersonVisible = ({
   camera,
   cameraOrigin,
@@ -199,46 +268,18 @@ const isPersonVisible = ({
   if (!person) {
     return false
   }
-  const personTarget = new THREE.Vector3(
-    person.x,
-    Math.max(person.height, DEFAULT_PERSON_RADIUS),
-    person.z,
+  const baseHeight = Math.max(person.height, DEFAULT_PERSON_RADIUS * 2)
+  const targetHeights = [baseHeight * 0.5, baseHeight]
+  return targetHeights.some((targetHeight) =>
+    isPersonVisibleAtHeight({
+      camera,
+      cameraOrigin,
+      forward,
+      obstacles,
+      person,
+      targetHeight,
+    }),
   )
-  const toPerson = personTarget.clone().sub(cameraOrigin)
-  const distance = toPerson.length()
-  const near = Math.max(camera.nearClipping ?? 0.1, 0.1)
-  const far = Math.max(camera.depth, near + 0.1)
-  if (distance < near || distance > far) {
-    return false
-  }
-  const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
-  const halfFov = degToRad(fov) / 2
-  const direction = toPerson.clone().normalize()
-  if (direction.dot(forward) < Math.cos(halfFov)) {
-    return false
-  }
-  const origin2d = new THREE.Vector2(cameraOrigin.x, cameraOrigin.z)
-  const target2d = new THREE.Vector2(person.x, person.z)
-  const maxDistance = origin2d.distanceTo(target2d)
-  if (maxDistance < EPSILON) {
-    return true
-  }
-  for (const obstacle of obstacles) {
-    const t = intersectSegments(
-      origin2d,
-      target2d,
-      obstacle.start,
-      obstacle.end,
-    )
-    if (t === null || t <= EPSILON || t >= 1 - EPSILON) {
-      continue
-    }
-    const rayHeight = cameraOrigin.y + (person.height - cameraOrigin.y) * t
-    if (obstacle.height >= rayHeight) {
-      return false
-    }
-  }
-  return true
 }
 
 export const computeCameraVisionState = ({
