@@ -1,10 +1,16 @@
-import type {AreaPolygon, ObstaclePolygon, ObstacleSegment} from './simulation-people-utils'
+import * as THREE from 'three'
+
+import type {
+  AreaPolygon,
+  ObstaclePolygon,
+  ObstacleSegment,
+} from './simulation-people-utils'
+
 import {
   distanceToSegment,
   getRandomPointInArea,
   isPointInPolygon,
 } from './simulation-people-utils'
-import * as THREE from 'three'
 
 const TARGET_REACHED_DISTANCE = 0.5
 const PERSON_AVOID_DISTANCE = 1.2
@@ -65,7 +71,12 @@ export const stepPeopleSimulation = (
       return
     }
     if (person.position.distanceTo(person.target) < TARGET_REACHED_DISTANCE) {
-      person.target = resolveNextTarget(person, area, wallSegments, shapePolygons)
+      person.target = resolveNextTarget(
+        person,
+        area,
+        wallSegments,
+        shapePolygons,
+      )
     }
 
     const desired = new THREE.Vector3()
@@ -89,10 +100,17 @@ export const stepPeopleSimulation = (
       }
     })
 
-    const nextPosition = person.position.clone().add(desired.multiplyScalar(delta))
+    const nextPosition = person.position
+      .clone()
+      .add(desired.multiplyScalar(delta))
 
     if (!isPointInPolygon(nextPosition, area.points)) {
-      person.target = resolveNextTarget(person, area, wallSegments, shapePolygons)
+      person.target = resolveNextTarget(
+        person,
+        area,
+        wallSegments,
+        shapePolygons,
+      )
       return
     }
 
@@ -103,7 +121,12 @@ export const stepPeopleSimulation = (
         distanceToSegment(nextPosition, wall.a, wall.b) < wall.thickness / 2,
     )
     if (blockedByWall) {
-      person.target = resolveNextTarget(person, area, wallSegments, shapePolygons)
+      person.target = resolveNextTarget(
+        person,
+        area,
+        wallSegments,
+        shapePolygons,
+      )
       return
     }
 
@@ -114,7 +137,12 @@ export const stepPeopleSimulation = (
         isPointInPolygon(nextPosition, shape.points),
     )
     if (blockedByShape) {
-      person.target = resolveNextTarget(person, area, wallSegments, shapePolygons)
+      person.target = resolveNextTarget(
+        person,
+        area,
+        wallSegments,
+        shapePolygons,
+      )
       return
     }
 

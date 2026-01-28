@@ -2,8 +2,9 @@ import * as THREE from 'three'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
 
-import {getCameraOpticHeight} from './camera-collision-utils'
 import type {CoordinateTransformer} from './simulation-helpers'
+
+import {getCameraOpticHeight} from './camera-collision-utils'
 
 const degToRad = (deg: number) => (deg * Math.PI) / 180
 

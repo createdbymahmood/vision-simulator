@@ -5,6 +5,7 @@ import type {MapMouseEvent, MapRef} from 'react-map-gl/mapbox'
 import {booleanPointInPolygon, polygon, point as turfPoint} from '@turf/turf'
 import React from 'react'
 
+import type {HistoryEntity} from '@/features/scene/application/history/history-actions'
 import type {
   AreaEntity,
   CameraEntity,
@@ -19,10 +20,7 @@ import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {TooltipState} from '@/features/scene/presentation/components/map-view/map-view-types'
 import type {Bounds} from '@/features/scene/presentation/components/map-view/selection-geometry'
 
-import type {HistoryEntity} from '@/features/scene/application/history/history-actions'
-
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
-import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 import {
   closeRing,
   distanceToSegment,
@@ -42,6 +40,7 @@ import {
   scalePoints,
   translatePoints,
 } from '@/features/scene/presentation/components/map-view/selection-geometry'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 type MapLayerMouseEvent = MapMouseEvent
 

@@ -1,5 +1,5 @@
-import React from 'react'
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
+import React from 'react'
 
 import type {RadarSettings} from '@/features/scene/infrastructure/stores/ui.store'
 

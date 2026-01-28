@@ -1,8 +1,9 @@
-import React from 'react'
 import {useFrame} from '@react-three/fiber'
+import React from 'react'
 import * as THREE from 'three'
 
 import type {WorldEntity} from './simulation-helpers'
+
 import {DEBUG_LAYER} from './simulation-layers'
 
 interface WallCollisionSurfaceProps {
@@ -33,26 +34,23 @@ export const WallCollisionSurface: React.FC<WallCollisionSurfaceProps> = ({
 
   return (
     <group position={midpoint} rotation={[0, angle, 0]}>
-      <mesh
-        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
-        renderOrder={300}
-      >
+      <mesh renderOrder={300} onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}>
         <boxGeometry
           args={[data.length, data.entity.height, data.entity.thickness]}
         />
         <meshBasicMaterial
-          ref={materialRef}
-          color={color}
           transparent
-          opacity={opacity}
-          side={THREE.DoubleSide}
+          blending={THREE.AdditiveBlending}
           clippingPlanes={planes}
+          depthWrite={false}
+          ref={materialRef}
+          side={THREE.DoubleSide}
           clipIntersection
+          color={color}
+          opacity={opacity}
           polygonOffset
           polygonOffsetFactor={2}
           polygonOffsetUnits={2}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
         />
       </mesh>
     </group>

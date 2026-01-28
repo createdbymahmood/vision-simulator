@@ -1,5 +1,6 @@
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import type {MapRef} from 'react-map-gl/mapbox'
+
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
@@ -286,8 +287,8 @@ export const EditorLayout: React.FC = () => {
             measurementEnabled={measurementEnabled}
             activeTool={activeTool}
             onBlankClick={handleBlankClick}
-            onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
             onMapReady={handleMapReady}
+            onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
             sceneMode={sceneMode}
             shapeMode={shapeMode}
           />
@@ -350,10 +351,10 @@ export const EditorLayout: React.FC = () => {
           <CameraPropertiesSheet />
 
           <MapStyleDialog
+            value={mapStyle}
             onOpenChange={setMapStyleOpen}
             onValueChange={handleMapStyleChange}
             open={mapStyleOpen}
-            value={mapStyle}
           />
         </>
       ) : null}

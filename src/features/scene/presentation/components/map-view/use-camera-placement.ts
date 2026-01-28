@@ -17,7 +17,6 @@ import type {TooltipState} from '@/features/scene/presentation/components/map-vi
 
 import {getCameraPreset} from '@/features/scene/domain/constants/camera-presets'
 import {assignCameraColor} from '@/features/scene/domain/services/color-assignment'
-
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {

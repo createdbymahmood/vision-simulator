@@ -1,11 +1,16 @@
 import * as THREE from 'three'
 
-import type {CameraEntity, SceneRoot, ShapeEntity} from '@/features/scene/domain/types'
+import type {
+  CameraEntity,
+  SceneRoot,
+  ShapeEntity,
+} from '@/features/scene/domain/types'
 
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 
-import {getCameraOpticHeight} from './camera-collision-utils'
 import type {CoordinateTransformer} from './simulation-helpers'
+
+import {getCameraOpticHeight} from './camera-collision-utils'
 
 const DEFAULT_LINE_THICKNESS = 0.1
 const EPSILON = 1e-5
@@ -136,9 +141,7 @@ export const buildObstacleSegmentsByArea = (
     const points = area.geometry.coordinates.map((coord) =>
       transformer.toVector3(coord),
     )
-    const ring = points.map(
-      (point) => new THREE.Vector2(point.x, point.z),
-    )
+    const ring = points.map((point) => new THREE.Vector2(point.x, point.z))
     if (ring.length > 0) {
       const first = ring[0]
       const last = ring[ring.length - 1]
@@ -169,9 +172,7 @@ export const buildObstacleSegmentsByArea = (
 
   scene.shapes.forEach((shape) => {
     const segments = segmentsByArea.get(shape.areaId) ?? []
-    const points = shape.geometry.map((coord) =>
-      transformer.toVector3(coord),
-    )
+    const points = shape.geometry.map((coord) => transformer.toVector3(coord))
     segments.push(...buildShapeSegments(shape, points))
     segmentsByArea.set(shape.areaId, segments)
   })
@@ -223,12 +224,16 @@ const isPersonVisible = ({
     return true
   }
   for (const obstacle of obstacles) {
-    const t = intersectSegments(origin2d, target2d, obstacle.start, obstacle.end)
+    const t = intersectSegments(
+      origin2d,
+      target2d,
+      obstacle.start,
+      obstacle.end,
+    )
     if (t === null || t <= EPSILON || t >= 1 - EPSILON) {
       continue
     }
-    const rayHeight =
-      cameraOrigin.y + (person.height - cameraOrigin.y) * t
+    const rayHeight = cameraOrigin.y + (person.height - cameraOrigin.y) * t
     if (obstacle.height >= rayHeight) {
       return false
     }
@@ -250,8 +255,7 @@ export const computeCameraVisionState = ({
   const peopleWorld: Record<string, VisionPersonState> = {}
   scene.people.forEach((person) => {
     const override = simulatedPeoplePositions.get(person.id)
-    const base =
-      override ?? transformer.toVector3([person.x, person.y], 0)
+    const base = override ?? transformer.toVector3([person.x, person.y], 0)
     peopleWorld[person.id] = {
       x: base.x,
       y: base.y,

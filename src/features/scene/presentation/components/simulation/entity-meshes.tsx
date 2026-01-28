@@ -347,11 +347,11 @@ export const CameraMesh: React.FC<{
             <meshBasicMaterial
               transparent
               blending={THREE.AdditiveBlending}
+              clippingPlanes={[groundPlane]}
               depthWrite={false}
               side={THREE.DoubleSide}
               color={color}
               opacity={dimmed ? 0.05 : 0.12}
-              clippingPlanes={[groundPlane]}
             />
           </mesh>
           <lineSegments
@@ -363,10 +363,10 @@ export const CameraMesh: React.FC<{
             <lineBasicMaterial
               transparent
               linewidth={2}
+              clippingPlanes={[groundPlane]}
               depthWrite={false}
               color={color}
               opacity={dimmed ? 0.3 : 0.8}
-              clippingPlanes={[groundPlane]}
             />
           </lineSegments>
         </>
@@ -453,10 +453,10 @@ export const EntitiesMesh: React.FC<{
             data={entity}
             key={entity.entity.id}
             maxFrustumDepth={maxFrustumDepth}
-            showFrustum={showCameraFrustums}
             selected={selectedEntityIds.includes(entity.entity.id)}
             onFocus={onFocus}
             onSelect={onSelectEntity}
+            showFrustum={showCameraFrustums}
           />
         )
       }

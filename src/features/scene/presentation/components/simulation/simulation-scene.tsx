@@ -1,8 +1,8 @@
 import type {OrbitControls as OrbitControlsImpl} from 'three-stdlib'
 
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {OrbitControls} from '@react-three/drei'
 import {useFrame, useThree} from '@react-three/fiber'
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import * as THREE from 'three'
 
@@ -10,9 +10,10 @@ import type {SceneMode, SceneRoot} from '@/features/scene/domain/types'
 
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
+import type {CameraFeedTarget} from './camera-feed-types'
+import type {SimulationCaptureApi} from './simulation-capture'
 import type {WorldEntity} from './simulation-helpers'
 
-import type {SimulationCaptureApi} from './simulation-capture'
 import {computeBounds} from '../map-view/selection-geometry'
 import {CameraCollisionSurfaces} from './camera-collision-surfaces'
 import {CameraFovFootprints} from './camera-fov-footprints'
@@ -20,7 +21,6 @@ import {
   buildObstacleSegmentsByArea,
   computeCameraVisionState,
 } from './camera-vision'
-import type {CameraFeedTarget} from './camera-feed-types'
 import {EntitiesMesh} from './entity-meshes'
 import {GroundPlane} from './ground-plane'
 import {PersonTrail} from './person-trail'
@@ -29,9 +29,9 @@ import {
   createCoordinateTransformer,
   transformFeatureCollectionsToThreeJSShapes,
 } from './simulation-helpers'
-import {useCameraFeedRenderers} from './use-camera-feed-renderers'
 import {DEBUG_LAYER} from './simulation-layers'
 import {createGridTexture, createMapTexture} from './simulation-textures'
+import {useCameraFeedRenderers} from './use-camera-feed-renderers'
 import {useSimulatedPeople} from './use-simulated-people'
 
 interface FocusRequest {
@@ -388,11 +388,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     }
   }, [areaFocus, focusAreaId])
 
-  const requestFocus = useCallbackRef(
-    (point: THREE.Vector3, distance = 10) => {
-      setFocusRequest({point, distance})
-    },
-  )
+  const requestFocus = useCallbackRef((point: THREE.Vector3, distance = 10) => {
+    setFocusRequest({point, distance})
+  })
 
   React.useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {

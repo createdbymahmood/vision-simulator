@@ -546,7 +546,14 @@ export const MapView: React.FC<MapViewProps> = ({
     toast.success(message)
 
     resetDrawing()
-  }, [addArea, areas.length, drawing, recordAction, resetDrawing, setActiveArea])
+  }, [
+    addArea,
+    areas.length,
+    drawing,
+    recordAction,
+    resetDrawing,
+    setActiveArea,
+  ])
 
   useMapViewHotkeys({
     activeTool,

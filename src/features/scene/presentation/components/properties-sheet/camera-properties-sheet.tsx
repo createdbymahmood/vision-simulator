@@ -1,3 +1,4 @@
+import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {
   ArrowDown,
   ArrowLeft,
@@ -7,7 +8,6 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import React from 'react'
-import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 
 import type {PtzPreset} from '@/features/scene/domain/types'
 
@@ -68,16 +68,18 @@ export const CameraPropertiesSheet: React.FC = () => {
     [selectedCamera, updateCamera],
   )
 
-  const recordCameraUpdate = useCallbackRef((updated?: ReturnType<typeof updateCamera>) => {
-    if (!updated || !selectedCamera) {
-      return
-    }
-    recordActionDebounced(
-      `camera-${selectedCamera.id}`,
-      {type: 'update', entity: 'camera'},
-      updated,
-    )
-  })
+  const recordCameraUpdate = useCallbackRef(
+    (updated?: ReturnType<typeof updateCamera>) => {
+      if (!updated || !selectedCamera) {
+        return
+      }
+      recordActionDebounced(
+        `camera-${selectedCamera.id}`,
+        {type: 'update', entity: 'camera'},
+        updated,
+      )
+    },
+  )
 
   const handleColorChange = (value: string) => {
     const updated = updateSelectedCamera((camera) => {
@@ -197,44 +199,42 @@ export const CameraPropertiesSheet: React.FC = () => {
     applyPtz({pan: 0, tilt: 0, zoom: 1})
   }
 
-  const handleKeyboard = useCallbackRef(
-    (event: KeyboardEvent) => {
-      if (!selectedCamera) return
-      if (
-        event.key === 'ArrowUp' ||
-        event.key === 'ArrowDown' ||
-        event.key === 'ArrowLeft' ||
-        event.key === 'ArrowRight' ||
-        event.key === '+' ||
-        event.key === '-' ||
-        event.key === '=' ||
-        event.key === '0'
-      ) {
-        event.preventDefault()
-      }
-      if (event.key === 'ArrowUp') {
-        applyPtz({tilt: selectedCamera.ptz.tilt + 5})
-      }
-      if (event.key === 'ArrowDown') {
-        applyPtz({tilt: selectedCamera.ptz.tilt - 5})
-      }
-      if (event.key === 'ArrowLeft') {
-        applyPtz({pan: selectedCamera.ptz.pan - 5})
-      }
-      if (event.key === 'ArrowRight') {
-        applyPtz({pan: selectedCamera.ptz.pan + 5})
-      }
-      if (event.key === '+' || event.key === '=') {
-        applyPtz({zoom: selectedCamera.ptz.zoom + 0.1})
-      }
-      if (event.key === '-') {
-        applyPtz({zoom: selectedCamera.ptz.zoom - 0.1})
-      }
-      if (event.key === '0') {
-        handleResetPtz()
-      }
-    },
-  )
+  const handleKeyboard = useCallbackRef((event: KeyboardEvent) => {
+    if (!selectedCamera) return
+    if (
+      event.key === 'ArrowUp' ||
+      event.key === 'ArrowDown' ||
+      event.key === 'ArrowLeft' ||
+      event.key === 'ArrowRight' ||
+      event.key === '+' ||
+      event.key === '-' ||
+      event.key === '=' ||
+      event.key === '0'
+    ) {
+      event.preventDefault()
+    }
+    if (event.key === 'ArrowUp') {
+      applyPtz({tilt: selectedCamera.ptz.tilt + 5})
+    }
+    if (event.key === 'ArrowDown') {
+      applyPtz({tilt: selectedCamera.ptz.tilt - 5})
+    }
+    if (event.key === 'ArrowLeft') {
+      applyPtz({pan: selectedCamera.ptz.pan - 5})
+    }
+    if (event.key === 'ArrowRight') {
+      applyPtz({pan: selectedCamera.ptz.pan + 5})
+    }
+    if (event.key === '+' || event.key === '=') {
+      applyPtz({zoom: selectedCamera.ptz.zoom + 0.1})
+    }
+    if (event.key === '-') {
+      applyPtz({zoom: selectedCamera.ptz.zoom - 0.1})
+    }
+    if (event.key === '0') {
+      handleResetPtz()
+    }
+  })
 
   React.useEffect(() => {
     window.addEventListener('keydown', handleKeyboard)
@@ -480,7 +480,6 @@ export const CameraPropertiesSheet: React.FC = () => {
               </Button>
             </div>
           </PropertiesSection>
-
         </div>
       ) : (
         <p className='text-sm text-muted-foreground'>

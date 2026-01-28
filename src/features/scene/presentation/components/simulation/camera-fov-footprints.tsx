@@ -1,12 +1,15 @@
 import React from 'react'
-import type {CameraEntity, SceneRoot} from '@/features/scene/domain/types'
-import type {CoordinateTransformer} from './simulation-helpers'
 import * as THREE from 'three'
+
+import type {CameraEntity, SceneRoot} from '@/features/scene/domain/types'
 
 import {
   buildFovOcclusionObstacles,
   buildOccludedFovRing,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
+
+import type {CoordinateTransformer} from './simulation-helpers'
+
 import {DEBUG_LAYER} from './simulation-layers'
 
 interface FovFootprintMeshProps {
@@ -66,10 +69,10 @@ const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({points, color}) => {
         position={[0, groundOffset, 0]}
       >
         <meshBasicMaterial
-          color={color}
           transparent
-          opacity={0.15}
           depthWrite={false}
+          color={color}
+          opacity={0.15}
         />
       </mesh>
       <lineSegments
@@ -79,11 +82,11 @@ const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({points, color}) => {
         position={[0, 0.001, 0]}
       >
         <lineDashedMaterial
-          color={color}
           transparent
-          opacity={0.9}
           dashSize={0.6}
           gapSize={0.6}
+          color={color}
+          opacity={0.9}
         />
       </lineSegments>
     </group>
@@ -105,7 +108,9 @@ export const CameraFovFootprints: React.FC<CameraFovFootprintsProps> = ({
     const map = new Map<string, ReturnType<typeof buildFovOcclusionObstacles>>()
     scene.areas.forEach((area) => {
       const areaWalls = scene.walls.filter((wall) => wall.areaId === area.id)
-      const areaShapes = scene.shapes.filter((shape) => shape.areaId === area.id)
+      const areaShapes = scene.shapes.filter(
+        (shape) => shape.areaId === area.id,
+      )
       map.set(area.id, buildFovOcclusionObstacles(areaWalls, areaShapes))
     })
     return map
@@ -117,9 +122,7 @@ export const CameraFovFootprints: React.FC<CameraFovFootprintsProps> = ({
       const effectivePan = camera.ptz?.pan ?? camera.direction
       const effectiveFov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
       const area = scene.areas.find((item) => item.id === camera.areaId)
-      const obstacles = area
-        ? obstaclesByArea.get(area.id) ?? []
-        : []
+      const obstacles = area ? (obstaclesByArea.get(area.id) ?? []) : []
       const ring = buildOccludedFovRing({
         origin,
         direction: effectivePan,

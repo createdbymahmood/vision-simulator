@@ -1,10 +1,13 @@
-import React from 'react'
 import {useFrame} from '@react-three/fiber'
+import React from 'react'
 import * as THREE from 'three'
 
 import type {SceneRoot} from '@/features/scene/domain/types'
 
 import type {CoordinateTransformer} from './simulation-helpers'
+import type {SimPersonState} from './simulation-people-engine'
+
+import {stepPeopleSimulation} from './simulation-people-engine'
 import {
   buildAreaBoundarySegments,
   buildAreaPolygons,
@@ -14,7 +17,6 @@ import {
   getRandomPointInArea,
   hashId,
 } from './simulation-people-utils'
-import {stepPeopleSimulation, type SimPersonState} from './simulation-people-engine'
 
 const FIXED_STEP = 1 / 30
 const PUBLISH_INTERVAL = FIXED_STEP

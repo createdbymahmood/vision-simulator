@@ -6,6 +6,7 @@ import type {CameraEntity} from '@/features/scene/domain/types'
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 
 import type {createCoordinateTransformer} from './simulation-helpers'
+
 import {getCameraOpticHeight} from './camera-collision-utils'
 
 export interface FeedBoundingBox {

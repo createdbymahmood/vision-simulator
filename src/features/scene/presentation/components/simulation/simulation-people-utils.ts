@@ -5,6 +5,7 @@ import type {
   ShapeEntity,
   WallEntity,
 } from '@/features/scene/domain/types'
+
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 
 import type {CoordinateTransformer} from './simulation-helpers'
@@ -85,10 +86,7 @@ export const distanceToSegment = (
   return projection.distanceTo(new THREE.Vector3(point.x, 0, point.z))
 }
 
-export const getRandomPointInArea = (
-  area: AreaPolygon,
-  rng: () => number,
-) => {
+export const getRandomPointInArea = (area: AreaPolygon, rng: () => number) => {
   for (let i = 0; i < 40; i += 1) {
     const x = THREE.MathUtils.lerp(area.bounds.min.x, area.bounds.max.x, rng())
     const z = THREE.MathUtils.lerp(area.bounds.min.z, area.bounds.max.z, rng())

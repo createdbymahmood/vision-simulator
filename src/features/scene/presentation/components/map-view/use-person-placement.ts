@@ -20,6 +20,7 @@ import {
   DEFAULT_PERSON_RADIUS,
   DEFAULT_PERSON_SPEED,
 } from '@/features/scene/domain/constants/person-defaults'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {
   createCircleRing,
@@ -27,8 +28,6 @@ import {
   getPersonCollision,
   isPointInsideArea,
 } from './map-view-helpers'
-
-import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 type MapLayerMouseEvent = MapMouseEvent
 

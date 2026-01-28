@@ -12,9 +12,9 @@ import type {
 } from '@/features/scene/domain/types'
 import type {ShapeDrawMode} from '@/features/scene/presentation/types'
 
-import type {TooltipState} from './map-view-types'
-
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
+
+import type {TooltipState} from './map-view-types'
 
 import {
   computeAngleDeg,

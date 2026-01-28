@@ -1,5 +1,5 @@
-import React from 'react'
 import {motion} from 'framer-motion'
+import React from 'react'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
 
@@ -81,17 +81,17 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
   onSelectPerson,
   onHoverCamera,
 }) => (
-  <svg width={size.width} height={size.height}>
-    <rect width='100%' height='100%' fill='transparent' />
+  <svg height={size.height} width={size.width}>
+    <rect height='100%' width='100%' fill='transparent' />
     <defs>
       <filter
+        height='200%'
+        width='200%'
         id='radar-person-glow'
         x='-50%'
         y='-50%'
-        width='200%'
-        height='200%'
       >
-        <feGaussianBlur in='SourceGraphic' stdDeviation='4' result='blur' />
+        <feGaussianBlur in='SourceGraphic' result='blur' stdDeviation='4' />
         <feMerge>
           <feMergeNode in='blur' />
           <feMergeNode in='SourceGraphic' />
@@ -102,8 +102,8 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
       <line
         key={`grid-${index}`}
         x1={line.start.x}
-        y1={line.start.y}
         x2={line.end.x}
+        y1={line.start.y}
         y2={line.end.y}
         stroke='rgba(255,255,255,0.1)'
         strokeWidth={1}
@@ -111,9 +111,9 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
     ))}
     {areaPaths.map((area) => (
       <path
-        key={area.id}
         d={area.path}
         fill='transparent'
+        key={area.id}
         stroke='rgba(255,255,255,0.2)'
         strokeWidth={1}
       />
@@ -128,10 +128,10 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
         .join(' ')
       return (
         <path
-          key={wedge.camera.id}
           d={`${path} Z`}
           fill={wedge.camera.color}
           fillOpacity={0.1}
+          key={wedge.camera.id}
           stroke={wedge.camera.color}
           strokeOpacity={0.4}
           strokeWidth={1}
@@ -140,24 +140,24 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
     })}
     {trailPaths.map((trail) => (
       <path
-        key={`trail-${trail.id}`}
         d={trail.path}
         fill='transparent'
+        key={`trail-${trail.id}`}
         stroke='rgba(78,205,196,0.35)'
         strokeWidth={1}
       />
     ))}
     {connections.map((line, index) => (
       <motion.line
+        animate={{strokeDashoffset: [0, -8]}}
         key={`line-${index}`}
         x1={line.cameraPoint.x}
-        y1={line.cameraPoint.y}
         x2={line.personPoint.x}
+        y1={line.cameraPoint.y}
         y2={line.personPoint.y}
         stroke={line.camera.color}
-        strokeWidth={1}
         strokeDasharray='4 4'
-        animate={{strokeDashoffset: [0, -8]}}
+        strokeWidth={1}
         transition={{duration: 0.2, ease: 'linear', repeat: Infinity}}
       />
     ))}
@@ -171,57 +171,57 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
           <circle
             cx={point.x}
             cy={point.y}
-            r={radius}
             fill={camera.color}
-            opacity={opacity}
+            r={radius}
+            onClick={() => onSelectCamera(camera.id)}
             onMouseEnter={() => onHoverCamera(camera.id)}
             onMouseLeave={() => onHoverCamera(undefined)}
-            onClick={() => onSelectCamera(camera.id)}
+            opacity={opacity}
           />
           <line
             x1={point.x}
-            y1={point.y}
             x2={arrowPoint.x}
+            y1={point.y}
             y2={arrowPoint.y}
+            opacity={opacity}
             stroke={camera.color}
             strokeWidth={isHovered ? 2.5 : 2}
-            opacity={opacity}
           />
         </g>
       )
     })}
     {peopleMarkers.map(({id, point}) => (
       <motion.circle
-        key={id}
-        animate={{
-          cx: point.x,
-          cy: point.y,
-          r: selectedPersonId === id ? 7 : 5,
-        }}
+        fill={selectedPersonId === id ? '#F7DC6F' : '#4ECDC4'}
+        filter={selectedPersonId === id ? 'url(#radar-person-glow)' : undefined}
         initial={false}
+        key={id}
+        onClick={() => onSelectPerson(id)}
         transition={{
           type: 'spring',
           stiffness: 260,
           damping: 20,
           bounce: 0.45,
         }}
-        fill={selectedPersonId === id ? '#F7DC6F' : '#4ECDC4'}
-        filter={selectedPersonId === id ? 'url(#radar-person-glow)' : undefined}
-        onClick={() => onSelectPerson(id)}
+        animate={{
+          cx: point.x,
+          cy: point.y,
+          r: selectedPersonId === id ? 7 : 5,
+        }}
       />
     ))}
     {pingPoint ? (
       <g key={`ping-${pingKey}`}>
         {[0, 0.2, 0.4].map((delay, index) => (
           <motion.circle
-            key={`ping-${index}`}
+            animate={{r: 50, opacity: 0}}
             cx={pingPoint.x}
             cy={pingPoint.y}
-            r={0}
             fill='none'
+            key={`ping-${index}`}
+            r={0}
             stroke='#F7DC6F'
             strokeWidth={2}
-            animate={{r: 50, opacity: 0}}
             transition={{duration: 1.2, ease: 'easeOut', delay}}
           />
         ))}

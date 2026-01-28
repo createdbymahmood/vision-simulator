@@ -1,11 +1,11 @@
+import {debounce} from '@lodash-es'
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 
-import {debounce} from '@lodash-es'
-
-import {describeHistoryAction} from '@/features/scene/application/history/history-actions'
 import type {HistoryAction} from '@/features/scene/application/history/history-actions'
 import type {SceneRoot} from '@/features/scene/domain/types'
+
+import {describeHistoryAction} from '@/features/scene/application/history/history-actions'
 import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'
 
 const DEFAULT_DEBOUNCE_MS = 300

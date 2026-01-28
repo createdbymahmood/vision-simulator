@@ -100,9 +100,7 @@ export const useSimulationRecording = ({
     startedAtRef.current = Date.now()
     setElapsedSeconds(0)
     timerRef.current = window.setInterval(() => {
-      const nextElapsed = Math.floor(
-        (Date.now() - startedAtRef.current) / 1000,
-      )
+      const nextElapsed = Math.floor((Date.now() - startedAtRef.current) / 1000)
       setElapsedSeconds(nextElapsed)
     }, 1000)
   }

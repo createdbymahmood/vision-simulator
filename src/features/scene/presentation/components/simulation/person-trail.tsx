@@ -1,8 +1,9 @@
-import React from 'react'
 import {useFrame} from '@react-three/fiber'
+import React from 'react'
 import * as THREE from 'three'
 
 import {DEBUG_LAYER} from './simulation-layers'
+
 interface PersonTrailProps {
   selectedPersonId?: string
   positions: Map<string, THREE.Vector3>
@@ -51,9 +52,9 @@ export const PersonTrail: React.FC<PersonTrailProps> = ({
   }
 
   return (
-    <line onUpdate={(line) => line.layers.set(DEBUG_LAYER)} ref={lineRef}>
+    <line ref={lineRef} onUpdate={(line) => line.layers.set(DEBUG_LAYER)}>
       <bufferGeometry />
-      <lineBasicMaterial color='#FACC15' transparent opacity={0.8} />
+      <lineBasicMaterial transparent color='#FACC15' opacity={0.8} />
     </line>
   )
 }

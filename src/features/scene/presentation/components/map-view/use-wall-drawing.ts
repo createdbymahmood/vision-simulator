@@ -10,12 +10,11 @@ import type {
   WallEntity,
 } from '@/features/scene/domain/types'
 
-import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
-
 import {
   DEFAULT_WALL_COLOR,
   DEFAULT_WALL_THICKNESS,
 } from '@/features/scene/domain/constants/wall-style'
+import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import type {TooltipState} from './map-view-types'
 

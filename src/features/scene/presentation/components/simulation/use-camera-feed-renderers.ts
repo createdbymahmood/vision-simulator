@@ -1,13 +1,17 @@
-import React from 'react'
 import {useFrame, useThree} from '@react-three/fiber'
+import React from 'react'
 import * as THREE from 'three'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
 
-import {computeFeedRenderConfig, getFeedFps} from './camera-feed-helpers'
-import {createFeedRenderer, updateFeedCamera} from './camera-feed-renderer-utils'
 import type {CameraFeedTarget} from './camera-feed-types'
 import type {CoordinateTransformer} from './simulation-helpers'
+
+import {computeFeedRenderConfig, getFeedFps} from './camera-feed-helpers'
+import {
+  createFeedRenderer,
+  updateFeedCamera,
+} from './camera-feed-renderer-utils'
 import {WORLD_LAYER} from './simulation-layers'
 
 interface FeedRendererState {
@@ -33,7 +37,9 @@ export const useCameraFeedRenderers = ({
     [cameras],
   )
   const rendererMap = React.useRef(new Map<string, FeedRendererState>())
-  const sizeMap = React.useRef(new Map<string, {width: number; height: number}>())
+  const sizeMap = React.useRef(
+    new Map<string, {width: number; height: number}>(),
+  )
   const observerMap = React.useRef(new Map<string, ResizeObserver>())
 
   React.useEffect(() => {

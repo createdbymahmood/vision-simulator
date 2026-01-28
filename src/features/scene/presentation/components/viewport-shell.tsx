@@ -1,5 +1,6 @@
-import {Ruler} from 'lucide-react'
 import type {MapRef} from 'react-map-gl/mapbox'
+
+import {Ruler} from 'lucide-react'
 import React from 'react'
 
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
@@ -37,8 +38,7 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
     ? {
         backgroundImage:
           'linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(rgba(0,0,0,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.25) 1px, transparent 1px)',
-        backgroundSize:
-          '20px 20px, 20px 20px, 200px 200px, 200px 200px',
+        backgroundSize: '20px 20px, 20px 20px, 200px 200px, 200px 200px',
         backgroundPosition: '0 0, 0 0, 0 0, 0 0',
       }
     : undefined
@@ -49,18 +49,18 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
       onMouseDown={onBlankClick}
     >
       <div
+        style={gridStyle}
         className={cn(
           'absolute inset-0 transition-all duration-200 pointer-events-none',
           showGrid ? 'opacity-100' : 'opacity-0',
         )}
-        style={gridStyle}
       />
 
       <div className='absolute inset-0'>
         <MapView
           activeTool={activeTool}
-          shapeMode={shapeMode}
           onMapReady={onMapReady}
+          shapeMode={shapeMode}
         />
       </div>
 

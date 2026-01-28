@@ -36,22 +36,22 @@ export const MapStyleDialog: React.FC<MapStyleDialogProps> = ({
         </DialogHeader>
         <RadioGroup
           className='gap-2'
+          value={value}
           onValueChange={(nextValue) =>
             onValueChange(nextValue as SceneMapStyle)
           }
-          value={value}
         >
           {(['street', 'satellite', 'traffic', 'osm'] as SceneMapStyle[]).map(
             (style) => {
               const optionId = `map-style-${style}`
               return (
                 <label
+                  key={style}
+                  htmlFor={optionId}
                   className={cn(
                     'flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition-colors hover:bg-muted/50',
                     style === value && 'border-primary bg-muted/40',
                   )}
-                  htmlFor={optionId}
-                  key={style}
                 >
                   <span className='capitalize'>{style}</span>
                   <RadioGroupItem id={optionId} value={style} />

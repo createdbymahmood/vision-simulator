@@ -1,11 +1,16 @@
+import type * as THREE from 'three'
+
 import React from 'react'
-import * as THREE from 'three'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
 
 import type {WorldEntity} from './simulation-helpers'
-import {createCameraFrustumPlanes, getCameraOpticHeight} from './camera-collision-utils'
+
 import {ShapeCollisionSurface} from './camera-collision-shape'
+import {
+  createCameraFrustumPlanes,
+  getCameraOpticHeight,
+} from './camera-collision-utils'
 import {WallCollisionSurface} from './camera-collision-wall'
 
 interface CameraCollisionSurfacesProps {
@@ -13,10 +18,9 @@ interface CameraCollisionSurfacesProps {
   entities: WorldEntity[]
 }
 
-export const CameraCollisionSurfaces: React.FC<CameraCollisionSurfacesProps> = ({
-  cameras,
-  entities,
-}) => {
+export const CameraCollisionSurfaces: React.FC<
+  CameraCollisionSurfacesProps
+> = ({cameras, entities}) => {
   const cameraWorldPositions = React.useMemo(() => {
     const map = new Map<string, THREE.Vector3>()
     entities.forEach((entity) => {
@@ -62,21 +66,19 @@ export const CameraCollisionSurfaces: React.FC<CameraCollisionSurfacesProps> = (
               .filter((wall) => wall.entity.areaId === camera.areaId)
               .map((wall) => (
                 <WallCollisionSurface
-                  key={`${camera.id}-${wall.entity.id}-${wall.segmentIndex}`}
                   data={wall}
+                  key={`${camera.id}-${wall.entity.id}-${wall.segmentIndex}`}
                   planes={planes}
                   color={camera.color}
-                  opacity={
-                    wall.entity.height >= camera.height ? 0.35 : 0.2
-                  }
+                  opacity={wall.entity.height >= camera.height ? 0.35 : 0.2}
                 />
               ))}
             {shapeEntities
               .filter((shape) => shape.entity.areaId === camera.areaId)
               .map((shape) => (
                 <ShapeCollisionSurface
-                  key={`${camera.id}-${shape.entity.id}`}
                   data={shape}
+                  key={`${camera.id}-${shape.entity.id}`}
                   planes={planes}
                   color={camera.color}
                   opacity={
