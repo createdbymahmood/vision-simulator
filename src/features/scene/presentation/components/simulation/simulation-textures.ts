@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 export const createGridTexture = () => {
   const size = 512
+  const step = 32
   const canvas = document.createElement('canvas')
   canvas.width = size
   canvas.height = size
@@ -12,23 +13,10 @@ export const createGridTexture = () => {
   ctx.fillStyle = '#F8FAFC'
   ctx.fillRect(0, 0, size, size)
 
-  ctx.strokeStyle = 'rgba(15, 23, 42, 0.12)'
+  const gridLineColor = 'rgba(148, 163, 184, 0.3)'
+  ctx.strokeStyle = gridLineColor
   ctx.lineWidth = 1
-  for (let i = 0; i <= size; i += 32) {
-    ctx.beginPath()
-    ctx.moveTo(i, 0)
-    ctx.lineTo(i, size)
-    ctx.stroke()
-
-    ctx.beginPath()
-    ctx.moveTo(0, i)
-    ctx.lineTo(size, i)
-    ctx.stroke()
-  }
-
-  ctx.strokeStyle = 'rgba(15, 23, 42, 0.18)'
-  ctx.lineWidth = 1.5
-  for (let i = 0; i <= size; i += 128) {
+  for (let i = 0; i < size; i += step) {
     ctx.beginPath()
     ctx.moveTo(i, 0)
     ctx.lineTo(i, size)

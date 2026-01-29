@@ -163,11 +163,7 @@ export const SimulationAnalysisView: React.FC = () => {
             onCaptureReady={handleCaptureReady}
             onSelectEntity={handleSelectEntity}
             sceneMode={scene.mode}
-            showMapTexture={
-              scene.mode === 'canvas'
-                ? true
-                : scene.mapVisible && scene.mode === 'map'
-            }
+            showMapTexture={scene.mode === 'map' && scene.mapVisible}
           />
         </SimulationViewport>
         <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>
