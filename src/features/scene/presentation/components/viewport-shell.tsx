@@ -24,8 +24,6 @@ interface ViewportShellProps {
   onMapReady?: (map: MapRef | null) => void
 }
 export const ViewportShell: React.FC<ViewportShellProps> = ({
-  sceneMode,
-  mapVisible,
   measurementEnabled,
   activeTool,
   shapeMode,
@@ -33,29 +31,11 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
   onToggleMeasurement,
   onMapReady,
 }) => {
-  const showGrid = sceneMode === 'canvas' || !mapVisible
-  const gridStyle = showGrid
-    ? {
-        backgroundImage:
-          'linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(rgba(0,0,0,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.25) 1px, transparent 1px)',
-        backgroundSize: '20px 20px, 20px 20px, 200px 200px, 200px 200px',
-        backgroundPosition: '0 0, 0 0, 0 0, 0 0',
-      }
-    : undefined
-
   return (
     <div
       className='relative w-full overflow-hidden backdrop-blur-lg h-full flex-1'
       onMouseDown={onBlankClick}
     >
-      <div
-        style={gridStyle}
-        className={cn(
-          'absolute inset-0 transition-all duration-200 pointer-events-none',
-          showGrid ? 'opacity-100' : 'opacity-0',
-        )}
-      />
-
       <div className='absolute inset-0'>
         <MapView
           activeTool={activeTool}
