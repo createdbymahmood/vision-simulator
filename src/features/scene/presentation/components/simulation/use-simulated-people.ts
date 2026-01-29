@@ -18,7 +18,7 @@ import {
   hashId,
 } from './simulation-people-utils'
 
-const FIXED_STEP = 1 / 30
+const FIXED_STEP = 1 / 60
 const PUBLISH_INTERVAL = FIXED_STEP
 export const useSimulatedPeople = ({
   scene,
