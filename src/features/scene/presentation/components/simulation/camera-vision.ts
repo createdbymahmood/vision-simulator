@@ -240,8 +240,7 @@ const isPersonVisibleAtHeight = ({
     } else if (t >= 1 - EPSILON) {
       continue
     }
-    const rayHeight =
-      cameraOrigin.y + (personTarget.y - cameraOrigin.y) * t
+    const rayHeight = cameraOrigin.y + (personTarget.y - cameraOrigin.y) * t
     if (obstacle.height >= rayHeight) {
       return false
     }

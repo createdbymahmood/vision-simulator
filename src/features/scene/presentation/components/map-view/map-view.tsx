@@ -56,6 +56,7 @@ import {MapViewSelectionHandlesLayer} from '@/features/scene/presentation/compon
 import {MapViewShapeLayers} from '@/features/scene/presentation/components/map-view/map-view-shape-layers'
 import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/map-view-tooltip'
 import {MapViewWallLayers} from '@/features/scene/presentation/components/map-view/map-view-wall-layers'
+import {getCanvasGridStyle} from '@/features/scene/presentation/components/map-view/mapbox-grid-style'
 import {SelectionOverlay} from '@/features/scene/presentation/components/map-view/selection-overlay'
 import {useCameraPlacement} from '@/features/scene/presentation/components/map-view/use-camera-placement'
 import {useFlyToActiveArea} from '@/features/scene/presentation/components/map-view/use-fly-to-active-area'
@@ -850,10 +851,13 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [drawing])
 
+  const canvasGridStyle = React.useMemo(() => getCanvasGridStyle(), [])
   const mapStyle =
-    sceneMode === 'map' && mapVisible
-      ? MAP_STYLE_URLS[mapStyleSetting]
-      : undefined
+    sceneMode === 'canvas'
+      ? canvasGridStyle
+      : mapVisible
+        ? MAP_STYLE_URLS[mapStyleSetting]
+        : undefined
   const mapStyleProps = mapStyle ? {mapStyle} : {}
 
   return (
