@@ -60,32 +60,6 @@ export const MapViewCameraLayers: React.FC<MapViewCameraLayersProps> = ({
         />
       </Source>
 
-      <Source
-        data={data.directions}
-        id='camera-directions'
-        type='geojson'
-        promoteId='id'
-      >
-        <Layer
-          id='camera-direction'
-          type='line'
-          layout={{
-            'line-cap': 'round',
-            'line-join': 'round',
-          }}
-          paint={{
-            'line-color': ['coalesce', ['get', 'color'], '#2563EB'],
-            'line-width': [
-              'case',
-              ['boolean', ['feature-state', 'selected'], false],
-              3,
-              2,
-            ],
-            'line-opacity': 0.8,
-          }}
-        />
-      </Source>
-
       <Source data={data.points} id='cameras' type='geojson' promoteId='id'>
         <Layer
           id='camera-outline'

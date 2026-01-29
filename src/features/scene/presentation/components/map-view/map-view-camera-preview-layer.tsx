@@ -6,14 +6,13 @@ import {Layer, Source} from 'react-map-gl/mapbox'
 interface MapViewCameraPreviewLayerProps {
   previewPoint: FeatureCollection<Point>
   previewFov: FeatureCollection<Polygon>
-  previewDirection: FeatureCollection<LineString>
   previewRange: FeatureCollection<LineString>
   isValid: boolean
 }
 
 export const MapViewCameraPreviewLayer: React.FC<
   MapViewCameraPreviewLayerProps
-> = ({previewPoint, previewFov, previewDirection, previewRange, isValid}) => {
+> = ({previewPoint, previewFov, previewRange, isValid}) => {
   const hasPreview = previewPoint.features.length > 0
   if (!hasPreview) {
     return null
@@ -62,26 +61,6 @@ export const MapViewCameraPreviewLayer: React.FC<
             'line-width': 2,
             'line-opacity': 0.8,
             'line-dasharray': [2, 2],
-          }}
-        />
-      </Source>
-
-      <Source
-        data={previewDirection}
-        id='camera-preview-direction'
-        type='geojson'
-      >
-        <Layer
-          id='camera-preview-direction-line'
-          type='line'
-          layout={{
-            'line-cap': 'round',
-            'line-join': 'round',
-          }}
-          paint={{
-            'line-color': invalidColor,
-            'line-width': 2,
-            'line-opacity': 0.8,
           }}
         />
       </Source>

@@ -68,7 +68,6 @@ export const ENTITY_LAYER_IDS = [
   'camera-outline',
   'camera-fov-fill',
   'camera-fov-outline',
-  'camera-direction',
   'wall-hit-area',
   'wall-lines',
   'shape-outline',
@@ -83,7 +82,6 @@ const LAYER_TYPE_MAP: Record<string, string> = {
   'camera-outline': 'camera',
   'camera-fov-fill': 'camera',
   'camera-fov-outline': 'camera',
-  'camera-direction': 'camera',
   'wall-hit-area': 'wall',
   'wall-lines': 'wall',
   'shape-outline': 'shape',
@@ -1041,8 +1039,7 @@ export const useSelectionTransform = ({
     if (id.startsWith('area-')) return ['areas']
     if (id.startsWith('wall-')) return ['walls']
     if (id.startsWith('shape-')) return ['shapes']
-    if (id.startsWith('camera-'))
-      return ['cameras', 'camera-fovs', 'camera-directions']
+    if (id.startsWith('camera-')) return ['cameras', 'camera-fovs']
     if (id.startsWith('person-')) return ['people']
     return []
   }, [])
@@ -1207,8 +1204,7 @@ export const useSelectionTransform = ({
         )
       }
 
-      const isCameraFovLayer = (layerId: string) =>
-        layerId.startsWith('camera-fov') || layerId === 'camera-direction'
+      const isCameraFovLayer = (layerId: string) => layerId.startsWith('camera-fov')
 
       const prioritized = HIT_TEST_PRIORITY.find((priority) =>
         features.some((feature) => {

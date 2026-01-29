@@ -919,7 +919,6 @@ export const MapView: React.FC<MapViewProps> = ({
           <MapViewCameraPreviewLayer
             isValid={cameraPreview.isValid}
             previewRange={cameraPreview.range}
-            previewDirection={cameraPreview.direction}
             previewFov={cameraPreview.fov}
             previewPoint={cameraPreview.point}
           />
