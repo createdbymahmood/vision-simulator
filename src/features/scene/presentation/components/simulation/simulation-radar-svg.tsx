@@ -64,6 +64,7 @@ interface SimulationRadarSvgProps {
   onHoverCamera: (cameraId?: string) => void
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
   size,
   gridLines,
@@ -98,9 +99,9 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
         </feMerge>
       </filter>
     </defs>
-    {gridLines.map((line, index) => (
+    {gridLines.map((line) => (
       <line
-        key={`grid-${index}`}
+        key={`grid-${line.start.x}-${line.start.y}-${line.end.x}-${line.end.y}`}
         x1={line.start.x}
         x2={line.end.x}
         y1={line.start.y}
@@ -147,10 +148,10 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
         strokeWidth={1}
       />
     ))}
-    {connections.map((line, index) => (
+    {connections.map((line) => (
       <motion.line
         animate={{strokeDashoffset: [0, -8]}}
-        key={`line-${index}`}
+        key={`line-${line.camera.id}-${line.personPoint.x}-${line.personPoint.y}`}
         x1={line.cameraPoint.x}
         x2={line.personPoint.x}
         y1={line.cameraPoint.y}
@@ -212,13 +213,13 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
     ))}
     {pingPoint ? (
       <g key={`ping-${pingKey}`}>
-        {[0, 0.2, 0.4].map((delay, index) => (
+        {[0, 0.2, 0.4].map((delay) => (
           <motion.circle
             animate={{r: 50, opacity: 0}}
             cx={pingPoint.x}
             cy={pingPoint.y}
             fill='none'
-            key={`ping-${index}`}
+            key={`ping-${delay}`}
             r={0}
             stroke='#F7DC6F'
             strokeWidth={2}

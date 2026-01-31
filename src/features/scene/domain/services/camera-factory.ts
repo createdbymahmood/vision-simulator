@@ -12,6 +12,15 @@ export interface CreateCameraParams {
   direction?: number
 }
 
+const DEFAULT_CAMERA_PRESET = {
+  fov: 90,
+  depth: 20,
+  zoom: 1,
+  nearClipping: 0.5,
+  height: 3,
+  resolution: {width: 1920, height: 1080},
+}
+
 const createDefaultPtzState = (zoom: number): PtzState => ({
   pan: 0,
   tilt: 0,
@@ -31,13 +40,9 @@ export const createCameraEntity = (
   index: number,
 ): CameraEntity => {
   const preset = getCameraPreset(params.presetId)
+  const resolvedPreset = {...DEFAULT_CAMERA_PRESET, ...(preset ?? {})}
 
   const color = params.color ?? assignCameraColor(index)
-  const fov = preset?.fov ?? 90
-  const depth = preset?.depth ?? 20
-  const zoom = preset?.zoom ?? 1
-  const nearClipping = preset?.nearClipping ?? 0.5
-  const height = preset?.height ?? 3
 
   return {
     id: params.id,
@@ -47,15 +52,15 @@ export const createCameraEntity = (
     typePreset: preset?.id ?? params.presetId,
     x: params.position[0],
     y: params.position[1],
-    height,
+    height: resolvedPreset.height,
     direction: params.direction ?? 0,
-    fov,
-    depth,
-    zoom,
-    nearClipping,
-    resolution: preset?.resolution ?? {width: 1920, height: 1080},
+    fov: resolvedPreset.fov,
+    depth: resolvedPreset.depth,
+    zoom: resolvedPreset.zoom,
+    nearClipping: resolvedPreset.nearClipping,
+    resolution: resolvedPreset.resolution,
     color,
-    ptz: createDefaultPtzState(zoom),
+    ptz: createDefaultPtzState(resolvedPreset.zoom),
     ptzPresets: [],
     showCollisions: true,
   }

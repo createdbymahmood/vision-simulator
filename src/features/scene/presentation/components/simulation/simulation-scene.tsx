@@ -145,7 +145,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     () => createCoordinateTransformer(originPoint),
     [originPoint],
   )
-  const notifyCaptureReady = useCallbackRef(onCaptureReady ?? (() => {}))
+  const notifyCaptureReady = useCallbackRef(onCaptureReady ?? (() => undefined))
 
   React.useEffect(() => {
     if (!onCaptureReady) {
@@ -207,7 +207,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     scene.shapes.forEach((shape) => points.push(...shape.geometry))
     scene.walls.forEach((wall) => points.push(...wall.points))
     scene.people.forEach((person) => points.push([person.x, person.y]))
-    scene.cameras.forEach((camera) => points.push([camera.x, camera.y]))
+    scene.cameras.forEach((sceneCamera) =>
+      points.push([sceneCamera.x, sceneCamera.y]),
+    )
     return points
   }, [scene])
 
@@ -346,9 +348,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     if (!bounds) {
       return undefined
     }
-    const size = new THREE.Vector3()
-    bounds.getSize(size)
-    return Math.max(size.x, size.z)
+    const boundsSize = new THREE.Vector3()
+    bounds.getSize(boundsSize)
+    return Math.max(boundsSize.x, boundsSize.z)
   }, [bounds])
 
   const [focusRequest, setFocusRequest] = React.useState<FocusRequest | null>(
@@ -376,9 +378,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     const box = new THREE.Box3().setFromPoints(points)
     const center = new THREE.Vector3()
     box.getCenter(center)
-    const size = new THREE.Vector3()
-    box.getSize(size)
-    const distance = Math.max(size.x, size.z, 10) * 1.2
+    const focusBoundsSize = new THREE.Vector3()
+    box.getSize(focusBoundsSize)
+    const distance = Math.max(focusBoundsSize.x, focusBoundsSize.z, 10) * 1.2
     return {point: center, distance}
   }, [entities, focusAreaId])
 
@@ -412,24 +414,24 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     if (!controlsRef.current) {
       return
     }
-    const camera = controlsRef.current.object
+    const controlsCamera = controlsRef.current.object
     const target = new THREE.Vector3()
     if (bounds) {
       bounds.getCenter(target)
-      const size = new THREE.Vector3()
-      bounds.getSize(size)
-      const distance = Math.max(size.x, size.z, 40)
-      camera.position.set(
+      const boundsSize = new THREE.Vector3()
+      bounds.getSize(boundsSize)
+      const distance = Math.max(boundsSize.x, boundsSize.z, 40)
+      controlsCamera.position.set(
         target.x + distance * 0.8,
         distance * 0.5,
         target.z + distance * 0.8,
       )
       controlsRef.current.target.copy(target)
     } else {
-      camera.position.set(40, 30, 40)
+      controlsCamera.position.set(40, 30, 40)
       controlsRef.current.target.set(0, 0, 0)
     }
-    camera.updateProjectionMatrix()
+    controlsCamera.updateProjectionMatrix()
     controlsRef.current.update()
   }, [bounds])
 

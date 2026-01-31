@@ -176,7 +176,7 @@ export const useSimulationRecording = ({
       recorder.start()
       setIsRecording(true)
       startTimer()
-    } catch (error) {
+    } catch {
       toast.error('Recording failed to start')
       cleanupStream()
       clearTimer()

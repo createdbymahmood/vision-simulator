@@ -54,6 +54,7 @@ interface TopPanelProps {
   onExportSceneImage: () => void
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const TopPanel: React.FC<TopPanelProps> = ({
   sceneMode,
   viewMode,

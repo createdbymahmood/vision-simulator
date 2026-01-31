@@ -41,6 +41,7 @@ const isEditableTarget = (target: EventTarget | null) => {
   return tag === 'input' || tag === 'textarea' || tag === 'select'
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const useEditorShortcuts = ({
   enabled = true,
   isEditMode,

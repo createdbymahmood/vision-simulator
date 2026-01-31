@@ -23,13 +23,7 @@ export const getCanvasGridStyle = (): StyleSpecification => ({
       type: 'background',
       paint: {
         'background-color': '#f8fafc',
-        'background-pattern': [
-          'step',
-          ['zoom'],
-          'grid-32',
-          12,
-          'grid-16',
-        ],
+        'background-pattern': ['step', ['zoom'], 'grid-32', 12, 'grid-16'],
       },
     },
   ],

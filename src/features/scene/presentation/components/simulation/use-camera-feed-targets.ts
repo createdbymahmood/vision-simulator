@@ -10,12 +10,16 @@ interface UseCameraFeedTargetsInput {
   cameras: CameraEntity[]
 }
 
+const createMutableRef = <T>(): React.MutableRefObject<T | null> => ({
+  current: null,
+})
+
 export const useCameraFeedTargets = ({cameras}: UseCameraFeedTargetsInput) => {
   const containerRefs = React.useRef(
-    new Map<string, React.RefObject<HTMLDivElement>>(),
+    new Map<string, React.MutableRefObject<HTMLDivElement | null>>(),
   )
   const canvasRefs = React.useRef(
-    new Map<string, React.RefObject<HTMLCanvasElement>>(),
+    new Map<string, React.MutableRefObject<HTMLCanvasElement | null>>(),
   )
 
   const orderedIds = React.useMemo(
@@ -33,12 +37,12 @@ export const useCameraFeedTargets = ({cameras}: UseCameraFeedTargetsInput) => {
       targetIds.map((id) => {
         let containerRef = containerRefs.current.get(id)
         if (!containerRef) {
-          containerRef = React.createRef<HTMLDivElement>()
+          containerRef = createMutableRef<HTMLDivElement>()
           containerRefs.current.set(id, containerRef)
         }
         let canvasRef = canvasRefs.current.get(id)
         if (!canvasRef) {
-          canvasRef = React.createRef<HTMLCanvasElement>()
+          canvasRef = createMutableRef<HTMLCanvasElement>()
           canvasRefs.current.set(id, canvasRef)
         }
         return {id, containerRef, canvasRef}

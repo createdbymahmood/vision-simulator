@@ -425,11 +425,11 @@ export const getSafeRing = (coordinates: GeoPoint[]) => {
 }
 
 export const distanceToSegment = (
-  point: GeoPoint,
+  targetPoint: GeoPoint,
   a: GeoPoint,
   b: GeoPoint,
 ) => {
-  const [px, py] = point
+  const [px, py] = targetPoint
   const [ax, ay] = a
   const [bx, by] = b
   const dx = bx - ax
@@ -949,7 +949,7 @@ export const doesWallCollideWithShapes = (
   return filteredShapes.some((shape) => {
     if (shape.shapeType === 'line' && shape.geometry.length >= 2) {
       const shapePoints = shape.geometry
-      return wallPoints.some((point, index) => {
+      return wallPoints.some((wallPoint, index) => {
         if (index === wallPoints.length - 1) {
           return false
         }
@@ -960,7 +960,7 @@ export const doesWallCollideWithShapes = (
           }
           const nextShape = shapePoints[sIndex + 1]
           return (
-            segmentDistanceMeters(point, nextWall, shapePoint, nextShape) <
+            segmentDistanceMeters(wallPoint, nextWall, shapePoint, nextShape) <
             thickness
           )
         })

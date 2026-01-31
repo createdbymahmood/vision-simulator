@@ -447,8 +447,7 @@ export const MapView: React.FC<MapViewProps> = ({
     [activeTool, showTooltip],
   )
   const handleMouseDown = (event: MapLayerMouseEvent) => {
-    if (handleSelectionMouseDown(event)) {
-    }
+    handleSelectionMouseDown(event)
   }
 
   const handleMouseUp = () => {
@@ -622,6 +621,69 @@ export const MapView: React.FC<MapViewProps> = ({
     [finalizeShape, shapeDrawing.isActive, shapeMode, startShape],
   )
 
+  const handlePlacementMapClick = React.useCallback(
+    (event: MapLayerMouseEvent) => {
+      if (activeTool === 'place-camera') {
+        return handleCameraMapClick(event)
+      }
+      if (activeTool === 'place-person') {
+        return handlePersonMapClick(event)
+      }
+      return false
+    },
+    [activeTool, handleCameraMapClick, handlePersonMapClick],
+  )
+
+  const handleDrawingToolClick = React.useCallback(
+    (point: GeoPoint) => {
+      const isDrawingTool =
+        activeTool === 'draw-area' ||
+        activeTool === 'draw-wall' ||
+        activeTool === 'draw-shape'
+
+      if (!isDrawingTool) {
+        return false
+      }
+
+      if (areas.length === 0 && activeTool !== 'draw-area') {
+        toast.info('Create an area first')
+        return true
+      }
+
+      const areaAtPoint = getAreaAtPoint(point)
+      const pointInside = activeTool === 'draw-area' || Boolean(areaAtPoint)
+      if (!pointInside) {
+        toast.error('Objects must be inside an area')
+        return true
+      }
+
+      if (activeTool === 'draw-area') {
+        handleAreaClick(point)
+        return true
+      }
+
+      if (activeTool === 'draw-wall') {
+        handleWallClick(point)
+        return true
+      }
+
+      if (activeTool === 'draw-shape') {
+        handleShapeClick(point)
+        return true
+      }
+
+      return false
+    },
+    [
+      activeTool,
+      areas.length,
+      getAreaAtPoint,
+      handleAreaClick,
+      handleShapeClick,
+      handleWallClick,
+    ],
+  )
+
   const handleMapClick = React.useCallback(
     (event: MapLayerMouseEvent) => {
       if (handleSelectionMapClick(event)) {
@@ -631,17 +693,8 @@ export const MapView: React.FC<MapViewProps> = ({
       if (!isEditMode) {
         return
       }
-      const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
-
-      if (activeTool === 'place-camera') {
-        if (handleCameraMapClick(event)) {
-          return
-        }
-      }
-      if (activeTool === 'place-person') {
-        if (handlePersonMapClick(event)) {
-          return
-        }
+      if (handlePlacementMapClick(event)) {
+        return
       }
 
       if (activeTool === 'hand') {
@@ -649,52 +702,16 @@ export const MapView: React.FC<MapViewProps> = ({
         return
       }
 
-      const isDrawingTool =
-        activeTool === 'draw-area' ||
-        activeTool === 'draw-wall' ||
-        activeTool === 'draw-shape'
-
-      if (!isDrawingTool) {
-        return
-      }
-
-      if (areas.length === 0 && activeTool !== 'draw-area') {
-        toast.info('Create an area first')
-        return
-      }
-
-      const areaAtPoint = getAreaAtPoint(point)
-      const pointInside = activeTool === 'draw-area' || Boolean(areaAtPoint)
-      if (!pointInside) {
-        toast.error('Objects must be inside an area')
-        return
-      }
-
-      if (activeTool === 'draw-area') {
-        handleAreaClick(point)
-        return
-      }
-
-      if (activeTool === 'draw-wall') {
-        handleWallClick(point)
-        return
-      }
-
-      if (activeTool === 'draw-shape') {
-        handleShapeClick(point)
-      }
+      const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
+      handleDrawingToolClick(point)
     },
     [
       activeTool,
       clearSelection,
-      handleCameraMapClick,
-      handleAreaClick,
-      handleShapeClick,
-      handleWallClick,
+      handleDrawingToolClick,
+      handlePlacementMapClick,
       handleSelectionMapClick,
       isEditMode,
-      getAreaAtPoint,
-      areas.length,
     ],
   )
 

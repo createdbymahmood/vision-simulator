@@ -162,6 +162,133 @@ const useShapeData = (
     return buildExtrudeShapeData(sanitized, shapeHeight)
   }, [entity.shapeType, lineThickness, points, shapeHeight])
 
+interface ShapeRenderContext {
+  shapeData: ShapeData
+  renderOrder: number
+  shapeHeight: number
+  color: string
+  selected: boolean
+  baseOpacity: number
+  onSelect: (event: ThreeEvent<MouseEvent>) => void
+}
+
+const renderLineShape = (
+  context: ShapeRenderContext & {shapeData: LineShapeData},
+) => (
+  <group
+    renderOrder={context.renderOrder}
+    position={context.shapeData.position}
+    rotation={[0, context.shapeData.rotationY, 0]}
+  >
+    <mesh
+      renderOrder={context.renderOrder}
+      castShadow
+      onClick={context.onSelect}
+      receiveShadow
+    >
+      <boxGeometry
+        args={[
+          context.shapeData.length,
+          context.shapeHeight,
+          context.shapeData.thickness,
+        ]}
+      />
+      <meshStandardMaterial
+        transparent
+        emissive={context.selected ? context.color : '#000000'}
+        emissiveIntensity={context.selected ? 0.3 : 0}
+        metalness={0.1}
+        color={context.color}
+        opacity={context.baseOpacity}
+        polygonOffset
+        polygonOffsetFactor={1}
+        polygonOffsetUnits={1}
+        roughness={0.8}
+      />
+    </mesh>
+  </group>
+)
+
+const renderCylinderShape = (
+  context: ShapeRenderContext & {shapeData: CylinderShapeData},
+) => (
+  <group
+    renderOrder={context.renderOrder}
+    position={context.shapeData.position}
+  >
+    <mesh
+      renderOrder={context.renderOrder}
+      castShadow
+      onClick={context.onSelect}
+      receiveShadow
+    >
+      <cylinderGeometry
+        args={[
+          context.shapeData.radius,
+          context.shapeData.radius,
+          context.shapeHeight,
+          48,
+        ]}
+      />
+      <meshStandardMaterial
+        transparent
+        emissive={context.selected ? context.color : '#000000'}
+        emissiveIntensity={context.selected ? 0.3 : 0}
+        metalness={0.1}
+        color={context.color}
+        opacity={context.baseOpacity}
+        polygonOffset
+        polygonOffsetFactor={1}
+        polygonOffsetUnits={1}
+        roughness={0.8}
+      />
+    </mesh>
+  </group>
+)
+
+const renderExtrudeShape = (
+  context: ShapeRenderContext & {shapeData: ExtrudeShapeData},
+) => (
+  <group
+    renderOrder={context.renderOrder}
+    position={context.shapeData.position}
+  >
+    <mesh
+      renderOrder={context.renderOrder}
+      castShadow
+      geometry={context.shapeData.geometry}
+      onClick={context.onSelect}
+      receiveShadow
+    >
+      <meshStandardMaterial
+        transparent
+        emissive={context.selected ? context.color : '#000000'}
+        emissiveIntensity={context.selected ? 0.3 : 0}
+        metalness={0.1}
+        color={context.color}
+        opacity={context.baseOpacity}
+        polygonOffset
+        polygonOffsetFactor={2}
+        polygonOffsetUnits={2}
+        roughness={0.8}
+      />
+    </mesh>
+  </group>
+)
+
+const renderShapeMesh = (context: ShapeRenderContext) => {
+  switch (context.shapeData.kind) {
+    case 'line':
+      return renderLineShape({...context, shapeData: context.shapeData})
+    case 'cylinder':
+      return renderCylinderShape({...context, shapeData: context.shapeData})
+    case 'extrude':
+      return renderExtrudeShape({...context, shapeData: context.shapeData})
+    default:
+      return null
+  }
+}
+
 export const ShapeMesh: React.FC<{
   data: Extract<WorldEntity, {type: 'shape'}>
   onSelect: (id?: string) => void
@@ -201,90 +328,13 @@ export const ShapeMesh: React.FC<{
     }
   }
 
-  if (shapeData.kind === 'line') {
-    return (
-      <group
-        renderOrder={renderOrder}
-        position={shapeData.position}
-        rotation={[0, shapeData.rotationY, 0]}
-      >
-        <mesh
-          renderOrder={renderOrder}
-          castShadow
-          onClick={handleSelect}
-          receiveShadow
-        >
-          <boxGeometry
-            args={[shapeData.length, shapeHeight, shapeData.thickness]}
-          />
-          <meshStandardMaterial
-            transparent
-            emissive={selected ? color : '#000000'}
-            emissiveIntensity={selected ? 0.3 : 0}
-            metalness={0.1}
-            color={color}
-            opacity={baseOpacity}
-            polygonOffset
-            polygonOffsetFactor={1}
-            polygonOffsetUnits={1}
-            roughness={0.8}
-          />
-        </mesh>
-      </group>
-    )
-  }
-
-  if (shapeData.kind === 'cylinder') {
-    return (
-      <group renderOrder={renderOrder} position={shapeData.position}>
-        <mesh
-          renderOrder={renderOrder}
-          castShadow
-          onClick={handleSelect}
-          receiveShadow
-        >
-          <cylinderGeometry
-            args={[shapeData.radius, shapeData.radius, shapeHeight, 48]}
-          />
-          <meshStandardMaterial
-            transparent
-            emissive={selected ? color : '#000000'}
-            emissiveIntensity={selected ? 0.3 : 0}
-            metalness={0.1}
-            color={color}
-            opacity={baseOpacity}
-            polygonOffset
-            polygonOffsetFactor={1}
-            polygonOffsetUnits={1}
-            roughness={0.8}
-          />
-        </mesh>
-      </group>
-    )
-  }
-
-  return (
-    <group renderOrder={renderOrder} position={shapeData.position}>
-      <mesh
-        renderOrder={renderOrder}
-        castShadow
-        geometry={shapeData.geometry}
-        onClick={handleSelect}
-        receiveShadow
-      >
-        <meshStandardMaterial
-          transparent
-          emissive={selected ? color : '#000000'}
-          emissiveIntensity={selected ? 0.3 : 0}
-          metalness={0.1}
-          color={color}
-          opacity={baseOpacity}
-          polygonOffset
-          polygonOffsetFactor={2}
-          polygonOffsetUnits={2}
-          roughness={0.8}
-        />
-      </mesh>
-    </group>
-  )
+  return renderShapeMesh({
+    shapeData,
+    renderOrder,
+    shapeHeight,
+    color,
+    selected,
+    baseOpacity,
+    onSelect: handleSelect,
+  })
 }

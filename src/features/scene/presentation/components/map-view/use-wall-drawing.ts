@@ -50,6 +50,7 @@ interface WallPointerResult {
   cursor?: string
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const useWallDrawing = ({
   addWall,
   getAreaForPoint,
@@ -213,7 +214,7 @@ export const useWallDrawing = ({
         },
       }
     },
-    [isGeometryInsideArea, people, targetArea, wallDrawing],
+    [isGeometryInsideArea, people, shapes, targetArea, wallDrawing],
   )
 
   return {

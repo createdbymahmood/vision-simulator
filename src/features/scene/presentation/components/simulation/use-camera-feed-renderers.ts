@@ -22,6 +22,7 @@ interface FeedRendererState {
   aspect: number
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const useCameraFeedRenderers = ({
   cameraFeedTargets,
   cameras,

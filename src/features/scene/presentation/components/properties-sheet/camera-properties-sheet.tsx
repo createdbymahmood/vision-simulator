@@ -38,6 +38,53 @@ const normalizePan = (value: number) => {
   return normalized
 }
 
+interface PtzDpadProps {
+  onPan: (delta: number) => void
+  onTilt: (delta: number) => void
+  color: string
+}
+
+const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
+  <div className='grid grid-cols-3 gap-2 rounded-md border p-3 '>
+    <div />
+    <div className='flex items-center justify-center'>
+      <Button size='icon' variant='secondary' onClick={() => onTilt(5)}>
+        <ArrowUp className='size-4' />
+      </Button>
+    </div>
+    <div />
+
+    <div className='flex items-center justify-center'>
+      <Button size='icon' variant='secondary' onClick={() => onPan(-5)}>
+        <ArrowLeft className='size-4' />
+      </Button>
+    </div>
+
+    <div className='flex items-center justify-center '>
+      <span
+        className='block size-4 rounded-full'
+        style={{backgroundColor: color}}
+      />
+    </div>
+
+    <div className='flex items-center justify-center'>
+      <Button size='icon' variant='secondary' onClick={() => onPan(5)}>
+        <ArrowRight className='size-4' />
+      </Button>
+    </div>
+
+    <div />
+
+    <div className='flex items-center justify-center'>
+      <Button size='icon' variant='secondary' onClick={() => onTilt(-5)}>
+        <ArrowDown className='size-4' />
+      </Button>
+    </div>
+    <div />
+  </div>
+)
+
+// eslint-disable-next-line max-lines-per-function
 export const CameraPropertiesSheet: React.FC = () => {
   const {recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
@@ -199,6 +246,7 @@ export const CameraPropertiesSheet: React.FC = () => {
     applyPtz({pan: 0, tilt: 0, zoom: 1})
   }
 
+  // eslint-disable-next-line complexity
   const handleKeyboard = useCallbackRef((event: KeyboardEvent) => {
     if (!selectedCamera) return
     if (
@@ -489,49 +537,3 @@ export const CameraPropertiesSheet: React.FC = () => {
     </PropertiesShell>
   )
 }
-
-interface PtzDpadProps {
-  onPan: (delta: number) => void
-  onTilt: (delta: number) => void
-  color: string
-}
-
-const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
-  <div className='grid grid-cols-3 gap-2 rounded-md border p-3 '>
-    <div />
-    <div className='flex items-center justify-center'>
-      <Button size='icon' variant='secondary' onClick={() => onTilt(5)}>
-        <ArrowUp className='size-4' />
-      </Button>
-    </div>
-    <div />
-
-    <div className='flex items-center justify-center'>
-      <Button size='icon' variant='secondary' onClick={() => onPan(-5)}>
-        <ArrowLeft className='size-4' />
-      </Button>
-    </div>
-
-    <div className='flex items-center justify-center '>
-      <span
-        className='block size-4 rounded-full'
-        style={{backgroundColor: color}}
-      />
-    </div>
-
-    <div className='flex items-center justify-center'>
-      <Button size='icon' variant='secondary' onClick={() => onPan(5)}>
-        <ArrowRight className='size-4' />
-      </Button>
-    </div>
-
-    <div />
-
-    <div className='flex items-center justify-center'>
-      <Button size='icon' variant='secondary' onClick={() => onTilt(-5)}>
-        <ArrowDown className='size-4' />
-      </Button>
-    </div>
-    <div />
-  </div>
-)

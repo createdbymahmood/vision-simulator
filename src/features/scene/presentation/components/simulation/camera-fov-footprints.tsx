@@ -40,8 +40,8 @@ const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({points, color}) => {
     const linePoints = points.map(
       (point) => new THREE.Vector3(point.x, groundOffset, point.z),
     )
-    const lineGeometry = new THREE.BufferGeometry().setFromPoints(linePoints)
-    return {surfaceGeometry: surface, lineGeometry}
+    const outlineGeometry = new THREE.BufferGeometry().setFromPoints(linePoints)
+    return {surfaceGeometry: surface, lineGeometry: outlineGeometry}
   }, [points])
 
   React.useEffect(() => {

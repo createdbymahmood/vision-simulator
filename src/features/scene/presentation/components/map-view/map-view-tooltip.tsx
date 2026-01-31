@@ -30,7 +30,7 @@ export const MapViewTooltip: React.FC<MapViewTooltipProps> = ({tooltip}) => {
     update?.()
   })
 
-  React.useEffect(cb, [refs, update, virtualRef, tooltip.visible])
+  React.useEffect(cb, [cb, refs, update, virtualRef, tooltip.visible])
 
   if (!tooltip.visible) {
     return null

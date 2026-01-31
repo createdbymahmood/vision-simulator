@@ -39,6 +39,7 @@ export const useRadarTrails = ({
   }, [peopleWorld, scene.people, updatedAt])
 
   const trailPaths = React.useMemo<RadarTrailPath[]>(() => {
+    void trailTick
     const paths: RadarTrailPath[] = []
     trailsRef.current.forEach((trail, id) => {
       if (trail.points.length < 2) {

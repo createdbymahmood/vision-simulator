@@ -242,6 +242,46 @@ const resetUi = (set: SetState, get: GetState) => {
   return get()
 }
 
+const defaultUiState = {
+  viewMode: 'editor' as ViewMode,
+  activeTool: 'select' as EditorTool,
+  isEditMode: true,
+  openPanels: {} as Record<string, boolean>,
+  openPopovers: {} as Record<string, boolean>,
+  cameraPlacement: {
+    presetId: null,
+    color: null,
+  },
+  flyToActiveAreaTick: 0,
+  radarSettings: {
+    zoom: 1.1,
+    pan: {x: 0, y: 0},
+  },
+  visionState: {
+    peopleWorld: {},
+    visibleByCameraId: {},
+    detectionsCount: 0,
+    updatedAt: 0,
+  },
+}
+
+const mergeUiState = (initialValues: Partial<UiState>) => ({
+  ...defaultUiState,
+  ...initialValues,
+  cameraPlacement: {
+    ...defaultUiState.cameraPlacement,
+    ...initialValues.cameraPlacement,
+  },
+  radarSettings: {
+    ...defaultUiState.radarSettings,
+    ...initialValues.radarSettings,
+  },
+  visionState: {
+    ...defaultUiState.visionState,
+    ...initialValues.visionState,
+  },
+})
+
 const triggerFlyToActiveArea = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.flyToActiveAreaTick += 1
@@ -254,26 +294,7 @@ const triggerFlyToActiveArea = (set: SetState, get: GetState) => {
 const createUiStore: (
   initialValues: Partial<UiState>,
 ) => StateCreator<UiState> = (initialValues) => (set, get) => ({
-  viewMode: initialValues?.viewMode ?? 'editor',
-  activeTool: initialValues?.activeTool ?? 'select',
-  isEditMode: initialValues?.isEditMode ?? true,
-  openPanels: initialValues?.openPanels ?? {},
-  openPopovers: initialValues?.openPopovers ?? {},
-  cameraPlacement: initialValues?.cameraPlacement ?? {
-    presetId: null,
-    color: null,
-  },
-  flyToActiveAreaTick: initialValues?.flyToActiveAreaTick ?? 0,
-  radarSettings: initialValues?.radarSettings ?? {
-    zoom: 1.1,
-    pan: {x: 0, y: 0},
-  },
-  visionState: initialValues?.visionState ?? {
-    peopleWorld: {},
-    visibleByCameraId: {},
-    detectionsCount: 0,
-    updatedAt: 0,
-  },
+  ...mergeUiState(initialValues),
   setViewMode: (mode) => setViewMode(set, get, mode),
   toggleViewMode: () => toggleViewMode(set, get),
   setActiveTool: (tool) => setActiveTool(set, get, tool),
@@ -304,7 +325,6 @@ const createUiStore: (
   setRadarSettings: (settings) => setRadarSettings(set, get, settings),
   setVisionState: (state) => setVisionState(set, get, state),
   resetUi: () => resetUi(set, get),
-  ...initialValues,
 })
 
 export const {

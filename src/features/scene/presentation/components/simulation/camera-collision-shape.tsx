@@ -96,10 +96,6 @@ export const ShapeCollisionSurface: React.FC<ShapeCollisionSurfaceProps> = ({
     }
   }, [geometry])
 
-  if (!geometry) {
-    return null
-  }
-
   const materialRef = React.useRef<THREE.MeshBasicMaterial | null>(null)
   useFrame(({clock}) => {
     if (!materialRef.current) {
@@ -108,6 +104,10 @@ export const ShapeCollisionSurface: React.FC<ShapeCollisionSurfaceProps> = ({
     const pulse = 0.85 + 0.15 * Math.sin(clock.elapsedTime * Math.PI)
     materialRef.current.opacity = opacity * pulse
   })
+
+  if (!geometry) {
+    return null
+  }
 
   return (
     <group position={geometry.position} rotation={[0, geometry.rotation, 0]}>

@@ -6,7 +6,6 @@ import React from 'react'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
 import {Button} from '@/components/ui/button'
-import {cn} from '@/lib/utils'
 
 import type {SceneMode} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'

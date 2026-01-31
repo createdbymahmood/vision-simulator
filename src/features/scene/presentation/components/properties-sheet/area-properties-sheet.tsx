@@ -22,6 +22,18 @@ import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-histor
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
+interface MetricProps {
+  label: string
+  value: string
+}
+
+const Metric: React.FC<MetricProps> = ({label, value}) => (
+  <div className='space-y-1 rounded-md border p-3'>
+    <p className='text-xs text-muted-foreground'>{label}</p>
+    <p className='text-sm font-semibold'>{value}</p>
+  </div>
+)
+
 // eslint-disable-next-line max-lines-per-function
 export const AreaPropertiesSheet: React.FC = () => {
   const {recordActionDebounced} = useHistoryRecorder()
@@ -241,15 +253,3 @@ export const AreaPropertiesSheet: React.FC = () => {
     </PropertiesShell>
   )
 }
-
-interface MetricProps {
-  label: string
-  value: string
-}
-
-const Metric: React.FC<MetricProps> = ({label, value}) => (
-  <div className='space-y-1 rounded-md border p-3'>
-    <p className='text-xs text-muted-foreground'>{label}</p>
-    <p className='text-sm font-semibold'>{value}</p>
-  </div>
-)

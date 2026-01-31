@@ -31,6 +31,24 @@ import {
 
 type MapLayerMouseEvent = MapMouseEvent
 
+const DEFAULT_CAMERA_PLACEMENT_PRESET = {
+  id: 'static-hd',
+  name: 'Camera',
+  fov: 90,
+  depth: 20,
+  zoom: 1,
+  nearClipping: 0.5,
+  height: 3,
+  resolution: {width: 1920, height: 1080},
+}
+
+const resolvePlacementPreset = (
+  preset?: ReturnType<typeof getCameraPreset>,
+) => ({
+  ...DEFAULT_CAMERA_PLACEMENT_PRESET,
+  ...(preset ?? {}),
+})
+
 interface CameraPlacementState {
   presetId: string | null
   color: string | null
@@ -292,51 +310,75 @@ export const useCameraPlacement = ({
     ],
   )
 
-  const onMapClick = React.useCallback(
-    (event: MapLayerMouseEvent) => {
-      if (!isEditMode || activeTool !== 'place-camera') {
-        return false
-      }
-      const mapPoint: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
-      const preset = resolvePreset()
-      const color = ensurePlacementColor()
-
+  const resolvePlacementArea = React.useCallback(
+    (mapPoint: GeoPoint) => {
       const areaForPlacement = getAreaAtPoint(mapPoint)
-
       if (!areaForPlacement) {
         toast.error('Cannot place camera outside area')
         setCursorOverride('not-allowed')
-        return true
+        return null
       }
+      return areaForPlacement
+    },
+    [getAreaAtPoint, setCursorOverride],
+  )
+
+  const isFovPlacementValid = React.useCallback(
+    (
+      mapPoint: GeoPoint,
+      areaForPlacement: AreaEntity,
+      preset: typeof DEFAULT_CAMERA_PLACEMENT_PRESET,
+    ) => {
       const obstacles = occlusionObstaclesByArea.get(areaForPlacement.id) ?? []
       const fovRing = buildOccludedFovRing({
         origin: mapPoint,
         direction: 0,
-        fov: preset?.fov ?? 90,
-        depth: preset?.depth ?? 20,
-        cameraHeight: preset?.height ?? 3,
+        fov: preset.fov,
+        depth: preset.depth,
+        cameraHeight: preset.height,
         area: areaForPlacement,
         obstacles,
       })
       if (computeArea(fovRing) <= MIN_FOV_PREVIEW_AREA) {
         toast.error('Camera FOV is blocked by obstacles')
         setCursorOverride('not-allowed')
+        return false
+      }
+      return true
+    },
+    [occlusionObstaclesByArea, setCursorOverride],
+  )
+
+  const onMapClick = React.useCallback(
+    (event: MapLayerMouseEvent) => {
+      if (!isEditMode || activeTool !== 'place-camera') {
+        return false
+      }
+      const mapPoint: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
+      const preset = resolvePlacementPreset(resolvePreset())
+      const color = ensurePlacementColor()
+
+      const areaForPlacement = resolvePlacementArea(mapPoint)
+      if (!areaForPlacement) {
+        return true
+      }
+      if (!isFovPlacementValid(mapPoint, areaForPlacement, preset)) {
         return true
       }
 
       const updatedScene = addCamera({
-        typePreset: preset?.id ?? 'static-hd',
+        typePreset: preset.id,
         areaId: areaForPlacement.id,
         x: mapPoint[0],
         y: mapPoint[1],
-        name: preset?.name ?? 'Camera',
-        height: preset?.height ?? 3,
+        name: preset.name,
+        height: preset.height,
         direction: 0,
-        fov: preset?.fov ?? 90,
-        depth: preset?.depth ?? 20,
-        zoom: preset?.zoom ?? 1,
-        nearClipping: preset?.nearClipping ?? 0.5,
-        resolution: preset?.resolution ?? {width: 1920, height: 1080},
+        fov: preset.fov,
+        depth: preset.depth,
+        zoom: preset.zoom,
+        nearClipping: preset.nearClipping,
+        resolution: preset.resolution,
         color,
         showCollisions: true,
       })
@@ -357,15 +399,14 @@ export const useCameraPlacement = ({
       addCamera,
       clearCameraPlacement,
       ensurePlacementColor,
+      isFovPlacementValid,
       isEditMode,
-      occlusionObstaclesByArea,
       openCameraPanel,
+      recordAction,
+      resolvePlacementArea,
       resolvePreset,
-      getAreaAtPoint,
       setActiveTool,
       setSelection,
-      setCursorOverride,
-      recordAction,
     ],
   )
 

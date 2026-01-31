@@ -5,6 +5,8 @@ import type {MapMouseEvent, MapRef} from 'react-map-gl/mapbox'
 import {booleanPointInPolygon, polygon, point as turfPoint} from '@turf/turf'
 import React from 'react'
 
+/* eslint-disable complexity */
+/* eslint-disable max-lines-per-function */
 import type {HistoryEntity} from '@/features/scene/application/history/history-actions'
 import type {
   AreaEntity,
@@ -916,7 +918,6 @@ const computeRotateTransform = ({
   }
 }
 
-// eslint-disable-next-line max-lines-per-function
 export const useSelectionTransform = ({
   mapRef,
   activeTool,
@@ -1088,9 +1089,10 @@ export const useSelectionTransform = ({
     }
 
     const map = getMapInstance()
-    const {handleFeatures, rotationHandle} = createHandleFeatures(bounds, map)
-    setHandleFeatures(handleFeatures)
-    setRotationHandle(rotationHandle)
+    const {handleFeatures: nextHandleFeatures, rotationHandle: nextRotation} =
+      createHandleFeatures(bounds, map)
+    setHandleFeatures(nextHandleFeatures)
+    setRotationHandle(nextRotation)
   }, [getMapInstance, selectedEntities])
 
   const selectionBoundsFeature: FeatureCollection | null = React.useMemo(() => {
@@ -1204,7 +1206,8 @@ export const useSelectionTransform = ({
         )
       }
 
-      const isCameraFovLayer = (layerId: string) => layerId.startsWith('camera-fov')
+      const isCameraFovLayer = (layerId: string) =>
+        layerId.startsWith('camera-fov')
 
       const prioritized = HIT_TEST_PRIORITY.find((priority) =>
         features.some((feature) => {
@@ -1465,12 +1468,8 @@ export const useSelectionTransform = ({
       entityIndex,
       getAreaForEntity,
       getEntityAreaId,
-      isGeometryInsideAreaSelection,
       isPersonPositionBlocked,
-      rotatePoints,
-      scalePoints,
       selectedEntities,
-      translatePoints,
       transformSession,
       walls,
       shapes,
@@ -1623,8 +1622,10 @@ export const useSelectionTransform = ({
       hitTestEntities,
       hitTestHandles,
       isEditMode,
+      openPropertiesForEntity,
       selectedEntities,
       selectedEntityIds,
+      selectionBounds,
       setSelection,
       startTransformSession,
     ],
@@ -1662,8 +1663,10 @@ export const useSelectionTransform = ({
     [
       activeTool,
       clearSelection,
+      entityIndex,
       hitTestEntities,
       isEditMode,
+      openPropertiesForEntity,
       selectedEntityIds,
       setSelection,
     ],

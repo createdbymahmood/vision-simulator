@@ -302,6 +302,14 @@ const addShape = (
   return updated
 }
 
+const getNextId = (existingIds: string[], prefix: string) => {
+  const suffixes = existingIds
+    .map((value) => Number.parseInt(value.replace(`${prefix}-`, ''), 10))
+    .filter((value) => Number.isFinite(value))
+  const maxSuffix = suffixes.length > 0 ? Math.max(...suffixes) : 0
+  return `${prefix}-${maxSuffix + 1}`
+}
+
 const addCamera = (
   set: SetState,
   get: GetState,
@@ -408,14 +416,6 @@ const updatePerson = (
   const updated = get().scene
   persistScene(updated)
   return updated
-}
-
-const getNextId = (existingIds: string[], prefix: string) => {
-  const suffixes = existingIds
-    .map((value) => Number.parseInt(value.replace(`${prefix}-`, ''), 10))
-    .filter((value) => Number.isFinite(value))
-  const maxSuffix = suffixes.length > 0 ? Math.max(...suffixes) : 0
-  return `${prefix}-${maxSuffix + 1}`
 }
 
 const deleteEntities = (set: SetState, get: GetState, ids: string[]) => {

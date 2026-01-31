@@ -170,6 +170,7 @@ export const PersonMesh: React.FC<{
   )
 }
 
+// eslint-disable-next-line max-statements
 const buildFrustumGeometry = (
   camera: CameraEntity,
   opticHeight: number,

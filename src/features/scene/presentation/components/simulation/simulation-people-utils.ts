@@ -30,6 +30,7 @@ export interface AreaPolygon {
   bounds: THREE.Box3
 }
 
+/* eslint-disable no-bitwise */
 export const createRng = (seed: number) => {
   let t = seed + 0x6d2b79f5
   return () => {
@@ -49,6 +50,7 @@ export const hashId = (value: string) => {
   }
   return Math.abs(hash)
 }
+/* eslint-enable no-bitwise */
 
 export const isPointInPolygon = (
   point: THREE.Vector3,

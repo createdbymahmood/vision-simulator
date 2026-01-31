@@ -13,7 +13,6 @@ import type {
   RadarConnectionLine,
   RadarGridLine,
   RadarPersonMarker,
-  RadarPoint,
   RadarWedge,
 } from './simulation-radar-svg'
 

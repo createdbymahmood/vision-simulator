@@ -71,6 +71,7 @@ const createEmptyPreview = (): PersonPreviewData => ({
   color: '#4ECDC4',
 })
 
+// eslint-disable-next-line max-lines-per-function
 export const usePersonPlacement = ({
   activeTool,
   isEditMode,

@@ -180,6 +180,43 @@ export const buildObstacleSegmentsByArea = (
   return segmentsByArea
 }
 
+const isOccluded = (
+  origin2d: THREE.Vector2,
+  target2d: THREE.Vector2,
+  obstacles: ObstacleSegment[],
+  cameraOrigin: THREE.Vector3,
+  personTarget: THREE.Vector3,
+  targetDistance: number,
+) => {
+  for (const obstacle of obstacles) {
+    const t = intersectSegments(
+      origin2d,
+      target2d,
+      obstacle.start,
+      obstacle.end,
+    )
+    if (t === null || t <= EPSILON) {
+      continue
+    }
+    if (obstacle.height === Number.MAX_SAFE_INTEGER) {
+      const tolerance = Math.min(
+        0.05,
+        (DEFAULT_PERSON_RADIUS * 1.25) / Math.max(targetDistance, 0.01),
+      )
+      if (t >= 1 - tolerance) {
+        continue
+      }
+    } else if (t >= 1 - EPSILON) {
+      continue
+    }
+    const rayHeight = cameraOrigin.y + (personTarget.y - cameraOrigin.y) * t
+    if (obstacle.height >= rayHeight) {
+      return true
+    }
+  }
+  return false
+}
+
 const isPersonVisibleAtHeight = ({
   camera,
   cameraOrigin,
@@ -219,31 +256,17 @@ const isPersonVisibleAtHeight = ({
   if (targetDistance < EPSILON) {
     return true
   }
-  for (const obstacle of obstacles) {
-    const t = intersectSegments(
+  if (
+    isOccluded(
       origin2d,
       target2d,
-      obstacle.start,
-      obstacle.end,
+      obstacles,
+      cameraOrigin,
+      personTarget,
+      targetDistance,
     )
-    if (t === null || t <= EPSILON) {
-      continue
-    }
-    if (obstacle.height === Number.MAX_SAFE_INTEGER) {
-      const tolerance = Math.min(
-        0.05,
-        (DEFAULT_PERSON_RADIUS * 1.25) / Math.max(targetDistance, 0.01),
-      )
-      if (t >= 1 - tolerance) {
-        continue
-      }
-    } else if (t >= 1 - EPSILON) {
-      continue
-    }
-    const rayHeight = cameraOrigin.y + (personTarget.y - cameraOrigin.y) * t
-    if (obstacle.height >= rayHeight) {
-      return false
-    }
+  ) {
+    return false
   }
   return true
 }

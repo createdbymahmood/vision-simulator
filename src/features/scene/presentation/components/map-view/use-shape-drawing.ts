@@ -349,7 +349,7 @@ export const useShapeDrawing = ({
       setShapePreview(preview)
       return null
     },
-    [isGeometryInsideArea, shapeDrawing, targetArea],
+    [isGeometryInsideArea, people, shapeDrawing, targetArea, walls],
   )
 
   const finalizeShape = React.useCallback(
