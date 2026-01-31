@@ -320,8 +320,8 @@ export const EditorLayout: React.FC = () => {
           />
 
           <SearchLocationDialog
+            mapRef={mapRef}
             onOpenChange={setSearchOpen}
-            onOpenMapStyles={() => setMapStyleOpen(true)}
             open={searchOpen}
           />
 

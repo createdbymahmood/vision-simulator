@@ -891,7 +891,7 @@ export const MapView: React.FC<MapViewProps> = ({
         doubleClickZoom={false}
         dragRotate={false}
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
-        minZoom={10}
+        minZoom={2}
         onClick={handleMapClick}
         onDblClick={handleDoubleClick}
         onDragEnd={handleDragEnd}
@@ -900,6 +900,7 @@ export const MapView: React.FC<MapViewProps> = ({
         onMouseDown={handleMouseDown}
         onMouseMove={handlePointerMove}
         onMouseUp={handleMouseUp}
+        projection='mercator'
         initialViewState={{
           latitude: 34.052235,
           longitude: -118.243683,
