@@ -28,7 +28,7 @@
     "preview": "vite preview",
     "build:lib": "rimraf dist && tsup && yarn build:styles",
     "publish:minor": "npm run build:lib && npm version minor && npm publish --registry=https://npm.pkg.github.com/",
-    "build:styles": "tailwindcss -i src/index.css -o dist/styles.raw.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/flatten-tailwind-layers.mjs dist/styles.raw.css dist/styles.css"
+    "build:styles": "tailwindcss -i src/index.css -o dist/styles.raw.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/flatten-tailwind-layers.mjs dist/styles.raw.css dist/styles.unprefixed.css && node scripts/prefix-tailwind-classes.mjs dist/styles.unprefixed.css dist/styles.css"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
@@ -119,6 +119,7 @@
     "eslint-plugin-unused-imports": "4.2.0",
     "globals": "16.5.0",
     "postcss": "8.5.2",
+    "postcss-selector-parser": "7.1.0",
     "prettier": "3.6.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
