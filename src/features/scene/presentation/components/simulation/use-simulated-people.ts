@@ -20,6 +20,8 @@ import {
 
 const FIXED_STEP = 1 / 60
 const PUBLISH_INTERVAL = FIXED_STEP
+const MAX_STEPS_PER_FRAME = 10
+const MAX_ACCUMULATOR = FIXED_STEP * MAX_STEPS_PER_FRAME
 export const useSimulatedPeople = ({
   scene,
   transformer,
@@ -87,10 +89,15 @@ export const useSimulatedPeople = ({
   }, [areaPolygons, scene.people, scene.simulationSeed, transformer])
 
   useFrame((_, delta) => {
+    const clampedDelta = Math.min(delta, MAX_ACCUMULATOR)
     const state = simRef.current
-    state.accumulator += delta
+    state.accumulator = Math.min(
+      state.accumulator + clampedDelta,
+      MAX_ACCUMULATOR,
+    )
 
-    while (state.accumulator >= FIXED_STEP) {
+    let steps = 0
+    while (state.accumulator >= FIXED_STEP && steps < MAX_STEPS_PER_FRAME) {
       state.accumulator -= FIXED_STEP
       stepPeopleSimulation(
         state.people,
@@ -99,9 +106,10 @@ export const useSimulatedPeople = ({
         shapePolygons,
         FIXED_STEP,
       )
+      steps += 1
     }
 
-    state.publishTimer += delta
+    state.publishTimer += clampedDelta
     if (state.publishTimer >= PUBLISH_INTERVAL) {
       state.publishTimer = 0
       setPositions(
