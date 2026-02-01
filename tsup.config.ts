@@ -8,14 +8,5 @@ export default defineConfig({
   clean: true,
   target: 'es2022',
   tsconfig: 'tsconfig.lib.json',
-  external: [
-    'react',
-    'react-dom',
-    'three',
-    '@react-three/fiber',
-    '@react-three/drei',
-    'mapbox-gl',
-    'react-map-gl',
-    '@mapbox/mapbox-gl-draw',
-  ],
+  external: ['react', 'react-dom'],
 })
