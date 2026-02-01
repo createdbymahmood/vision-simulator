@@ -1,0 +1,4 @@
+/* Optional host reset for standalone/full-page usage. */
+body {
+  margin: 0;
+}

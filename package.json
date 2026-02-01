@@ -11,6 +11,7 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./host.css": "./dist/host.css",
     "./styles.css": "./dist/styles.css",
     "./styles.raw.css": "./dist/styles.raw.css"
   },
@@ -28,7 +29,7 @@
     "preview": "vite preview",
     "build:lib": "rimraf dist && tsup && yarn build:styles",
     "publish:minor": "npm run build:lib && npm version minor && npm publish --registry=https://npm.pkg.github.com/",
-    "build:styles": "tailwindcss -i src/index.css -o dist/style.css --content \"./src/**/*.{ts,tsx}\" --minify"
+    "build:styles": "tailwindcss -i src/index.css -o dist/styles.raw.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/scope-css.mjs dist/styles.raw.css dist/styles.css && node scripts/copy-file.mjs src/host.css dist/host.css"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
