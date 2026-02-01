@@ -56,6 +56,7 @@ import {MapViewSelectionHandlesLayer} from '@/features/scene/presentation/compon
 import {MapViewShapeLayers} from '@/features/scene/presentation/components/map-view/map-view-shape-layers'
 import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/map-view-tooltip'
 import {MapViewWallLayers} from '@/features/scene/presentation/components/map-view/map-view-wall-layers'
+import {ensureCanvasGridImages} from '@/features/scene/presentation/components/map-view/mapbox-grid-images'
 import {getCanvasGridStyle} from '@/features/scene/presentation/components/map-view/mapbox-grid-style'
 import {SelectionOverlay} from '@/features/scene/presentation/components/map-view/selection-overlay'
 import {useCameraPlacement} from '@/features/scene/presentation/components/map-view/use-camera-placement'
@@ -718,6 +719,29 @@ export const MapView: React.FC<MapViewProps> = ({
   const handleMapLoad = React.useCallback(() => {
     handleSelectionMapLoad()
   }, [handleSelectionMapLoad])
+
+  React.useEffect(() => {
+    if (!mapLoaded) {
+      return
+    }
+    const map = mapRef.current?.getMap?.() ?? null
+    if (!map) {
+      return
+    }
+
+    const handleStyleLoad = () => {
+      ensureCanvasGridImages(map)
+    }
+
+    map.on('style.load', handleStyleLoad)
+    if (map.isStyleLoaded()) {
+      ensureCanvasGridImages(map)
+    }
+
+    return () => {
+      map.off('style.load', handleStyleLoad)
+    }
+  }, [mapLoaded])
 
   React.useEffect(() => {
     if (!onMapReady || !mapLoaded) {
