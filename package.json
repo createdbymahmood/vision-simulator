@@ -28,7 +28,7 @@
     "preview": "vite preview",
     "build:lib": "rimraf dist && tsup && yarn build:styles",
     "publish:minor": "npm run build:lib && npm version minor && npm publish --registry=https://npm.pkg.github.com/",
-    "build:styles": "tailwindcss -i src/index.css -o dist/styles.raw.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/flatten-tailwind-layers.mjs dist/styles.raw.css dist/styles.unprefixed.css && node scripts/prefix-tailwind-classes.mjs dist/styles.unprefixed.css dist/styles.css"
+    "build:styles": "tailwindcss -i src/index.css -o dist/style.css --content \"./src/**/*.{ts,tsx}\" --minify"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
