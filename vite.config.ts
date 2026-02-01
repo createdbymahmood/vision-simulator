@@ -14,10 +14,6 @@ export default defineConfig({
         './tsconfig.node.json',
       ],
     }),
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
+    react(),
   ],
 })
