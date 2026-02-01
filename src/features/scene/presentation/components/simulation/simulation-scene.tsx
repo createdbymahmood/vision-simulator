@@ -139,6 +139,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
 }) => {
   const {camera, gl, scene: threeScene, size} = useThree()
   const setVisionState = useUiStore((state) => state.setVisionState)
+  const mapboxToken = useUiStore((state) => state.mapboxToken)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
   const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
   const transformer = React.useMemo(
@@ -246,8 +247,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   }, [mapPlaneSize])
 
   React.useEffect(() => {
-    const token = import.meta.env.VITE_MAPBOX_TOKEN
-    if (!showMapTexture || !geoBounds || !token) {
+    if (!showMapTexture || !geoBounds || !mapboxToken) {
       setStaticMapTexture(null)
       setIsStaticMapReady(false)
       return
@@ -261,7 +261,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       reqWidth = Math.max(1, Math.round(reqHeight * planeAspect))
     }
 
-    const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/[${geoBounds.minLng},${geoBounds.minLat},${geoBounds.maxLng},${geoBounds.maxLat}]/${reqWidth}x${reqHeight}@2x?attribution=false&logo=false&access_token=${token}`
+    const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/[${geoBounds.minLng},${geoBounds.minLat},${geoBounds.maxLng},${geoBounds.maxLat}]/${reqWidth}x${reqHeight}@2x?attribution=false&logo=false&access_token=${mapboxToken}`
     let canceled = false
     const loader = new THREE.TextureLoader()
     loader.setCrossOrigin('anonymous')
@@ -289,7 +289,13 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     return () => {
       canceled = true
     }
-  }, [geoBounds, mapPlaneSize.height, mapPlaneSize.width, showMapTexture])
+  }, [
+    geoBounds,
+    mapPlaneSize.height,
+    mapPlaneSize.width,
+    mapboxToken,
+    showMapTexture,
+  ])
 
   const entities: WorldEntity[] = React.useMemo(
     () =>

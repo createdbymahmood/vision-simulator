@@ -42,6 +42,7 @@ export interface UiState {
   isEditMode: boolean
   openPanels: Record<string, boolean>
   openPopovers: Record<string, boolean>
+  mapboxToken?: string
   cameraPlacement: {
     presetId: string | null
     color: string | null
@@ -248,6 +249,7 @@ const defaultUiState = {
   isEditMode: true,
   openPanels: {} as Record<string, boolean>,
   openPopovers: {} as Record<string, boolean>,
+  mapboxToken: undefined as string | undefined,
   cameraPlacement: {
     presetId: null,
     color: null,

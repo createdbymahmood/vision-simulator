@@ -9,13 +9,14 @@ import {EditorLayout} from '@/features/scene/presentation/components/editor-layo
 
 interface AppProps {
   children?: React.ReactNode
+  mapboxToken?: string
 }
 
-export const App: React.FC<AppProps> = () => {
+export const App: React.FC<AppProps> = ({mapboxToken}) => {
   return (
     <SceneStoreProvider initialState={{}}>
       <HistoryStoreProvider initialState={{}}>
-        <UiStoreProvider initialState={{}}>
+        <UiStoreProvider initialState={{mapboxToken}}>
           <TooltipProvider delayDuration={0}>
             <EditorLayout />
             <Toaster />

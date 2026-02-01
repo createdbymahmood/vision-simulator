@@ -114,6 +114,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const {recordAction} = useHistoryRecorder()
 
   const isEditMode = useUiStore((state) => state.isEditMode)
+  const mapboxToken = useUiStore((state) => state.mapboxToken)
   const sceneMode = useSceneStore((state) => state.scene.mode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
   const mapStyleSetting = useSceneStore((state) => state.scene.meta.mapStyle)
@@ -914,7 +915,7 @@ export const MapView: React.FC<MapViewProps> = ({
         cursor={cursor}
         doubleClickZoom={false}
         dragRotate={false}
-        mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
+        mapboxAccessToken={mapboxToken}
         minZoom={2}
         onClick={handleMapClick}
         onDblClick={handleDoubleClick}

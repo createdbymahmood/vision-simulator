@@ -8,6 +8,23 @@
 - `docs/developer-setup.md`
 - `docs/known-limitations.md`
 
+## Mapbox Token (Required)
+
+The `VisionSimulator` export requires a Mapbox access token to be provided via
+props. The app does not fall back to `import.meta.env` internally.
+
+```tsx
+import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
+
+interface AppProps {
+  mapboxToken: string
+}
+
+export const App: React.FC<AppProps> = ({mapboxToken}) => {
+  return <VisionSimulator mapboxToken={mapboxToken} />
+}
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

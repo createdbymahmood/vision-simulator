@@ -11,6 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
+import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {useDebouncedValue} from '@/features/scene/presentation/hooks/use-debounced-value'
 import {useMapboxLocationSearch} from '@/features/scene/presentation/hooks/use-mapbox-location-search'
 
@@ -20,7 +21,6 @@ interface SearchLocationDialogProps {
   mapRef: MapRef | null
 }
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
 const SEARCH_DEBOUNCE_MS = 300
 const SEARCH_RESULT_LIMIT = 10
 const DEFAULT_ZOOM = 14
@@ -47,12 +47,13 @@ export const SearchLocationDialog: React.FC<SearchLocationDialogProps> = ({
   onOpenChange,
   mapRef,
 }) => {
+  const mapboxToken = useUiStore((state) => state.mapboxToken)
   const [query, setQuery] = React.useState('')
   const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS)
 
   const {results, isLoading, error} = useMapboxLocationSearch({
     query: debouncedQuery,
-    accessToken: MAPBOX_TOKEN,
+    accessToken: mapboxToken,
     limit: SEARCH_RESULT_LIMIT,
   })
 
