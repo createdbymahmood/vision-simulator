@@ -14,17 +14,15 @@ interface AppProps {
 
 export const App: React.FC<AppProps> = ({mapboxToken}) => {
   return (
-    <div className='vision-simulator'>
-      <SceneStoreProvider initialState={{}}>
-        <HistoryStoreProvider initialState={{}}>
-          <UiStoreProvider initialState={{mapboxToken}}>
-            <TooltipProvider delayDuration={0}>
-              <EditorLayout />
-              <Toaster />
-            </TooltipProvider>
-          </UiStoreProvider>
-        </HistoryStoreProvider>
-      </SceneStoreProvider>
-    </div>
+    <SceneStoreProvider initialState={{}}>
+      <HistoryStoreProvider initialState={{}}>
+        <UiStoreProvider initialState={{mapboxToken}}>
+          <TooltipProvider delayDuration={0}>
+            <EditorLayout />
+            <Toaster />
+          </TooltipProvider>
+        </UiStoreProvider>
+      </HistoryStoreProvider>
+    </SceneStoreProvider>
   )
 }
