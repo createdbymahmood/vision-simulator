@@ -61,7 +61,8 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
           <ArrowLeft className='size-5' />
         </Button>
 
-        <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
+        {/* This is a very important code that should not be removed */}
+        {/* <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
           <Button
             className='rounded-full h-8'
             variant={sceneMode === 'map' ? 'default' : 'ghost'}
@@ -78,7 +79,7 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
             <ToggleLeft className='mr-2 size-5' />
             Canvas
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className='flex items-center gap-2 ml-auto'>
