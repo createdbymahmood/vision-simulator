@@ -115,7 +115,7 @@ export const SimulationAnalysisView: React.FC = () => {
     }
     downloadDataUrl(dataUrl, createSnapshotFilename())
     triggerFlash()
-    toast.success('✓ Snapshot saved')
+    toast.success('Snapshot saved')
   })
 
   const handleBackToEditor = useCallbackRef(() => {
