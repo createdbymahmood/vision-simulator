@@ -47,17 +47,15 @@ Prepare a clean, neutral template to capture the Design Mode redesign plan once 
 
 ### Editor Mode Top Bar
 
-- Left side includes:
-  - Back button.
-  - Project name.
-  - Button with horizontal more icon.
-- Right side includes:
-  - Switch toggle for edit mode.
-  - Icon button to clean the board.
-  - Undo button.
-  - Redo button.
-  - Export button with share icon.
-  - Live preview button with caption `Live preview`.
+- [ ] Left side includes: Back button.
+- [ ] Left side includes: Project name.
+- [ ] Left side includes: Button with horizontal more icon.
+- [ ] Right side includes: Switch toggle for edit mode.
+- [ ] Right side includes: Icon button to clean the board.
+- [ ] Right side includes: Undo button.
+- [ ] Right side includes: Redo button.
+- [ ] Right side includes: Export button with share icon.
+- [ ] Right side includes: Live preview button with caption `Live preview`.
 
 ---
 
