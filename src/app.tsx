@@ -1,5 +1,7 @@
 import React from 'react'
 
+import type {SceneMode} from '@/features/scene/domain/types'
+
 import {Toaster} from '@/components/ui/sonner'
 import {TooltipProvider} from '@/components/ui/tooltip'
 import {HistoryStoreProvider} from '@/features/scene/infrastructure/stores/history.store'
@@ -10,11 +12,12 @@ import {EditorLayout} from '@/features/scene/presentation/components/editor-layo
 interface AppProps {
   children?: React.ReactNode
   mapboxToken?: string
+  sceneMode?: SceneMode
 }
 
-export const App: React.FC<AppProps> = ({mapboxToken}) => {
+export const App: React.FC<AppProps> = ({mapboxToken, sceneMode}) => {
   return (
-    <SceneStoreProvider initialState={{}}>
+    <SceneStoreProvider initialState={{sceneMode}}>
       <HistoryStoreProvider initialState={{}}>
         <UiStoreProvider initialState={{mapboxToken}}>
           <TooltipProvider delayDuration={0}>

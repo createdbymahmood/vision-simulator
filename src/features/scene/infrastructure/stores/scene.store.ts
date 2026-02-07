@@ -54,6 +54,11 @@ export interface SceneState {
   deleteEntities: (ids: string[]) => SceneRoot
 }
 
+export interface SceneStoreInitialState extends Partial<SceneState> {
+  sceneMode?: SceneMode
+  sceneOverrides?: Partial<SceneRoot>
+}
+
 type SetState = StoreApi<SceneState>['setState']
 type GetState = StoreApi<SceneState>['getState']
 
@@ -480,35 +485,68 @@ const deleteEntities = (set: SetState, get: GetState, ids: string[]) => {
   return updated
 }
 
-const createSceneStore: (
-  initialValues: Partial<SceneState>,
-) => StateCreator<SceneState> = (initialValues) => (set, get) => ({
-  scene: initialValues?.scene ?? loadSceneFromStorage() ?? createInitialScene(),
-  selectedEntityIds: initialValues?.selectedEntityIds ?? [],
-  setScene: (scene) => setScene(set, get, scene),
-  updateScene: (updater) => updateScene(set, get, updater),
-  setMode: (mode) => setMode(set, get, mode),
-  setMapVisibility: (visible) => setMapVisibility(set, get, visible),
-  setMapStyle: (style) => setMapStyle(set, get, style),
-  setSimulationSeed: (seed) => setSimulationSeed(set, get, seed),
-  setSelection: (ids) => setSelection(set, get, ids),
-  clearSelection: () => clearSelection(set, get),
-  addArea: (geometry) => addArea(set, get, geometry),
-  setActiveArea: (areaId) => setActiveArea(set, get, areaId),
-  updateAreaName: (areaId, name) => updateAreaName(set, get, areaId, name),
-  deleteArea: (areaId) => deleteArea(set, get, areaId),
-  addWall: (wall) => addWall(set, get, wall),
-  addShape: (shape) => addShape(set, get, shape),
-  addCamera: (camera) => addCamera(set, get, camera),
-  updateCamera: (id, updater) => updateCamera(set, get, id, updater),
-  addPerson: (person) => addPerson(set, get, person),
-  updatePerson: (id, updater) => updatePerson(set, get, id, updater),
-  deleteEntities: (entityIds) => deleteEntities(set, get, entityIds),
-  ...initialValues,
+const mergeSceneRoot = (base: SceneRoot, override: Partial<SceneRoot>) => ({
+  ...base,
+  ...override,
+  origin: {...base.origin, ...override.origin},
+  meta: {...base.meta, ...override.meta},
 })
+
+const resolveInitialScene = (initialValues: SceneStoreInitialState) => {
+  const baseScene =
+    initialValues.scene ?? loadSceneFromStorage() ?? createInitialScene()
+  const mergedScene = initialValues.sceneOverrides
+    ? mergeSceneRoot(baseScene, initialValues.sceneOverrides)
+    : baseScene
+  if (!initialValues.sceneMode) {
+    return mergedScene
+  }
+  return {
+    ...mergedScene,
+    mode: initialValues.sceneMode,
+  }
+}
+
+const createSceneStore: (
+  initialValues: SceneStoreInitialState,
+) => StateCreator<SceneState> = (initialValues) => {
+  const {
+    scene: _scene,
+    sceneMode: _sceneMode,
+    sceneOverrides: _sceneOverrides,
+    ...restInitialValues
+  } = initialValues
+
+  return (set, get) => ({
+    scene: resolveInitialScene(initialValues),
+    selectedEntityIds: restInitialValues.selectedEntityIds ?? [],
+    setScene: (scene) => setScene(set, get, scene),
+    updateScene: (updater) => updateScene(set, get, updater),
+    setMode: (mode) => setMode(set, get, mode),
+    setMapVisibility: (visible) => setMapVisibility(set, get, visible),
+    setMapStyle: (style) => setMapStyle(set, get, style),
+    setSimulationSeed: (seed) => setSimulationSeed(set, get, seed),
+    setSelection: (ids) => setSelection(set, get, ids),
+    clearSelection: () => clearSelection(set, get),
+    addArea: (geometry) => addArea(set, get, geometry),
+    setActiveArea: (areaId) => setActiveArea(set, get, areaId),
+    updateAreaName: (areaId, name) => updateAreaName(set, get, areaId, name),
+    deleteArea: (areaId) => deleteArea(set, get, areaId),
+    addWall: (wall) => addWall(set, get, wall),
+    addShape: (shape) => addShape(set, get, shape),
+    addCamera: (camera) => addCamera(set, get, camera),
+    updateCamera: (id, updater) => updateCamera(set, get, id, updater),
+    addPerson: (person) => addPerson(set, get, person),
+    updatePerson: (id, updater) => updatePerson(set, get, id, updater),
+    deleteEntities: (entityIds) => deleteEntities(set, get, entityIds),
+    ...restInitialValues,
+  })
+}
 
 export const {
   Provider: SceneStoreProvider,
   useStore: useSceneStore,
   getState: getSceneStore,
-} = createZustandContextStore<SceneState, Partial<SceneState>>(createSceneStore)
+} = createZustandContextStore<SceneState, SceneStoreInitialState>(
+  createSceneStore,
+)
