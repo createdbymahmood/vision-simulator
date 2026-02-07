@@ -48,7 +48,7 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <Button
-          size='icon-lg'
+          size='icon'
           aria-label='Measurement overlay'
           aria-pressed={measurementEnabled}
           className='rounded-full backdrop-blur-md'

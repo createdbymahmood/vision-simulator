@@ -1,3 +1,4 @@
+import {Eraser, FlipBackward, FlipForward, Share01} from '@untitledui/icons'
 import {
   ArrowLeft,
   MoreHorizontal,
@@ -81,15 +82,15 @@ export const TopPanel: React.FC<TopPanelProps> = ({
             variant='ghost'
             onClick={onBack}
           >
-            <ArrowLeft className='h-4 w-4' />
+            <ArrowLeft className='size-5' />
           </Button>
-          <Badge className='uppercase' variant='secondary'>
-            Project name
-          </Badge>
+
+          <span className='text-xl font-semibold'>Project name</span>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size='icon' aria-label='More options' variant='ghost'>
-                <MoreHorizontal className='h-4 w-4' />
+                <MoreHorizontal className='size-5' />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='start'>
@@ -111,7 +112,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
           </DropdownMenu>
         </div>
 
-        <div className='flex items-center gap-4'>
+        <div className='flex items-center gap-3'>
           <div className='flex items-center gap-2'>
             <Switch
               checked={isEditMode}
@@ -129,9 +130,9 @@ export const TopPanel: React.FC<TopPanelProps> = ({
                 size='icon'
                 aria-label='Clear board'
                 disabled={!isEditMode}
-                variant='outline'
+                variant='ghost'
               >
-                <Trash2 className='h-4 w-4' />
+                <Eraser className='size-5' />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -158,10 +159,10 @@ export const TopPanel: React.FC<TopPanelProps> = ({
                   size='icon'
                   aria-label='Undo'
                   disabled={!canUndo || !isEditMode}
-                  variant='outline'
+                  variant='ghost'
                   onClick={onUndo}
                 >
-                  <RotateCcw className='h-4 w-4' />
+                  <FlipBackward className='size-5' />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -174,10 +175,10 @@ export const TopPanel: React.FC<TopPanelProps> = ({
                   size='icon'
                   aria-label='Redo'
                   disabled={!canRedo || !isEditMode}
-                  variant='outline'
+                  variant='ghost'
                   onClick={onRedo}
                 >
-                  <RotateCw className='h-4 w-4' />
+                  <FlipForward className='size-5' />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -188,9 +189,8 @@ export const TopPanel: React.FC<TopPanelProps> = ({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size='sm' variant='outline'>
-                <Share2 className='h-4 w-4' />
-                Export
+              <Button size='icon' variant='outline'>
+                <Share01 className='size-5' />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
@@ -206,8 +206,8 @@ export const TopPanel: React.FC<TopPanelProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button size='sm' onClick={onTogglePreview}>
-            <Play className='h-4 w-4' />
+          <Button variant='outline' onClick={onTogglePreview}>
+            <Play className='size-5' />
             Live preview
           </Button>
         </div>

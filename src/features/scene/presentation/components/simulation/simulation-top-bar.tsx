@@ -1,3 +1,4 @@
+import {VideoRecorder} from '@untitledui/icons'
 import {ArrowLeft, Camera, Film, Map, MapPin, ToggleLeft} from 'lucide-react'
 import React from 'react'
 
@@ -51,59 +52,33 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
   return (
     <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
       <div className='flex items-center gap-4'>
+        <Button
+          size='icon'
+          aria-label='Back'
+          variant='ghost'
+          onClick={onBackToEditor}
+        >
+          <ArrowLeft className='size-5' />
+        </Button>
+
         <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
           <Button
-            size='sm'
-            className='rounded-full'
+            className='rounded-full h-8'
             variant={sceneMode === 'map' ? 'default' : 'ghost'}
             onClick={() => onSceneModeChange('map')}
           >
-            <Map className='mr-2 h-4 w-4' />
+            <Map className='mr-2 size-5' />
             Map
           </Button>
           <Button
-            size='sm'
-            className='rounded-full'
+            className='rounded-full h-8'
             variant={sceneMode === 'canvas' ? 'default' : 'ghost'}
             onClick={() => onSceneModeChange('canvas')}
           >
-            <ToggleLeft className='mr-2 h-4 w-4' />
+            <ToggleLeft className='mr-2 size-5' />
             Canvas
           </Button>
         </div>
-      </div>
-
-      <div className='flex items-center gap-3'>
-        {hasMultipleAreas ? (
-          <Select value={activeAreaId} onValueChange={onAreaChange}>
-            <SelectTrigger className='w-[200px]'>
-              <SelectValue placeholder='All Areas' />
-            </SelectTrigger>
-            <SelectContent align='center'>
-              <SelectItem value='all'>All Areas</SelectItem>
-              <div className='my-1 h-px bg-border' />
-              {areaOptions.map((area) => (
-                <SelectItem key={area.id} value={area.id}>
-                  <div className='flex items-center gap-2'>
-                    <span
-                      className='inline-block size-2.5 rounded-full'
-                      style={{
-                        backgroundColor:
-                          area.id === activeAreaId ? '#0EA5E9' : '#9CA3AF',
-                      }}
-                    />
-                    {area.label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-            <MapPin className='h-4 w-4' />
-            {areaOptions[0]?.label ?? 'All Areas'}
-          </div>
-        )}
       </div>
 
       <div className='flex items-center gap-2 ml-auto'>
@@ -115,24 +90,18 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
         ) : null}
 
         <Button
-          size='sm'
           className={cn(isRecording ? 'recording-button' : '')}
           variant={isRecording ? 'destructive' : 'outline'}
           onClick={isRecording ? onStopRecording : onStartRecording}
         >
-          <Film className='mr-2 h-4 w-4' />
+          <VideoRecorder className='size-5' />
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </Button>
-        <Button size='sm' variant='outline' onClick={onSnapshot}>
-          <Camera className='mr-2 h-4 w-4' />
-          Snapshot
+        <Button variant='outline' onClick={onSnapshot}>
+          <Camera className='size-5' />
+          Export Snapshot
         </Button>
       </div>
-
-      <Button size='sm' variant='outline' onClick={onBackToEditor}>
-        <ArrowLeft className='mr-2 h-4 w-4' />
-        Back to Editor
-      </Button>
     </div>
   )
 }
