@@ -26,8 +26,8 @@ export const RightRail: React.FC<RightRailProps> = ({
   onDevicesInUse,
 }) => {
   return (
-    <div className='fixed right-4 top-24 z-30 w-12 rounded-full border p-1 backdrop-blur shadow-lg bg-white/30'>
-      <div className='flex flex-col items-center'>
+    <div className='fixed right-4 top-24 z-30 w-12'>
+      <div className='flex flex-col items-center gap-2'>
         {isMapMode ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -36,10 +36,10 @@ export const RightRail: React.FC<RightRailProps> = ({
                 aria-label='Search location (⌘K)'
                 className={railButtonClass}
                 disabled={!isEditMode}
-                variant='ghost'
+                variant='outline'
                 onClick={onSearchLocation}
               >
-                <Search className='h-5 w-5' />
+                <Search className='size-5' />
               </Button>
             </TooltipTrigger>
             <TooltipContent side='left'>Search location (⌘K)</TooltipContent>
@@ -53,10 +53,10 @@ export const RightRail: React.FC<RightRailProps> = ({
               aria-label='Areas (⌘⇧A)'
               className={railButtonClass}
               disabled={!isEditMode}
-              variant='ghost'
+              variant='outline'
               onClick={onAreaManagement}
             >
-              <Layers className='h-5 w-5' />
+              <Layers className='size-5' />
               {/*  <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
                 {areaCount}
               </Badge> */}
@@ -73,10 +73,10 @@ export const RightRail: React.FC<RightRailProps> = ({
                 aria-label='Map style'
                 className={railButtonClass}
                 disabled={!isEditMode}
-                variant='ghost'
+                variant='outline'
                 onClick={onMapViewMode}
               >
-                <Map className='h-5 w-5' />
+                <Map className='size-5' />
               </Button>
             </TooltipTrigger>
             <TooltipContent side='left'>Map style</TooltipContent>
@@ -90,10 +90,10 @@ export const RightRail: React.FC<RightRailProps> = ({
               aria-label='Devices (⌘⇧D)'
               className={railButtonClass}
               disabled={!isEditMode}
-              variant='ghost'
+              variant='outline'
               onClick={onDevicesInUse}
             >
-              <Video className='h-5 w-5' />
+              <Video className='size-5' />
               {/*  <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
                 {deviceCount}
               </Badge> */}
