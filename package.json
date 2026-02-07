@@ -70,6 +70,7 @@
     "@react-three/fiber": "9.4.2",
     "@tanstack/react-virtual": "3.13.13",
     "@turf/turf": "7.3.1",
+    "@untitledui/icons": "0.0.21",
     "@xyflow/react": "12.10.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

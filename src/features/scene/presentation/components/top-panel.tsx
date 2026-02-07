@@ -1,15 +1,15 @@
 import {
-  Download,
-  Grid,
-  Map,
+  ArrowLeft,
+  MoreHorizontal,
   Play,
   RotateCcw,
   RotateCw,
+  Share2,
   Trash2,
 } from 'lucide-react'
 import React from 'react'
 
-import type {SceneMode, ViewMode} from '@/features/scene/domain/types'
+import type {SceneMode} from '@/features/scene/domain/types'
 
 import {
   AlertDialog,
@@ -33,17 +33,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {Switch} from '@/components/ui/switch'
-import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 
 interface TopPanelProps {
   sceneMode: SceneMode
-  viewMode: ViewMode
   isEditMode: boolean
   canUndo: boolean
   canRedo: boolean
   lastUndoDescription?: string
   lastRedoDescription?: string
+  onBack: () => void
   onSceneModeChange: (mode: SceneMode) => void
   onTogglePreview: () => void
   onEditModeChange: (enabled: boolean) => void
@@ -57,12 +56,12 @@ interface TopPanelProps {
 // eslint-disable-next-line max-lines-per-function
 export const TopPanel: React.FC<TopPanelProps> = ({
   sceneMode,
-  viewMode,
   isEditMode,
   canUndo,
   canRedo,
   lastUndoDescription,
   lastRedoDescription,
+  onBack,
   onSceneModeChange,
   onTogglePreview,
   onEditModeChange,
@@ -76,36 +75,40 @@ export const TopPanel: React.FC<TopPanelProps> = ({
     <div className='fixed left-0 right-0 top-0 z-40 h-14 border-b backdrop-blur'>
       <div className='mx-auto flex h-full items-center justify-between px-4'>
         <div className='flex items-center gap-3'>
-          <Badge className='uppercase' variant='secondary'>
-            Editor
-          </Badge>
-          <ToggleGroup
-            className='border shadow-sm transition duration-200 '
-            type='single'
-            value={sceneMode}
-            onValueChange={(value) => {
-              if (value) {
-                onSceneModeChange(value as SceneMode)
-              }
-            }}
+          <Button
+            size='icon'
+            aria-label='Back'
+            variant='ghost'
+            onClick={onBack}
           >
-            <ToggleGroupItem
-              aria-label='Map Mode'
-              className='gap-2 transition duration-200'
-              value='map'
-            >
-              <Map className='h-4 w-4' />
-              Map
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              aria-label='Canvas Mode'
-              className='gap-2 transition duration-200'
-              value='canvas'
-            >
-              <Grid className='h-4 w-4' />
-              Canvas
-            </ToggleGroupItem>
-          </ToggleGroup>
+            <ArrowLeft className='h-4 w-4' />
+          </Button>
+          <Badge className='uppercase' variant='secondary'>
+            Project name
+          </Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size='icon' aria-label='More options' variant='ghost'>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='start'>
+              <DropdownMenuLabel>Scene mode</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={sceneMode === 'map'}
+                onSelect={() => onSceneModeChange('map')}
+              >
+                Map mode
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={sceneMode === 'canvas'}
+                onSelect={() => onSceneModeChange('canvas')}
+              >
+                Canvas mode
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className='flex items-center gap-4'>
@@ -116,15 +119,19 @@ export const TopPanel: React.FC<TopPanelProps> = ({
               onCheckedChange={onEditModeChange}
             />
             <label className='text-sm font-medium' htmlFor='edit-mode'>
-              Edit Mode
+              Edit mode
             </label>
           </div>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size='sm' disabled={!isEditMode} variant='outline'>
+              <Button
+                size='icon'
+                aria-label='Clear board'
+                disabled={!isEditMode}
+                variant='outline'
+              >
                 <Trash2 className='h-4 w-4' />
-                Clear Board
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -178,13 +185,11 @@ export const TopPanel: React.FC<TopPanelProps> = ({
               </TooltipContent>
             </Tooltip>
           </div>
-        </div>
 
-        <div className='flex items-center gap-2'>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size='sm' variant='outline'>
-                <Download className='h-4 w-4' />
+                <Share2 className='h-4 w-4' />
                 Export
               </Button>
             </DropdownMenuTrigger>
@@ -203,7 +208,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
 
           <Button size='sm' onClick={onTogglePreview}>
             <Play className='h-4 w-4' />
-            {viewMode === 'preview' ? 'Back to Editor' : 'Live Preview'}
+            Live preview
           </Button>
         </div>
       </div>

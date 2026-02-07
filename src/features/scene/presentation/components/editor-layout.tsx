@@ -136,6 +136,12 @@ export const EditorLayout: React.FC = () => {
     recordAction({type: 'map-visibility', visible: mode === 'map'}, nextScene)
   }
 
+  const handleBack = useCallbackRef(() => {
+    if (typeof window !== 'undefined') {
+      window.history.back()
+    }
+  })
+
   const handleUndo = () => {
     const entry = undoScene(scene)
     if (entry) {
@@ -265,6 +271,7 @@ export const EditorLayout: React.FC = () => {
           isEditMode={isEditMode}
           lastRedoDescription={lastRedoDescription}
           lastUndoDescription={lastUndoDescription}
+          onBack={handleBack}
           onClearBoard={handleClearBoard}
           onEditModeChange={setEditMode}
           onExportSceneImage={handleExportSceneImage}
@@ -274,7 +281,6 @@ export const EditorLayout: React.FC = () => {
           onTogglePreview={() => setViewMode('preview')}
           onUndo={handleUndo}
           sceneMode={sceneMode}
-          viewMode={viewMode}
         />
       ) : null}
 
