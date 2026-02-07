@@ -69,7 +69,6 @@ Establish the foundational architecture, data models, routing structure, and sta
   - `pointCount`
   - `color` (unique from palette)
   - `style: { fillColor, fillOpacity, borderColor, borderWidth }`
-  - `boundaryMode: "strict"`
 
 - [ ] **Camera Entity** (Section 7.2 + Section 5.5.5)
   - `id`, `type: "camera"`, `areaId`, `typePreset`

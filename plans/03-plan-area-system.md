@@ -71,7 +71,6 @@ This ensures optimal performance with the map renderer and maintains consistency
   - `geometry: { type: "polygon", coordinates, bezierControls }`
   - `pointCount`
   - `style: { fillColor/opacity, borderColor/width }`
-  - `boundaryMode: "strict"`
   - `color` (unique from palette for multi-area distinction)
 
 ### Point Mode Drawing (Section 5.9.2)

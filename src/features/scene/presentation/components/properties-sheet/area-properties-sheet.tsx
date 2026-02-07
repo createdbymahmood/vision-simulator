@@ -2,13 +2,6 @@ import React from 'react'
 
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
@@ -150,51 +143,24 @@ export const AreaPropertiesSheet: React.FC = () => {
     >
       {selectedArea ? (
         <div className='space-y-6'>
-          <PropertiesSection title='Details'>
-            <div className='space-y-2'>
-              <Label htmlFor='area-name'>Name</Label>
-              <Input
-                id='area-name'
-                value={selectedArea.name}
-                onChange={(event) => handleNameChange(event.target.value)}
-              />
+          <div className='space-y-2'>
+            <Label htmlFor='area-name'>Name</Label>
+            <Input
+              id='area-name'
+              value={selectedArea.name}
+              onChange={(event) => handleNameChange(event.target.value)}
+            />
+          </div>
+          <div className='grid grid-cols-2 gap-3'>
+            <div className='space-y-1'>
+              <p className='text-xs text-muted-foreground'>Point Count</p>
+              <p className='text-sm font-medium'>{selectedArea.pointCount}</p>
             </div>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-1'>
-                <p className='text-xs text-muted-foreground'>Point Count</p>
-                <p className='text-sm font-medium'>{selectedArea.pointCount}</p>
-              </div>
-              <div className='space-y-1'>
-                <p className='text-xs text-muted-foreground'>Boundary Mode</p>
-                <Select
-                  value={selectedArea.boundaryMode}
-                  onValueChange={(value) => {
-                    const updated = updateSelectedArea((area) => {
-                      area.boundaryMode = value as typeof area.boundaryMode
-                    })
-                    if (updated && selectedArea) {
-                      recordActionDebounced(
-                        `area-${selectedArea.id}`,
-                        {type: 'update', entity: 'area'},
-                        updated,
-                      )
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Boundary mode' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='strict'>Strict</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className='grid grid-cols-2 gap-3'>
-              <Metric label='Perimeter' value={formatMeters(perimeter)} />
-              <Metric label='Area' value={formatArea(areaValue)} />
-            </div>
-          </PropertiesSection>
+          </div>
+          <div className='grid grid-cols-2 gap-3'>
+            <Metric label='Perimeter' value={formatMeters(perimeter)} />
+            <Metric label='Area' value={formatArea(areaValue)} />
+          </div>
 
           <PropertiesSection title='Fill & Border'>
             <div className='grid grid-cols-2 gap-3'>

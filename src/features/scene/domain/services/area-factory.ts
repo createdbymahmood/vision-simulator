@@ -41,5 +41,4 @@ export const createAreaEntity = (
     fillColor: getAreaColor(existingAreas),
     borderColor: getAreaColor(existingAreas),
   },
-  boundaryMode: 'strict',
 })

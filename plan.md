@@ -1016,7 +1016,6 @@ Each area has:
 - geometry: polygon (with optional curves → store as control points + baked polygon)
 - point count
 - style: fill color/opacity, border color/width
-- boundaryMode: "strict" (default - nothing can be placed outside)
 - color: unique color from palette (for multi-area distinction)
 
 #### 5.9.2 Drawing Modes (Enhanced)
@@ -2113,8 +2112,7 @@ renderer.setSize(originalSize.x, originalSize.y)
     "fillOpacity": 0.2,
     "borderColor": "#rgba",
     "borderWidth": 2
-  },
-  "boundaryMode": "strict"
+  }
 }
 ```
 

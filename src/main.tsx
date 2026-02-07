@@ -7,6 +7,6 @@ import {App} from '@/app'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN} />
+    <App mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN} sceneMode='canvas' />
   </StrictMode>,
 )

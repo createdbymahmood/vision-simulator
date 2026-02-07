@@ -35,8 +35,6 @@ export interface PolygonGeometry {
   bezierControls: GeoPoint[]
 }
 
-export type BoundaryMode = 'strict'
-
 export interface AreaStyle {
   fillColor: string
   fillOpacity: number
@@ -52,7 +50,6 @@ export interface AreaEntity {
   pointCount: number
   color: string
   style: AreaStyle
-  boundaryMode: BoundaryMode
 }
 
 export interface Resolution {

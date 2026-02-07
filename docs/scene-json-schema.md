@@ -43,7 +43,6 @@ Scene exports follow the `SceneRoot` shape defined in `src/features/scene/domain
 - `pointCount`: number
 - `color`: string
 - `style`: `{ fillColor, fillOpacity, borderColor, borderWidth }`
-- `boundaryMode`: "strict"
 
 ### WallEntity
 
