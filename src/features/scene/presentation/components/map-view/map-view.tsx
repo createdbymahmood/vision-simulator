@@ -60,6 +60,7 @@ import {ensureCanvasGridImages} from '@/features/scene/presentation/components/m
 import {getCanvasGridStyle} from '@/features/scene/presentation/components/map-view/mapbox-grid-style'
 import {SelectionOverlay} from '@/features/scene/presentation/components/map-view/selection-overlay'
 import {useCameraPlacement} from '@/features/scene/presentation/components/map-view/use-camera-placement'
+import {useCanvasEmptyZoom} from '@/features/scene/presentation/components/map-view/use-canvas-empty-zoom'
 import {useFlyToActiveArea} from '@/features/scene/presentation/components/map-view/use-fly-to-active-area'
 import {useMapViewHotkeys} from '@/features/scene/presentation/components/map-view/use-map-view-hotkeys'
 import {usePersonPlacement} from '@/features/scene/presentation/components/map-view/use-person-placement'
@@ -796,6 +797,13 @@ export const MapView: React.FC<MapViewProps> = ({
     flyToActiveAreaTick,
   })
 
+  const {initialZoom} = useCanvasEmptyZoom({
+    mapRef,
+    mapLoaded,
+    sceneMode,
+    areaCount: areas.length,
+  })
+
   const overlapFeatures = React.useMemo(
     () => buildOverlapFeatures(areas),
     [areas],
@@ -901,7 +909,6 @@ export const MapView: React.FC<MapViewProps> = ({
         ? MAP_STYLE_URLS[mapStyleSetting]
         : undefined
   const mapStyleProps = mapStyle ? {mapStyle} : {}
-
   return (
     <div className='relative h-full w-full'>
       <Mapbox
@@ -929,7 +936,7 @@ export const MapView: React.FC<MapViewProps> = ({
         initialViewState={{
           latitude: 34.052235,
           longitude: -118.243683,
-          zoom: 10,
+          zoom: initialZoom,
         }}
       >
         <MapViewAreaLayers
