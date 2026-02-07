@@ -15,7 +15,7 @@ interface RightRailProps {
   deviceCount?: number
 }
 
-const railButtonClass = 'relative h-12 w-12'
+const railButtonClass = 'relative h-12 w-12 rounded-lg'
 
 export const RightRail: React.FC<RightRailProps> = ({
   isMapMode,
