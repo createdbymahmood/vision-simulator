@@ -3,11 +3,15 @@ import type {AxiosError, AxiosRequestConfig} from 'axios'
 import axios from 'axios'
 import {v4 as uuidv4} from 'uuid'
 
-const ApiServiceCallerInstance = axios.create({
-  baseURL: import.meta.env.VITE_ENV_API_SERVICE_URL,
-})
+const ApiServiceCallerInstance = axios.create({})
 
 const instances = [ApiServiceCallerInstance]
+
+export const applyAxiosApiBaseUrl = (apiBaseUrl: string) => {
+  instances.forEach((instance) => {
+    instance.defaults.baseURL = apiBaseUrl
+  })
+}
 
 export const applyAxiosAuthorizationHeader = (accessToken: string) => {
   instances.forEach((instance) => {

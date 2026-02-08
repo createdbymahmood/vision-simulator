@@ -13,10 +13,13 @@ yarn install
 
 ## Environment Variables
 
-Create a `.env` file with a Mapbox token:
+Create a `.env` file:
 
 ```
+VITE_API_BASE_URL=https://your-api-host/api
+VITE_ACCESS_TOKEN=your_access_token_here
 VITE_MAPBOX_TOKEN=your_token_here
+VITE_VISION_SIMULATOR_ID=your_vision_id_here
 ```
 
 ## Run

@@ -7,7 +7,10 @@ import {Pending} from '@/components/shared/pending'
 import {Toaster} from '@/components/ui/sonner'
 import {TooltipProvider} from '@/components/ui/tooltip'
 import {useGetVisionByIDSuspense} from '@/data-provider/api/services/v2/vision-simulator'
-import {applyAxiosAuthorizationHeader} from '@/data-provider/axios/axios'
+import {
+  applyAxiosApiBaseUrl,
+  applyAxiosAuthorizationHeader,
+} from '@/data-provider/axios/axios'
 import {queryClient} from '@/data-provider/react-query'
 import {HistoryStoreProvider} from '@/features/scene/infrastructure/stores/history.store'
 import {SceneStoreProvider} from '@/features/scene/infrastructure/stores/scene.store'
@@ -19,13 +22,14 @@ interface AppProps {
   children?: React.ReactNode
   visionSimulatorId: string
   accessToken: string
+  apiBaseUrl: string
   mapboxToken?: string
 }
 
 const AppImpl = ({
   visionSimulatorId,
   mapboxToken,
-}: Omit<AppProps, 'accessToken'>) => {
+}: Omit<AppProps, 'accessToken' | 'apiBaseUrl'>) => {
   const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId)
 
   const initialSceneState: SceneStoreInitialState = {
@@ -47,10 +51,12 @@ const AppImpl = ({
   )
 }
 export const App: React.FC<AppProps> = ({
+  apiBaseUrl,
   mapboxToken,
   accessToken,
   visionSimulatorId,
 }) => {
+  applyAxiosApiBaseUrl(apiBaseUrl)
   applyAxiosAuthorizationHeader(accessToken)
 
   return (

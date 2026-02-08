@@ -10,14 +10,15 @@
 
 ## Required Props
 
-The `VisionSimulator` export requires a `mapboxToken`, `visionSimulatorId`,
-and `accessToken` to be provided via props. The app does not fall back to
-`import.meta.env` internally.
+The `VisionSimulator` export requires an `apiBaseUrl`, `mapboxToken`,
+`visionSimulatorId`, and `accessToken` to be provided via props. The app does
+not fall back to `import.meta.env` internally.
 
 ```tsx
 import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
 
 interface AppProps {
+  apiBaseUrl: string
   mapboxToken: string
   visionSimulatorId: string
   accessToken: string
@@ -25,12 +26,14 @@ interface AppProps {
 
 export const App: React.FC<AppProps> = ({
   accessToken,
+  apiBaseUrl,
   mapboxToken,
   visionSimulatorId,
 }) => {
   return (
     <VisionSimulator
       accessToken={accessToken}
+      apiBaseUrl={apiBaseUrl}
       mapboxToken={mapboxToken}
       visionSimulatorId={visionSimulatorId}
     />
