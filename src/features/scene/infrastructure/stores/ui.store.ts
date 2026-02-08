@@ -289,7 +289,7 @@ const triggerFlyToActiveArea = (set: SetState, get: GetState) => {
   })
 
   set(nextValue)
-  return get()
+  return get().flyToActiveAreaTick
 }
 
 const createUiStore: (
