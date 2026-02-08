@@ -26,7 +26,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --fix",
     "preview": "vite preview",
-    "build:lib": "rimraf dist && tsup && yarn build:styles && node scripts/obfuscate-dist-css.mjs",
+    "build:lib": "rimraf dist && tsup && yarn build:styles && node scripts/obfuscate-dist-css.mjs && node scripts/verify-classname-obfuscation.mjs",
     "publish:minor": "npm run build:lib && npm version minor && npm publish --registry=https://npm.pkg.github.com/",
     "build:styles": "tailwindcss -i src/index.css -o dist/styles.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/copy-file.mjs src/host.css dist/host.css",
     "download-swagger-file": "node scripts/download-swagger-file.mjs",
@@ -111,6 +111,8 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
+    "@babel/parser": "7.29.0",
+    "@babel/traverse": "7.29.0",
     "@fullstacksjs/eslint-config": "13.2.2",
     "@tailwindcss/cli": "4.1.18",
     "@tailwindcss/vite": "4.1.18",

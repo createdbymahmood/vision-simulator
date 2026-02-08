@@ -22,6 +22,7 @@ const OBFUSCATED_CLASS_TERTIARY_ALPHABET = 'zyxwvutsrqponmlkjihgfedcba9876543210
 const OBFUSCATED_CLASS_PRIMARY_SEGMENT_LENGTH = 6
 const OBFUSCATED_CLASS_SECONDARY_SEGMENT_LENGTH = 6
 const OBFUSCATED_CLASS_CHECKSUM_SEGMENT_LENGTH = 4
+const COMPLEX_CLASS_TOKEN_PATTERN = /[-:[\]/!()%.]|\d/
 const SUPPORTED_SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
 const CLASS_PROP_NAME_PATTERN = /class(name|names)?$/i
 const CLASS_COMPOSER_CALL_NAMES = new Set([
@@ -100,6 +101,59 @@ const replaceClassTokens = (
   return {changed, value: nextValue}
 }
 
+const tokenizeClassValue = (value: string) =>
+  value
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+
+const canConservativelyTransformClassLiteral = (
+  value: string,
+  classMap: ReadonlyMap<string, string>,
+) => {
+  const tokens = tokenizeClassValue(value)
+
+  if (tokens.length === 0) {
+    return false
+  }
+
+  let hasComplexMappedToken = false
+
+  for (const token of tokens) {
+    if (PRESERVED_CLASS_NAMES.has(token)) {
+      continue
+    }
+
+    if (!classMap.has(token)) {
+      return false
+    }
+
+    if (COMPLEX_CLASS_TOKEN_PATTERN.test(token)) {
+      hasComplexMappedToken = true
+    }
+  }
+
+  return hasComplexMappedToken
+}
+
+const transformStringLiteralConservatively = (
+  literalNode: t.StringLiteral,
+  classMap: ReadonlyMap<string, string>,
+) => {
+  if (!canConservativelyTransformClassLiteral(literalNode.value, classMap)) {
+    return false
+  }
+
+  const transformed = replaceClassTokens(literalNode.value, classMap)
+
+  if (!transformed.changed) {
+    return false
+  }
+
+  literalNode.value = transformed.value
+  return true
+}
+
 const getObjectPropertyKeyName = (property: t.ObjectProperty) => {
   if (property.computed) {
     return null
@@ -139,6 +193,8 @@ const isClassComposerCall = (node: t.CallExpression) => {
   const calleeName = getCalleeName(node.callee)
   return calleeName ? CLASS_COMPOSER_CALL_NAMES.has(calleeName) : false
 }
+
+const isCvaCall = (node: t.CallExpression) => getCalleeName(node.callee) === 'cva'
 
 const escapeTemplateLiteralRawValue = (value: string) =>
   value
@@ -266,10 +322,6 @@ const transformClassExpression = (
           changed = true
         }
       }
-
-      if (transformClassExpression(property.value, classMap)) {
-        changed = true
-      }
     }
 
     return changed
@@ -292,6 +344,12 @@ const transformClassExpression = (
   }
 
   if (t.isCallExpression(expression) && isClassComposerCall(expression)) {
+    const calleeName = getCalleeName(expression.callee)
+
+    if (calleeName === 'cva') {
+      return transformCvaCallExpression(expression, classMap)
+    }
+
     let changed = false
 
     for (const argument of expression.arguments) {
@@ -314,6 +372,160 @@ const transformClassExpression = (
   return false
 }
 
+const transformCvaVariantsExpression = (
+  expression: t.Node,
+  classMap: ReadonlyMap<string, string>,
+) => {
+  if (!t.isObjectExpression(expression)) {
+    return false
+  }
+
+  let changed = false
+
+  for (const variantGroupProperty of expression.properties) {
+    if (!t.isObjectProperty(variantGroupProperty)) {
+      continue
+    }
+
+    if (!t.isObjectExpression(variantGroupProperty.value)) {
+      continue
+    }
+
+    for (const variantOptionProperty of variantGroupProperty.value.properties) {
+      if (!t.isObjectProperty(variantOptionProperty)) {
+        continue
+      }
+
+      if (transformClassExpression(variantOptionProperty.value, classMap)) {
+        changed = true
+      }
+    }
+  }
+
+  return changed
+}
+
+const transformCvaCompoundVariantsExpression = (
+  expression: t.Node,
+  classMap: ReadonlyMap<string, string>,
+) => {
+  if (!t.isArrayExpression(expression)) {
+    return false
+  }
+
+  let changed = false
+
+  for (const element of expression.elements) {
+    if (!element || !t.isObjectExpression(element)) {
+      continue
+    }
+
+    for (const property of element.properties) {
+      if (!t.isObjectProperty(property)) {
+        continue
+      }
+
+      const keyName = getObjectPropertyKeyName(property)
+
+      if (!keyName || !isClassPropertyName(keyName)) {
+        continue
+      }
+
+      if (transformClassExpression(property.value, classMap)) {
+        changed = true
+      }
+    }
+  }
+
+  return changed
+}
+
+const transformCvaConfigExpression = (
+  expression: t.Node,
+  classMap: ReadonlyMap<string, string>,
+) => {
+  if (!t.isObjectExpression(expression)) {
+    return false
+  }
+
+  let changed = false
+
+  for (const property of expression.properties) {
+    if (!t.isObjectProperty(property)) {
+      continue
+    }
+
+    const keyName = getObjectPropertyKeyName(property)
+
+    if (!keyName) {
+      continue
+    }
+
+    if (keyName === 'variants') {
+      if (transformCvaVariantsExpression(property.value, classMap)) {
+        changed = true
+      }
+
+      continue
+    }
+
+    if (keyName === 'compoundVariants') {
+      if (transformCvaCompoundVariantsExpression(property.value, classMap)) {
+        changed = true
+      }
+
+      continue
+    }
+
+    if (isClassPropertyName(keyName)) {
+      if (transformClassExpression(property.value, classMap)) {
+        changed = true
+      }
+    }
+  }
+
+  return changed
+}
+
+const transformCvaCallExpression = (
+  expression: t.CallExpression,
+  classMap: ReadonlyMap<string, string>,
+) => {
+  let changed = false
+
+  const firstArgument = expression.arguments[0]
+
+  if (firstArgument && !t.isSpreadElement(firstArgument)) {
+    if (transformClassExpression(firstArgument, classMap)) {
+      changed = true
+    }
+  }
+
+  const secondArgument = expression.arguments[1]
+
+  if (secondArgument && !t.isSpreadElement(secondArgument)) {
+    if (transformCvaConfigExpression(secondArgument, classMap)) {
+      changed = true
+    }
+  }
+
+  for (const trailingArgument of expression.arguments.slice(2)) {
+    if (t.isSpreadElement(trailingArgument)) {
+      if (transformClassExpression(trailingArgument.argument, classMap)) {
+        changed = true
+      }
+
+      continue
+    }
+
+    if (transformClassExpression(trailingArgument, classMap)) {
+      changed = true
+    }
+  }
+
+  return changed
+}
+
 const isWithinProjectSource = (projectRoot: string, absoluteFilePath: string) => {
   const sourceRoot = path.join(projectRoot, PROJECT_SOURCE_DIRECTORY)
   const relativePath = path.relative(sourceRoot, absoluteFilePath)
@@ -323,6 +535,26 @@ const isWithinProjectSource = (projectRoot: string, absoluteFilePath: string) =>
   }
 
   return !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
+}
+
+const isImportExportSourceLiteral = (
+  path: import('@babel/traverse').NodePath<t.StringLiteral>,
+) => {
+  const parentNode = path.parent
+
+  if (t.isImportDeclaration(parentNode) && parentNode.source === path.node) {
+    return true
+  }
+
+  if (t.isExportAllDeclaration(parentNode) && parentNode.source === path.node) {
+    return true
+  }
+
+  if (t.isExportNamedDeclaration(parentNode) && parentNode.source === path.node) {
+    return true
+  }
+
+  return false
 }
 
 const stripQueryString = (id: string) => id.split('?')[0]
@@ -702,6 +934,14 @@ export const transformSourceClassNames = (
         return
       }
 
+      if (isCvaCall(path.node)) {
+        if (transformCvaCallExpression(path.node, classMap)) {
+          changed = true
+        }
+
+        return
+      }
+
       for (const argument of path.node.arguments) {
         if (t.isSpreadElement(argument)) {
           if (transformClassExpression(argument.argument, classMap)) {
@@ -714,6 +954,16 @@ export const transformSourceClassNames = (
         if (transformClassExpression(argument, classMap)) {
           changed = true
         }
+      }
+    },
+
+    StringLiteral(path) {
+      if (isImportExportSourceLiteral(path)) {
+        return
+      }
+
+      if (transformStringLiteralConservatively(path.node, classMap)) {
+        changed = true
       }
     },
   })
