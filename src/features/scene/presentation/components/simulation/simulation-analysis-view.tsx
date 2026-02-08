@@ -2,7 +2,7 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
-import type {SceneEntity, SceneMode} from '@/features/scene/domain/types'
+import type {SceneEntity, EditorMode} from '@/features/scene/domain/types'
 
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
@@ -28,7 +28,7 @@ const formatAreaLabel = (name: string, count: number) =>
 // eslint-disable-next-line max-lines-per-function
 export const SimulationAnalysisView: React.FC = () => {
   const scene = useSceneStore((state) => state.scene)
-  const setSceneMode = useSceneStore((state) => state.setMode)
+  const setEditorMode = useSceneStore((state) => state.setMode)
   const setMapVisibility = useSceneStore((state) => state.setMapVisibility)
   const setActiveArea = useSceneStore((state) => state.setActiveArea)
   const setSelection = useSceneStore((state) => state.setSelection)
@@ -79,8 +79,8 @@ export const SimulationAnalysisView: React.FC = () => {
     setSelection([])
   })
 
-  const handleSceneModeChange = useCallbackRef((mode: SceneMode) => {
-    setSceneMode(mode)
+  const handleEditorModeChange = useCallbackRef((mode: EditorMode) => {
+    setEditorMode(mode)
     setMapVisibility(mode === 'map')
   })
 
@@ -139,12 +139,12 @@ export const SimulationAnalysisView: React.FC = () => {
         isRecording={isRecording}
         onAreaChange={handleAreaChange}
         onBackToEditor={handleBackToEditor}
-        onSceneModeChange={handleSceneModeChange}
+        onEditorModeChange={handleEditorModeChange}
         onSnapshot={handleSnapshot}
         onStartRecording={startRecording}
         onStopRecording={stopRecording}
         recordingLabel={`REC ${formattedTime}`}
-        sceneMode={scene.mode}
+        editorMode={scene.mode}
       />
 
       <div className='flex flex-1 min-h-0 overflow-hidden'>
@@ -162,7 +162,7 @@ export const SimulationAnalysisView: React.FC = () => {
             focusAreaId={scene.activeAreaId}
             onCaptureReady={handleCaptureReady}
             onSelectEntity={handleSelectEntity}
-            sceneMode={scene.mode}
+            editorMode={scene.mode}
             showMapTexture={scene.mode === 'map' && scene.mapVisible}
           />
         </SimulationViewport>

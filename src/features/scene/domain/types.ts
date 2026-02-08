@@ -1,6 +1,6 @@
 export type SceneVersion = '1.1'
 
-export type SceneMode = 'canvas' | 'map'
+export type EditorMode = 'canvas' | 'map'
 
 export type Units = 'meters'
 
@@ -170,7 +170,7 @@ export type SceneEntity =
 
 export interface SceneRoot {
   version: SceneVersion
-  mode: SceneMode
+  mode: EditorMode
   mapVisible: boolean
   units: Units
   origin: GeoOrigin

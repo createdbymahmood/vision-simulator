@@ -13,7 +13,7 @@ Enable location search using the existing search dialog. The user can type a que
 ## How Codex Should Use This Phase
 
 - Reuse the existing search-location dialog (do not create a new dialog).
-- The right-rail item for **Search Location** is visible only when `sceneMode === 'map'`.
+- The right-rail item for **Search Location** is visible only when `editorMode === 'map'`.
 - Remove/disable the "Adjust map style" shortcut from this right-rail section; the search action is the only map-mode entry there.
 - Input is debounced; results are fetched after the debounce interval and listed immediately in the dialog.
 - Use Mapbox Geocoding API as the primary provider for search.
@@ -43,7 +43,7 @@ Enable location search using the existing search dialog. The user can type a que
 
 ### Right Rail (Map Mode Only)
 
-- [ ] Show the Search Location shortcut only when `sceneMode === 'map'`.
+- [ ] Show the Search Location shortcut only when `editorMode === 'map'`.
 - [ ] Hide/remove the "Adjust map style" shortcut from this right-rail section.
 - [ ] Clicking Search Location opens the existing dialog.
 

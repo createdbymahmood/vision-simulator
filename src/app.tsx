@@ -1,7 +1,7 @@
 import {QueryClientProvider} from '@tanstack/react-query'
 import React from 'react'
 
-import type {SceneMode} from '@/features/scene/domain/types'
+import type {EditorMode} from '@/features/scene/domain/types'
 
 import {Toaster} from '@/components/ui/sonner'
 import {TooltipProvider} from '@/components/ui/tooltip'
@@ -18,18 +18,27 @@ interface AppProps {
   visionSimulatorId: string
   accessToken: string
   mapboxToken?: string
-  sceneMode?: SceneMode
+  editorMode?: EditorMode
 }
 
 const AppImpl = ({
   visionSimulatorId,
-  sceneMode,
+  editorMode,
   mapboxToken,
 }: Omit<AppProps, 'accessToken'>) => {
-  /* const {data: vision} = */ useGetVisionByIDSuspense(visionSimulatorId)
+  const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId)
+  /* vision.vision.data */
 
+  /* {
+    "vision": {
+        "data": {
+            "editorMode": "map"
+        }
+    },
+   
+} */
   return (
-    <SceneStoreProvider initialState={{sceneMode}}>
+    <SceneStoreProvider initialState={{editorMode}}>
       <HistoryStoreProvider initialState={{}}>
         <UiStoreProvider initialState={{mapboxToken}}>
           <TooltipProvider delayDuration={0}>
@@ -43,7 +52,7 @@ const AppImpl = ({
 }
 export const App: React.FC<AppProps> = ({
   mapboxToken,
-  sceneMode,
+  editorMode,
   accessToken,
   visionSimulatorId,
 }) => {
@@ -52,8 +61,8 @@ export const App: React.FC<AppProps> = ({
   return (
     <QueryClientProvider client={queryClient}>
       <AppImpl
+        editorMode={editorMode}
         mapboxToken={mapboxToken}
-        sceneMode={sceneMode}
         visionSimulatorId={visionSimulatorId}
       />
     </QueryClientProvider>

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import React from 'react'
 
-import type {SceneMode} from '@/features/scene/domain/types'
+import type {EditorMode} from '@/features/scene/domain/types'
 
 import {
   AlertDialog,
@@ -37,14 +37,14 @@ import {Switch} from '@/components/ui/switch'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 
 interface TopPanelProps {
-  sceneMode: SceneMode
+  editorMode: EditorMode
   isEditMode: boolean
   canUndo: boolean
   canRedo: boolean
   lastUndoDescription?: string
   lastRedoDescription?: string
   onBack: () => void
-  onSceneModeChange: (mode: SceneMode) => void
+  onEditorModeChange: (mode: EditorMode) => void
   onTogglePreview: () => void
   onEditModeChange: (enabled: boolean) => void
   onUndo: () => void
@@ -56,14 +56,14 @@ interface TopPanelProps {
 
 // eslint-disable-next-line max-lines-per-function
 export const TopPanel: React.FC<TopPanelProps> = ({
-  sceneMode,
+  editorMode,
   isEditMode,
   canUndo,
   canRedo,
   lastUndoDescription,
   lastRedoDescription,
   onBack,
-  onSceneModeChange,
+  onEditorModeChange,
   onTogglePreview,
   onEditModeChange,
   onUndo,
@@ -97,14 +97,14 @@ export const TopPanel: React.FC<TopPanelProps> = ({
               <DropdownMenuLabel>Scene mode</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                disabled={sceneMode === 'map'}
-                onSelect={() => onSceneModeChange('map')}
+                disabled={editorMode === 'map'}
+                onSelect={() => onEditorModeChange('map')}
               >
                 Map mode
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={sceneMode === 'canvas'}
-                onSelect={() => onSceneModeChange('canvas')}
+                disabled={editorMode === 'canvas'}
+                onSelect={() => onEditorModeChange('canvas')}
               >
                 Canvas mode
               </DropdownMenuItem>

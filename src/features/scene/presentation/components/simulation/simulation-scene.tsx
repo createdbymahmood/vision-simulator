@@ -6,7 +6,7 @@ import {useFrame, useThree} from '@react-three/fiber'
 import React from 'react'
 import * as THREE from 'three'
 
-import type {SceneMode, SceneRoot} from '@/features/scene/domain/types'
+import type {EditorMode, SceneRoot} from '@/features/scene/domain/types'
 
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
@@ -41,7 +41,7 @@ interface FocusRequest {
 
 export interface SimulationSceneProps {
   scene: SceneRoot
-  sceneMode: SceneMode
+  editorMode: EditorMode
   showMapTexture: boolean
   focusAreaId?: string
   onSelectEntity: (id?: string) => void
@@ -129,7 +129,7 @@ const FocusController: React.FC<{
 // eslint-disable-next-line max-lines-per-function
 export const SimulationScene: React.FC<SimulationSceneProps> = ({
   scene,
-  sceneMode: _sceneMode,
+  editorMode: _editorMode,
   showMapTexture,
   focusAreaId,
   onSelectEntity,

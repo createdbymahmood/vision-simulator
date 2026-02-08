@@ -17,7 +17,7 @@ import {
 } from '@/features/scene/presentation/utils/scene-export'
 import {cn} from '@/lib/utils'
 
-import type {SceneMapStyle, SceneMode, SceneRoot} from '../../domain/types'
+import type {SceneMapStyle, EditorMode, SceneRoot} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {assignCameraColor} from '../../domain/services/color-assignment'
@@ -54,14 +54,14 @@ export const EditorLayout: React.FC = () => {
   const [mapRef, setMapRef] = React.useState<MapRef | null>(null)
   const hasSeededHistoryRef = React.useRef(false)
 
-  const sceneMode = useSceneStore((state) => state.scene.mode)
+  const editorMode = useSceneStore((state) => state.scene.mode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
   const mapStyle = useSceneStore((state) => state.scene.meta.mapStyle)
   const areas = useSceneStore((state) => state.scene.areas)
   const cameras = useSceneStore((state) => state.scene.cameras)
   const scene = useSceneStore((state) => state.scene)
   const setScene = useSceneStore((state) => state.setScene)
-  const setSceneMode = useSceneStore((state) => state.setMode)
+  const setEditorMode = useSceneStore((state) => state.setMode)
   const setMapVisibility = useSceneStore((state) => state.setMapVisibility)
   const setMapStyle = useSceneStore((state) => state.setMapStyle)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
@@ -130,8 +130,8 @@ export const EditorLayout: React.FC = () => {
     setMapRef(nextMap)
   })
 
-  const handleSceneModeChange = (mode: SceneMode) => {
-    setSceneMode(mode)
+  const handleEditorModeChange = (mode: EditorMode) => {
+    setEditorMode(mode)
     const nextScene = setMapVisibility(mode === 'map')
     recordAction({type: 'map-visibility', visible: mode === 'map'}, nextScene)
   }
@@ -188,7 +188,7 @@ export const EditorLayout: React.FC = () => {
   })
 
   const handleExportSceneImage = useCallbackRef(() => {
-    if (sceneMode !== 'map' || !mapVisible) {
+    if (editorMode !== 'map' || !mapVisible) {
       toast.info('Switch to Map mode to export a scene image')
       return
     }
@@ -242,7 +242,7 @@ export const EditorLayout: React.FC = () => {
     enabled: viewMode === 'editor',
     isEditMode,
     hasAreas,
-    isMapMode: sceneMode === 'map',
+    isMapMode: editorMode === 'map',
     onSelectTool: setActiveTool,
     onSelectShapeMode: setShapeMode,
     onOpenPlaceDevice: () => setPlaceDeviceOpen(true),
@@ -277,10 +277,10 @@ export const EditorLayout: React.FC = () => {
           onExportSceneImage={handleExportSceneImage}
           onExportSceneJson={handleExportSceneJson}
           onRedo={handleRedo}
-          onSceneModeChange={handleSceneModeChange}
+          onEditorModeChange={handleEditorModeChange}
           onTogglePreview={() => setViewMode('preview')}
           onUndo={handleUndo}
-          sceneMode={sceneMode}
+          editorMode={editorMode}
         />
       ) : null}
 
@@ -295,7 +295,7 @@ export const EditorLayout: React.FC = () => {
             onBlankClick={handleBlankClick}
             onMapReady={handleMapReady}
             onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
-            sceneMode={sceneMode}
+            editorMode={editorMode}
             shapeMode={shapeMode}
           />
         ) : (
@@ -318,7 +318,7 @@ export const EditorLayout: React.FC = () => {
 
           <RightRail
             isEditMode={isEditMode}
-            isMapMode={sceneMode === 'map'}
+            isMapMode={editorMode === 'map'}
             onAreaManagement={() => setAreaPanelOpen(true)}
             onDevicesInUse={() => setDevicesPanelOpen(true)}
             onMapViewMode={() => setMapStyleOpen(true)}

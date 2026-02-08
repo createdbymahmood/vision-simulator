@@ -7,7 +7,7 @@ import type {
   PersonEntity,
   PolygonGeometry,
   SceneMapStyle,
-  SceneMode,
+  EditorMode,
   SceneRoot,
   ShapeEntity,
   WallEntity,
@@ -27,7 +27,7 @@ export interface SceneState {
 
   setScene: (scene: SceneRoot) => SceneRoot
   updateScene: (updater: (scene: SceneRoot) => void) => SceneRoot
-  setMode: (mode: SceneMode) => SceneRoot
+  setMode: (mode: EditorMode) => SceneRoot
   setMapVisibility: (visible: boolean) => SceneRoot
   setMapStyle: (style: SceneMapStyle) => SceneRoot
   setSimulationSeed: (seed: number) => SceneRoot
@@ -55,7 +55,7 @@ export interface SceneState {
 }
 
 export interface SceneStoreInitialState extends Partial<SceneState> {
-  sceneMode?: SceneMode
+  editorMode?: EditorMode
   sceneOverrides?: Partial<SceneRoot>
 }
 
@@ -121,7 +121,7 @@ const updateScene = (
   return updated
 }
 
-const setMode = (set: SetState, get: GetState, mode: SceneMode) => {
+const setMode = (set: SetState, get: GetState, mode: EditorMode) => {
   const nextValue = produce<SceneState>((state) => {
     state.scene.mode = mode
     state.scene.meta.updatedAt = new Date().toISOString()
@@ -498,12 +498,12 @@ const resolveInitialScene = (initialValues: SceneStoreInitialState) => {
   const mergedScene = initialValues.sceneOverrides
     ? mergeSceneRoot(baseScene, initialValues.sceneOverrides)
     : baseScene
-  if (!initialValues.sceneMode) {
+  if (!initialValues.editorMode) {
     return mergedScene
   }
   return {
     ...mergedScene,
-    mode: initialValues.sceneMode,
+    mode: initialValues.editorMode,
   }
 }
 
@@ -512,7 +512,7 @@ const createSceneStore: (
 ) => StateCreator<SceneState> = (initialValues) => {
   const {
     scene: _scene,
-    sceneMode: _sceneMode,
+    editorMode: _editorMode,
     sceneOverrides: _sceneOverrides,
     ...restInitialValues
   } = initialValues

@@ -116,7 +116,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const isEditMode = useUiStore((state) => state.isEditMode)
   const mapboxToken = useUiStore((state) => state.mapboxToken)
-  const sceneMode = useSceneStore((state) => state.scene.mode)
+  const editorMode = useSceneStore((state) => state.scene.mode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
   const mapStyleSetting = useSceneStore((state) => state.scene.meta.mapStyle)
 
@@ -800,7 +800,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const {initialZoom} = useCanvasEmptyZoom({
     mapRef,
     mapLoaded,
-    sceneMode,
+    editorMode,
     areaCount: areas.length,
   })
 
@@ -903,7 +903,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const canvasGridStyle = React.useMemo(() => getCanvasGridStyle(), [])
   const mapStyle =
-    sceneMode === 'canvas'
+    editorMode === 'canvas'
       ? canvasGridStyle
       : mapVisible
         ? MAP_STYLE_URLS[mapStyleSetting]

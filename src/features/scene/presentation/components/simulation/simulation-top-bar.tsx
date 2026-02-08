@@ -2,7 +2,7 @@ import {VideoRecorder} from '@untitledui/icons'
 import {ArrowLeft, Camera, Film, Map, MapPin, ToggleLeft} from 'lucide-react'
 import React from 'react'
 
-import type {SceneMode} from '@/features/scene/domain/types'
+import type {EditorMode} from '@/features/scene/domain/types'
 
 import {Button} from '@/components/ui/button'
 import {
@@ -21,12 +21,12 @@ export interface SimulationAreaOption {
 }
 
 interface SimulationTopBarProps {
-  sceneMode: SceneMode
+  editorMode: EditorMode
   areaOptions: SimulationAreaOption[]
   activeAreaId: string
   isRecording: boolean
   recordingLabel: string
-  onSceneModeChange: (mode: SceneMode) => void
+  onEditorModeChange: (mode: EditorMode) => void
   onAreaChange: (value: string) => void
   onStartRecording: () => void
   onStopRecording: () => void
@@ -35,12 +35,12 @@ interface SimulationTopBarProps {
 }
 
 export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
-  sceneMode,
+  editorMode,
   areaOptions,
   activeAreaId,
   isRecording,
   recordingLabel,
-  onSceneModeChange,
+  onEditorModeChange,
   onAreaChange,
   onStartRecording,
   onStopRecording,
@@ -65,16 +65,16 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
         {/* <div className='inline-flex items-center gap-1 rounded-full bg-muted'>
           <Button
             className='rounded-full h-8'
-            variant={sceneMode === 'map' ? 'default' : 'ghost'}
-            onClick={() => onSceneModeChange('map')}
+            variant={editorMode === 'map' ? 'default' : 'ghost'}
+            onClick={() => onEditorModeChange('map')}
           >
             <Map className='mr-2 size-5' />
             Map
           </Button>
           <Button
             className='rounded-full h-8'
-            variant={sceneMode === 'canvas' ? 'default' : 'ghost'}
-            onClick={() => onSceneModeChange('canvas')}
+            variant={editorMode === 'canvas' ? 'default' : 'ghost'}
+            onClick={() => onEditorModeChange('canvas')}
           >
             <ToggleLeft className='mr-2 size-5' />
             Canvas

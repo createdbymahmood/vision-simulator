@@ -7,13 +7,13 @@ import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
 import {Button} from '@/components/ui/button'
 
-import type {SceneMode} from '../../domain/types'
+import type {EditorMode} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {MapView} from './map-view'
 
 interface ViewportShellProps {
-  sceneMode: SceneMode
+  editorMode: EditorMode
   mapVisible: boolean
   measurementEnabled: boolean
   activeTool: EditorTool
