@@ -144,7 +144,7 @@ export const SimulationAnalysisView: React.FC = () => {
         onStartRecording={startRecording}
         onStopRecording={stopRecording}
         recordingLabel={`REC ${formattedTime}`}
-        editorMode={scene.mode}
+        editorMode={scene.editorMode}
       />
 
       <div className='flex flex-1 min-h-0 overflow-hidden'>
@@ -162,8 +162,8 @@ export const SimulationAnalysisView: React.FC = () => {
             focusAreaId={scene.activeAreaId}
             onCaptureReady={handleCaptureReady}
             onSelectEntity={handleSelectEntity}
-            editorMode={scene.mode}
-            showMapTexture={scene.mode === 'map' && scene.mapVisible}
+            editorMode={scene.editorMode}
+            showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
           />
         </SimulationViewport>
         <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>

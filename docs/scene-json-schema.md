@@ -7,7 +7,7 @@ Scene exports follow the `SceneRoot` shape defined in `src/features/scene/domain
 ```json
 {
   "version": "1.1",
-  "mode": "map",
+  "editorMode": "map",
   "mapVisible": true,
   "units": "meters",
   "origin": {

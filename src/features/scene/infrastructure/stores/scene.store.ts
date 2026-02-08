@@ -70,28 +70,36 @@ const loadSceneFromStorage = (): SceneRoot | null => {
   if (!isBrowser()) {
     return null
   }
-  const raw = window.localStorage.getItem(STORAGE_KEY)
-  if (!raw) {
-    return null
-  }
-  try {
-    const parsed = JSON.parse(raw) as SceneRoot
-    return parsed
-  } catch (error) {
-    console.warn('Failed to parse persisted scene', error)
-    return null
-  }
+  void STORAGE_KEY
+  // NOTE: Local storage persistence is temporarily disabled.
+  // Do not remove the commented code below; it will be re-enabled later.
+  // const raw = window.localStorage.getItem(STORAGE_KEY)
+  // if (!raw) {
+  //   return null
+  // }
+  // try {
+  //   const parsed = JSON.parse(raw) as SceneRoot
+  //   return parsed
+  // } catch (error) {
+  //   console.warn('Failed to parse persisted scene', error)
+  //   return null
+  // }
+  return null
 }
 
 const persistScene = (scene: SceneRoot) => {
   if (!isBrowser()) {
     return
   }
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(scene))
-  } catch (error) {
-    console.warn('Failed to persist scene', error)
-  }
+  void scene
+  void STORAGE_KEY
+  // NOTE: Local storage persistence is temporarily disabled.
+  // Do not remove the commented code below; it will be re-enabled later.
+  // try {
+  //   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(scene))
+  // } catch (error) {
+  //   console.warn('Failed to persist scene', error)
+  // }
 }
 
 const setScene = (set: SetState, get: GetState, scene: SceneRoot) => {
@@ -123,7 +131,7 @@ const updateScene = (
 
 const setMode = (set: SetState, get: GetState, mode: EditorMode) => {
   const nextValue = produce<SceneState>((state) => {
-    state.scene.mode = mode
+    state.scene.editorMode = mode
     state.scene.meta.updatedAt = new Date().toISOString()
   })
 
@@ -503,7 +511,7 @@ const resolveInitialScene = (initialValues: SceneStoreInitialState) => {
   }
   return {
     ...mergedScene,
-    mode: initialValues.editorMode,
+    editorMode: initialValues.editorMode,
   }
 }
 

@@ -5,6 +5,7 @@ import React from 'react'
 import {toast} from 'sonner'
 
 import {serializeScene} from '@/features/scene/application/utils/scene-serializer'
+import {updateVision} from '@/data-provider/api/services/v2/vision-simulator'
 import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
@@ -41,8 +42,14 @@ import {RightRail} from './right-rail'
 import {SimulationAnalysisView} from './simulation/simulation-analysis-view'
 import {ViewportShell} from './viewport-shell'
 
+interface EditorLayoutProps {
+  visionSimulatorId: string
+}
+
 // eslint-disable-next-line max-lines-per-function, max-statements
-export const EditorLayout: React.FC = () => {
+export const EditorLayout: React.FC<EditorLayoutProps> = ({
+  visionSimulatorId,
+}) => {
   const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
   const [measurementEnabled, setMeasurementEnabled] = React.useState(false)
 
@@ -54,7 +61,7 @@ export const EditorLayout: React.FC = () => {
   const [mapRef, setMapRef] = React.useState<MapRef | null>(null)
   const hasSeededHistoryRef = React.useRef(false)
 
-  const editorMode = useSceneStore((state) => state.scene.mode)
+  const editorMode = useSceneStore((state) => state.scene.editorMode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
   const mapStyle = useSceneStore((state) => state.scene.meta.mapStyle)
   const areas = useSceneStore((state) => state.scene.areas)
@@ -135,6 +142,19 @@ export const EditorLayout: React.FC = () => {
     const nextScene = setMapVisibility(mode === 'map')
     recordAction({type: 'map-visibility', visible: mode === 'map'}, nextScene)
   }
+
+  const handleSave = useCallbackRef(async () => {
+    try {
+      await updateVision(visionSimulatorId, {
+        vision: {
+          data: scene,
+        },
+      })
+      toast.success('Scene saved')
+    } catch (error) {
+      toast.error('Failed to save scene')
+    }
+  })
 
   const handleBack = useCallbackRef(() => {
     if (typeof window !== 'undefined') {
@@ -278,6 +298,7 @@ export const EditorLayout: React.FC = () => {
           onExportSceneJson={handleExportSceneJson}
           onRedo={handleRedo}
           onEditorModeChange={handleEditorModeChange}
+          onSave={handleSave}
           onTogglePreview={() => setViewMode('preview')}
           onUndo={handleUndo}
           editorMode={editorMode}

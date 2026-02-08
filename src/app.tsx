@@ -1,8 +1,9 @@
 import {QueryClientProvider} from '@tanstack/react-query'
-import React from 'react'
+import React, {Suspense} from 'react'
 
-import type {EditorMode} from '@/features/scene/domain/types'
+import type {SceneStoreInitialState} from '@/features/scene/infrastructure/stores/scene.store'
 
+import {Pending} from '@/components/shared/pending'
 import {Toaster} from '@/components/ui/sonner'
 import {TooltipProvider} from '@/components/ui/tooltip'
 import {useGetVisionByIDSuspense} from '@/data-provider/api/services/v2/vision-simulator'
@@ -12,37 +13,31 @@ import {HistoryStoreProvider} from '@/features/scene/infrastructure/stores/histo
 import {SceneStoreProvider} from '@/features/scene/infrastructure/stores/scene.store'
 import {UiStoreProvider} from '@/features/scene/infrastructure/stores/ui.store'
 import {EditorLayout} from '@/features/scene/presentation/components/editor-layout'
+import {get} from '@/lib/lodash-es'
 
 interface AppProps {
   children?: React.ReactNode
   visionSimulatorId: string
   accessToken: string
   mapboxToken?: string
-  editorMode?: EditorMode
 }
 
 const AppImpl = ({
   visionSimulatorId,
-  editorMode,
   mapboxToken,
 }: Omit<AppProps, 'accessToken'>) => {
   const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId)
-  /* vision.vision.data */
 
-  /* {
-    "vision": {
-        "data": {
-            "editorMode": "map"
-        }
-    },
-   
-} */
+  const initialSceneState: SceneStoreInitialState = {
+    scene: get(vision, 'vision.data') as SceneStoreInitialState['scene'],
+  }
+
   return (
-    <SceneStoreProvider initialState={{editorMode}}>
+    <SceneStoreProvider initialState={initialSceneState}>
       <HistoryStoreProvider initialState={{}}>
         <UiStoreProvider initialState={{mapboxToken}}>
           <TooltipProvider delayDuration={0}>
-            <EditorLayout />
+            <EditorLayout visionSimulatorId={visionSimulatorId} />
             <Toaster />
           </TooltipProvider>
         </UiStoreProvider>
@@ -52,19 +47,19 @@ const AppImpl = ({
 }
 export const App: React.FC<AppProps> = ({
   mapboxToken,
-  editorMode,
   accessToken,
   visionSimulatorId,
 }) => {
   applyAxiosAuthorizationHeader(accessToken)
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppImpl
-        editorMode={editorMode}
-        mapboxToken={mapboxToken}
-        visionSimulatorId={visionSimulatorId}
-      />
-    </QueryClientProvider>
+    <Suspense fallback={<Pending />}>
+      <QueryClientProvider client={queryClient}>
+        <AppImpl
+          mapboxToken={mapboxToken}
+          visionSimulatorId={visionSimulatorId}
+        />
+      </QueryClientProvider>
+    </Suspense>
   )
 }

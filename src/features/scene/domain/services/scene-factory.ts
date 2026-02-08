@@ -14,7 +14,7 @@ const defaultMeta = (mapStyle: SceneMapStyle) => ({
 
 export const createInitialScene = (): SceneRoot => ({
   version: DEFAULT_SCENE_VERSION,
-  mode: 'map',
+  editorMode: 'map',
   mapVisible: true,
   units: 'meters',
   origin: {lat: 0, lng: 0, description: 'Geographic reference point'},

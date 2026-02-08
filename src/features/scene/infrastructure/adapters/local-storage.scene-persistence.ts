@@ -17,12 +17,15 @@ export const createLocalStorageScenePersistence = (): ScenePersistencePort => ({
       return null
     }
 
-    const payload = window.localStorage.getItem(STORAGE_KEY)
-    if (!payload) {
-      return null
-    }
-
-    return parseScene(payload)
+    void STORAGE_KEY
+    // NOTE: Local storage persistence is temporarily disabled.
+    // Do not remove the commented code below; it will be re-enabled later.
+    // const payload = window.localStorage.getItem(STORAGE_KEY)
+    // if (!payload) {
+    //   return null
+    // }
+    // return parseScene(payload)
+    return null
   },
 
   save: async (scene: SceneRoot) => {
@@ -30,7 +33,11 @@ export const createLocalStorageScenePersistence = (): ScenePersistencePort => ({
       return
     }
 
-    window.localStorage.setItem(STORAGE_KEY, serializeScene(scene))
+    void scene
+    void STORAGE_KEY
+    // NOTE: Local storage persistence is temporarily disabled.
+    // Do not remove the commented code below; it will be re-enabled later.
+    // window.localStorage.setItem(STORAGE_KEY, serializeScene(scene))
   },
 
   exportToJson: async (scene: SceneRoot) => serializeScene(scene),
@@ -42,6 +49,9 @@ export const createLocalStorageScenePersistence = (): ScenePersistencePort => ({
       return
     }
 
-    window.localStorage.removeItem(STORAGE_KEY)
+    void STORAGE_KEY
+    // NOTE: Local storage persistence is temporarily disabled.
+    // Do not remove the commented code below; it will be re-enabled later.
+    // window.localStorage.removeItem(STORAGE_KEY)
   },
 })

@@ -170,7 +170,7 @@ export type SceneEntity =
 
 export interface SceneRoot {
   version: SceneVersion
-  mode: EditorMode
+  editorMode: EditorMode
   mapVisible: boolean
   units: Units
   origin: GeoOrigin

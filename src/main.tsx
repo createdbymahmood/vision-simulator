@@ -9,7 +9,6 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App
       accessToken={import.meta.env.VITE_ACCESS_TOKEN}
-      editorMode='canvas'
       mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}
       visionSimulatorId={import.meta.env.VITE_VISION_SIMULATOR_ID}
     />

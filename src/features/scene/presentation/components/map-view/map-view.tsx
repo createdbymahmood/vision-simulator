@@ -116,7 +116,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const isEditMode = useUiStore((state) => state.isEditMode)
   const mapboxToken = useUiStore((state) => state.mapboxToken)
-  const editorMode = useSceneStore((state) => state.scene.mode)
+  const editorMode = useSceneStore((state) => state.scene.editorMode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
   const mapStyleSetting = useSceneStore((state) => state.scene.meta.mapStyle)
 

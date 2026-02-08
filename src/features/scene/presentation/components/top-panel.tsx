@@ -5,6 +5,7 @@ import {
   Play,
   RotateCcw,
   RotateCw,
+  Save,
   Share2,
   Trash2,
 } from 'lucide-react'
@@ -50,6 +51,7 @@ interface TopPanelProps {
   onUndo: () => void
   onRedo: () => void
   onClearBoard: () => void
+  onSave: () => void
   onExportSceneJson: () => void
   onExportSceneImage: () => void
 }
@@ -69,6 +71,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
   onUndo,
   onRedo,
   onClearBoard,
+  onSave,
   onExportSceneJson,
   onExportSceneImage,
 }) => {
@@ -186,6 +189,10 @@ export const TopPanel: React.FC<TopPanelProps> = ({
               </TooltipContent>
             </Tooltip>
           </div>
+
+          <Button size='icon' variant='outline' onClick={onSave}>
+            <Save className='size-5' />
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -51,7 +51,7 @@ Establish the foundational architecture, data models, routing structure, and sta
 
 - [ ] **Scene Root Schema** (Section 7.1)
   - `version: "1.1"`
-  - `mode: "map" | "canvas"`
+  - `editorMode: "map" | "canvas"`
   - `mapVisible: boolean`
   - `units: "meters"`
   - `origin: { lat, lng, description }`
