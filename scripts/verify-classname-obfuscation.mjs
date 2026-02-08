@@ -7,10 +7,15 @@ const CLASS_MAP_PATH = path.resolve(
   process.cwd(),
   '.cache/classname-obfuscation-map.json',
 )
+const CSS_VAR_MAP_PATH = path.resolve(
+  process.cwd(),
+  '.cache/css-variable-obfuscation-map.json',
+)
 const DIST_JS_PATH = path.resolve(process.cwd(), 'dist/index.js')
 const DIST_CSS_PATH = path.resolve(process.cwd(), 'dist/styles.css')
 const COMPLEX_CLASS_TOKEN_PATTERN = /[\d!%()\-./:[\]]/
 const OBFUSCATED_CLASS_PATTERN = /\bx[0-9a-z]{6}_[0-9a-z]{6}_[0-9a-z]{4}\b/g
+const CSS_VARIABLE_TOKEN_PATTERN = /--[\w-]+/g
 
 const traverse =
   /** @type {{default: typeof import('@babel/traverse').default}} */ (
@@ -95,11 +100,28 @@ const collectObfuscatedClassNamesFromCss = (cssCode) => {
   return classNames
 }
 
+const collectCssVariableTokens = (code) => {
+  const cssVariables = new Set()
+  let match
+
+  CSS_VARIABLE_TOKEN_PATTERN.lastIndex = 0
+
+  while ((match = CSS_VARIABLE_TOKEN_PATTERN.exec(code)) !== null) {
+    cssVariables.add(match[0])
+  }
+
+  return cssVariables
+}
+
 const classMapCode = readTextFile(CLASS_MAP_PATH)
+const cssVarMapCode = readTextFile(CSS_VAR_MAP_PATH)
 const jsCode = readTextFile(DIST_JS_PATH)
 const cssCode = readTextFile(DIST_CSS_PATH)
 const classMap = JSON.parse(classMapCode)
+const cssVarMap = JSON.parse(cssVarMapCode)
 const classSet = new Set(Object.keys(classMap))
+const originalCssVarSet = new Set(Object.keys(cssVarMap))
+const obfuscatedCssVarSet = new Set(Object.values(cssVarMap))
 
 const complexOriginalTokens = collectComplexOriginalClassTokens(
   jsCode,
@@ -137,6 +159,50 @@ if (missingCssClasses.length > 0) {
   )
 }
 
+const jsCssVars = collectCssVariableTokens(jsCode)
+const cssCssVars = collectCssVariableTokens(cssCode)
+const leakedOriginalCssVarsInJs = [...originalCssVarSet].filter((cssVarName) =>
+  jsCssVars.has(cssVarName),
+)
+const leakedOriginalCssVarsInCss = [...originalCssVarSet].filter((cssVarName) =>
+  cssCssVars.has(cssVarName),
+)
+
+if (
+  leakedOriginalCssVarsInJs.length > 0 ||
+  leakedOriginalCssVarsInCss.length > 0
+) {
+  throw new Error(
+    [
+      'Classname obfuscation verification failed.',
+      'Some original CSS variables still exist in build outputs.',
+      ...leakedOriginalCssVarsInJs
+        .slice(0, 25)
+        .map((cssVarName) => `dist/index.js: ${cssVarName}`),
+      ...leakedOriginalCssVarsInCss
+        .slice(0, 25)
+        .map((cssVarName) => `dist/styles.css: ${cssVarName}`),
+    ].join('\n'),
+  )
+}
+
+const jsObfuscatedCssVars = [...obfuscatedCssVarSet].filter((cssVarName) =>
+  jsCssVars.has(cssVarName),
+)
+const missingCssVarsInCss = jsObfuscatedCssVars.filter(
+  (cssVarName) => !cssCssVars.has(cssVarName),
+)
+
+if (missingCssVarsInCss.length > 0) {
+  throw new Error(
+    [
+      'Classname obfuscation verification failed.',
+      'Some obfuscated CSS variables used in dist/index.js are missing in dist/styles.css:',
+      ...missingCssVarsInCss.slice(0, 50),
+    ].join('\n'),
+  )
+}
+
 if (/@layer\b/.test(cssCode)) {
   throw new Error(
     [
@@ -148,5 +214,5 @@ if (/@layer\b/.test(cssCode)) {
 }
 
 console.log(
-  `Classname obfuscation verified: ${jsObfuscatedClassNames.size} JS classes, ${cssObfuscatedClassNames.size} CSS classes.`,
+  `Classname obfuscation verified: ${jsObfuscatedClassNames.size} JS classes, ${cssObfuscatedClassNames.size} CSS classes, ${obfuscatedCssVarSet.size} CSS variables.`,
 )

@@ -13,16 +13,23 @@ import {parse as parseCss} from 'postcss'
 import type {Plugin as VitePlugin} from 'vite'
 
 const MAP_MANIFEST_RELATIVE_PATH = '.cache/classname-obfuscation-map.json'
+const CSS_VAR_MAP_MANIFEST_RELATIVE_PATH =
+  '.cache/css-variable-obfuscation-map.json'
 const CLASS_HASH_SEED = 'vision-simulator-class-obfuscation-v1'
+const CSS_VAR_HASH_SEED = 'vision-simulator-css-variable-obfuscation-v1'
 const OBFUSCATED_CLASS_PREFIX = 'x'
 const OBFUSCATED_CLASS_SEGMENT_SEPARATOR = '_'
 const OBFUSCATED_CLASS_PRIMARY_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
-const OBFUSCATED_CLASS_SECONDARY_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz'
-const OBFUSCATED_CLASS_TERTIARY_ALPHABET = 'zyxwvutsrqponmlkjihgfedcba9876543210'
+const OBFUSCATED_CLASS_SECONDARY_ALPHABET =
+  '0123456789abcdefghijklmnopqrstuvwxyz'
+const OBFUSCATED_CLASS_TERTIARY_ALPHABET =
+  'zyxwvutsrqponmlkjihgfedcba9876543210'
+const OBFUSCATED_CSS_VAR_PREFIX = '--v'
 const OBFUSCATED_CLASS_PRIMARY_SEGMENT_LENGTH = 6
 const OBFUSCATED_CLASS_SECONDARY_SEGMENT_LENGTH = 6
 const OBFUSCATED_CLASS_CHECKSUM_SEGMENT_LENGTH = 4
 const COMPLEX_CLASS_TOKEN_PATTERN = /[-:[\]/!()%.]|\d/
+const CSS_VARIABLE_TOKEN_PATTERN = /--[a-zA-Z0-9_-]+/g
 const SUPPORTED_SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
 const CLASS_PROP_NAME_PATTERN = /class(name|names)?$/i
 const CLASS_COMPOSER_CALL_NAMES = new Set([
@@ -35,11 +42,20 @@ const CLASS_COMPOSER_CALL_NAMES = new Set([
 ])
 const QUICK_CLASS_SIGNAL_PATTERN =
   /className|classNames|containerClassName|\bcn\(|\bcva\(|\bclsx\(|\btwMerge\(/u
+const QUICK_CSS_VARIABLE_SIGNAL_PATTERN = /--[a-zA-Z0-9_-]+|var\(--/u
 const CLASS_SELECTOR_PATTERN = /\.((?:\\.|[-_a-zA-Z0-9])+)/g
 const CSS_HEX_ESCAPE_PATTERN = /\\([0-9a-fA-F]{1,6})(?:\s)?/g
 const CSS_SIMPLE_ESCAPE_PATTERN = /\\(.)/g
 const PROJECT_SOURCE_DIRECTORY = 'src'
 const PRESERVED_CLASS_NAMES = new Set(['dark', 'light'])
+const PRESERVED_CLASS_PREFIXES = Object.freeze(['size-'])
+const PRESERVED_CSS_VARIABLE_PREFIXES = Object.freeze([
+  '--radix-',
+  '--bits-',
+  '--reka-',
+  '--kb-',
+  '--ngp-',
+])
 const PARSER_PLUGINS: ParserPlugin[] = ['typescript', 'jsx']
 const generate = (
   generatorModule as unknown as {
@@ -55,6 +71,8 @@ const traverse = (
 interface ClassNameObfuscationContext {
   readonly classMap: ReadonlyMap<string, string>
   readonly classMapObject: Readonly<Record<string, string>>
+  readonly cssVarMap: ReadonlyMap<string, string>
+  readonly cssVarMapObject: Readonly<Record<string, string>>
   readonly projectRoot: string
 }
 
@@ -65,7 +83,8 @@ interface SourceTransformResult {
 
 let cachedContext: ClassNameObfuscationContext | null = null
 
-const getYarnCommand = () => (process.platform === 'win32' ? 'yarn.cmd' : 'yarn')
+const getYarnCommand = () =>
+  process.platform === 'win32' ? 'yarn.cmd' : 'yarn'
 
 const resolveProjectRoot = (inputRoot: string) => path.resolve(inputRoot)
 
@@ -101,6 +120,41 @@ const replaceClassTokens = (
   return {changed, value: nextValue}
 }
 
+const replaceCssVariableTokens = (
+  value: string,
+  cssVarMap: ReadonlyMap<string, string>,
+): {changed: boolean; value: string} => {
+  let changed = false
+
+  CSS_VARIABLE_TOKEN_PATTERN.lastIndex = 0
+
+  const nextValue = value.replace(CSS_VARIABLE_TOKEN_PATTERN, (cssVarToken) => {
+    const obfuscatedCssVarName = cssVarMap.get(cssVarToken)
+
+    if (!obfuscatedCssVarName) {
+      return cssVarToken
+    }
+
+    changed = true
+    return obfuscatedCssVarName
+  })
+
+  return {changed, value: nextValue}
+}
+
+const isPreservedCssVariable = (cssVariableName: string) =>
+  PRESERVED_CSS_VARIABLE_PREFIXES.some((prefix) =>
+    cssVariableName.startsWith(prefix),
+  )
+
+const isPreservedClassName = (className: string) => {
+  if (PRESERVED_CLASS_NAMES.has(className)) {
+    return true
+  }
+
+  return PRESERVED_CLASS_PREFIXES.some((prefix) => className.startsWith(prefix))
+}
+
 const tokenizeClassValue = (value: string) =>
   value
     .split(/\s+/)
@@ -120,7 +174,7 @@ const canConservativelyTransformClassLiteral = (
   let hasComplexMappedToken = false
 
   for (const token of tokens) {
-    if (PRESERVED_CLASS_NAMES.has(token)) {
+    if (isPreservedClassName(token)) {
       continue
     }
 
@@ -145,6 +199,20 @@ const transformStringLiteralConservatively = (
   }
 
   const transformed = replaceClassTokens(literalNode.value, classMap)
+
+  if (!transformed.changed) {
+    return false
+  }
+
+  literalNode.value = transformed.value
+  return true
+}
+
+const transformStringLiteralCssVariables = (
+  literalNode: t.StringLiteral,
+  cssVarMap: ReadonlyMap<string, string>,
+) => {
+  const transformed = replaceCssVariableTokens(literalNode.value, cssVarMap)
 
   if (!transformed.changed) {
     return false
@@ -194,13 +262,11 @@ const isClassComposerCall = (node: t.CallExpression) => {
   return calleeName ? CLASS_COMPOSER_CALL_NAMES.has(calleeName) : false
 }
 
-const isCvaCall = (node: t.CallExpression) => getCalleeName(node.callee) === 'cva'
+const isCvaCall = (node: t.CallExpression) =>
+  getCalleeName(node.callee) === 'cva'
 
 const escapeTemplateLiteralRawValue = (value: string) =>
-  value
-    .replace(/\\/g, '\\\\')
-    .replace(/`/g, '\\`')
-    .replace(/\$\{/g, '\\${')
+  value.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
 
 const transformTemplateLiteralValue = (
   templateNode: t.TemplateLiteral,
@@ -230,6 +296,33 @@ const transformTemplateLiteralValue = (
     if (transformClassExpression(expression, classMap)) {
       changed = true
     }
+  }
+
+  return changed
+}
+
+const transformTemplateLiteralCssVariables = (
+  templateNode: t.TemplateLiteral,
+  cssVarMap: ReadonlyMap<string, string>,
+) => {
+  let changed = false
+
+  for (const templateElement of templateNode.quasis) {
+    const cookedValue = templateElement.value.cooked
+
+    if (cookedValue == null) {
+      continue
+    }
+
+    const transformed = replaceCssVariableTokens(cookedValue, cssVarMap)
+
+    if (!transformed.changed) {
+      continue
+    }
+
+    changed = true
+    templateElement.value.cooked = transformed.value
+    templateElement.value.raw = escapeTemplateLiteralRawValue(transformed.value)
   }
 
   return changed
@@ -310,7 +403,10 @@ const transformClassExpression = (
         continue
       }
 
-      if (property.computed && transformClassExpression(property.key, classMap)) {
+      if (
+        property.computed &&
+        transformClassExpression(property.key, classMap)
+      ) {
         changed = true
       }
 
@@ -526,7 +622,10 @@ const transformCvaCallExpression = (
   return changed
 }
 
-const isWithinProjectSource = (projectRoot: string, absoluteFilePath: string) => {
+const isWithinProjectSource = (
+  projectRoot: string,
+  absoluteFilePath: string,
+) => {
   const sourceRoot = path.join(projectRoot, PROJECT_SOURCE_DIRECTORY)
   const relativePath = path.relative(sourceRoot, absoluteFilePath)
 
@@ -550,7 +649,10 @@ const isImportExportSourceLiteral = (
     return true
   }
 
-  if (t.isExportNamedDeclaration(parentNode) && parentNode.source === path.node) {
+  if (
+    t.isExportNamedDeclaration(parentNode) &&
+    parentNode.source === path.node
+  ) {
     return true
   }
 
@@ -615,8 +717,53 @@ const extractClassNamesFromCss = (cssCode: string) => {
   return classNames
 }
 
+const extractCssVariablesFromValue = (value: string) => {
+  const cssVariables = new Set<string>()
+  let match: RegExpExecArray | null
+
+  CSS_VARIABLE_TOKEN_PATTERN.lastIndex = 0
+
+  while ((match = CSS_VARIABLE_TOKEN_PATTERN.exec(value)) !== null) {
+    const cssVariableName = match[0]
+
+    if (cssVariableName.length <= 2) {
+      continue
+    }
+
+    cssVariables.add(cssVariableName)
+  }
+
+  return cssVariables
+}
+
+const extractCssVariablesFromCss = (cssCode: string) => {
+  const cssVariables = new Set<string>()
+  const cssAst = parseCss(cssCode)
+
+  cssAst.walkDecls((declaration) => {
+    if (declaration.prop.startsWith('--')) {
+      cssVariables.add(declaration.prop)
+    }
+
+    for (const cssVariableName of extractCssVariablesFromValue(
+      declaration.value,
+    )) {
+      cssVariables.add(cssVariableName)
+    }
+  })
+
+  cssAst.walkAtRules((atRule) => {
+    for (const cssVariableName of extractCssVariablesFromValue(atRule.params)) {
+      cssVariables.add(cssVariableName)
+    }
+  })
+
+  return cssVariables
+}
+
 const rotateAlphabet = (alphabet: string, shift: number) => {
-  const normalizedShift = ((shift % alphabet.length) + alphabet.length) % alphabet.length
+  const normalizedShift =
+    ((shift % alphabet.length) + alphabet.length) % alphabet.length
 
   if (normalizedShift === 0) {
     return alphabet
@@ -696,12 +843,66 @@ const createObfuscatedClassName = (className: string, attempt: number) => {
   ].join(OBFUSCATED_CLASS_SEGMENT_SEPARATOR)
 }
 
+const createObfuscatedCssVariableName = (
+  cssVariableName: string,
+  attempt: number,
+) => {
+  const hash = createHash('sha256')
+    .update(`${CSS_VAR_HASH_SEED}:${cssVariableName}:${attempt}`)
+    .digest()
+  const rotationSeed = hash[2] + hash[9] + cssVariableName.length + attempt * 13
+  const primaryAlphabet = rotateAlphabet(
+    OBFUSCATED_CLASS_PRIMARY_ALPHABET,
+    rotationSeed,
+  )
+  const secondaryAlphabet = rotateAlphabet(
+    OBFUSCATED_CLASS_SECONDARY_ALPHABET,
+    hash[11] + cssVariableName.length * 5 + attempt * 7,
+  )
+  const tertiaryAlphabet = rotateAlphabet(
+    OBFUSCATED_CLASS_TERTIARY_ALPHABET,
+    hash[19] + cssVariableName.length * 11 + attempt * 17,
+  )
+  const primarySegment = createHashSegment(
+    hash,
+    primaryAlphabet,
+    OBFUSCATED_CLASS_PRIMARY_SEGMENT_LENGTH,
+    2,
+    5,
+    cssVariableName.length + attempt * 3,
+  )
+  const secondarySegment = createHashSegment(
+    hash,
+    secondaryAlphabet,
+    OBFUSCATED_CLASS_SECONDARY_SEGMENT_LENGTH,
+    7,
+    7,
+    cssVariableName.length * 7 + attempt * 11,
+  )
+  const checksumSegment = createHashSegment(
+    hash,
+    tertiaryAlphabet,
+    OBFUSCATED_CLASS_CHECKSUM_SEGMENT_LENGTH,
+    13,
+    11,
+    cssVariableName.length * 13 + attempt * 19,
+  )
+
+  return [
+    `${OBFUSCATED_CSS_VAR_PREFIX}${primarySegment}`,
+    secondarySegment,
+    checksumSegment,
+  ].join(OBFUSCATED_CLASS_SEGMENT_SEPARATOR)
+}
+
 const createClassMap = (classNames: Iterable<string>) => {
   const map = new Map<string, string>()
   const occupiedClassNames = new Set<string>()
 
-  for (const className of [...classNames].sort((left, right) => left.localeCompare(right))) {
-    if (PRESERVED_CLASS_NAMES.has(className)) {
+  for (const className of [...classNames].sort((left, right) =>
+    left.localeCompare(right),
+  )) {
+    if (isPreservedClassName(className)) {
       continue
     }
 
@@ -723,6 +924,38 @@ const createClassMap = (classNames: Iterable<string>) => {
   return map
 }
 
+const createCssVarMap = (cssVariables: Iterable<string>) => {
+  const map = new Map<string, string>()
+  const occupiedCssVariables = new Set<string>()
+
+  for (const cssVariableName of [...cssVariables].sort((left, right) =>
+    left.localeCompare(right),
+  )) {
+    if (isPreservedCssVariable(cssVariableName)) {
+      continue
+    }
+
+    let attempt = 0
+
+    while (true) {
+      const obfuscatedCssVariableName = createObfuscatedCssVariableName(
+        cssVariableName,
+        attempt,
+      )
+
+      if (!occupiedCssVariables.has(obfuscatedCssVariableName)) {
+        occupiedCssVariables.add(obfuscatedCssVariableName)
+        map.set(cssVariableName, obfuscatedCssVariableName)
+        break
+      }
+
+      attempt += 1
+    }
+  }
+
+  return map
+}
+
 const mapToSortedObject = (classMap: ReadonlyMap<string, string>) => {
   const sortedEntries = [...classMap.entries()].sort((left, right) =>
     left[0].localeCompare(right[0]),
@@ -731,18 +964,19 @@ const mapToSortedObject = (classMap: ReadonlyMap<string, string>) => {
   return Object.freeze(Object.fromEntries(sortedEntries))
 }
 
-const writeClassMapManifest = (
+const writeObfuscationMapManifest = (
   projectRoot: string,
-  classMap: ReadonlyMap<string, string>,
+  mapRelativePath: string,
+  obfuscationMap: ReadonlyMap<string, string>,
 ) => {
-  const manifestPath = path.join(projectRoot, MAP_MANIFEST_RELATIVE_PATH)
+  const manifestPath = path.join(projectRoot, mapRelativePath)
   const manifestDirectoryPath = path.dirname(manifestPath)
 
   if (!fs.existsSync(manifestDirectoryPath)) {
     fs.mkdirSync(manifestDirectoryPath, {recursive: true})
   }
 
-  const mapAsObject = mapToSortedObject(classMap)
+  const mapAsObject = mapToSortedObject(obfuscationMap)
   fs.writeFileSync(manifestPath, JSON.stringify(mapAsObject, null, 2), 'utf8')
 }
 
@@ -796,13 +1030,22 @@ const createTailwindPrebuildCss = (projectRoot: string) => {
 const buildClassNameObfuscationContext = (projectRoot: string) => {
   const generatedCss = createTailwindPrebuildCss(projectRoot)
   const discoveredClassNames = extractClassNamesFromCss(generatedCss)
+  const discoveredCssVariables = extractCssVariablesFromCss(generatedCss)
   const classMap = createClassMap(discoveredClassNames)
+  const cssVarMap = createCssVarMap(discoveredCssVariables)
 
-  writeClassMapManifest(projectRoot, classMap)
+  writeObfuscationMapManifest(projectRoot, MAP_MANIFEST_RELATIVE_PATH, classMap)
+  writeObfuscationMapManifest(
+    projectRoot,
+    CSS_VAR_MAP_MANIFEST_RELATIVE_PATH,
+    cssVarMap,
+  )
 
   return {
     classMap,
     classMapObject: mapToSortedObject(classMap),
+    cssVarMap,
+    cssVarMapObject: mapToSortedObject(cssVarMap),
     projectRoot,
   } satisfies ClassNameObfuscationContext
 }
@@ -813,21 +1056,25 @@ const replaceSelectorClassNames = (
 ) => {
   CLASS_SELECTOR_PATTERN.lastIndex = 0
 
-  return selector.replace(CLASS_SELECTOR_PATTERN, (fullMatch, rawClassToken) => {
-    const decodedClassName = decodeCssClassToken(rawClassToken)
-    const obfuscatedClassName = classMap.get(decodedClassName)
+  return selector.replace(
+    CLASS_SELECTOR_PATTERN,
+    (fullMatch, rawClassToken) => {
+      const decodedClassName = decodeCssClassToken(rawClassToken)
+      const obfuscatedClassName = classMap.get(decodedClassName)
 
-    if (!obfuscatedClassName) {
-      return fullMatch
-    }
+      if (!obfuscatedClassName) {
+        return fullMatch
+      }
 
-    return `.${obfuscatedClassName}`
-  })
+      return `.${obfuscatedClassName}`
+    },
+  )
 }
 
 export const obfuscateCssCode = (
   cssCode: string,
   classMap: ReadonlyMap<string, string>,
+  cssVarMap: ReadonlyMap<string, string>,
 ) => {
   const cssAst = parseCss(cssCode)
 
@@ -836,7 +1083,47 @@ export const obfuscateCssCode = (
       return
     }
 
-    rule.selector = replaceSelectorClassNames(rule.selector, classMap)
+    const selectorWithObfuscatedClasses = replaceSelectorClassNames(
+      rule.selector,
+      classMap,
+    )
+    const selectorWithObfuscatedCssVars = replaceCssVariableTokens(
+      selectorWithObfuscatedClasses,
+      cssVarMap,
+    )
+
+    rule.selector = selectorWithObfuscatedCssVars.value
+  })
+
+  cssAst.walkDecls((declaration) => {
+    if (declaration.prop.startsWith('--')) {
+      const obfuscatedPropertyName = cssVarMap.get(declaration.prop)
+
+      if (obfuscatedPropertyName) {
+        declaration.prop = obfuscatedPropertyName
+      }
+    }
+
+    const transformedValue = replaceCssVariableTokens(
+      declaration.value,
+      cssVarMap,
+    )
+
+    if (transformedValue.changed) {
+      declaration.value = transformedValue.value
+    }
+  })
+
+  cssAst.walkAtRules((atRule) => {
+    if (!atRule.params) {
+      return
+    }
+
+    const transformedParams = replaceCssVariableTokens(atRule.params, cssVarMap)
+
+    if (transformedParams.changed) {
+      atRule.params = transformedParams.value
+    }
   })
 
   return cssAst.toString()
@@ -857,8 +1144,12 @@ export const transformSourceClassNames = (
   sourceCode: string,
   sourcePath: string,
   classMap: ReadonlyMap<string, string>,
+  cssVarMap: ReadonlyMap<string, string>,
 ): SourceTransformResult => {
-  if (!QUICK_CLASS_SIGNAL_PATTERN.test(sourceCode)) {
+  if (
+    !QUICK_CLASS_SIGNAL_PATTERN.test(sourceCode) &&
+    !QUICK_CSS_VARIABLE_SIGNAL_PATTERN.test(sourceCode)
+  ) {
     return {
       changed: false,
       code: sourceCode,
@@ -962,7 +1253,23 @@ export const transformSourceClassNames = (
         return
       }
 
+      let pathChanged = false
+
       if (transformStringLiteralConservatively(path.node, classMap)) {
+        pathChanged = true
+      }
+
+      if (transformStringLiteralCssVariables(path.node, cssVarMap)) {
+        pathChanged = true
+      }
+
+      if (pathChanged) {
+        changed = true
+      }
+    },
+
+    TemplateLiteral(path) {
+      if (transformTemplateLiteralCssVariables(path.node, cssVarMap)) {
         changed = true
       }
     },
@@ -1012,6 +1319,7 @@ export const createViteClassNameObfuscationPlugin = (): VitePlugin => {
         sourceCode,
         sourcePath,
         context.classMap,
+        context.cssVarMap,
       )
 
       if (!transformed.changed) {
@@ -1042,7 +1350,11 @@ export const createViteClassNameObfuscationPlugin = (): VitePlugin => {
             ? outputChunk.source
             : Buffer.from(outputChunk.source).toString('utf8')
 
-        outputChunk.source = obfuscateCssCode(cssCode, context.classMap)
+        outputChunk.source = obfuscateCssCode(
+          cssCode,
+          context.classMap,
+          context.cssVarMap,
+        )
       }
     },
   }
@@ -1091,6 +1403,7 @@ export const createEsbuildClassNameObfuscationPlugin = (
           sourceCode,
           filePath,
           context.classMap,
+          context.cssVarMap,
         )
 
         if (!transformed.changed) {
@@ -1110,6 +1423,9 @@ export const createEsbuildClassNameObfuscationPlugin = (
 export const getClassMapManifestPath = (inputRoot = process.cwd()) =>
   path.join(resolveProjectRoot(inputRoot), MAP_MANIFEST_RELATIVE_PATH)
 
+export const getCssVarMapManifestPath = (inputRoot = process.cwd()) =>
+  path.join(resolveProjectRoot(inputRoot), CSS_VAR_MAP_MANIFEST_RELATIVE_PATH)
+
 export const readClassMapFromManifest = (inputRoot = process.cwd()) => {
   const manifestPath = getClassMapManifestPath(inputRoot)
 
@@ -1125,12 +1441,28 @@ export const readClassMapFromManifest = (inputRoot = process.cwd()) => {
   return new Map<string, string>(Object.entries(parsedManifest))
 }
 
+export const readCssVarMapFromManifest = (inputRoot = process.cwd()) => {
+  const manifestPath = getCssVarMapManifestPath(inputRoot)
+
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(
+      `CSS variable obfuscation manifest was not found at ${manifestPath}.`,
+    )
+  }
+
+  const manifestCode = fs.readFileSync(manifestPath, 'utf8')
+  const parsedManifest = JSON.parse(manifestCode) as Record<string, string>
+
+  return new Map<string, string>(Object.entries(parsedManifest))
+}
+
 export const obfuscateCssFile = (
   cssFilePath: string,
   classMap: ReadonlyMap<string, string>,
+  cssVarMap: ReadonlyMap<string, string>,
 ) => {
   const cssCode = fs.readFileSync(cssFilePath, 'utf8')
-  const obfuscatedCss = obfuscateCssCode(cssCode, classMap)
+  const obfuscatedCss = obfuscateCssCode(cssCode, classMap, cssVarMap)
 
   fs.writeFileSync(cssFilePath, obfuscatedCss, 'utf8')
 }
