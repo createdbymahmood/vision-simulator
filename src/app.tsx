@@ -30,6 +30,7 @@ const AppImpl = ({
 
   const initialSceneState: SceneStoreInitialState = {
     scene: get(vision, 'vision.data') as SceneStoreInitialState['scene'],
+    projectName: get(vision, 'name'),
   }
 
   return (

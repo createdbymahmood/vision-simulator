@@ -11,7 +11,6 @@ export type EditorTool =
   | 'draw-shape'
   | 'draw-wall'
   | 'hand'
-  | 'measure'
   | 'place-camera'
   | 'place-person'
   | 'select'

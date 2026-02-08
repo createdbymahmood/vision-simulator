@@ -24,6 +24,7 @@ import {createInitialScene} from '@/features/scene/domain/services/scene-factory
 export interface SceneState {
   scene: SceneRoot
   selectedEntityIds: string[]
+  projectName: string
 
   setScene: (scene: SceneRoot) => SceneRoot
   updateScene: (updater: (scene: SceneRoot) => void) => SceneRoot
@@ -533,6 +534,7 @@ const createSceneStore: (
 
   return (set, get) => ({
     scene: resolveInitialScene(initialValues),
+    projectName: initialValues.projectName ?? 'Untitled project',
     selectedEntityIds: restInitialValues.selectedEntityIds ?? [],
     setScene: (scene) => setScene(set, get, scene),
     updateScene: (updater) => updateScene(set, get, updater),

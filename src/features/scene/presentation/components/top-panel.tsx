@@ -38,6 +38,7 @@ import {Switch} from '@/components/ui/switch'
 import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 
 interface TopPanelProps {
+  projectName: string
   editorMode: EditorMode
   isEditMode: boolean
   canUndo: boolean
@@ -59,6 +60,7 @@ interface TopPanelProps {
 
 // eslint-disable-next-line max-lines-per-function
 export const TopPanel: React.FC<TopPanelProps> = ({
+  projectName,
   editorMode,
   isEditMode,
   canUndo,
@@ -90,7 +92,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
             <ArrowLeft className='size-5' />
           </Button>
 
-          <span className='text-xl font-semibold'>Project name</span>
+          <span className='text-xl font-semibold'>{projectName}</span>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

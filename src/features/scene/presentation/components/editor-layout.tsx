@@ -65,6 +65,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const mapStyle = useSceneStore((state) => state.scene.meta.mapStyle)
   const areas = useSceneStore((state) => state.scene.areas)
   const cameras = useSceneStore((state) => state.scene.cameras)
+  const projectName = useSceneStore((state) => state.projectName)
   const scene = useSceneStore((state) => state.scene)
   const setScene = useSceneStore((state) => state.setScene)
   const setEditorMode = useSceneStore((state) => state.setMode)
@@ -254,7 +255,6 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     if (viewMode === 'preview') {
       closeTransientUi()
       setEditMode(false)
-      setMeasurementEnabled(false)
     } else {
       setEditMode(true)
     }
@@ -304,6 +304,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           saveLoading={saveLoading}
           onTogglePreview={() => setViewMode('preview')}
           onUndo={handleUndo}
+          projectName={projectName}
           editorMode={editorMode}
         />
       ) : null}
