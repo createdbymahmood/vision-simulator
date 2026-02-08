@@ -54,6 +54,15 @@ const obfuscateCssCode = (cssCode, classMap) => {
     )
   })
 
+  cssAst.walkAtRules('layer', (layerAtRule) => {
+    if (!layerAtRule.nodes || layerAtRule.nodes.length === 0) {
+      layerAtRule.remove()
+      return
+    }
+
+    layerAtRule.replaceWith(...layerAtRule.nodes)
+  })
+
   return cssAst.toString()
 }
 
