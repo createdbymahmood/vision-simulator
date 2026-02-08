@@ -7,11 +7,17 @@ interface AppProps {
 }
 
 export const App: React.FC<AppProps> = ({className}) => {
+  const accessToken = import.meta.env.VITE_ACCESS_TOKEN
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN
+  const visionSimulatorId = import.meta.env.VITE_VISION_SIMULATOR_ID
 
   return (
     <div className={['app-root', className].filter(Boolean).join(' ')}>
-      <VisionSimulator mapboxToken={mapboxToken} />
+      <VisionSimulator
+        accessToken={accessToken}
+        mapboxToken={mapboxToken}
+        visionSimulatorId={visionSimulatorId}
+      />
     </div>
   )
 }

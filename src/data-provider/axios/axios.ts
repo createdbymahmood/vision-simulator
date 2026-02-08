@@ -3,7 +3,9 @@ import type {AxiosError, AxiosRequestConfig} from 'axios'
 import axios from 'axios'
 import {v4 as uuidv4} from 'uuid'
 
-const ApiServiceCallerInstance = axios.create({})
+const ApiServiceCallerInstance = axios.create({
+  baseURL: import.meta.env.VITE_ENV_API_SERVICE_URL,
+})
 
 const instances = [ApiServiceCallerInstance]
 

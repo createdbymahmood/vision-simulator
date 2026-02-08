@@ -8,20 +8,33 @@
 - `docs/developer-setup.md`
 - `docs/known-limitations.md`
 
-## Mapbox Token (Required)
+## Required Props
 
-The `VisionSimulator` export requires a Mapbox access token to be provided via
-props. The app does not fall back to `import.meta.env` internally.
+The `VisionSimulator` export requires a `mapboxToken`, `visionSimulatorId`,
+and `accessToken` to be provided via props. The app does not fall back to
+`import.meta.env` internally.
 
 ```tsx
 import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
 
 interface AppProps {
   mapboxToken: string
+  visionSimulatorId: string
+  accessToken: string
 }
 
-export const App: React.FC<AppProps> = ({mapboxToken}) => {
-  return <VisionSimulator mapboxToken={mapboxToken} />
+export const App: React.FC<AppProps> = ({
+  accessToken,
+  mapboxToken,
+  visionSimulatorId,
+}) => {
+  return (
+    <VisionSimulator
+      accessToken={accessToken}
+      mapboxToken={mapboxToken}
+      visionSimulatorId={visionSimulatorId}
+    />
+  )
 }
 ```
 
