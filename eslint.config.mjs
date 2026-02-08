@@ -3,7 +3,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import unusedImports from 'eslint-plugin-unused-imports'
 
 export default defineConfig({
-  ignores: ['src/routes/**'],
+  ignores: ['src/routes/**', 'src/data-provider/api/**'],
   plugins: {
     'unused-imports': unusedImports,
     'react-refresh': reactRefresh,
