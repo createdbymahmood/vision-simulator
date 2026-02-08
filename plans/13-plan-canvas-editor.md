@@ -15,7 +15,7 @@ Implement the Canvas Editor as the exact same editor as Map Mode, but with the m
 - Treat Canvas Editor as a **visual-only** mode with full feature parity to Map Mode.
 - Do **not** add new tools, data models, or interactions; only adjust map styling.
 - The only required difference is the map styling input: **no `mapStyle` prop** or an **empty `mapStyle` value**.
-- Keep all editing tools, selections, drawing behaviors, measurements, and constraints identical.
+- Keep all editing tools, selections, drawing behaviors, and constraints identical.
 - Any Map-specific UI that is already gated in prior phases must remain gated (no new gating in this phase).
 
 ---
@@ -68,4 +68,3 @@ Implement the Canvas Editor as the exact same editor as Map Mode, but with the m
 - [ ] Editor remains fully interactive with no feature loss
 - [ ] Switching back to Map Mode restores map tiles and behaves normally
 - [ ] No console errors related to map styling
-

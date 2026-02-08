@@ -61,7 +61,6 @@ This ensures person placement integrates with the collision detection system and
 - Collision detection with walls, shapes, and other people
 - Person visual design (icon, collision radius)
 - Person cursor states
-- Person measurement tooltips
 - Person entity management
 
 ### Explicitly Excluded

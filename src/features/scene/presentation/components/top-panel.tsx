@@ -52,6 +52,7 @@ interface TopPanelProps {
   onRedo: () => void
   onClearBoard: () => void
   onSave: () => void
+  saveLoading: boolean
   onExportSceneJson: () => void
   onExportSceneImage: () => void
 }
@@ -72,6 +73,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
   onRedo,
   onClearBoard,
   onSave,
+  saveLoading,
   onExportSceneJson,
   onExportSceneImage,
 }) => {
@@ -190,7 +192,12 @@ export const TopPanel: React.FC<TopPanelProps> = ({
             </Tooltip>
           </div>
 
-          <Button size='icon' variant='outline' onClick={onSave}>
+          <Button
+            size='icon'
+            variant='outline'
+            loading={saveLoading}
+            onClick={onSave}
+          >
             <Save className='size-5' />
           </Button>
 

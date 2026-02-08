@@ -51,13 +51,12 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   visionSimulatorId,
 }) => {
   const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
-  const [measurementEnabled, setMeasurementEnabled] = React.useState(false)
-
   const [placeDeviceOpen, setPlaceDeviceOpen] = React.useState(false)
   const [searchOpen, setSearchOpen] = React.useState(false)
   const [areaPanelOpen, setAreaPanelOpen] = React.useState(false)
   const [devicesPanelOpen, setDevicesPanelOpen] = React.useState(false)
   const [mapStyleOpen, setMapStyleOpen] = React.useState(false)
+  const [saveLoading, setSaveLoading] = React.useState(false)
   const [mapRef, setMapRef] = React.useState<MapRef | null>(null)
   const hasSeededHistoryRef = React.useRef(false)
 
@@ -144,6 +143,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   }
 
   const handleSave = useCallbackRef(async () => {
+    setSaveLoading(true)
     try {
       await updateVision(visionSimulatorId, {
         vision: {
@@ -153,6 +153,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       toast.success('Scene saved')
     } catch (error) {
       toast.error('Failed to save scene')
+    } finally {
+      setSaveLoading(false)
     }
   })
 
@@ -299,6 +301,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           onRedo={handleRedo}
           onEditorModeChange={handleEditorModeChange}
           onSave={handleSave}
+          saveLoading={saveLoading}
           onTogglePreview={() => setViewMode('preview')}
           onUndo={handleUndo}
           editorMode={editorMode}
@@ -311,11 +314,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
         {viewMode === 'editor' ? (
           <ViewportShell
             mapVisible={mapVisible}
-            measurementEnabled={measurementEnabled}
             activeTool={activeTool}
             onBlankClick={handleBlankClick}
             onMapReady={handleMapReady}
-            onToggleMeasurement={() => setMeasurementEnabled((prev) => !prev)}
             editorMode={editorMode}
             shapeMode={shapeMode}
           />

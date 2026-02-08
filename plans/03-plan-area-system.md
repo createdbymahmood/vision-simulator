@@ -6,17 +6,16 @@
 
 ## Phase Goal
 
-Implement the complete Area creation system, which is the mandatory foundation for all other objects. Areas define spatial boundaries where all objects must be placed. This phase includes both Point Mode and Pen Mode drawing, all visual feedback, measurement tooltips, first-time user experience, and area constraints.
+Implement the complete Area creation system, which is the mandatory foundation for all other objects. Areas define spatial boundaries where all objects must be placed. This phase includes both Point Mode and Pen Mode drawing, all visual feedback, first-time user experience, and area constraints.
 
 ---
 
 ## How Codex Should Use This Phase
 
 - Enforce the global rule: nothing else can be placed without at least one area; keep wall/shape/camera/person tools disabled until then.
-- Build both Point and Pen modes with the exact visuals, cursors, and measurements; sampling (1000 points) is required, not optional.
+- Build both Point and Pen modes with the exact visuals and cursors; sampling (1000 points) is required, not optional.
 - Validation is strict: areas must close, min 3 vertices, and all later objects must remain inside area bounds.
 - Deliver the first-time experience (prompt + tutorial) so later phases inherit correct gating states.
-- Keep measurement tooltips, cursor states, and overlap visuals identical to the specs; treat toasts/animations as acceptance criteria.
 - Add the area management panel and active-area highlighting so downstream tools can target the active area.
 
 ---
@@ -124,35 +123,6 @@ This ensures optimal performance with the map renderer and maintains consistency
 
 - [ ] **Conversion**:
   - Bezier curves sampled into polyline (1000 points per curve)
-
-### Measurement Tooltips - Area (Section 5.7.3)
-
-- [ ] **Tooltip Appearance** (Section 5.7.2):
-  - Background: `rgba(0, 0, 0, 0.85)` with backdrop blur
-  - Text: white, 13px, bold font
-  - Padding: 6px 10px
-  - Border-radius: 6px
-  - Box-shadow: `0 2px 8px rgba(0, 0, 0, 0.3)`
-  - Pointer: small triangle pointing to measurement line
-
-- [ ] **Position**:
-  - Follows cursor at offset (12px right, 12px down)
-  - OR snaps to midpoint of line being drawn
-  - Always within viewport bounds
-
-- [ ] **Content**:
-  - Current segment: `"15.3 m"`
-  - After 3+ vertices: `"15.3 m • Total: 42.7 m"`
-  - Near close: `"Click to close | Total: 84.2 m"`
-  - Pen mode: `"Curve length: ~18.4 m"`
-
-- [ ] **Animation**:
-  - Fade in: 100ms
-  - Updates: instant
-  - Fade out: 200ms when drawing completes
-
-- [ ] **Perimeter Display**:
-  - After closing: toast `"Area created • Perimeter: 84.2 m • Area: 245.8 m²"`
 
 ### Enhanced Cursor States - Area (Section 5.8.2)
 

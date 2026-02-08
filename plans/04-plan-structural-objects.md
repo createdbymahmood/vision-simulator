@@ -6,7 +6,7 @@
 
 ## Phase Goal
 
-Implement the complete drawing system for structural objects: Walls and Shapes (Rectangle, Circle, Triangle, Line). These objects must be placed within areas and serve as obstacles for simulation. This phase includes all visual feedback, measurement tooltips, enhanced cursors, and constraint validation.
+Implement the complete drawing system for structural objects: Walls and Shapes (Rectangle, Circle, Triangle, Line). These objects must be placed within areas and serve as obstacles for simulation. This phase includes all visual feedback, enhanced cursors, and constraint validation.
 
 ---
 
@@ -16,7 +16,6 @@ Implement the complete drawing system for structural objects: Walls and Shapes (
 - Match visuals to spec: solid wall previews with thickness, dashed shape previews, specified colors/dashes, and enhanced cursors.
 - Build snapping (angle/grid) as toggles; show explicit snapped feedback in tooltips.
 - Surface invalid states clearly (red previews, not-allowed cursor, tooltip message) instead of silently clamping.
-- Keep measurement tooltips and additional distance/angle guides accurate; they are acceptance tests.
 - Shape popover UX is required—do not skip the 2×2 selector or keyboard shortcuts.
 
 ---
@@ -35,7 +34,6 @@ Implement the complete drawing system for structural objects: Walls and Shapes (
 - **Mapbox Expressions**: Use Mapbox expressions for:
   - Dynamic styling (hover states, preview states, invalid states)
   - Angle snapping visualization
-  - Measurement overlays
 - **Mapbox Paint Properties**: Use paint properties for visual feedback (colors, opacity, dashed lines)
 
 This ensures optimal performance with the map renderer and maintains consistency with the area system.

@@ -60,7 +60,6 @@ This ensures camera visualizations integrate seamlessly with the map and area sy
 - Camera visual design (icon, direction indicator, FOV)
 - Camera placement validation (inside area)
 - Camera cursor states
-- Camera measurement tooltips
 - Devices in Use panel
 
 ### Explicitly Excluded

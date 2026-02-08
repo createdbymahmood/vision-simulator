@@ -501,11 +501,17 @@ const mergeSceneRoot = (base: SceneRoot, override: Partial<SceneRoot>) => ({
 })
 
 const resolveInitialScene = (initialValues: SceneStoreInitialState) => {
-  const baseScene =
-    initialValues.scene ?? loadSceneFromStorage() ?? createInitialScene()
-  const mergedScene = initialValues.sceneOverrides
-    ? mergeSceneRoot(baseScene, initialValues.sceneOverrides)
+  const baseScene = createInitialScene()
+  const persistedScene = loadSceneFromStorage()
+  const withPersistedScene = persistedScene
+    ? mergeSceneRoot(baseScene, persistedScene)
     : baseScene
+  const withInitialScene = initialValues.scene
+    ? mergeSceneRoot(withPersistedScene, initialValues.scene)
+    : withPersistedScene
+  const mergedScene = initialValues.sceneOverrides
+    ? mergeSceneRoot(withInitialScene, initialValues.sceneOverrides)
+    : withInitialScene
   if (!initialValues.editorMode) {
     return mergedScene
   }

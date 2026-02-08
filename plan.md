@@ -38,7 +38,6 @@ We are building an interactive simulation tool that lets users:
 - 3D FOV collision visualization with walls/shapes/obstacles
 - Per-camera PTZ (Pan-Tilt-Zoom) controllers
 - Radar view with person ping animations
-- Real-time measurement tooltips during drawing
 - Refined cursor states and visual feedback
 
 ---
@@ -67,7 +66,6 @@ We are building an interactive simulation tool that lets users:
 
 - **Unified Map-based editor** with Canvas Mode toggle (removes map styling)
 - **Areas** as mandatory spatial boundaries (all objects must be inside areas)
-- Drawing tools with **real-time measurement tooltips**: walls, shapes, device placing, people placing
 - **Individual camera FOV colors** for visual distinction
 - **3D FOV collision rendering** showing camera view intersections with obstacles
 - **Per-camera PTZ controls** (pan, tilt, zoom) in editor and simulation
@@ -100,7 +98,6 @@ We are building an interactive simulation tool that lets users:
 - **Selection mode** governs whether items are selectable
 - **Areas are mandatory**: All objects (walls, shapes, cameras, people) must be placed inside defined areas
 - **Each camera has a unique color**: Auto-assigned from predefined palette, user-customizable
-- **Measurement tooltips** appear during all drawing operations
 - Clicking "blank space" closes:
   - Properties panels
   - Popovers
@@ -121,7 +118,6 @@ We are building an interactive simulation tool that lets users:
 ### 3.3 Interaction Categories
 
 - Define areas (required first)
-- Create: draw/place objects (within areas) with measurement feedback
 - Select: pick object
 - Modify: drag/resize/rotate and edit properties
 - Control: PTZ camera adjustments
@@ -204,7 +200,6 @@ No client-side routing is used. View switching is handled by state management.
      - Icon: grid
      - Active state: highlighted
      - Snap distance: 0.5m
-   - **Measurement Overlay Toggle** (bottom-right, below snap):
      - Icon: ruler
      - Shows distances between objects when active
 
@@ -783,135 +778,6 @@ elevation = ptz.tilt // vertical angle
 
 ---
 
-### 5.7 Real-Time Measurement Tooltips (NEW)
-
-#### 5.7.1 Purpose
-
-Display precise measurements during drawing operations to help users create accurate layouts.
-
-#### 5.7.2 Tooltip Appearance
-
-**Design**:
-
-- Small rectangular tooltip
-- Background: rgba(0, 0, 0, 0.85) with backdrop blur
-- Text: white, 13px, bold font
-- Padding: 6px 10px
-- Border-radius: 6px
-- Box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3)
-- Pointer: small triangle pointing to measurement line
-
-**Position**:
-
-- Follows cursor at offset (12px right, 12px down)
-- OR snaps to midpoint of line being drawn (better for longer lines)
-- Always within viewport bounds (edge detection)
-
-**Animation**:
-
-- Fade in: 100ms
-- Updates: no transition (instant update for responsive feel)
-- Fade out: 200ms when drawing completes
-
-#### 5.7.3 Measurement Tooltips by Tool
-
-**1. Area Drawing**:
-
-**Line Preview** (while drawing):
-
-- Current segment (from last vertex to cursor):
-  - Line style: **dashed** (dash pattern: 8px dash, 4px gap)
-  - Color: primary blue `#4ECDC4`
-  - Width: 2px
-  - Opacity: 0.8
-- Tooltip shows: `"15.3 m"` (distance from last vertex to cursor)
-- When hovering near first vertex to close: `"Click to close | Total: 84.2 m"`
-
-**Perimeter Display**:
-
-- After closing polygon: brief toast showing `"Area created • Perimeter: 84.2 m • Area: 245.8 m²"`
-
-**2. Wall Drawing**:
-
-**Line Preview**:
-
-- Current segment:
-  - Line style: **solid** (not dashed, more definitive)
-  - Color: red `#E63946`
-  - Width: shows actual thickness (if thickness = 0.2m, line renders 0.2m thick)
-  - Opacity: 0.6
-- Tooltip shows: `"12.8 m • 45°"` (length • angle from horizontal)
-- When continuing multi-segment wall: cumulative length `"12.
-8 m • Total: 38.4 m"`
-
-**3. Shape Drawing**:
-
-**Rectangle**:
-
-- Ghost preview: semi-transparent rectangle at cursor
-- Tooltip during drag: `"W: 5.2 m × H: 3.1 m • Area: 16.1 m²"`
-
-**Circle**:
-
-- Ghost preview: semi-transparent circle
-- Tooltip: `"Radius: 4.5 m • Diameter: 9.0 m • Area: 63.6 m²"`
-
-**Triangle**:
-
-- Ghost preview: semi-transparent triangle
-- Tooltip: `"Base: 6.0 m • Height: 4.2 m • Area: 12.6 m²"`
-
-**Line**:
-
-- Preview: dashed line from start to cursor
-- Tooltip: `"8.3 m • 30°"` (length • angle)
-
-**4. Camera Placement**:
-
-**Before Placement**:
-
-- Circular range indicator (FOV depth)
-  - Circle diameter = camera depth × 2
-  - Stroke: camera color (assigned on hover)
-  - Dashed line
-  - Opacity: 0.3
-- Tooltip: `"Camera • Range: 20 m"`
-
-**After Placement** (adjusting FOV):
-
-- If dragging FOV cone edge to adjust: `"FOV: 75° • Depth: 20 m"`
-
-**5. Person Placement**:
-
-**Before Placement**:
-
-- Circular collision radius preview
-  - Filled circle showing person size
-  - Color: blue, opacity 0.3
-- Tooltip: `"Person • Radius: 0.3 m"`
-
-#### 5.7.4 Additional Measurement Displays
-
-**Angle Guides**:
-
-- When drawing walls, faint guide lines appear at 0°, 45°, 90°, 135°, 180°, etc.
-- Snap to these angles if within 5° threshold
-- Tooltip updates: `"12.8 m • 45° (snapped)"`
-
-**Distance Markers** (optional, toggled):
-
-- Along longer lines (>20m), show intermediate distance markers
-- Small tick marks every 5m with label
-
-**Object-to-Object Distance**:
-
-- When dragging object near another object:
-  - Faint line connects edges
-  - Tooltip: `"Distance: 2.3 m"` (shortest distance between objects)
-- Helps maintain spacing requirements
-
----
-
 ### 5.8 Enhanced Cursor States (Refined)
 
 Building on earlier cursor descriptions, adding more detail:
@@ -1047,7 +913,6 @@ Each area has:
     - Cursor becomes pointer (hand)
     - Tooltip: `"Click to close polygon • Total: 84.2 m"`
 
-- **Measurement tooltip**:
   - Always shows during drawing
   - Position: midpoint of current preview line
   - Content: `"15.3 m"` (current segment length)
@@ -1080,7 +945,6 @@ Each area has:
   - Hover first anchor: highlight + tooltip
   - Click or drag to add final curve handle
 
-**Measurement**:
 
 - Tooltip shows: `"Curve length: ~18.4 m"` (approximate arc length)
 - Total perimeter after closure
@@ -1204,7 +1068,6 @@ Each area has:
 
 - Click first point: Wall start (8px red dot appears)
 - Mouse move: Preview line extends (solid red, actual thickness)
-- **Measurement tooltip**: `"12.8 m • 45°"`
 - Click additional points: Continue polyline
 - **Double-click**: End wall drawing
 
@@ -1280,7 +1143,6 @@ Each area has:
 - Drag: Ghost rectangle extends toward cursor
   - Fill: light gray, opacity 0.3
   - Border: 2px primary color, dashed (8px dash, 4px gap)
-- **Measurement tooltip**: `"W: 5.2 m × H: 3.1 m"`
 - Release: Rectangle created
 
 **Proportional mode** (hold Shift):
@@ -1301,7 +1163,6 @@ Each area has:
 - Drag: Ghost circle expands
   - Fill: light gray, opacity 0.3
   - Border: 2px primary, dashed
-- **Measurement tooltip**: `"Radius: 4.5 m • Diameter: 9.0 m"`
 - Release: Circle created
 
 **3. Triangle**:
@@ -1326,7 +1187,6 @@ Each area has:
 - Click: Start point
 - Drag: Line extends
 - **Dashed preview**: 8px dash, 4px gap, 2px width
-- **Measurement tooltip**: `"8.3 m • 30°"`
 - Release: Line created
 - Properties: Has thickness (default 0.1m for visibility)
 
@@ -2123,7 +1983,6 @@ renderer.setSize(originalSize.x, originalSize.y)
 ### Phase 1: Core Editor (Weeks 1-3)
 
 - [ ] Map/Canvas mode toggle
-- [ ] Area creation with measurement tooltips
 - [ ] Wall/shape drawing with enhanced cursors
 - [ ] Object placement with validation
 - [ ] Properties panels
@@ -2175,7 +2034,6 @@ renderer.setSize(originalSize.x, originalSize.y)
 - [ ] Collision surfaces update when camera moves or obstacles change
 - [ ] Collision visualization toggle works
 
-### Measurement Tooltips
 
 - [ ] Area drawing shows current segment length
 - [ ] Wall drawing shows length and angle
