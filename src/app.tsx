@@ -277,11 +277,7 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
   )
 
   return (
-    <div
-      className='size-full bg-blue-200'
-      ref={hostRef}
-      data-slot={SHADOW_HOST_SLOT}
-    >
+    <div className='size-full' ref={hostRef} data-slot={SHADOW_HOST_SLOT}>
       {shadowRoot
         ? createPortal(
             <>

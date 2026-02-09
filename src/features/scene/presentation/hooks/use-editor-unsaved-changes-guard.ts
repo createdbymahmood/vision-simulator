@@ -190,6 +190,7 @@ export const useEditorUnsavedChangesGuard = ({
   const isSavingRef = React.useRef(false)
 
   const unsavedChangesEnabled = unsavedChanges?.enabled ?? true
+  const onDirtyStateChange = unsavedChanges?.onDirtyStateChange
   const leaveDialogConfig = React.useMemo(
     () => ({
       title: unsavedChanges?.confirmDialogTitle ?? DEFAULT_DIALOG_TITLE,
@@ -296,11 +297,11 @@ export const useEditorUnsavedChangesGuard = ({
   }, [isRouteLeaveDialogOpen, manualLeaveDialogOpen])
 
   React.useEffect(() => {
-    unsavedChanges?.onDirtyStateChange?.({
+    onDirtyStateChange?.({
       isDirty,
       isSaving: saveLoading || leaveDialogSaving,
     })
-  }, [isDirty, leaveDialogSaving, saveLoading, unsavedChanges])
+  }, [isDirty, leaveDialogSaving, onDirtyStateChange, saveLoading])
 
   return {
     saveLoading,

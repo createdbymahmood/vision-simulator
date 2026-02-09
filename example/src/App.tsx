@@ -1,5 +1,4 @@
 import {
-  Link,
   Outlet,
   RouterProvider,
   createRootRoute,
@@ -12,6 +11,7 @@ import {
 } from '@vega-tek-hub/vision-simulator-v2'
 import simulatorStylesUrl from '@vega-tek-hub/vision-simulator-v2/styles.css?url'
 import React from 'react'
+import 'mapbox-gl/dist/mapbox-gl.css'
 
 const rootRoute = createRootRoute({
   component: () => <ExampleLayout />,
@@ -44,38 +44,7 @@ declare module '@tanstack/react-router' {
 export const App: React.FC = () => <RouterProvider router={router} />
 
 const ExampleLayout: React.FC = () => {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        height: '100vh',
-        padding: '16px',
-        boxSizing: 'border-box',
-      }}
-    >
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          borderBottom: '1px solid #e5e7eb',
-          paddingBottom: '12px',
-        }}
-      >
-        <strong>Vision Simulator v2 Example</strong>
-        <Link to='/' activeProps={{style: {fontWeight: 700}}}>
-          Home
-        </Link>
-        <Link to='/simulator' activeProps={{style: {fontWeight: 700}}}>
-          Simulator
-        </Link>
-      </header>
-
-      <Outlet />
-    </div>
-  )
+  return <Outlet />
 }
 
 const HomePage: React.FC = () => {
@@ -96,72 +65,24 @@ const HomePage: React.FC = () => {
 }
 
 const SimulatorPage: React.FC = () => {
-  const [dirtyState, setDirtyState] = React.useState<DirtyStateChangePayload>({
-    isDirty: false,
-    isSaving: false,
-  })
-
   const accessToken = import.meta.env.VITE_ACCESS_TOKEN
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN
   const visionSimulatorId = import.meta.env.VITE_VISION_SIMULATOR_ID
 
   return (
-    <section
-      style={{
-        display: 'grid',
-        gap: '12px',
-        minHeight: 0,
-        flex: 1,
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '8px',
-          alignItems: 'center',
+    <div style={{height: '100vh', width: '100vw'}}>
+      <VisionSimulator
+        apiBaseUrl={apiBaseUrl}
+        accessToken={accessToken}
+        isolationMode='shadow'
+        mapboxToken={mapboxToken}
+        shadowStyleUrls={[simulatorStylesUrl]}
+        unsavedChanges={{
+          enabled: true,
         }}
-      >
-        <span>
-          Dirty: <strong>{String(dirtyState.isDirty)}</strong>
-        </span>
-        <span>
-          Saving: <strong>{String(dirtyState.isSaving)}</strong>
-        </span>
-      </div>
-
-      <p style={{margin: 0}}>
-        To test route blocking: make changes, then click <code>Home</code> in the
-        top navigation.
-      </p>
-
-      <p style={{margin: 0}}>
-        To test browser unload blocking: make changes, then refresh the tab.
-      </p>
-
-      <div
-        style={{
-          minHeight: 0,
-          flex: 1,
-          border: '1px solid #e5e7eb',
-          borderRadius: '12px',
-          overflow: 'hidden',
-        }}
-      >
-        <VisionSimulator
-          apiBaseUrl={apiBaseUrl}
-          accessToken={accessToken}
-          isolationMode='shadow'
-          mapboxToken={mapboxToken}
-          shadowStyleUrls={[simulatorStylesUrl]}
-          unsavedChanges={{
-            enabled: true,
-            onDirtyStateChange: setDirtyState,
-          }}
-          visionSimulatorId={visionSimulatorId}
-        />
-      </div>
-    </section>
+        visionSimulatorId={visionSimulatorId}
+      />
+    </div>
   )
 }
