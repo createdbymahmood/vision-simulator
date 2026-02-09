@@ -2,6 +2,10 @@ import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
 import * as React from 'react'
 
 import {buttonVariants} from '@/components/ui/button'
+import {
+  resolvePortalContainer,
+  usePortalContainer,
+} from '@/lib/portal-container'
 import {cn} from '@/lib/utils'
 
 function AlertDialog({
@@ -19,10 +23,17 @@ function AlertDialogTrigger({
 }
 
 function AlertDialogPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
+  const portalContainer = usePortalContainer()
+
   return (
-    <AlertDialogPrimitive.Portal data-slot='alert-dialog-portal' {...props} />
+    <AlertDialogPrimitive.Portal
+      container={resolvePortalContainer(container, portalContainer)}
+      data-slot='alert-dialog-portal'
+      {...props}
+    />
   )
 }
 

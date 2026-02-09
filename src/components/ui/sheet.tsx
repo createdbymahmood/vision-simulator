@@ -2,6 +2,10 @@ import * as SheetPrimitive from '@radix-ui/react-dialog'
 import {XIcon} from 'lucide-react'
 import * as React from 'react'
 
+import {
+  resolvePortalContainer,
+  usePortalContainer,
+} from '@/lib/portal-container'
 import {cn} from '@/lib/utils'
 
 function Sheet({...props}: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -21,9 +25,18 @@ function SheetClose({
 }
 
 function SheetPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
-  return <SheetPrimitive.Portal data-slot='sheet-portal' {...props} />
+  const portalContainer = usePortalContainer()
+
+  return (
+    <SheetPrimitive.Portal
+      container={resolvePortalContainer(container, portalContainer)}
+      data-slot='sheet-portal'
+      {...props}
+    />
+  )
 }
 
 function SheetOverlay({

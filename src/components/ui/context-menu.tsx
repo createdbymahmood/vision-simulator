@@ -4,6 +4,10 @@ import * as ContextMenuPrimitive from '@radix-ui/react-context-menu'
 import {CheckIcon, ChevronRightIcon, CircleIcon} from 'lucide-react'
 import * as React from 'react'
 
+import {
+  resolvePortalContainer,
+  usePortalContainer,
+} from '@/lib/portal-container'
 import {cn} from '@/lib/utils'
 
 function ContextMenu({
@@ -29,10 +33,17 @@ function ContextMenuGroup({
 }
 
 function ContextMenuPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Portal>) {
+  const portalContainer = usePortalContainer()
+
   return (
-    <ContextMenuPrimitive.Portal data-slot='context-menu-portal' {...props} />
+    <ContextMenuPrimitive.Portal
+      container={resolvePortalContainer(container, portalContainer)}
+      data-slot='context-menu-portal'
+      {...props}
+    />
   )
 }
 
@@ -98,7 +109,7 @@ function ContextMenuContent({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Content>) {
   return (
-    <ContextMenuPrimitive.Portal>
+    <ContextMenuPortal>
       <ContextMenuPrimitive.Content
         data-slot='context-menu-content'
         className={cn(
@@ -107,7 +118,7 @@ function ContextMenuContent({
         )}
         {...props}
       />
-    </ContextMenuPrimitive.Portal>
+    </ContextMenuPortal>
   )
 }
 

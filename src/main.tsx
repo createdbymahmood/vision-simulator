@@ -10,6 +10,7 @@ createRoot(document.getElementById('root')!).render(
     <App
       apiBaseUrl={import.meta.env.VITE_API_BASE_URL}
       accessToken={import.meta.env.VITE_ACCESS_TOKEN}
+      isolationMode='none'
       mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}
       visionSimulatorId={import.meta.env.VITE_VISION_SIMULATOR_ID}
     />

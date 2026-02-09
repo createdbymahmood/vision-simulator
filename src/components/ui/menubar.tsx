@@ -2,6 +2,10 @@ import * as MenubarPrimitive from '@radix-ui/react-menubar'
 import {CheckIcon, ChevronRightIcon, CircleIcon} from 'lucide-react'
 import * as React from 'react'
 
+import {
+  resolvePortalContainer,
+  usePortalContainer,
+} from '@/lib/portal-container'
 import {cn} from '@/lib/utils'
 
 function Menubar({
@@ -33,9 +37,18 @@ function MenubarGroup({
 }
 
 function MenubarPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Portal>) {
-  return <MenubarPrimitive.Portal data-slot='menubar-portal' {...props} />
+  const portalContainer = usePortalContainer()
+
+  return (
+    <MenubarPrimitive.Portal
+      container={resolvePortalContainer(container, portalContainer)}
+      data-slot='menubar-portal'
+      {...props}
+    />
+  )
 }
 
 function MenubarRadioGroup({

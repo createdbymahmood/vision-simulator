@@ -2,6 +2,10 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import {XIcon} from 'lucide-react'
 import * as React from 'react'
 
+import {
+  resolvePortalContainer,
+  usePortalContainer,
+} from '@/lib/portal-container'
 import {cn} from '@/lib/utils'
 
 function Dialog({...props}: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -15,9 +19,18 @@ function DialogTrigger({
 }
 
 function DialogPortal({
+  container,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot='dialog-portal' {...props} />
+  const portalContainer = usePortalContainer()
+
+  return (
+    <DialogPrimitive.Portal
+      container={resolvePortalContainer(container, portalContainer)}
+      data-slot='dialog-portal'
+      {...props}
+    />
+  )
 }
 
 function DialogClose({
