@@ -4,8 +4,8 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
-import {serializeScene} from '@/features/scene/application/utils/scene-serializer'
 import {updateVision} from '@/data-provider/api/services/v2/vision-simulator'
+import {serializeScene} from '@/features/scene/application/utils/scene-serializer'
 import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
@@ -18,7 +18,7 @@ import {
 } from '@/features/scene/presentation/utils/scene-export'
 import {cn} from '@/lib/utils'
 
-import type {SceneMapStyle, EditorMode, SceneRoot} from '../../domain/types'
+import type {EditorMode, SceneMapStyle, SceneRoot} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {assignCameraColor} from '../../domain/services/color-assignment'
@@ -281,31 +281,33 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     <div
       className={cn(
         'flex w-full flex-col',
-        viewMode === 'preview'
-          ? 'h-svh min-h-0 overflow-hidden'
-          : 'min-h-screen',
+        // DON't REMOVE THESE COMMENTS
+        // viewMode === 'preview'
+        //   ? 'h-svh min-h-0 overflow-hidden'
+        //   : 'min-h-screen',
+        'size-full',
       )}
     >
       {viewMode === 'editor' ? (
         <TopPanel
           canRedo={canRedo}
           canUndo={canUndo}
+          editorMode={editorMode}
           isEditMode={isEditMode}
           lastRedoDescription={lastRedoDescription}
           lastUndoDescription={lastUndoDescription}
           onBack={handleBack}
           onClearBoard={handleClearBoard}
           onEditModeChange={setEditMode}
+          onEditorModeChange={handleEditorModeChange}
           onExportSceneImage={handleExportSceneImage}
           onExportSceneJson={handleExportSceneJson}
           onRedo={handleRedo}
-          onEditorModeChange={handleEditorModeChange}
           onSave={handleSave}
-          saveLoading={saveLoading}
           onTogglePreview={() => setViewMode('preview')}
           onUndo={handleUndo}
           projectName={projectName}
-          editorMode={editorMode}
+          saveLoading={saveLoading}
         />
       ) : null}
 
@@ -316,9 +318,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           <ViewportShell
             mapVisible={mapVisible}
             activeTool={activeTool}
+            editorMode={editorMode}
             onBlankClick={handleBlankClick}
             onMapReady={handleMapReady}
-            editorMode={editorMode}
             shapeMode={shapeMode}
           />
         ) : (

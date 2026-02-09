@@ -208,7 +208,11 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
   }, [documentStyles.links, explicitStyleUrls, hasExplicitStyleUrls])
 
   return (
-    <div ref={hostRef} data-slot='vision-simulator-shadow-host'>
+    <div
+      className='size-full'
+      ref={hostRef}
+      data-slot='vision-simulator-shadow-host'
+    >
       {shadowRoot
         ? createPortal(
             <>
