@@ -47,6 +47,11 @@ const CLASS_SELECTOR_PATTERN = /\.((?:\\.|[-_a-zA-Z0-9])+)/g
 const CSS_HEX_ESCAPE_PATTERN = /\\([0-9a-fA-F]{1,6})(?:\s)?/g
 const CSS_SIMPLE_ESCAPE_PATTERN = /\\(.)/g
 const PROJECT_SOURCE_DIRECTORY = 'src'
+const UI_COMPONENTS_DIRECTORY = path.join(
+  PROJECT_SOURCE_DIRECTORY,
+  'components',
+  'ui',
+)
 const PRESERVED_CLASS_NAMES = new Set(['dark', 'light'])
 const PRESERVED_CLASS_PREFIXES = Object.freeze(['size-'])
 const PRESERVED_CSS_VARIABLE_PREFIXES = Object.freeze([
@@ -82,6 +87,18 @@ interface SourceTransformResult {
 }
 
 let cachedContext: ClassNameObfuscationContext | null = null
+
+type ClassNameObfuscationMode = 'merge-safe' | 'strict'
+
+const resolveClassNameObfuscationMode = (): ClassNameObfuscationMode => {
+  const mode = process.env.CLASSNAME_OBFUSCATION_MODE?.trim().toLowerCase()
+
+  if (mode === 'merge-safe') {
+    return 'merge-safe'
+  }
+
+  return 'strict'
+}
 
 const getYarnCommand = () =>
   process.platform === 'win32' ? 'yarn.cmd' : 'yarn'
@@ -887,6 +904,16 @@ const isWithinProjectSource = (
   return !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
 }
 
+const isWithinDirectory = (directoryPath: string, absoluteFilePath: string) => {
+  const relativePath = path.relative(directoryPath, absoluteFilePath)
+
+  if (relativePath.length === 0) {
+    return true
+  }
+
+  return !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
+}
+
 const isImportExportSourceLiteral = (
   path: import('@babel/traverse').NodePath<t.StringLiteral>,
 ) => {
@@ -963,9 +990,14 @@ const collectProjectSourceFilePaths = (directoryPath: string): string[] => {
 const collectClassNamesUsedByClassComposers = (projectRoot: string) => {
   const classNames = new Set<string>()
   const sourceRoot = path.join(projectRoot, PROJECT_SOURCE_DIRECTORY)
+  const uiComponentsRoot = path.join(projectRoot, UI_COMPONENTS_DIRECTORY)
   const sourceFilePaths = collectProjectSourceFilePaths(sourceRoot)
 
   for (const sourceFilePath of sourceFilePaths) {
+    if (!isWithinDirectory(uiComponentsRoot, sourceFilePath)) {
+      continue
+    }
+
     const sourceCode = fs.readFileSync(sourceFilePath, 'utf8')
 
     if (!QUICK_CLASS_SIGNAL_PATTERN.test(sourceCode)) {
@@ -996,6 +1028,77 @@ const collectClassNamesUsedByClassComposers = (projectRoot: string) => {
           }
 
           collectClassTokensFromExpression(argument, classNames)
+        }
+      },
+    })
+  }
+
+  return classNames
+}
+
+const isCustomComponentJsxName = (
+  jsxName: t.JSXIdentifier | t.JSXMemberExpression | t.JSXNamespacedName,
+) => {
+  if (t.isJSXIdentifier(jsxName)) {
+    return /^[A-Z]/u.test(jsxName.name)
+  }
+
+  if (t.isJSXMemberExpression(jsxName)) {
+    return true
+  }
+
+  return false
+}
+
+const collectClassNamesPassedToCustomComponents = (projectRoot: string) => {
+  const classNames = new Set<string>()
+  const sourceRoot = path.join(projectRoot, PROJECT_SOURCE_DIRECTORY)
+  const sourceFilePaths = collectProjectSourceFilePaths(sourceRoot)
+
+  for (const sourceFilePath of sourceFilePaths) {
+    const sourceCode = fs.readFileSync(sourceFilePath, 'utf8')
+
+    if (!QUICK_CLASS_SIGNAL_PATTERN.test(sourceCode)) {
+      continue
+    }
+
+    const parsedAst = parseCode(sourceCode, {
+      errorRecovery: true,
+      plugins: PARSER_PLUGINS,
+      sourceType: 'module',
+    })
+
+    traverse(parsedAst, {
+      JSXAttribute(path) {
+        if (!t.isJSXIdentifier(path.node.name)) {
+          return
+        }
+
+        if (!isClassPropertyName(path.node.name.name)) {
+          return
+        }
+
+        const parentNode = path.parent
+
+        if (!t.isJSXOpeningElement(parentNode)) {
+          return
+        }
+
+        if (!isCustomComponentJsxName(parentNode.name)) {
+          return
+        }
+
+        if (!path.node.value) {
+          return
+        }
+
+        if (t.isStringLiteral(path.node.value)) {
+          addClassTokensToSet(path.node.value.value, classNames)
+          return
+        }
+
+        if (t.isJSXExpressionContainer(path.node.value)) {
+          collectClassTokensFromExpression(path.node.value.expression, classNames)
         }
       },
     })
@@ -1364,11 +1467,17 @@ const buildClassNameObfuscationContext = (projectRoot: string) => {
   const generatedCss = createTailwindPrebuildCss(projectRoot)
   const discoveredClassNames = extractClassNamesFromCss(generatedCss)
   const discoveredCssVariables = extractCssVariablesFromCss(generatedCss)
-  const classNamesUsedByClassComposers =
-    collectClassNamesUsedByClassComposers(projectRoot)
+  const obfuscationMode = resolveClassNameObfuscationMode()
+  const mergeSafePreservedClassNames =
+    obfuscationMode === 'merge-safe'
+      ? new Set([
+          ...collectClassNamesUsedByClassComposers(projectRoot),
+          ...collectClassNamesPassedToCustomComponents(projectRoot),
+        ])
+      : new Set<string>()
   const classMap = createClassMap(
     discoveredClassNames,
-    classNamesUsedByClassComposers,
+    mergeSafePreservedClassNames,
   )
   const cssVarMap = createCssVarMap(discoveredCssVariables)
 
