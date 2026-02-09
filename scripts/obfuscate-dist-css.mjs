@@ -44,6 +44,67 @@ const replaceCssVariableTokens = (value, cssVarMap) => {
   })
 }
 
+const TAILWIND_RUNTIME_DEFAULTS_SELECTOR = '*,:before,:after,::backdrop'
+
+const normalizeSelector = (selector) => selector.replace(/\s+/g, '')
+
+const hasOnlyCustomPropertyDeclarations = (rule) =>
+  (rule.nodes ?? []).every(
+    (node) => node.type === 'decl' && node.prop.startsWith('--'),
+  )
+
+const ensureTailwindRuntimeDefaultsFallback = (cssAst) => {
+  const normalizedTargetSelector = normalizeSelector(
+    TAILWIND_RUNTIME_DEFAULTS_SELECTOR,
+  )
+
+  const alreadyHasTopLevelFallback = cssAst.nodes.some((node) => {
+    if (node.type !== 'rule') {
+      return false
+    }
+
+    if (normalizeSelector(node.selector) !== normalizedTargetSelector) {
+      return false
+    }
+
+    return hasOnlyCustomPropertyDeclarations(node)
+  })
+
+  if (alreadyHasTopLevelFallback) {
+    return
+  }
+
+  let runtimeDefaultsRule = null
+
+  cssAst.walkAtRules('supports', (supportsAtRule) => {
+    if (runtimeDefaultsRule) {
+      return
+    }
+
+    supportsAtRule.walkRules((rule) => {
+      if (runtimeDefaultsRule) {
+        return
+      }
+
+      if (normalizeSelector(rule.selector) !== normalizedTargetSelector) {
+        return
+      }
+
+      if (!hasOnlyCustomPropertyDeclarations(rule)) {
+        return
+      }
+
+      runtimeDefaultsRule = rule
+    })
+  })
+
+  if (!runtimeDefaultsRule) {
+    return
+  }
+
+  cssAst.prepend(runtimeDefaultsRule.clone())
+}
+
 const obfuscateCssCode = (cssCode, classMap, cssVarMap) => {
   const cssAst = parseCss(cssCode)
 
@@ -102,6 +163,8 @@ const obfuscateCssCode = (cssCode, classMap, cssVarMap) => {
 
     layerAtRule.replaceWith(...layerAtRule.nodes)
   })
+
+  ensureTailwindRuntimeDefaultsFallback(cssAst)
 
   return cssAst.toString()
 }

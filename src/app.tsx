@@ -39,6 +39,59 @@ interface ShadowIsolatedRootProps {
   shadowStyleUrls?: string[]
 }
 
+interface ShadowInlineStyleEntry {
+  key: string
+  cssText: string
+}
+
+interface ShadowResolvedStyles {
+  inline: ShadowInlineStyleEntry[]
+  links: string[]
+}
+
+const getPackageStyleSourcesFromDocument = (): ShadowResolvedStyles => {
+  if (typeof document === 'undefined') {
+    return {inline: [], links: []}
+  }
+
+  const matchesMarker = (value: string | null | undefined) => {
+    if (!value) {
+      return false
+    }
+
+    const normalizedValue = value.toLowerCase()
+
+    return (
+      normalizedValue.includes('vision-simulator-v2') &&
+      normalizedValue.includes('styles.css')
+    )
+  }
+
+  const inlineStyles = Array.from(document.querySelectorAll('style'))
+    .filter((styleElement) => {
+      const viteMarker = styleElement.getAttribute('data-vite-dev-id')
+      const sourceMapMarker = styleElement.getAttribute('data-source-map')
+
+      return matchesMarker(viteMarker) || matchesMarker(sourceMapMarker)
+    })
+    .map((styleElement, index) => ({
+      key: `inline-style-${index}`,
+      cssText: styleElement.textContent ?? '',
+    }))
+    .filter((entry) => entry.cssText.trim().length > 0)
+
+  const linkStyles = Array.from(
+    document.querySelectorAll('link[rel="stylesheet"]'),
+  )
+    .map((linkElement) => linkElement.getAttribute('href'))
+    .filter((href): href is string => Boolean(href) && matchesMarker(href))
+
+  return {
+    inline: inlineStyles,
+    links: linkStyles,
+  }
+}
+
 const AppImpl = ({
   visionSimulatorId,
   mapboxToken,
@@ -73,6 +126,13 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
 }) => {
   const hostRef = React.useRef<HTMLDivElement>(null)
   const [shadowRoot, setShadowRoot] = React.useState<ShadowRoot | null>(null)
+  const explicitStyleUrls = shadowStyleUrls ?? []
+  const hasExplicitStyleUrls = explicitStyleUrls.length > 0
+  const [documentStyles, setDocumentStyles] =
+    React.useState<ShadowResolvedStyles>({
+      inline: [],
+      links: [],
+    })
 
   React.useEffect(() => {
     const hostElement = hostRef.current
@@ -89,19 +149,76 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
     }
   }, [shadowRoot])
 
+  React.useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    const hostElement = hostRef.current
+
+    if (!hostElement) {
+      return
+    }
+
+    const syncDarkClass = () => {
+      const hasDarkClass =
+        document.documentElement.classList.contains('dark') ||
+        document.body.classList.contains('dark')
+
+      hostElement.classList.toggle('dark', hasDarkClass)
+    }
+
+    syncDarkClass()
+
+    const observer = new MutationObserver(syncDarkClass)
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (hasExplicitStyleUrls) {
+      return
+    }
+
+    setDocumentStyles(getPackageStyleSourcesFromDocument())
+  }, [hasExplicitStyleUrls])
+
   const styleUrls = React.useMemo(() => {
-    if (!shadowStyleUrls || shadowStyleUrls.length === 0) {
+    if (!hasExplicitStyleUrls) {
+      if (documentStyles.links.length > 0) {
+        return documentStyles.links
+      }
+
       return DEFAULT_SHADOW_STYLE_URLS
     }
 
-    return [...new Set(shadowStyleUrls.filter(Boolean))]
-  }, [shadowStyleUrls])
+    return [...new Set(explicitStyleUrls.filter(Boolean))]
+  }, [documentStyles.links, explicitStyleUrls, hasExplicitStyleUrls])
 
   return (
     <div ref={hostRef} data-slot='vision-simulator-shadow-host'>
       {shadowRoot
         ? createPortal(
             <>
+              {!hasExplicitStyleUrls &&
+                documentStyles.inline.map((entry) => (
+                  <style
+                    key={entry.key}
+                    dangerouslySetInnerHTML={{__html: entry.cssText}}
+                  />
+                ))}
               {styleUrls.map((href) => (
                 <link href={href} key={href} rel='stylesheet' />
               ))}
