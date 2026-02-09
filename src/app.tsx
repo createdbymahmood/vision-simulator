@@ -23,6 +23,7 @@ import {PortalContainerProvider} from '@/lib/portal-container'
 const DEFAULT_SHADOW_STYLE_URLS = [
   new URL('./styles.css', import.meta.url).href,
 ]
+const SHADOW_HOST_SLOT = 'vision-simulator-shadow-host'
 
 interface AppProps {
   children?: React.ReactNode
@@ -39,6 +40,11 @@ interface ShadowIsolatedRootProps {
   shadowStyleUrls?: string[]
 }
 
+interface VisionSimulatorProvidersProps {
+  visionSimulatorId: string
+  mapboxToken?: string
+}
+
 interface ShadowInlineStyleEntry {
   key: string
   cssText: string
@@ -49,30 +55,39 @@ interface ShadowResolvedStyles {
   links: string[]
 }
 
-const getPackageStyleSourcesFromDocument = (): ShadowResolvedStyles => {
+interface ResolveShadowStyleUrlsParams {
+  hasExplicitStyleUrls: boolean
+  explicitStyleUrls: string[]
+  documentStyleLinks: string[]
+}
+
+const isVisionSimulatorStyleSource = (value: string | null | undefined) => {
+  if (!value) {
+    return false
+  }
+
+  const normalizedValue = value.toLowerCase()
+
+  return (
+    normalizedValue.includes('vision-simulator-v2') &&
+    normalizedValue.includes('styles.css')
+  )
+}
+
+const collectPackageStylesFromDocument = (): ShadowResolvedStyles => {
   if (typeof document === 'undefined') {
     return {inline: [], links: []}
   }
 
-  const matchesMarker = (value: string | null | undefined) => {
-    if (!value) {
-      return false
-    }
-
-    const normalizedValue = value.toLowerCase()
-
-    return (
-      normalizedValue.includes('vision-simulator-v2') &&
-      normalizedValue.includes('styles.css')
-    )
-  }
-
-  const inlineStyles = Array.from(document.querySelectorAll('style'))
+  const inline = Array.from(document.querySelectorAll('style'))
     .filter((styleElement) => {
       const viteMarker = styleElement.getAttribute('data-vite-dev-id')
       const sourceMapMarker = styleElement.getAttribute('data-source-map')
 
-      return matchesMarker(viteMarker) || matchesMarker(sourceMapMarker)
+      return (
+        isVisionSimulatorStyleSource(viteMarker) ||
+        isVisionSimulatorStyleSource(sourceMapMarker)
+      )
     })
     .map((styleElement, index) => ({
       key: `inline-style-${index}`,
@@ -80,59 +95,50 @@ const getPackageStyleSourcesFromDocument = (): ShadowResolvedStyles => {
     }))
     .filter((entry) => entry.cssText.trim().length > 0)
 
-  const linkStyles = Array.from(
-    document.querySelectorAll('link[rel="stylesheet"]'),
-  )
+  const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
     .map((linkElement) => linkElement.getAttribute('href'))
-    .filter((href): href is string => Boolean(href) && matchesMarker(href))
+    .filter(
+      (href): href is string =>
+        Boolean(href) && isVisionSimulatorStyleSource(href),
+    )
 
-  return {
-    inline: inlineStyles,
-    links: linkStyles,
-  }
+  return {inline, links}
 }
 
-const AppImpl = ({
-  visionSimulatorId,
-  mapboxToken,
-}: Omit<
-  AppProps,
-  'accessToken' | 'apiBaseUrl' | 'isolationMode' | 'shadowStyleUrls'
->) => {
-  const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId)
+const createInitialSceneState = (vision: unknown): SceneStoreInitialState => ({
+  scene: get(vision, 'vision.data') as SceneStoreInitialState['scene'],
+  projectName: get(vision, 'name'),
+})
 
-  const initialSceneState: SceneStoreInitialState = {
-    scene: get(vision, 'vision.data') as SceneStoreInitialState['scene'],
-    projectName: get(vision, 'name'),
+const resolveShadowStyleUrls = ({
+  hasExplicitStyleUrls,
+  explicitStyleUrls,
+  documentStyleLinks,
+}: ResolveShadowStyleUrlsParams): string[] => {
+  if (hasExplicitStyleUrls) {
+    return [...new Set(explicitStyleUrls.filter(Boolean))]
   }
 
-  return (
-    <SceneStoreProvider initialState={initialSceneState}>
-      <HistoryStoreProvider initialState={{}}>
-        <UiStoreProvider initialState={{mapboxToken}}>
-          <TooltipProvider delayDuration={0}>
-            <EditorLayout visionSimulatorId={visionSimulatorId} />
-            <Toaster />
-          </TooltipProvider>
-        </UiStoreProvider>
-      </HistoryStoreProvider>
-    </SceneStoreProvider>
-  )
+  if (documentStyleLinks.length > 0) {
+    return documentStyleLinks
+  }
+
+  return DEFAULT_SHADOW_STYLE_URLS
 }
 
-const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
-  children,
-  shadowStyleUrls,
+const configureDataProvider = ({
+  apiBaseUrl,
+  accessToken,
+}: {
+  apiBaseUrl: string
+  accessToken: string
 }) => {
-  const hostRef = React.useRef<HTMLDivElement>(null)
+  applyAxiosApiBaseUrl(apiBaseUrl)
+  applyAxiosAuthorizationHeader(accessToken)
+}
+
+const useOpenShadowRoot = (hostRef: React.RefObject<HTMLDivElement | null>) => {
   const [shadowRoot, setShadowRoot] = React.useState<ShadowRoot | null>(null)
-  const explicitStyleUrls = shadowStyleUrls ?? []
-  const hasExplicitStyleUrls = explicitStyleUrls.length > 0
-  const [documentStyles, setDocumentStyles] =
-    React.useState<ShadowResolvedStyles>({
-      inline: [],
-      links: [],
-    })
 
   React.useEffect(() => {
     const hostElement = hostRef.current
@@ -144,11 +150,21 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
     const nextShadowRoot =
       hostElement.shadowRoot ?? hostElement.attachShadow({mode: 'open'})
 
-    if (shadowRoot !== nextShadowRoot) {
-      setShadowRoot(nextShadowRoot)
-    }
-  }, [shadowRoot])
+    setShadowRoot((currentShadowRoot) => {
+      if (currentShadowRoot === nextShadowRoot) {
+        return currentShadowRoot
+      }
 
+      return nextShadowRoot
+    })
+  }, [hostRef])
+
+  return shadowRoot
+}
+
+const useMirrorDarkModeClass = (
+  hostRef: React.RefObject<HTMLDivElement | null>,
+) => {
   React.useEffect(() => {
     if (typeof document === 'undefined') {
       return
@@ -185,34 +201,76 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
     return () => {
       observer.disconnect()
     }
-  }, [])
+  }, [hostRef])
+}
+
+const usePackageDocumentStyles = (enabled: boolean) => {
+  const [documentStyles, setDocumentStyles] =
+    React.useState<ShadowResolvedStyles>({
+      inline: [],
+      links: [],
+    })
 
   React.useEffect(() => {
-    if (hasExplicitStyleUrls) {
+    if (!enabled) {
       return
     }
 
-    setDocumentStyles(getPackageStyleSourcesFromDocument())
-  }, [hasExplicitStyleUrls])
+    setDocumentStyles(collectPackageStylesFromDocument())
+  }, [enabled])
 
-  const styleUrls = React.useMemo(() => {
-    if (!hasExplicitStyleUrls) {
-      if (documentStyles.links.length > 0) {
-        return documentStyles.links
-      }
+  return documentStyles
+}
 
-      return DEFAULT_SHADOW_STYLE_URLS
-    }
-
-    return [...new Set(explicitStyleUrls.filter(Boolean))]
-  }, [documentStyles.links, explicitStyleUrls, hasExplicitStyleUrls])
+const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
+  visionSimulatorId,
+  mapboxToken,
+}) => {
+  const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId)
+  const initialSceneState = React.useMemo(
+    () => createInitialSceneState(vision),
+    [vision],
+  )
 
   return (
-    <div
-      className='size-full'
-      ref={hostRef}
-      data-slot='vision-simulator-shadow-host'
-    >
+    <SceneStoreProvider initialState={initialSceneState}>
+      <HistoryStoreProvider initialState={{}}>
+        <UiStoreProvider initialState={{mapboxToken}}>
+          <TooltipProvider delayDuration={0}>
+            <EditorLayout visionSimulatorId={visionSimulatorId} />
+            <Toaster />
+          </TooltipProvider>
+        </UiStoreProvider>
+      </HistoryStoreProvider>
+    </SceneStoreProvider>
+  )
+}
+
+const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
+  children,
+  shadowStyleUrls,
+}) => {
+  const hostRef = React.useRef<HTMLDivElement>(null)
+  const shadowRoot = useOpenShadowRoot(hostRef)
+
+  useMirrorDarkModeClass(hostRef)
+
+  const explicitStyleUrls = shadowStyleUrls ?? []
+  const hasExplicitStyleUrls = explicitStyleUrls.length > 0
+  const documentStyles = usePackageDocumentStyles(!hasExplicitStyleUrls)
+
+  const styleUrls = React.useMemo(
+    () =>
+      resolveShadowStyleUrls({
+        hasExplicitStyleUrls,
+        explicitStyleUrls,
+        documentStyleLinks: documentStyles.links,
+      }),
+    [documentStyles.links, explicitStyleUrls, hasExplicitStyleUrls],
+  )
+
+  return (
+    <div className='size-full' ref={hostRef} data-slot={SHADOW_HOST_SLOT}>
       {shadowRoot
         ? createPortal(
             <>
@@ -237,6 +295,20 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
   )
 }
 
+const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
+  mapboxToken,
+  visionSimulatorId,
+}) => (
+  <Suspense fallback={<Pending />}>
+    <QueryClientProvider client={queryClient}>
+      <VisionSimulatorProviders
+        mapboxToken={mapboxToken}
+        visionSimulatorId={visionSimulatorId}
+      />
+    </QueryClientProvider>
+  </Suspense>
+)
+
 export const App: React.FC<AppProps> = ({
   apiBaseUrl,
   mapboxToken,
@@ -245,31 +317,26 @@ export const App: React.FC<AppProps> = ({
   isolationMode = 'shadow',
   shadowStyleUrls,
 }) => {
-  applyAxiosApiBaseUrl(apiBaseUrl)
-  applyAxiosAuthorizationHeader(accessToken)
+  configureDataProvider({apiBaseUrl, accessToken})
 
   const appShell = (
-    <Suspense fallback={<Pending />}>
-      <QueryClientProvider client={queryClient}>
-        <AppImpl
-          mapboxToken={mapboxToken}
-          visionSimulatorId={visionSimulatorId}
-        />
-      </QueryClientProvider>
-    </Suspense>
+    <VisionSimulatorAppShell
+      mapboxToken={mapboxToken}
+      visionSimulatorId={visionSimulatorId}
+    />
   )
 
-  if (isolationMode === 'shadow') {
+  if (isolationMode !== 'shadow') {
     return (
-      <ShadowIsolatedRoot shadowStyleUrls={shadowStyleUrls}>
+      <PortalContainerProvider container={null}>
         {appShell}
-      </ShadowIsolatedRoot>
+      </PortalContainerProvider>
     )
   }
 
   return (
-    <PortalContainerProvider container={null}>
+    <ShadowIsolatedRoot shadowStyleUrls={shadowStyleUrls}>
       {appShell}
-    </PortalContainerProvider>
+    </ShadowIsolatedRoot>
   )
 }
