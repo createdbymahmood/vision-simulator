@@ -4,6 +4,7 @@ import {createPortal} from 'react-dom'
 
 import type {SceneStoreInitialState} from '@/features/scene/infrastructure/stores/scene.store'
 import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
+import type {VisionSimulatorMode} from '@/features/scene/presentation/modes/vision-simulator-mode'
 
 import {Pending} from '@/components/shared/pending'
 import {Toaster} from '@/components/ui/sonner'
@@ -18,6 +19,10 @@ import {HistoryStoreProvider} from '@/features/scene/infrastructure/stores/histo
 import {SceneStoreProvider} from '@/features/scene/infrastructure/stores/scene.store'
 import {UiStoreProvider} from '@/features/scene/infrastructure/stores/ui.store'
 import {EditorLayout} from '@/features/scene/presentation/components/editor-layout'
+import {
+  getVisionSimulatorModePolicy,
+  resolveVisionSimulatorMode,
+} from '@/features/scene/presentation/modes/vision-simulator-mode'
 import {get} from '@/lib/lodash-es'
 import {PortalContainerProvider} from '@/lib/portal-container'
 
@@ -32,6 +37,7 @@ export interface AppProps {
   accessToken: string
   apiBaseUrl: string
   mapboxToken?: string
+  mode?: VisionSimulatorMode
   isolationMode?: 'none' | 'shadow'
   shadowStyleUrls?: string[]
   unsavedChanges?: UnsavedChangesOptions
@@ -45,6 +51,7 @@ interface ShadowIsolatedRootProps {
 interface VisionSimulatorProvidersProps {
   visionSimulatorId: string
   mapboxToken?: string
+  mode: VisionSimulatorMode
   unsavedChanges?: UnsavedChangesOptions
 }
 
@@ -228,6 +235,7 @@ const usePackageDocumentStyles = (enabled: boolean) => {
 const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
   visionSimulatorId,
   mapboxToken,
+  mode,
   unsavedChanges,
 }) => {
   const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId)
@@ -235,13 +243,23 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
     () => createInitialSceneState(vision),
     [vision],
   )
+  const modePolicy = React.useMemo(
+    () => getVisionSimulatorModePolicy(mode),
+    [mode],
+  )
 
   return (
     <SceneStoreProvider initialState={initialSceneState}>
       <HistoryStoreProvider initialState={{}}>
-        <UiStoreProvider initialState={{mapboxToken}}>
+        <UiStoreProvider
+          initialState={{
+            mapboxToken,
+            viewMode: modePolicy.initialViewMode,
+          }}
+        >
           <TooltipProvider delayDuration={0}>
             <EditorLayout
+              mode={mode}
               unsavedChanges={unsavedChanges}
               visionSimulatorId={visionSimulatorId}
             />
@@ -304,6 +322,7 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
 
 const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
   mapboxToken,
+  mode,
   visionSimulatorId,
   unsavedChanges,
 }) => (
@@ -312,6 +331,7 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
       <VisionSimulatorProviders
         unsavedChanges={unsavedChanges}
         mapboxToken={mapboxToken}
+        mode={mode}
         visionSimulatorId={visionSimulatorId}
       />
     </QueryClientProvider>
@@ -321,6 +341,7 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
 export const App: React.FC<AppProps> = ({
   apiBaseUrl,
   mapboxToken,
+  mode,
   accessToken,
   visionSimulatorId,
   isolationMode = 'shadow',
@@ -328,11 +349,13 @@ export const App: React.FC<AppProps> = ({
   unsavedChanges,
 }) => {
   configureDataProvider({apiBaseUrl, accessToken})
+  const effectiveMode = resolveVisionSimulatorMode(mode)
 
   const appShell = (
     <VisionSimulatorAppShell
       unsavedChanges={unsavedChanges}
       mapboxToken={mapboxToken}
+      mode={effectiveMode}
       visionSimulatorId={visionSimulatorId}
     />
   )

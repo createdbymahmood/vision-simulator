@@ -2,17 +2,13 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
-import type {SceneEntity, EditorMode} from '@/features/scene/domain/types'
-
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
-import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {
   createSnapshotFilename,
   downloadDataUrl,
 } from '@/features/scene/presentation/utils/scene-export'
 
 import type {SimulationCaptureApi} from './simulation-capture'
-import type {SimulationAreaOption} from './simulation-top-bar'
 
 import {SimulationCameraSidebar} from './simulation-camera-sidebar'
 import {SimulationCanvas} from './simulation-canvas'
@@ -22,19 +18,23 @@ import {SimulationViewport} from './simulation-viewport'
 import {useCameraFeedTargets} from './use-camera-feed-targets'
 import {useSimulationRecording} from './use-simulation-recording'
 
-const formatAreaLabel = (name: string, count: number) =>
-  `${name} (${count} objects)`
+interface SimulationAnalysisViewProps {
+  showTopBar?: boolean
+  showAuxiliaryPanels?: boolean
+  allowBackToEditor?: boolean
+  onBackToEditor: () => void
+}
 
 // eslint-disable-next-line max-lines-per-function
-export const SimulationAnalysisView: React.FC = () => {
+export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
+  showTopBar = true,
+  showAuxiliaryPanels = true,
+  allowBackToEditor = true,
+  onBackToEditor,
+}) => {
   const scene = useSceneStore((state) => state.scene)
-  const setEditorMode = useSceneStore((state) => state.setMode)
-  const setMapVisibility = useSceneStore((state) => state.setMapVisibility)
-  const setActiveArea = useSceneStore((state) => state.setActiveArea)
   const setSelection = useSceneStore((state) => state.setSelection)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
-
-  const setViewMode = useUiStore((state) => state.setViewMode)
 
   const captureRef = React.useRef<SimulationCaptureApi | null>(null)
   const handleCaptureReady = useCallbackRef((api: SimulationCaptureApi) => {
@@ -49,40 +49,9 @@ export const SimulationAnalysisView: React.FC = () => {
     startRecording,
     stopRecording,
   } = useSimulationRecording({captureRef})
-
-  const areaOptions: SimulationAreaOption[] = React.useMemo(() => {
-    const getCount = (areaId: string) =>
-      [
-        ...scene.walls,
-        ...scene.shapes,
-        ...scene.cameras,
-        ...scene.people,
-      ].filter(
-        (entity: SceneEntity) => 'areaId' in entity && entity.areaId === areaId,
-      ).length
-
-    return scene.areas.map((area) => ({
-      id: area.id,
-      label: formatAreaLabel(area.name, getCount(area.id)),
-      objects: getCount(area.id),
-    }))
-  }, [scene.cameras, scene.people, scene.shapes, scene.walls, scene.areas])
-
-  const activeAreaId = scene.activeAreaId ?? 'all'
   const radarPanelSize = {width: 360, height: 180}
 
   const feedTargets = useCameraFeedTargets({cameras: scene.cameras})
-
-  const handleAreaChange = useCallbackRef((value: string) => {
-    const nextArea = value === 'all' ? undefined : value
-    setActiveArea(nextArea)
-    setSelection([])
-  })
-
-  const handleEditorModeChange = useCallbackRef((mode: EditorMode) => {
-    setEditorMode(mode)
-    setMapVisibility(mode === 'map')
-  })
 
   const handleSelectEntity = useCallbackRef((id?: string) => {
     setSelection(id ? [id] : [])
@@ -118,8 +87,12 @@ export const SimulationAnalysisView: React.FC = () => {
     toast.success('Snapshot saved')
   })
 
-  const handleBackToEditor = useCallbackRef(() => {
-    setViewMode('editor')
+  const handleBackAction = useCallbackRef(() => {
+    if (!allowBackToEditor) {
+      return
+    }
+
+    onBackToEditor()
   })
 
   React.useEffect(
@@ -133,19 +106,17 @@ export const SimulationAnalysisView: React.FC = () => {
 
   return (
     <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden overscroll-none'>
-      <SimulationTopBar
-        activeAreaId={activeAreaId}
-        areaOptions={areaOptions}
-        isRecording={isRecording}
-        onAreaChange={handleAreaChange}
-        onBackToEditor={handleBackToEditor}
-        onEditorModeChange={handleEditorModeChange}
-        onSnapshot={handleSnapshot}
-        onStartRecording={startRecording}
-        onStopRecording={stopRecording}
-        recordingLabel={`REC ${formattedTime}`}
-        editorMode={scene.editorMode}
-      />
+      {showTopBar ? (
+        <SimulationTopBar
+          isRecording={isRecording}
+          onBackToEditor={handleBackAction}
+          onSnapshot={handleSnapshot}
+          onStartRecording={startRecording}
+          onStopRecording={stopRecording}
+          recordingLabel={`REC ${formattedTime}`}
+          showBackButton={allowBackToEditor}
+        />
+      ) : null}
 
       <div className='flex flex-1 min-h-0 overflow-hidden'>
         <SimulationViewport
@@ -166,17 +137,19 @@ export const SimulationAnalysisView: React.FC = () => {
             showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
           />
         </SimulationViewport>
-        <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>
-          <SimulationRadar
-            size={radarPanelSize}
-            scene={scene}
-            selectedEntityIds={selectedEntityIds}
-            onSelectEntity={handleSelectEntity}
-          />
-          {scene.cameras.length > 0 ? (
-            <SimulationCameraSidebar feedTargets={feedTargets} scene={scene} />
-          ) : null}
-        </div>
+        {showAuxiliaryPanels ? (
+          <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>
+            <SimulationRadar
+              size={radarPanelSize}
+              scene={scene}
+              selectedEntityIds={selectedEntityIds}
+              onSelectEntity={handleSelectEntity}
+            />
+            {scene.cameras.length > 0 ? (
+              <SimulationCameraSidebar feedTargets={feedTargets} scene={scene} />
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   )

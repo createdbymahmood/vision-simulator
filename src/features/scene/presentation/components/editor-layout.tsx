@@ -5,6 +5,7 @@ import React from 'react'
 import {toast} from 'sonner'
 
 import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
+import type {VisionSimulatorMode} from '@/features/scene/presentation/modes/vision-simulator-mode'
 
 import {serializeScene} from '@/features/scene/application/utils/scene-serializer'
 import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'
@@ -12,6 +13,7 @@ import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {TopPanel} from '@/features/scene/presentation/components/top-panel'
 import {useEditorUnsavedChangesGuard} from '@/features/scene/presentation/hooks/use-editor-unsaved-changes-guard'
+import {getVisionSimulatorModePolicy} from '@/features/scene/presentation/modes/vision-simulator-mode'
 import {
   createSceneImageFilename,
   createSceneJsonFilename,
@@ -20,7 +22,7 @@ import {
 } from '@/features/scene/presentation/utils/scene-export'
 import {cn} from '@/lib/utils'
 
-import type {EditorMode, SceneMapStyle, SceneRoot} from '../../domain/types'
+import type {EditorMode, SceneMapStyle, SceneRoot, ViewMode} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {assignCameraColor} from '../../domain/services/color-assignment'
@@ -47,12 +49,14 @@ import {ViewportShell} from './viewport-shell'
 
 export interface EditorLayoutProps {
   visionSimulatorId: string
+  mode: VisionSimulatorMode
   unsavedChanges?: UnsavedChangesOptions
 }
 
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const EditorLayout: React.FC<EditorLayoutProps> = ({
   visionSimulatorId,
+  mode,
   unsavedChanges,
 }) => {
   const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
@@ -63,6 +67,11 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const [mapStyleOpen, setMapStyleOpen] = React.useState(false)
   const [mapRef, setMapRef] = React.useState<MapRef | null>(null)
   const hasSeededHistoryRef = React.useRef(false)
+  const previousModeRef = React.useRef(mode)
+  const modePolicy = React.useMemo(
+    () => getVisionSimulatorModePolicy(mode),
+    [mode],
+  )
 
   const editorMode = useSceneStore((state) => state.scene.editorMode)
   const mapVisible = useSceneStore((state) => state.scene.mapVisible)
@@ -153,6 +162,17 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     closeAllPopovers()
   })
 
+  const setViewModeIfAllowed = useCallbackRef((nextViewMode: ViewMode) => {
+    if (
+      modePolicy.lockViewMode &&
+      nextViewMode !== modePolicy.initialViewMode
+    ) {
+      return
+    }
+
+    setViewMode(nextViewMode)
+  })
+
   const handleMapReady = useCallbackRef((nextMap: MapRef | null) => {
     setMapRef(nextMap)
   })
@@ -171,6 +191,10 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     if (typeof window !== 'undefined') {
       window.history.back()
     }
+  })
+
+  const handleBackToEditor = useCallbackRef(() => {
+    setViewModeIfAllowed('editor')
   })
 
   const handleUndo = () => {
@@ -264,6 +288,27 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   }, [activeTool, closeAllPanels])
 
   React.useEffect(() => {
+    if (previousModeRef.current === mode) {
+      return
+    }
+
+    previousModeRef.current = mode
+    setViewMode(modePolicy.initialViewMode)
+  }, [mode, modePolicy.initialViewMode, setViewMode])
+
+  React.useEffect(() => {
+    if (!modePolicy.lockViewMode) {
+      return
+    }
+
+    if (viewMode === modePolicy.initialViewMode) {
+      return
+    }
+
+    setViewMode(modePolicy.initialViewMode)
+  }, [modePolicy.initialViewMode, modePolicy.lockViewMode, setViewMode, viewMode])
+
+  React.useEffect(() => {
     if (viewMode === 'preview') {
       closeTransientUi()
       setEditMode(false)
@@ -317,7 +362,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           onExportSceneJson={handleExportSceneJson}
           onRedo={handleRedo}
           onSave={handleSave}
-          onTogglePreview={() => setViewMode('preview')}
+          onTogglePreview={() => setViewModeIfAllowed('preview')}
           onUndo={handleUndo}
           projectName={projectName}
           saveLoading={saveLoading}
@@ -337,7 +382,12 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
             shapeMode={shapeMode}
           />
         ) : (
-          <SimulationAnalysisView />
+          <SimulationAnalysisView
+            allowBackToEditor={modePolicy.allowSimulationBackToEditor}
+            onBackToEditor={handleBackToEditor}
+            showAuxiliaryPanels={modePolicy.showSimulationAuxiliaryPanels}
+            showTopBar={modePolicy.showSimulationTopBar}
+          />
         )}
       </main>
 

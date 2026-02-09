@@ -22,6 +22,7 @@ interface AppProps {
   mapboxToken: string
   visionSimulatorId: string
   accessToken: string
+  mode?: 'editor' | 'preview'
 }
 
 export const App: React.FC<AppProps> = ({
@@ -35,10 +36,38 @@ export const App: React.FC<AppProps> = ({
       accessToken={accessToken}
       apiBaseUrl={apiBaseUrl}
       mapboxToken={mapboxToken}
+      mode='editor'
       visionSimulatorId={visionSimulatorId}
     />
   )
 }
+```
+
+## Mode Prop
+
+`mode` is optional and defaults to `'editor'`.
+
+- `mode='editor'`: full editor UI and standard preview toggle behavior.
+- `mode='preview'`: simulation-only view (no top bar or editor surfaces).
+
+```tsx
+<VisionSimulator
+  accessToken={accessToken}
+  apiBaseUrl={apiBaseUrl}
+  mapboxToken={mapboxToken}
+  mode='preview'
+  visionSimulatorId={visionSimulatorId}
+/>
+```
+
+```tsx
+<VisionSimulator
+  accessToken={accessToken}
+  apiBaseUrl={apiBaseUrl}
+  mapboxToken={mapboxToken}
+  mode='editor'
+  visionSimulatorId={visionSimulatorId}
+/>
 ```
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

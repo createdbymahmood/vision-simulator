@@ -1,33 +1,14 @@
 import {VideoRecorder} from '@untitledui/icons'
-import {ArrowLeft, Camera, Film, Map, MapPin, ToggleLeft} from 'lucide-react'
+import {ArrowLeft, Camera} from 'lucide-react'
 import React from 'react'
 
-import type {EditorMode} from '@/features/scene/domain/types'
-
 import {Button} from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {cn} from '@/lib/utils'
 
-export interface SimulationAreaOption {
-  id: string
-  label: string
-  objects: number
-}
-
 interface SimulationTopBarProps {
-  editorMode: EditorMode
-  areaOptions: SimulationAreaOption[]
-  activeAreaId: string
+  showBackButton?: boolean
   isRecording: boolean
   recordingLabel: string
-  onEditorModeChange: (mode: EditorMode) => void
-  onAreaChange: (value: string) => void
   onStartRecording: () => void
   onStopRecording: () => void
   onSnapshot: () => void
@@ -35,31 +16,27 @@ interface SimulationTopBarProps {
 }
 
 export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
-  editorMode,
-  areaOptions,
-  activeAreaId,
+  showBackButton = true,
   isRecording,
   recordingLabel,
-  onEditorModeChange,
-  onAreaChange,
   onStartRecording,
   onStopRecording,
   onSnapshot,
   onBackToEditor,
 }) => {
-  const hasMultipleAreas = areaOptions.length > 1
-
   return (
     <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
       <div className='flex items-center gap-4'>
-        <Button
-          size='icon'
-          aria-label='Back'
-          variant='ghost'
-          onClick={onBackToEditor}
-        >
-          <ArrowLeft className='size-5' />
-        </Button>
+        {showBackButton ? (
+          <Button
+            size='icon'
+            aria-label='Back'
+            variant='ghost'
+            onClick={onBackToEditor}
+          >
+            <ArrowLeft className='size-5' />
+          </Button>
+        ) : null}
 
         {/* This is a very important code that should not be removed */}
         {/* <div className='inline-flex items-center gap-1 rounded-full bg-muted'>

@@ -5,13 +5,10 @@ import {
   createRoute,
   createRouter,
 } from '@tanstack/react-router'
-import {
-  VisionSimulator,
-  type DirtyStateChangePayload,
-} from '@vega-tek-hub/vision-simulator-v2'
+import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
 import simulatorStylesUrl from '@vega-tek-hub/vision-simulator-v2/styles.css?url'
-import React from 'react'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import React from 'react'
 
 const rootRoute = createRootRoute({
   component: () => <ExampleLayout />,
@@ -73,6 +70,7 @@ const SimulatorPage: React.FC = () => {
   return (
     <div style={{height: '100vh', width: '100vw'}}>
       <VisionSimulator
+        mode='preview'
         apiBaseUrl={apiBaseUrl}
         accessToken={accessToken}
         isolationMode='shadow'
