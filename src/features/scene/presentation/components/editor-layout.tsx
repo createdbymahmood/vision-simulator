@@ -4,9 +4,7 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
-import type {
-  UnsavedChangesOptions,
-} from '@/features/scene/presentation/leave-guard/types'
+import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
 
 import {serializeScene} from '@/features/scene/application/utils/scene-serializer'
 import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'

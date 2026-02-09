@@ -3,9 +3,10 @@ import {useBlocker} from '@tanstack/react-router'
 import React from 'react'
 import {toast} from 'sonner'
 
-import {updateVision} from '@/data-provider/api/services/v2/vision-simulator'
 import type {SceneRoot} from '@/features/scene/domain/types'
 import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
+
+import {updateVision} from '@/data-provider/api/services/v2/vision-simulator'
 
 import {useSceneDirtyState} from './use-scene-dirty-state'
 
@@ -13,6 +14,48 @@ interface UseEditorUnsavedChangesGuardParams {
   scene: SceneRoot
   visionSimulatorId: string
   unsavedChanges?: UnsavedChangesOptions
+}
+
+const isPrimaryUnmodifiedClick = (event: MouseEvent) =>
+  event.button === 0 &&
+  !event.metaKey &&
+  !event.ctrlKey &&
+  !event.shiftKey &&
+  !event.altKey
+
+const resolveAnchorNavigationHref = (
+  anchorElement: HTMLAnchorElement,
+): string | null => {
+  if (anchorElement.hasAttribute('download')) {
+    return null
+  }
+
+  const target = anchorElement.getAttribute('target')
+
+  if (target && target !== '_self') {
+    return null
+  }
+
+  const href = anchorElement.getAttribute('href')
+
+  if (!href || href.startsWith('#')) {
+    return null
+  }
+
+  const nextUrl = new URL(anchorElement.href, window.location.href)
+  const currentUrl = new URL(window.location.href)
+
+  if (nextUrl.href === currentUrl.href) {
+    return null
+  }
+
+  return nextUrl.href
+}
+
+interface UseManualAnchorNavigationBlockerParams {
+  enabled: boolean
+  isDirty: boolean
+  isRouteBlockerAvailable: boolean
 }
 
 const DEFAULT_DIALOG_TITLE = 'Unsaved changes'
@@ -28,6 +71,112 @@ const useOptionalRouteBlocker = (enabled: boolean, isDirty: boolean) => {
     })
   } catch {
     return null
+  }
+}
+
+const useManualAnchorNavigationBlocker = ({
+  enabled,
+  isDirty,
+  isRouteBlockerAvailable,
+}: UseManualAnchorNavigationBlockerParams) => {
+  const [isOpen, setIsOpen] = React.useState(false)
+  const pendingNavigationHrefRef = React.useRef<string | null>(null)
+
+  const reset = useCallbackRef(() => {
+    pendingNavigationHrefRef.current = null
+    setIsOpen(false)
+  })
+
+  const proceed = useCallbackRef(() => {
+    const pendingHref = pendingNavigationHrefRef.current
+
+    if (!pendingHref) {
+      return false
+    }
+
+    reset()
+    window.location.assign(pendingHref)
+    return true
+  })
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    if (isRouteBlockerAvailable || !enabled || !isDirty) {
+      return
+    }
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (!isPrimaryUnmodifiedClick(event)) {
+        return
+      }
+
+      const target = event.target
+
+      if (!(target instanceof Element)) {
+        return
+      }
+
+      const anchorElement = target.closest('a[href]')
+
+      if (!(anchorElement instanceof HTMLAnchorElement)) {
+        return
+      }
+
+      const pendingHref = resolveAnchorNavigationHref(anchorElement)
+
+      if (!pendingHref) {
+        return
+      }
+
+      event.preventDefault()
+      pendingNavigationHrefRef.current = pendingHref
+      setIsOpen(true)
+    }
+
+    document.addEventListener('click', handleDocumentClick, true)
+
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, true)
+    }
+  }, [enabled, isDirty, isRouteBlockerAvailable])
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    if (isRouteBlockerAvailable || !enabled || !isDirty) {
+      return
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [enabled, isDirty, isRouteBlockerAvailable])
+
+  React.useEffect(() => {
+    if (isDirty && enabled && !isRouteBlockerAvailable) {
+      return
+    }
+
+    pendingNavigationHrefRef.current = null
+    setIsOpen(false)
+  }, [enabled, isDirty, isRouteBlockerAvailable])
+
+  return {
+    isOpen,
+    reset,
+    proceed,
   }
 }
 
@@ -59,6 +208,16 @@ export const useEditorUnsavedChangesGuard = ({
   })
 
   const routeBlocker = useOptionalRouteBlocker(unsavedChangesEnabled, isDirty)
+  const isRouteLeaveDialogOpen = routeBlocker?.status === 'blocked'
+  const {
+    isOpen: manualLeaveDialogOpen,
+    proceed: proceedManualNavigation,
+    reset: resetManualNavigation,
+  } = useManualAnchorNavigationBlocker({
+    enabled: unsavedChangesEnabled,
+    isDirty,
+    isRouteBlockerAvailable: Boolean(routeBlocker),
+  })
 
   const saveScene = useCallbackRef(async () => {
     if (isSavingRef.current) {
@@ -91,7 +250,7 @@ export const useEditorUnsavedChangesGuard = ({
   })
 
   const onConfirmSaveAndLeave = useCallbackRef(async () => {
-    if (!routeBlocker || routeBlocker.status !== 'blocked') {
+    if (!isRouteLeaveDialogOpen && !manualLeaveDialogOpen) {
       return
     }
 
@@ -104,55 +263,37 @@ export const useEditorUnsavedChangesGuard = ({
       return
     }
 
-    routeBlocker.proceed()
+    if (routeBlocker && routeBlocker.status === 'blocked') {
+      routeBlocker.proceed()
+      return
+    }
+
+    proceedManualNavigation()
   })
 
   const onConfirmDiscardAndLeave = useCallbackRef(() => {
-    if (!routeBlocker || routeBlocker.status !== 'blocked') {
+    if (routeBlocker && routeBlocker.status === 'blocked') {
+      routeBlocker.proceed()
       return
     }
 
-    routeBlocker.proceed()
+    proceedManualNavigation()
   })
 
   const onConfirmStay = useCallbackRef(() => {
-    if (!routeBlocker || routeBlocker.status !== 'blocked') {
+    if (routeBlocker && routeBlocker.status === 'blocked') {
+      routeBlocker.reset()
       return
     }
 
-    routeBlocker.reset()
+    resetManualNavigation()
   })
 
   React.useEffect(() => {
-    if (routeBlocker?.status !== 'blocked') {
+    if (!isRouteLeaveDialogOpen && !manualLeaveDialogOpen) {
       setLeaveDialogSaving(false)
     }
-  }, [routeBlocker?.status])
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    if (routeBlocker) {
-      return
-    }
-
-    if (!unsavedChangesEnabled || !isDirty) {
-      return
-    }
-
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault()
-      event.returnValue = ''
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    }
-  }, [isDirty, routeBlocker, unsavedChangesEnabled])
+  }, [isRouteLeaveDialogOpen, manualLeaveDialogOpen])
 
   React.useEffect(() => {
     unsavedChanges?.onDirtyStateChange?.({
@@ -165,7 +306,7 @@ export const useEditorUnsavedChangesGuard = ({
     saveLoading,
     saveScene,
     leaveDialogState: {
-      open: routeBlocker?.status === 'blocked',
+      open: isRouteLeaveDialogOpen || manualLeaveDialogOpen,
       isSaving: leaveDialogSaving,
     },
     leaveDialogConfig,
