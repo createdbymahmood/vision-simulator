@@ -26,7 +26,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --fix",
     "preview": "vite preview",
-    "build:lib": "rimraf dist && tsup && yarn build:styles && node scripts/obfuscate-dist-css.mjs && node scripts/verify-classname-obfuscation.mjs",
+    "build:lib": "rimraf dist && tsup && yarn build:styles",
     "publish:minor": "npm run build:lib && npm version minor && npm publish --registry=https://npm.pkg.github.com/",
     "build:styles": "tailwindcss -i src/index.css -o dist/styles.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/copy-file.mjs src/host.css dist/host.css",
     "download-swagger-file": "node scripts/download-swagger-file.mjs",
