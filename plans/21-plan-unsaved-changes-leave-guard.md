@@ -1,4 +1,4 @@
-# Phase 21: Unsaved Changes Leave Guard (Navigation + Unmount)
+# Phase 21: Unsaved Changes Leave Guard (As Implemented)
 
 **Timeline Reference**: Post-Phase 20 follow-up
 
@@ -6,247 +6,193 @@
 
 ## Phase Goal
 
-Prevent accidental data loss by intercepting all leave attempts and requiring an explicit user decision when unsaved changes exist.
+Prevent accidental data loss by blocking route/navigation leave attempts and warning on browser unload when unsaved scene changes exist.
 
-Target behavior:
-- Route change should be blocked and show a confirmation dialog.
-- Back/forward navigation should be blocked and show a confirmation dialog.
-- Browser refresh/tab-close should warn when dirty.
-- Host-driven "unmount the app" flows should be blockable through an explicit contract.
-
----
-
-## Why This Phase Is Critical
-
-The simulator is embedded in host apps and can be unmounted by routing or container state changes. Without a leave guard, unsaved work is lost silently.
+Implemented target behavior:
+- Route navigation is blocked and a confirmation dialog is shown when dirty.
+- Back/forward navigation is blocked via router blocker when dirty.
+- Browser refresh/tab-close shows native unload warning when dirty.
+- Save/Discard/Stay decisions are handled in-app for blocked router navigation.
 
 ---
 
-## Scope & Responsibilities
+## Current Scope
 
 ### Included
 
-- Define a first-class unsaved-changes model (dirty/saving/clean).
-- Add a leave-guard controller that decides whether navigation/unmount can proceed.
-- Add UI dialog for `Save / Discard / Stay`.
-- Integrate with latest TanStack Router `useBlocker` (`withResolver`, `status`, `proceed`, `reset`, `enableBeforeUnload`).
-- Add host-facing API for controlled unmount flows.
+- Unsaved state tracking based on scene signature and save baseline.
+- Leave guard hook integrated with TanStack Router `useBlocker`.
+- Native `beforeunload` warning support.
+- Unsaved changes dialog UI with `Save and leave` / `Discard changes` / `Stay`.
+- Host callback for dirty/saving state updates.
 
-### Explicitly Excluded
+### Not Included (Current Implementation)
 
-- Refactoring editor feature logic unrelated to save/leave flows.
-- New persistence backends.
-- Auto-save as a mandatory behavior (optional extension only).
-
----
-
-## Important Technical Reality
-
-React cannot reliably "cancel" an unmount after the host has already committed to unmounting. Therefore:
-- Router/navigation unmount is blockable via TanStack Router `useBlocker`.
-- Browser refresh/close is blockable via `beforeunload` (native browser prompt only).
-- Arbitrary host `setMounted(false)` unmount must use an explicit pre-unmount handshake API provided by this package.
+- Host-driven unmount handshake API (`requestLeave`, `leaveGuardRef`).
+- Public leave-guard adapter hook for host apps.
+- Custom leave intent/decision types.
 
 ---
 
-## Proposed API (Production Contract)
-
-### 1) App Props Extensions
+## Public API (Current Contract)
 
 ```ts
-interface AppProps {
-  // existing props...
-  unsavedChanges?: {
-    enabled?: boolean // default: true
-    onDirtyStateChange?: (payload: {isDirty: boolean; isSaving: boolean}) => void
-    confirmDialogTitle?: string
-    confirmDialogDescription?: string
-  }
-}
-```
-
-### 2) Imperative Guard Ref for Host-Controlled Unmount
-
-```ts
-export type LeaveIntent = 'route-change' | 'history-back' | 'host-unmount' | 'browser-unload'
-export type LeaveDecision = 'saved' | 'discarded' | 'cancelled'
-
-export interface VisionSimulatorLeaveGuardHandle {
-  hasUnsavedChanges: () => boolean
-  requestLeave: (intent: LeaveIntent) => Promise<LeaveDecision>
-}
-```
-
-```ts
-interface AppProps {
-  // existing props...
-  leaveGuardRef?: React.Ref<VisionSimulatorLeaveGuardHandle>
-}
-```
-
-### 3) Optional TanStack Router Adapter Hook (host-side usage)
-
-```ts
-export const useVisionSimulatorRouteLeaveBlocker = (options: {
-  enabled: boolean
-  hasUnsavedChanges: () => boolean
-  onBlockedLeave: () => Promise<'proceed' | 'stay'>
-}) => void
-```
-
-Implementation note:
-- Internally uses TanStack Router `useBlocker({ shouldBlockFn, withResolver: true, enableBeforeUnload })`.
-- If user chooses proceed, call blocker `proceed()`.
-- If user chooses stay/cancel, call blocker `reset()`.
-
----
-
-## Domain Model (Clean Separation)
-
-Introduce a focused leave-guard state model independent from UI components.
-
-```ts
-type UnsavedState = {
+export interface DirtyStateChangePayload {
   isDirty: boolean
   isSaving: boolean
-  lastSavedRevision: number
-  currentRevision: number
+}
+
+export interface UnsavedChangesOptions {
+  enabled?: boolean
+  onDirtyStateChange?: (payload: DirtyStateChangePayload) => void
+  confirmDialogTitle?: string
+  confirmDialogDescription?: string
+}
+
+interface AppProps {
+  // existing props...
+  unsavedChanges?: UnsavedChangesOptions
 }
 ```
 
-Dirty rule:
-- `isDirty = currentRevision > lastSavedRevision`
-
-Revision rule:
-- Increment `currentRevision` for every scene mutation that changes persisted scene payload.
-- Update `lastSavedRevision = currentRevision` only after successful save.
+Notes:
+- `unsavedChanges.enabled` defaults to `true`.
+- No imperative leave guard ref is exposed.
 
 ---
 
-## Save/Leave State Machine
+## Implementation Architecture
 
-```text
-idle(clean)
-idle(dirty)
-blocked(waiting-user-decision)
-saving
-leave-approved
-leave-cancelled
-save-failed
-```
+### 1) Dirty State Tracking
 
-Decision mapping:
-- `Save` -> run save pipeline -> on success approve leave; on error remain blocked.
-- `Discard` -> approve leave without save.
-- `Stay` -> cancel leave and keep user in editor.
+Implemented in `src/features/scene/presentation/hooks/use-scene-dirty-state.ts`.
 
----
+Mechanics:
+- Scene signature is `JSON.stringify(scene)`.
+- Hook maintains:
+  - `currentRevision`
+  - `lastSavedRevision`
+  - `currentSceneSignature`
+  - `lastSavedSceneSignature`
+- On scene signature change:
+  - increment `currentRevision`
+  - update `currentSceneSignature`
+- Save flow integration:
+  - `createSaveSnapshot(scene)` captures `{ sceneSignature, revision }`
+  - `markSaved(snapshot)` updates saved baseline
 
-## UI Plan (Dialog)
+Dirty rule currently used:
+- `isDirty = enabled && currentSceneSignature !== lastSavedSceneSignature`
 
-Add a dedicated unsaved-changes dialog component (single responsibility):
-- Title: "Unsaved changes"
-- Description: "You have unsaved changes. Do you want to save before leaving?"
-- Actions:
-  - Primary: `Save and leave`
-  - Secondary: `Discard changes`
-  - Ghost: `Stay`
+### 2) Leave Guard Orchestration
 
-Requirements:
-- Works for keyboard and pointer.
-- Shows loading state during save.
-- Disables duplicate submissions while saving.
-- Keeps focus management accessible.
+Implemented in `src/features/scene/presentation/hooks/use-editor-unsaved-changes-guard.ts`.
 
----
-
-## Integration Plan (Implementation Steps)
-
-### 1) Track Dirty State Reliably
-
-- Add revision counters to scene-related store or a dedicated unsaved-changes store.
-- Increment revision from mutation points (`setScene`, `updateScene`, etc.).
-- Initialize clean baseline after initial scene load is seeded.
-- Mark clean after successful `handleSave` in editor flow.
-
-### 2) Centralize Leave Guard Controller
-
-- Add `useUnsavedChangesGuard` hook with pure decision API.
-- Expose `hasUnsavedChanges` and `requestLeave(intent)`.
-- Keep UI-independent decision layer testable.
-
-### 3) Wire Dialog to Controller
-
-- Show dialog when guard enters blocked state.
-- Hook buttons to controller actions (`save`, `discard`, `stay`).
-
-### 4) TanStack Router Blocking
-
-- Integrate via `useBlocker` with:
-  - `shouldBlockFn: () => guard.hasUnsavedChanges()`
+Responsibilities:
+- Creates optional router blocker with:
+  - `shouldBlockFn: () => enabled && isDirty`
   - `withResolver: true`
-  - `enableBeforeUnload: guard.hasUnsavedChanges()`
-- On `status === 'blocked'`, invoke dialog and route decision to `proceed/reset`.
+  - `enableBeforeUnload: enabled && isDirty`
+- Uses `try/catch` around `useBlocker` through `useOptionalRouteBlocker(...)` to avoid crashing when router context is absent.
+- Runs save pipeline via `updateVision(...)`, then `markSaved(...)`.
+- Exposes dialog state/actions to presentation layer:
+  - `onConfirmSaveAndLeave` -> save then `routeBlocker.proceed()`
+  - `onConfirmDiscardAndLeave` -> `routeBlocker.proceed()`
+  - `onConfirmStay` -> `routeBlocker.reset()`
+- Emits `unsavedChanges.onDirtyStateChange({ isDirty, isSaving })`.
 
-### 5) Host Unmount Contract
+### 3) Browser Unload Fallback
 
-- Expose `leaveGuardRef` handle from `App`.
-- Host must call `await leaveGuardRef.current?.requestLeave('host-unmount')` before unmounting.
-- Host unmount proceeds only on `saved` or `discarded`.
+In the same hook:
+- If router blocker is not available, a native `beforeunload` listener is attached when `enabled && isDirty`.
+- This keeps refresh/tab-close protection available even outside router context.
 
-### 6) Back Button Behavior
+### 4) Dialog UI
 
-- Replace direct unguarded back action path with guarded leave request.
-- Preserve current UX but route through shared guard controller.
+Implemented in `src/features/scene/presentation/components/unsaved-changes-leave-dialog.tsx`.
 
----
+Behavior:
+- Uses `AlertDialog`.
+- Actions:
+  - `Stay` (ghost)
+  - `Discard changes` (outline)
+  - `Save and leave` (primary, loading state)
+- Closing the dialog via outside interaction maps to `onStay()` unless currently saving.
 
-## Reliability & Edge Cases
+### 5) Editor Integration
 
-- Multiple rapid navigation attempts while blocked: serialize and keep one active decision.
-- Save failure while leaving: keep dialog open, show error, do not navigate.
-- Non-dirty state: never show dialog.
-- Preview mode: same guard behavior if unsaved edits exist.
-- Browser `beforeunload`: cannot show custom modal; rely on native prompt.
+Implemented in `src/features/scene/presentation/components/editor-layout.tsx`.
 
----
+Integration points:
+- Calls `useEditorUnsavedChangesGuard(...)` with current `scene`, `visionSimulatorId`, and `unsavedChanges` config.
+- Top panel save action uses guard `saveScene()`.
+- Back action uses `window.history.back()`; router blocker handles dirty-state interception.
+- Renders `UnsavedChangesLeaveDialog` from guard-derived state.
 
-## Testing Plan
+### 6) App Wiring
 
-### Unit
-
-- Dirty calculation from revision counters.
-- Guard decision outputs for `save/discard/stay`.
-- Save failure path does not allow leave.
-
-### Integration
-
-- Route navigation blocked with unsaved changes.
-- `proceed/reset` called correctly based on dialog choice.
-- Browser unload registration toggles with dirty state.
-- Host unmount handshake: `requestLeave('host-unmount')` returns expected decision.
-
-### Regression
-
-- Existing save action still works.
-- Undo/redo behavior remains unchanged.
-- No impact on rendering modes (`editor`/`preview`).
+- `src/app.tsx` passes `unsavedChanges` into `EditorLayout`.
+- `src/index.ts` exports only:
+  - `DirtyStateChangePayload`
+  - `UnsavedChangesOptions`
 
 ---
 
-## Acceptance Checklist
+## Router Context Requirement
 
-- [ ] Dirty state is deterministic and independent from UI rendering details.
-- [ ] Route leave is blocked with TanStack Router `useBlocker` and custom dialog.
-- [ ] Browser refresh/close warns when unsaved changes exist.
-- [ ] Host-driven unmount can be guarded through `leaveGuardRef.requestLeave(...)`.
-- [ ] `Save / Discard / Stay` outcomes behave exactly as expected.
-- [ ] No regressions in existing save/undo/redo/editor flows.
+`useBlocker` requires TanStack Router context.
+
+Current local app bootstrapping (`src/main.tsx`) provides this by:
+- Wrapping UI with `RouterProvider`.
+- Defining a default `/` route that renders `App`.
+
+This ensures in-repo development mode has router-backed leave blocking.
 
 ---
 
-## Rollout Strategy
+## Example App Coverage
 
-- Ship behind `unsavedChanges.enabled` defaulting to `true` for new integrations.
-- Provide migration snippet for host apps using TanStack Router.
-- Document host-unmount contract clearly: unmount must be preceded by `requestLeave`.
+Current example (`example/src/App.tsx`) demonstrates:
+- Route leave blocking (`/simulator` -> `/`).
+- Browser refresh/tab-close warning when dirty.
+- Dirty/saving state visualization via `onDirtyStateChange`.
+
+No host-unmount handshake example exists, by design of current implementation.
+
+---
+
+## Reliability Characteristics
+
+- Save operation is de-duplicated with `isSavingRef`.
+- On save failure during leave:
+  - user remains blocked
+  - dialog stays open
+  - error toast is shown
+- On non-dirty state:
+  - no blocker dialog
+  - no unload warning
+
+---
+
+## Acceptance Checklist (As Implemented)
+
+- [x] Dirty state is tracked from scene signature baseline.
+- [x] Route leave is blocked with TanStack Router `useBlocker` and custom dialog.
+- [x] Browser refresh/close warns when unsaved changes exist.
+- [x] `Save / Discard / Stay` actions are wired to `proceed/reset` behavior.
+- [x] Host receives dirty/saving updates through `onDirtyStateChange`.
+- [ ] Host-driven arbitrary unmount guarding via imperative pre-unmount API.
+
+---
+
+## Migration Notes From Previous Plan Draft
+
+Removed from contract:
+- `VisionSimulatorLeaveGuardHandle`
+- `requestLeave(...)`
+- `LeaveIntent` / `LeaveDecision`
+- Host-controlled unmount handshake requirements
+
+Adopted contract:
+- Declarative `unsavedChanges` options only
+- Router-context-based blocking plus browser unload protection
