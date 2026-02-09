@@ -4,12 +4,16 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
-import {updateVision} from '@/data-provider/api/services/v2/vision-simulator'
+import type {
+  UnsavedChangesOptions,
+} from '@/features/scene/presentation/leave-guard/types'
+
 import {serializeScene} from '@/features/scene/application/utils/scene-serializer'
 import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {TopPanel} from '@/features/scene/presentation/components/top-panel'
+import {useEditorUnsavedChangesGuard} from '@/features/scene/presentation/hooks/use-editor-unsaved-changes-guard'
 import {
   createSceneImageFilename,
   createSceneJsonFilename,
@@ -40,15 +44,18 @@ import {ShapePropertiesSheet} from './properties-sheet/shape-properties-sheet'
 import {WallPropertiesSheet} from './properties-sheet/wall-properties-sheet'
 import {RightRail} from './right-rail'
 import {SimulationAnalysisView} from './simulation/simulation-analysis-view'
+import {UnsavedChangesLeaveDialog} from './unsaved-changes-leave-dialog'
 import {ViewportShell} from './viewport-shell'
 
-interface EditorLayoutProps {
+export interface EditorLayoutProps {
   visionSimulatorId: string
+  unsavedChanges?: UnsavedChangesOptions
 }
 
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const EditorLayout: React.FC<EditorLayoutProps> = ({
   visionSimulatorId,
+  unsavedChanges,
 }) => {
   const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
   const [placeDeviceOpen, setPlaceDeviceOpen] = React.useState(false)
@@ -56,7 +63,6 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const [areaPanelOpen, setAreaPanelOpen] = React.useState(false)
   const [devicesPanelOpen, setDevicesPanelOpen] = React.useState(false)
   const [mapStyleOpen, setMapStyleOpen] = React.useState(false)
-  const [saveLoading, setSaveLoading] = React.useState(false)
   const [mapRef, setMapRef] = React.useState<MapRef | null>(null)
   const hasSeededHistoryRef = React.useRef(false)
 
@@ -105,10 +111,25 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     [cameras.length],
   )
 
+  const {
+    leaveDialogConfig,
+    leaveDialogState,
+    onConfirmDiscardAndLeave,
+    onConfirmSaveAndLeave,
+    onConfirmStay,
+    saveLoading,
+    saveScene,
+  } = useEditorUnsavedChangesGuard({
+    scene,
+    unsavedChanges,
+    visionSimulatorId,
+  })
+
   const syncSelectionForScene = useCallbackRef((nextScene: SceneRoot) => {
     if (selectedEntityIds.length === 0) {
       return
     }
+
     const ids = new Set<string>()
     nextScene.areas.forEach((area) => ids.add(area.id))
     nextScene.walls.forEach((wall) => ids.add(wall.id))
@@ -120,6 +141,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     if (nextSelection.length === selectedEntityIds.length) {
       return
     }
+
     setSelection([])
   })
 
@@ -144,19 +166,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   }
 
   const handleSave = useCallbackRef(async () => {
-    setSaveLoading(true)
-    try {
-      await updateVision(visionSimulatorId, {
-        vision: {
-          data: scene,
-        },
-      })
-      toast.success('Scene saved')
-    } catch (error) {
-      toast.error('Failed to save scene')
-    } finally {
-      setSaveLoading(false)
-    }
+    await saveScene()
   })
 
   const handleBack = useCallbackRef(() => {
@@ -215,11 +225,13 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       toast.info('Switch to Map mode to export a scene image')
       return
     }
+
     const map = mapRef?.getMap?.()
     if (!map) {
       toast.error('Scene image export unavailable')
       return
     }
+
     try {
       const dataUrl = map.getCanvas().toDataURL('image/png')
       downloadDataUrl(dataUrl, createSceneImageFilename())
@@ -239,10 +251,12 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     if (hasSeededHistoryRef.current) {
       return
     }
+
     if (pastEntries.length > 0) {
       hasSeededHistoryRef.current = true
       return
     }
+
     seedHistory(scene)
     hasSeededHistoryRef.current = true
   }, [pastEntries.length, scene, seedHistory])
@@ -255,9 +269,10 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     if (viewMode === 'preview') {
       closeTransientUi()
       setEditMode(false)
-    } else {
-      setEditMode(true)
+      return
     }
+
+    setEditMode(true)
   }, [closeTransientUi, setEditMode, viewMode])
 
   useEditorShortcuts({
@@ -389,6 +404,16 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           />
         </>
       ) : null}
+
+      <UnsavedChangesLeaveDialog
+        isSaving={leaveDialogState.isSaving}
+        title={leaveDialogConfig.title}
+        description={leaveDialogConfig.description}
+        onDiscardChanges={onConfirmDiscardAndLeave}
+        onSaveAndLeave={onConfirmSaveAndLeave}
+        onStay={onConfirmStay}
+        open={leaveDialogState.open}
+      />
     </div>
   )
 }

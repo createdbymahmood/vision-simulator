@@ -3,6 +3,7 @@ import React, {Suspense} from 'react'
 import {createPortal} from 'react-dom'
 
 import type {SceneStoreInitialState} from '@/features/scene/infrastructure/stores/scene.store'
+import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
 
 import {Pending} from '@/components/shared/pending'
 import {Toaster} from '@/components/ui/sonner'
@@ -25,7 +26,7 @@ const DEFAULT_SHADOW_STYLE_URLS = [
 ]
 const SHADOW_HOST_SLOT = 'vision-simulator-shadow-host'
 
-interface AppProps {
+export interface AppProps {
   children?: React.ReactNode
   visionSimulatorId: string
   accessToken: string
@@ -33,6 +34,7 @@ interface AppProps {
   mapboxToken?: string
   isolationMode?: 'none' | 'shadow'
   shadowStyleUrls?: string[]
+  unsavedChanges?: UnsavedChangesOptions
 }
 
 interface ShadowIsolatedRootProps {
@@ -43,6 +45,7 @@ interface ShadowIsolatedRootProps {
 interface VisionSimulatorProvidersProps {
   visionSimulatorId: string
   mapboxToken?: string
+  unsavedChanges?: UnsavedChangesOptions
 }
 
 interface ShadowInlineStyleEntry {
@@ -225,6 +228,7 @@ const usePackageDocumentStyles = (enabled: boolean) => {
 const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
   visionSimulatorId,
   mapboxToken,
+  unsavedChanges,
 }) => {
   const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId)
   const initialSceneState = React.useMemo(
@@ -237,7 +241,10 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
       <HistoryStoreProvider initialState={{}}>
         <UiStoreProvider initialState={{mapboxToken}}>
           <TooltipProvider delayDuration={0}>
-            <EditorLayout visionSimulatorId={visionSimulatorId} />
+            <EditorLayout
+              unsavedChanges={unsavedChanges}
+              visionSimulatorId={visionSimulatorId}
+            />
             <Toaster />
           </TooltipProvider>
         </UiStoreProvider>
@@ -270,7 +277,11 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
   )
 
   return (
-    <div className='size-full' ref={hostRef} data-slot={SHADOW_HOST_SLOT}>
+    <div
+      className='size-full bg-blue-200'
+      ref={hostRef}
+      data-slot={SHADOW_HOST_SLOT}
+    >
       {shadowRoot
         ? createPortal(
             <>
@@ -298,10 +309,12 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
 const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
   mapboxToken,
   visionSimulatorId,
+  unsavedChanges,
 }) => (
   <Suspense fallback={<Pending />}>
     <QueryClientProvider client={queryClient}>
       <VisionSimulatorProviders
+        unsavedChanges={unsavedChanges}
         mapboxToken={mapboxToken}
         visionSimulatorId={visionSimulatorId}
       />
@@ -316,11 +329,13 @@ export const App: React.FC<AppProps> = ({
   visionSimulatorId,
   isolationMode = 'shadow',
   shadowStyleUrls,
+  unsavedChanges,
 }) => {
   configureDataProvider({apiBaseUrl, accessToken})
 
   const appShell = (
     <VisionSimulatorAppShell
+      unsavedChanges={unsavedChanges}
       mapboxToken={mapboxToken}
       visionSimulatorId={visionSimulatorId}
     />
