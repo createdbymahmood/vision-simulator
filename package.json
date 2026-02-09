@@ -28,7 +28,7 @@
     "preview": "vite preview",
     "build:lib": "rimraf dist && tsup && yarn build:styles",
     "publish:minor": "npm run build:lib && npm version minor && npm publish --registry=https://npm.pkg.github.com/",
-    "build:styles": "tailwindcss -i src/index.css -o dist/styles.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/copy-file.mjs src/host.css dist/host.css",
+    "build:styles": "tailwindcss -i src/index.css -o dist/styles.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/normalize-dist-css.mjs dist/styles.css && node scripts/copy-file.mjs src/host.css dist/host.css",
     "download-swagger-file": "node scripts/download-swagger-file.mjs",
     "orval": "yarn download-swagger-file && orval --config src/data-provider/orval.config.ts"
   },
