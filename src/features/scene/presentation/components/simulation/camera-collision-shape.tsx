@@ -62,19 +62,6 @@ export const ShapeCollisionSurface: React.FC<ShapeCollisionSurfaceProps> = ({
       }
     }
 
-    if (entity.shapeType === 'circle') {
-      const bounds = new THREE.Box3().setFromPoints(points)
-      const size = bounds.getSize(new THREE.Vector3())
-      const center = bounds.getCenter(new THREE.Vector3())
-      const radius = Math.max(size.x, size.z) / 2 || 0.1
-      return {
-        kind: 'cylinder' as const,
-        geometry: new THREE.CylinderGeometry(radius, radius, shapeHeight, 48),
-        position: new THREE.Vector3(center.x, shapeHeight / 2, center.z),
-        rotation: 0,
-      }
-    }
-
     if (points.length < 3) {
       return null
     }

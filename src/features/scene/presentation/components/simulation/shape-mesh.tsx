@@ -20,14 +20,6 @@ interface LineShapeData {
   focusDistance: number
 }
 
-interface CylinderShapeData {
-  kind: 'cylinder'
-  position: THREE.Vector3
-  radius: number
-  focusPoint: THREE.Vector3
-  focusDistance: number
-}
-
 interface ExtrudeShapeData {
   kind: 'extrude'
   position: THREE.Vector3
@@ -36,7 +28,7 @@ interface ExtrudeShapeData {
   focusDistance: number
 }
 
-type ShapeData = CylinderShapeData | ExtrudeShapeData | LineShapeData
+type ShapeData = ExtrudeShapeData | LineShapeData
 
 const stripClosingPoint = (points: THREE.Vector3[]) => {
   if (points.length < 2) {
@@ -93,31 +85,6 @@ const buildLineShapeData = (
   }
 }
 
-const buildCircleShapeData = (
-  points: THREE.Vector3[],
-  shapeHeight: number,
-): ShapeData | null => {
-  if (points.length < 2) {
-    return null
-  }
-  const bounds = new THREE.Box3().setFromPoints(points)
-  const size = bounds.getSize(new THREE.Vector3())
-  const center = bounds.getCenter(new THREE.Vector3())
-  const radius = Math.max(size.x, size.z) / 2 || 0.1
-  const focusPoint = new THREE.Vector3(
-    center.x,
-    shapeHeight / 2 + SHAPE_SURFACE_OFFSET,
-    center.z,
-  )
-  return {
-    kind: 'cylinder',
-    position: focusPoint.clone(),
-    radius,
-    focusPoint,
-    focusDistance: Math.max(radius * 2, shapeHeight) * 2,
-  }
-}
-
 const buildExtrudeShapeData = (
   points: THREE.Vector3[],
   shapeHeight: number,
@@ -171,9 +138,6 @@ const useShapeData = (
       return buildLineShapeData(points, shapeHeight, lineThickness)
     }
     const sanitized = stripClosingPoint(points)
-    if (entity.shapeType === 'circle') {
-      return buildCircleShapeData(sanitized, shapeHeight)
-    }
     return buildExtrudeShapeData(sanitized, shapeHeight)
   }, [entity.shapeType, lineThickness, points, shapeHeight])
 
@@ -206,43 +170,6 @@ const renderLineShape = (
           context.shapeData.length,
           context.shapeHeight,
           context.shapeData.thickness,
-        ]}
-      />
-      <meshStandardMaterial
-        transparent
-        emissive={context.selected ? context.color : '#000000'}
-        emissiveIntensity={context.selected ? 0.3 : 0}
-        metalness={0.1}
-        color={context.color}
-        opacity={context.baseOpacity}
-        polygonOffset
-        polygonOffsetFactor={1}
-        polygonOffsetUnits={1}
-        roughness={0.8}
-      />
-    </mesh>
-  </group>
-)
-
-const renderCylinderShape = (
-  context: ShapeRenderContext & {shapeData: CylinderShapeData},
-) => (
-  <group
-    renderOrder={context.renderOrder}
-    position={context.shapeData.position}
-  >
-    <mesh
-      renderOrder={context.renderOrder}
-      castShadow
-      onClick={context.onSelect}
-      receiveShadow
-    >
-      <cylinderGeometry
-        args={[
-          context.shapeData.radius,
-          context.shapeData.radius,
-          context.shapeHeight,
-          48,
         ]}
       />
       <meshStandardMaterial
@@ -295,8 +222,6 @@ const renderShapeMesh = (context: ShapeRenderContext) => {
   switch (context.shapeData.kind) {
     case 'line':
       return renderLineShape({...context, shapeData: context.shapeData})
-    case 'cylinder':
-      return renderCylinderShape({...context, shapeData: context.shapeData})
     case 'extrude':
       return renderExtrudeShape({...context, shapeData: context.shapeData})
     default:
