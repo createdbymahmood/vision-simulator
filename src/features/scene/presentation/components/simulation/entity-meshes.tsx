@@ -14,8 +14,148 @@ import {DEBUG_LAYER} from './simulation-layers'
 const WALL_BASE_OPACITY = 0.8
 const MAX_RENDER_FOV_DEG = 150
 const MAX_RENDER_VERTICAL_FOV_DEG = 70
+const WALL_CORNER_KEY_PRECISION = 1000
+const WALL_COLLINEAR_DOT_THRESHOLD = 0.995
+const MIN_WALL_CAP_RADIUS = 0.01
 
 const degToRad = (deg: number) => (deg * Math.PI) / 180
+type WallWorldEntity = Extract<WorldEntity, {type: 'wall'}>
+
+interface WallCornerCapData {
+  key: string
+  position: THREE.Vector3
+  radius: number
+  height: number
+  color: string
+  opacity: number
+  entityId: string
+  focusDistance: number
+}
+
+interface WallCornerEntry {
+  segment: WallWorldEntity
+  point: THREE.Vector3
+  otherPoint: THREE.Vector3
+}
+
+const getWallCornerKey = (point: THREE.Vector3) => {
+  const x = Math.round(point.x * WALL_CORNER_KEY_PRECISION)
+  const z = Math.round(point.z * WALL_CORNER_KEY_PRECISION)
+  return `${x}:${z}`
+}
+
+const hasCornerAngle = (entries: WallCornerEntry[]) => {
+  if (entries.length < 2) {
+    return false
+  }
+  const directions = entries
+    .map((entry) => {
+      const vector = new THREE.Vector2(
+        entry.otherPoint.x - entry.point.x,
+        entry.otherPoint.z - entry.point.z,
+      )
+      const length = vector.length()
+      if (length <= 1e-6) {
+        return null
+      }
+      return vector.multiplyScalar(1 / length)
+    })
+    .filter((direction): direction is THREE.Vector2 => Boolean(direction))
+  if (directions.length < 2) {
+    return false
+  }
+  for (let index = 0; index < directions.length; index += 1) {
+    for (
+      let nextIndex = index + 1;
+      nextIndex < directions.length;
+      nextIndex += 1
+    ) {
+      const dot = Math.abs(directions[index].dot(directions[nextIndex]))
+      if (dot < WALL_COLLINEAR_DOT_THRESHOLD) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+const buildWallCornerCaps = (walls: WallWorldEntity[]): WallCornerCapData[] => {
+  const groups = new Map<string, WallCornerEntry[]>()
+
+  walls.forEach((segment) => {
+    const startKey = getWallCornerKey(segment.start)
+    const endKey = getWallCornerKey(segment.end)
+
+    const startEntries = groups.get(startKey)
+    if (startEntries) {
+      startEntries.push({
+        segment,
+        point: segment.start,
+        otherPoint: segment.end,
+      })
+    } else {
+      groups.set(startKey, [
+        {
+          segment,
+          point: segment.start,
+          otherPoint: segment.end,
+        },
+      ])
+    }
+
+    const endEntries = groups.get(endKey)
+    if (endEntries) {
+      endEntries.push({
+        segment,
+        point: segment.end,
+        otherPoint: segment.start,
+      })
+    } else {
+      groups.set(endKey, [
+        {
+          segment,
+          point: segment.end,
+          otherPoint: segment.start,
+        },
+      ])
+    }
+  })
+
+  const caps: WallCornerCapData[] = []
+  groups.forEach((entries, key) => {
+    if (!hasCornerAngle(entries)) {
+      return
+    }
+    const point = entries[0]?.point
+    if (!point) {
+      return
+    }
+    const thickness = Math.max(
+      ...entries.map((entry) => entry.segment.entity.thickness),
+    )
+    const height = Math.max(
+      ...entries.map((entry) => entry.segment.entity.height),
+    )
+    const primarySegment = entries[0].segment
+    caps.push({
+      key,
+      position: new THREE.Vector3(point.x, height / 2, point.z),
+      radius: Math.max(thickness / 2, MIN_WALL_CAP_RADIUS),
+      height,
+      color: primarySegment.entity.color,
+      opacity: primarySegment.dimmed
+        ? WALL_BASE_OPACITY * 0.5
+        : WALL_BASE_OPACITY,
+      entityId: primarySegment.entity.id,
+      focusDistance: Math.max(thickness * 4, 8),
+    })
+  })
+
+  return caps
+}
+
+const isWallEntity = (entity: WorldEntity): entity is WallWorldEntity =>
+  entity.type === 'wall'
 
 const getCameraAspect = (camera: CameraEntity) => {
   const width = Math.max(camera.resolution?.width ?? 16, 1)
@@ -37,7 +177,7 @@ const getCameraFovAngles = (camera: CameraEntity) => {
 }
 
 export const WallMesh: React.FC<{
-  data: Extract<WorldEntity, {type: 'wall'}>
+  data: WallWorldEntity
   onSelect: (id?: string) => void
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selected: boolean
@@ -70,6 +210,49 @@ export const WallMesh: React.FC<{
         />
       </mesh>
     </group>
+  )
+}
+
+interface WallCornerCapsProps {
+  walls: WallWorldEntity[]
+  onSelect: (id?: string) => void
+  onFocus: (point: THREE.Vector3, distance?: number) => void
+}
+
+const WallCornerCaps: React.FC<WallCornerCapsProps> = ({
+  walls,
+  onSelect,
+  onFocus,
+}) => {
+  const caps = React.useMemo(() => buildWallCornerCaps(walls), [walls])
+
+  return (
+    <>
+      {caps.map((cap) => (
+        <mesh
+          key={cap.key}
+          castShadow
+          onClick={(event) => {
+            event.stopPropagation()
+            onSelect(cap.entityId)
+            if (event.detail === 2) {
+              onFocus(cap.position.clone(), cap.focusDistance)
+            }
+          }}
+          position={cap.position}
+          receiveShadow
+        >
+          <cylinderGeometry args={[cap.radius, cap.radius, cap.height, 28]} />
+          <meshStandardMaterial
+            transparent
+            metalness={0}
+            color={cap.color}
+            opacity={cap.opacity}
+            roughness={0.9}
+          />
+        </mesh>
+      ))}
+    </>
   )
 }
 
@@ -427,67 +610,79 @@ export const EntitiesMesh: React.FC<{
   selectedEntityIds,
   maxFrustumDepth,
   showCameraFrustums = true,
-}) => (
-  <>
-    {entities.map((entity) => {
-      if (entity.type === 'area') {
-        return (
-          <AreaMesh
-            data={entity}
-            key={entity.entity.id}
-            selected={selectedEntityIds.includes(entity.entity.id)}
-            onFocus={onFocus}
-            onSelect={onSelectEntity}
-          />
-        )
-      }
-      if (entity.type === 'wall') {
-        return (
-          <WallMesh
-            data={entity}
-            key={`${entity.entity.id}-${entity.segmentIndex}`}
-            selected={selectedEntityIds.includes(entity.entity.id)}
-            onFocus={onFocus}
-            onSelect={onSelectEntity}
-          />
-        )
-      }
-      if (entity.type === 'person') {
-        return (
-          <PersonMesh
-            data={entity}
-            key={entity.entity.id}
-            selected={selectedEntityIds.includes(entity.entity.id)}
-            onFocus={onFocus}
-            onSelect={onSelectEntity}
-          />
-        )
-      }
-      if (entity.type === 'shape') {
-        return (
-          <ShapeMesh
-            data={entity}
-            key={entity.entity.id}
-            selected={selectedEntityIds.includes(entity.entity.id)}
-            onFocus={onFocus}
-            onSelect={onSelectEntity}
-          />
-        )
-      }
-      if (entity.type === 'camera') {
-        return (
-          <CameraMesh
-            data={entity}
-            key={entity.entity.id}
-            maxFrustumDepth={maxFrustumDepth}
-            selected={selectedEntityIds.includes(entity.entity.id)}
-            onFocus={onFocus}
-            onSelect={onSelectEntity}
-            showFrustum={showCameraFrustums}
-          />
-        )
-      }
-      return null
-    })}
-  </>
-)
+}) => {
+  const wallEntities = React.useMemo(
+    () => entities.filter(isWallEntity),
+    [entities],
+  )
+
+  return (
+    <>
+      {entities.map((entity) => {
+        if (entity.type === 'area') {
+          return (
+            <AreaMesh
+              data={entity}
+              key={entity.entity.id}
+              selected={selectedEntityIds.includes(entity.entity.id)}
+              onFocus={onFocus}
+              onSelect={onSelectEntity}
+            />
+          )
+        }
+        if (entity.type === 'wall') {
+          return (
+            <WallMesh
+              data={entity}
+              key={`${entity.entity.id}-${entity.segmentIndex}`}
+              selected={selectedEntityIds.includes(entity.entity.id)}
+              onFocus={onFocus}
+              onSelect={onSelectEntity}
+            />
+          )
+        }
+        if (entity.type === 'person') {
+          return (
+            <PersonMesh
+              data={entity}
+              key={entity.entity.id}
+              selected={selectedEntityIds.includes(entity.entity.id)}
+              onFocus={onFocus}
+              onSelect={onSelectEntity}
+            />
+          )
+        }
+        if (entity.type === 'shape') {
+          return (
+            <ShapeMesh
+              data={entity}
+              key={entity.entity.id}
+              selected={selectedEntityIds.includes(entity.entity.id)}
+              onFocus={onFocus}
+              onSelect={onSelectEntity}
+            />
+          )
+        }
+        if (entity.type === 'camera') {
+          return (
+            <CameraMesh
+              data={entity}
+              key={entity.entity.id}
+              maxFrustumDepth={maxFrustumDepth}
+              selected={selectedEntityIds.includes(entity.entity.id)}
+              onFocus={onFocus}
+              onSelect={onSelectEntity}
+              showFrustum={showCameraFrustums}
+            />
+          )
+        }
+        return null
+      })}
+      <WallCornerCaps
+        walls={wallEntities}
+        onFocus={onFocus}
+        onSelect={onSelectEntity}
+      />
+    </>
+  )
+}
