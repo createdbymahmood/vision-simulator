@@ -87,7 +87,7 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   const handleCameraHover = useCallbackRef((cameraId?: string) => {
     setHoveredCameraId(cameraId ?? null)
   })
-  const {handlePanStart, handleWheel} = useRadarInteractions({
+  const {interactionRef, handlePanStart} = useRadarInteractions({
     radarSettings,
     setRadarSettings,
   })
@@ -110,9 +110,9 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
           <SimulationRadarHeader />
           <CardContent className='p-0 overflow-hidden'>
             <div
-              className='relative overflow-hidden'
+              className='relative overflow-hidden overscroll-contain'
+              ref={interactionRef}
               onPointerDown={handlePanStart}
-              onWheel={handleWheel}
             >
               <SimulationRadarSvg
                 size={size}

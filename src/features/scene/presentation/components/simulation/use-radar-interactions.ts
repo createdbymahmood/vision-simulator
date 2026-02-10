@@ -16,6 +16,7 @@ export const useRadarInteractions = ({
 }: UseRadarInteractionsInput) => {
   const zoomMin = 0.5
   const zoomMax = 10
+  const interactionRef = React.useRef<HTMLDivElement | null>(null)
   const panRef = React.useRef<{
     startX: number
     startY: number
@@ -23,13 +24,28 @@ export const useRadarInteractions = ({
     panY: number
   } | null>(null)
 
-  const handleWheel = useCallbackRef((event: React.WheelEvent) => {
-    event.preventDefault()
-    const delta = event.deltaY > 0 ? -0.1 : 0.1
+  const handleWheelDelta = useCallbackRef((deltaY: number) => {
+    const delta = deltaY > 0 ? -0.1 : 0.1
     setRadarSettings({
       zoom: clamp(radarSettings.zoom + delta, zoomMin, zoomMax),
     })
   })
+
+  React.useEffect(() => {
+    const element = interactionRef.current
+    if (!element) {
+      return
+    }
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      handleWheelDelta(event.deltaY)
+    }
+    element.addEventListener('wheel', handleWheel, {passive: false})
+    return () => {
+      element.removeEventListener('wheel', handleWheel)
+    }
+  }, [handleWheelDelta])
 
   const handlePanStart = useCallbackRef((event: React.PointerEvent) => {
     panRef.current = {
@@ -59,7 +75,7 @@ export const useRadarInteractions = ({
   })
 
   return {
+    interactionRef,
     handlePanStart,
-    handleWheel,
   }
 }
