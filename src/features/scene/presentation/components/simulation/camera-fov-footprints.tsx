@@ -28,10 +28,11 @@ const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({points, color}) => {
     }
     const shape = new THREE.Shape()
     points.forEach((point, index) => {
+      const projectedY = -point.z
       if (index === 0) {
-        shape.moveTo(point.x, point.z)
+        shape.moveTo(point.x, projectedY)
       } else {
-        shape.lineTo(point.x, point.z)
+        shape.lineTo(point.x, projectedY)
       }
     })
     const surface = new THREE.ShapeGeometry(shape)

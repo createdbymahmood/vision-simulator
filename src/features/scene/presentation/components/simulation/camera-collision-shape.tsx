@@ -8,6 +8,23 @@ import {DEBUG_LAYER} from './simulation-layers'
 
 const MIN_SHAPE_HEIGHT = 0.05
 const DEFAULT_LINE_THICKNESS = 0.1
+const LINE_ENDPOINT_EPSILON = 1e-12
+
+const getLineEndpoints = (points: THREE.Vector3[]) => {
+  if (points.length < 2) {
+    return null
+  }
+  const start = points[0]
+  const end =
+    points.find(
+      (point, index) =>
+        index > 0 && point.distanceToSquared(start) > LINE_ENDPOINT_EPSILON,
+    ) ?? points[points.length - 1]
+  if (!end) {
+    return null
+  }
+  return {start, end}
+}
 
 interface ShapeCollisionSurfaceProps {
   data: Extract<WorldEntity, {type: 'shape'}>
@@ -31,17 +48,17 @@ export const ShapeCollisionSurface: React.FC<ShapeCollisionSurfaceProps> = ({
 
   const geometry = React.useMemo(() => {
     if (entity.shapeType === 'line') {
-      if (points.length < 2) {
+      const endpoints = getLineEndpoints(points)
+      if (!endpoints) {
         return null
       }
-      const start = points[0]
-      const end = points[points.length - 1]
+      const {start, end} = endpoints
       const length = start.distanceTo(end)
       return {
         kind: 'line' as const,
         geometry: new THREE.BoxGeometry(length, shapeHeight, lineThickness),
         position: start.clone().add(end).multiplyScalar(0.5),
-        rotation: Math.atan2(end.z - start.z, end.x - start.x),
+        rotation: Math.atan2(start.z - end.z, end.x - start.x),
       }
     }
 

@@ -44,7 +44,7 @@ export const WallMesh: React.FC<{
 }> = ({data, onSelect, onFocus}) => {
   const midpoint = data.start.clone().add(data.end).multiplyScalar(0.5)
   midpoint.y = data.entity.height / 2
-  const angle = Math.atan2(data.end.z - data.start.z, data.end.x - data.start.x)
+  const angle = Math.atan2(data.start.z - data.end.z, data.end.x - data.start.x)
   return (
     <group position={midpoint} rotation={[0, angle, 0]}>
       <mesh
@@ -84,10 +84,11 @@ export const AreaMesh: React.FC<{
   }
   const shape = new THREE.Shape()
   data.points.forEach((point, index) => {
+    const projectedY = -point.z
     if (index === 0) {
-      shape.moveTo(point.x, point.z)
+      shape.moveTo(point.x, projectedY)
     } else {
-      shape.lineTo(point.x, point.z)
+      shape.lineTo(point.x, projectedY)
     }
   })
   const extrude = new THREE.ExtrudeGeometry(shape, {

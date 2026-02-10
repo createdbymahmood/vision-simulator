@@ -50,16 +50,31 @@ const stripClosingPoint = (points: THREE.Vector3[]) => {
   return points
 }
 
+const getLineEndpoints = (points: THREE.Vector3[]) => {
+  if (points.length < 2) {
+    return null
+  }
+  const start = points[0]
+  const end =
+    points.find(
+      (point, index) => index > 0 && point.distanceToSquared(start) > 1e-12,
+    ) ?? points[points.length - 1]
+  if (!end) {
+    return null
+  }
+  return {start, end}
+}
+
 const buildLineShapeData = (
   points: THREE.Vector3[],
   shapeHeight: number,
   lineThickness: number,
 ): ShapeData | null => {
-  if (points.length < 2) {
+  const endpoints = getLineEndpoints(points)
+  if (!endpoints) {
     return null
   }
-  const start = points[0]
-  const end = points[points.length - 1]
+  const {start, end} = endpoints
   const center = start.clone().add(end).multiplyScalar(0.5)
   const length = start.distanceTo(end)
   const focusPoint = new THREE.Vector3(
@@ -70,7 +85,7 @@ const buildLineShapeData = (
   return {
     kind: 'line',
     position: focusPoint.clone(),
-    rotationY: Math.atan2(end.z - start.z, end.x - start.x),
+    rotationY: Math.atan2(start.z - end.z, end.x - start.x),
     length,
     thickness: lineThickness,
     focusPoint,

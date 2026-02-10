@@ -705,6 +705,17 @@ export const MapView: React.FC<MapViewProps> = ({
         return
       }
 
+      const clickDetail =
+        (event.originalEvent as MouseEvent | undefined)?.detail ?? 1
+      if (
+        clickDetail > 1 &&
+        (activeTool === 'draw-area' ||
+          activeTool === 'draw-wall' ||
+          activeTool === 'draw-shape')
+      ) {
+        return
+      }
+
       const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
       handleDrawingToolClick(point)
     },

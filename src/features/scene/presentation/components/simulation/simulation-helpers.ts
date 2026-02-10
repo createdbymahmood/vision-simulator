@@ -14,6 +14,7 @@ import {closeRing} from '../map-view/map-view-helpers'
 import {computeBounds} from '../map-view/selection-geometry'
 
 const EARTH_RADIUS = 6378137
+const GEO_POINT_EPSILON = 1e-10
 
 export interface CoordinateTransformer {
   toVector3: (point: GeoPoint, y?: number) => THREE.Vector3
@@ -62,6 +63,25 @@ export const closeRingVectors = (points: THREE.Vector3[]) => {
     return points
   }
   return [...points, first.clone()]
+}
+
+const areGeoPointsEqual = (a: GeoPoint, b: GeoPoint) =>
+  Math.abs(a[0] - b[0]) <= GEO_POINT_EPSILON &&
+  Math.abs(a[1] - b[1]) <= GEO_POINT_EPSILON
+
+export const getLineShapeGeometryEndpoints = (points: GeoPoint[]) => {
+  if (points.length < 2) {
+    return points
+  }
+  const start = points[0]
+  const end =
+    points.find(
+      (point, index) => index > 0 && !areGeoPointsEqual(point, start),
+    ) ?? points[points.length - 1]
+  if (!end) {
+    return [start]
+  }
+  return [start, end]
 }
 
 export const parseColorAndAlpha = (
@@ -202,7 +222,9 @@ export const transformShapeFeatureCollectionsToThreeJSShapes = (
       entity: shape,
       points:
         shape.shapeType === 'line'
-          ? shape.geometry.map((point) => transformer.toVector3(point))
+          ? getLineShapeGeometryEndpoints(shape.geometry).map((point) =>
+              transformer.toVector3(point),
+            )
           : closeRing(shape.geometry).map((point) =>
               transformer.toVector3(point),
             ),

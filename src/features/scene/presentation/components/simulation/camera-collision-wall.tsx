@@ -21,7 +21,7 @@ export const WallCollisionSurface: React.FC<WallCollisionSurfaceProps> = ({
 }) => {
   const midpoint = data.start.clone().add(data.end).multiplyScalar(0.5)
   midpoint.y = data.entity.height / 2
-  const angle = Math.atan2(data.end.z - data.start.z, data.end.x - data.start.x)
+  const angle = Math.atan2(data.start.z - data.end.z, data.end.x - data.start.x)
   const materialRef = React.useRef<THREE.MeshBasicMaterial | null>(null)
 
   useFrame(({clock}) => {

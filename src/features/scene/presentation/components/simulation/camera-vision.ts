@@ -11,6 +11,7 @@ import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-de
 import type {CoordinateTransformer} from './simulation-helpers'
 
 import {getCameraOpticHeight} from './camera-collision-utils'
+import {getLineShapeGeometryEndpoints} from './simulation-helpers'
 
 const DEFAULT_LINE_THICKNESS = 0.1
 const EPSILON = 1e-5
@@ -172,7 +173,11 @@ export const buildObstacleSegmentsByArea = (
 
   scene.shapes.forEach((shape) => {
     const segments = segmentsByArea.get(shape.areaId) ?? []
-    const points = shape.geometry.map((coord) => transformer.toVector3(coord))
+    const sourcePoints =
+      shape.shapeType === 'line'
+        ? getLineShapeGeometryEndpoints(shape.geometry)
+        : shape.geometry
+    const points = sourcePoints.map((coord) => transformer.toVector3(coord))
     segments.push(...buildShapeSegments(shape, points))
     segmentsByArea.set(shape.areaId, segments)
   })
