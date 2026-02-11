@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24.5.0'
           cache: yarn
           registry-url: https://npm.pkg.github.com
           scope: '@vega-tek-hub'
