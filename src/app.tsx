@@ -71,6 +71,8 @@ interface ResolveShadowStyleUrlsParams {
   documentStyleLinks: string[]
 }
 
+const APP_SURFACE_CLASSNAME = 'block size-full min-h-0 min-w-0 overflow-hidden'
+
 const isVisionSimulatorStyleSource = (value: string | null | undefined) => {
   if (!value) {
     return false
@@ -259,8 +261,8 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
         >
           <TooltipProvider delayDuration={0}>
             <EditorLayout
-              mode={mode}
               unsavedChanges={unsavedChanges}
+              mode={mode}
               visionSimulatorId={visionSimulatorId}
             />
             <Toaster />
@@ -280,22 +282,25 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
 
   useMirrorDarkModeClass(hostRef)
 
-  const explicitStyleUrls = shadowStyleUrls ?? []
-  const hasExplicitStyleUrls = explicitStyleUrls.length > 0
+  const hasExplicitStyleUrls = (shadowStyleUrls?.length ?? 0) > 0
   const documentStyles = usePackageDocumentStyles(!hasExplicitStyleUrls)
 
   const styleUrls = React.useMemo(
     () =>
       resolveShadowStyleUrls({
         hasExplicitStyleUrls,
-        explicitStyleUrls,
+        explicitStyleUrls: shadowStyleUrls ?? [],
         documentStyleLinks: documentStyles.links,
       }),
-    [documentStyles.links, explicitStyleUrls, hasExplicitStyleUrls],
+    [documentStyles.links, hasExplicitStyleUrls, shadowStyleUrls],
   )
 
   return (
-    <div className='size-full' ref={hostRef} data-slot={SHADOW_HOST_SLOT}>
+    <div
+      className={APP_SURFACE_CLASSNAME}
+      ref={hostRef}
+      data-slot={SHADOW_HOST_SLOT}
+    >
       {shadowRoot
         ? createPortal(
             <>
@@ -310,7 +315,7 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
                 <link href={href} key={href} rel='stylesheet' />
               ))}
               <PortalContainerProvider container={shadowRoot}>
-                {children}
+                <div className={APP_SURFACE_CLASSNAME}>{children}</div>
               </PortalContainerProvider>
             </>,
             shadowRoot,
@@ -363,7 +368,7 @@ export const App: React.FC<AppProps> = ({
   if (isolationMode !== 'shadow') {
     return (
       <PortalContainerProvider container={null}>
-        {appShell}
+        <div className={APP_SURFACE_CLASSNAME}>{appShell}</div>
       </PortalContainerProvider>
     )
   }

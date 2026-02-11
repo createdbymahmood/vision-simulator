@@ -22,7 +22,12 @@ import {
 } from '@/features/scene/presentation/utils/scene-export'
 import {cn} from '@/lib/utils'
 
-import type {EditorMode, SceneMapStyle, SceneRoot, ViewMode} from '../../domain/types'
+import type {
+  EditorMode,
+  SceneMapStyle,
+  SceneRoot,
+  ViewMode,
+} from '../../domain/types'
 import type {ShapeDrawMode} from '../types'
 
 import {assignCameraColor} from '../../domain/services/color-assignment'
@@ -177,10 +182,13 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     setMapRef(nextMap)
   })
 
-  const handleEditorModeChange = (mode: EditorMode) => {
-    setEditorMode(mode)
-    const nextScene = setMapVisibility(mode === 'map')
-    recordAction({type: 'map-visibility', visible: mode === 'map'}, nextScene)
+  const handleEditorModeChange = (nextMode: EditorMode) => {
+    setEditorMode(nextMode)
+    const nextScene = setMapVisibility(nextMode === 'map')
+    recordAction(
+      {type: 'map-visibility', visible: nextMode === 'map'},
+      nextScene,
+    )
   }
 
   const handleSave = useCallbackRef(async () => {
@@ -306,7 +314,12 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     }
 
     setViewMode(modePolicy.initialViewMode)
-  }, [modePolicy.initialViewMode, modePolicy.lockViewMode, setViewMode, viewMode])
+  }, [
+    modePolicy.initialViewMode,
+    modePolicy.lockViewMode,
+    setViewMode,
+    viewMode,
+  ])
 
   React.useEffect(() => {
     if (viewMode === 'preview') {
@@ -338,7 +351,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   return (
     <div
       className={cn(
-        'flex w-full flex-col',
+        'flex w-full min-h-0 min-w-0 flex-col',
         // DON't REMOVE THESE COMMENTS
         // viewMode === 'preview'
         //   ? 'h-svh min-h-0 overflow-hidden'
@@ -370,7 +383,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       ) : null}
 
       <main
-        className={`mx-auto flex min-h-0 flex-1 flex-col gap-4 size-full ${viewMode === 'editor' ? 'pt-14' : ''} ${viewMode === 'preview' ? 'overflow-hidden' : ''}`}
+        className={`flex min-h-0 min-w-0 flex-1 flex-col gap-4 size-full ${viewMode === 'editor' ? 'pt-14' : ''} ${viewMode === 'preview' ? 'overflow-hidden' : ''}`}
       >
         {viewMode === 'editor' ? (
           <ViewportShell

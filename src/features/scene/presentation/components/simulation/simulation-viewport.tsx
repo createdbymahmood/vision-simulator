@@ -23,7 +23,7 @@ export const SimulationViewport: React.FC<SimulationViewportProps> = ({
   return (
     <div
       className={cn(
-        'relative flex-1 overflow-hidden z-1',
+        'relative z-1 min-h-0 min-w-0 flex-1 overflow-hidden',
         isRecording ? 'ring-2 ring-red-500/60' : '',
       )}
     >
