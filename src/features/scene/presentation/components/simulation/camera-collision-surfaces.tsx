@@ -13,10 +13,27 @@ import {
 } from './camera-collision-utils'
 import {WallCollisionSurface} from './camera-collision-wall'
 
+const WALL_FULL_OCCLUSION_OPACITY = 0.35
+const SHAPE_FULL_OCCLUSION_OPACITY = 0.4
+const PARTIAL_OCCLUSION_OPACITY = 0.2
+
 interface CameraCollisionSurfacesProps {
   cameras: CameraEntity[]
   entities: WorldEntity[]
 }
+
+const getCollisionOpacity = ({
+  cameraHeight,
+  obstacleHeight,
+  fullOcclusionOpacity,
+}: {
+  cameraHeight: number
+  obstacleHeight: number
+  fullOcclusionOpacity: number
+}) =>
+  obstacleHeight >= cameraHeight
+    ? fullOcclusionOpacity
+    : PARTIAL_OCCLUSION_OPACITY
 
 export const CameraCollisionSurfaces: React.FC<
   CameraCollisionSurfacesProps
@@ -90,7 +107,11 @@ export const CameraCollisionSurfaces: React.FC<
                 key={`${camera.id}-${wall.entity.id}-${wall.segmentIndex}`}
                 planes={planes}
                 color={camera.color}
-                opacity={wall.entity.height >= camera.height ? 0.35 : 0.2}
+                opacity={getCollisionOpacity({
+                  cameraHeight: camera.height,
+                  obstacleHeight: wall.entity.height,
+                  fullOcclusionOpacity: WALL_FULL_OCCLUSION_OPACITY,
+                })}
               />
             ))}
             {shapes.map((shape) => (
@@ -99,9 +120,11 @@ export const CameraCollisionSurfaces: React.FC<
                 key={`${camera.id}-${shape.entity.id}`}
                 planes={planes}
                 color={camera.color}
-                opacity={
-                  (shape.entity.height ?? 0) >= camera.height ? 0.4 : 0.2
-                }
+                opacity={getCollisionOpacity({
+                  cameraHeight: camera.height,
+                  obstacleHeight: shape.entity.height ?? 0,
+                  fullOcclusionOpacity: SHAPE_FULL_OCCLUSION_OPACITY,
+                })}
               />
             ))}
           </group>

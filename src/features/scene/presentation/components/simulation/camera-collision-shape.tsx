@@ -1,4 +1,3 @@
-import {useFrame} from '@react-three/fiber'
 import React from 'react'
 import * as THREE from 'three'
 
@@ -100,15 +99,6 @@ export const ShapeCollisionSurface: React.FC<ShapeCollisionSurfaceProps> = ({
     }
   }, [geometry])
 
-  const materialRef = React.useRef<THREE.MeshBasicMaterial | null>(null)
-  useFrame(({clock}) => {
-    if (!materialRef.current) {
-      return
-    }
-    const pulse = 0.85 + 0.15 * Math.sin(clock.elapsedTime * Math.PI)
-    materialRef.current.opacity = opacity * pulse
-  })
-
   if (!geometry) {
     return null
   }
@@ -122,17 +112,18 @@ export const ShapeCollisionSurface: React.FC<ShapeCollisionSurfaceProps> = ({
       >
         <meshBasicMaterial
           transparent
-          blending={THREE.AdditiveBlending}
+          blending={THREE.NormalBlending}
           clippingPlanes={planes}
           depthWrite={false}
-          ref={materialRef}
           side={THREE.DoubleSide}
           clipIntersection
           color={color}
+          fog={false}
           opacity={opacity}
           polygonOffset
           polygonOffsetFactor={2}
           polygonOffsetUnits={2}
+          toneMapped={false}
         />
       </mesh>
     </group>

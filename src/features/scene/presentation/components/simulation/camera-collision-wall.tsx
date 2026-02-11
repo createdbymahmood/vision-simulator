@@ -41,6 +41,7 @@ export const WallCollisionSurface: React.FC<WallCollisionSurfaceProps> = ({
           polygonOffset
           polygonOffsetFactor={2}
           polygonOffsetUnits={2}
+          toneMapped={false}
         />
       </mesh>
     </group>
