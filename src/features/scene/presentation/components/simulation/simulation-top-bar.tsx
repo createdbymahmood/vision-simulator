@@ -1,8 +1,9 @@
 import {VideoRecorder} from '@untitledui/icons'
-import {ArrowLeft, Camera} from 'lucide-react'
+import {ArrowLeft, Camera, Eye, EyeOff} from 'lucide-react'
 import React from 'react'
 
 import {Button} from '@/components/ui/button'
+import {Switch} from '@/components/ui/switch'
 import {cn} from '@/lib/utils'
 
 interface SimulationTopBarProps {
@@ -13,6 +14,8 @@ interface SimulationTopBarProps {
   onStopRecording: () => void
   onSnapshot: () => void
   onBackToEditor: () => void
+  showFovCollisions: boolean
+  onShowFovCollisionsChange: (enabled: boolean) => void
 }
 
 export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
@@ -23,6 +26,8 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
   onStopRecording,
   onSnapshot,
   onBackToEditor,
+  showFovCollisions,
+  onShowFovCollisionsChange,
 }) => {
   return (
     <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
@@ -60,6 +65,25 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
       </div>
 
       <div className='flex items-center gap-2 ml-auto'>
+        <div className='flex items-center gap-2 rounded-full border px-3 py-1'>
+          {showFovCollisions ? (
+            <Eye className='size-4 text-muted-foreground' />
+          ) : (
+            <EyeOff className='size-4 text-muted-foreground' />
+          )}
+          <Switch
+            checked={showFovCollisions}
+            id='show-fov-collisions'
+            onCheckedChange={onShowFovCollisionsChange}
+          />
+          <label
+            className='text-xs font-medium text-muted-foreground'
+            htmlFor='show-fov-collisions'
+          >
+            FOV Collisions
+          </label>
+        </div>
+
         {isRecording ? (
           <div className='flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600 tabular-nums'>
             <span className='recording-dot size-2 rounded-full bg-red-500' />

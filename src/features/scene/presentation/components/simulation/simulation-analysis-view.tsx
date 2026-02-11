@@ -3,6 +3,7 @@ import React from 'react'
 import {toast} from 'sonner'
 
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
+import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {
   createSnapshotFilename,
   downloadDataUrl,
@@ -25,7 +26,6 @@ interface SimulationAnalysisViewProps {
   onBackToEditor: () => void
 }
 
-// eslint-disable-next-line max-lines-per-function
 export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   showTopBar = true,
   showAuxiliaryPanels = true,
@@ -35,6 +35,8 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   const scene = useSceneStore((state) => state.scene)
   const setSelection = useSceneStore((state) => state.setSelection)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
+  const showFovCollisions = useUiStore((state) => state.showFovCollisions)
+  const setShowFovCollisions = useUiStore((state) => state.setShowFovCollisions)
 
   const captureRef = React.useRef<SimulationCaptureApi | null>(null)
   const handleCaptureReady = useCallbackRef((api: SimulationCaptureApi) => {
@@ -110,11 +112,13 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
         <SimulationTopBar
           isRecording={isRecording}
           onBackToEditor={handleBackAction}
+          onShowFovCollisionsChange={setShowFovCollisions}
           onSnapshot={handleSnapshot}
           onStartRecording={startRecording}
           onStopRecording={stopRecording}
           recordingLabel={`REC ${formattedTime}`}
           showBackButton={allowBackToEditor}
+          showFovCollisions={showFovCollisions}
         />
       ) : null}
 
@@ -130,10 +134,10 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
             cameraFeedTargets={feedTargets}
             scene={scene}
             selectedEntityIds={selectedEntityIds}
+            editorMode={scene.editorMode}
             focusAreaId={scene.activeAreaId}
             onCaptureReady={handleCaptureReady}
             onSelectEntity={handleSelectEntity}
-            editorMode={scene.editorMode}
             showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
           />
         </SimulationViewport>
@@ -146,7 +150,10 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
               onSelectEntity={handleSelectEntity}
             />
             {scene.cameras.length > 0 ? (
-              <SimulationCameraSidebar feedTargets={feedTargets} scene={scene} />
+              <SimulationCameraSidebar
+                feedTargets={feedTargets}
+                scene={scene}
+              />
             ) : null}
           </div>
         ) : null}
