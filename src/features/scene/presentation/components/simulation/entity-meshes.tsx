@@ -11,7 +11,7 @@ import {ShapeMesh} from './shape-mesh'
 import {parseColorAndAlpha} from './simulation-helpers'
 import {DEBUG_LAYER} from './simulation-layers'
 
-const WALL_BASE_OPACITY = 0.8
+const WALL_BASE_OPACITY = 1
 const MAX_RENDER_FOV_DEG = 150
 const MAX_RENDER_VERTICAL_FOV_DEG = 70
 const WALL_CORNER_KEY_PRECISION = 1000
@@ -20,6 +20,15 @@ const MIN_WALL_CAP_RADIUS = 0.01
 
 const degToRad = (deg: number) => (deg * Math.PI) / 180
 type WallWorldEntity = Extract<WorldEntity, {type: 'wall'}>
+
+const getWallMaterialStyle = (color: string, dimmed: boolean) => {
+  const parsed = parseColorAndAlpha(color)
+  const baseOpacity = dimmed ? WALL_BASE_OPACITY * 0.5 : WALL_BASE_OPACITY
+  return {
+    color: parsed.color ?? color,
+    opacity: baseOpacity * parsed.alpha,
+  }
+}
 
 interface WallCornerCapData {
   key: string
@@ -137,15 +146,17 @@ const buildWallCornerCaps = (walls: WallWorldEntity[]): WallCornerCapData[] => {
       ...entries.map((entry) => entry.segment.entity.height),
     )
     const primarySegment = entries[0].segment
+    const materialStyle = getWallMaterialStyle(
+      primarySegment.entity.color,
+      primarySegment.dimmed,
+    )
     caps.push({
       key,
       position: new THREE.Vector3(point.x, height / 2, point.z),
       radius: Math.max(thickness / 2, MIN_WALL_CAP_RADIUS),
       height,
-      color: primarySegment.entity.color,
-      opacity: primarySegment.dimmed
-        ? WALL_BASE_OPACITY * 0.5
-        : WALL_BASE_OPACITY,
+      color: materialStyle.color,
+      opacity: materialStyle.opacity,
       entityId: primarySegment.entity.id,
       focusDistance: Math.max(thickness * 4, 8),
     })
@@ -185,6 +196,7 @@ export const WallMesh: React.FC<{
   const midpoint = data.start.clone().add(data.end).multiplyScalar(0.5)
   midpoint.y = data.entity.height / 2
   const angle = Math.atan2(data.start.z - data.end.z, data.end.x - data.start.x)
+  const materialStyle = getWallMaterialStyle(data.entity.color, data.dimmed)
   return (
     <group position={midpoint} rotation={[0, angle, 0]}>
       <mesh
@@ -201,12 +213,12 @@ export const WallMesh: React.FC<{
         <boxGeometry
           args={[data.length, data.entity.height, data.entity.thickness]}
         />
-        <meshStandardMaterial
+        <meshBasicMaterial
           transparent
-          metalness={0}
-          color={data.entity.color}
-          opacity={data.dimmed ? WALL_BASE_OPACITY * 0.5 : WALL_BASE_OPACITY}
-          roughness={0.9}
+          color={materialStyle.color}
+          fog={false}
+          opacity={materialStyle.opacity}
+          toneMapped={false}
         />
       </mesh>
     </group>
@@ -243,12 +255,12 @@ const WallCornerCaps: React.FC<WallCornerCapsProps> = ({
           receiveShadow
         >
           <cylinderGeometry args={[cap.radius, cap.radius, cap.height, 28]} />
-          <meshStandardMaterial
+          <meshBasicMaterial
             transparent
-            metalness={0}
             color={cap.color}
+            fog={false}
             opacity={cap.opacity}
-            roughness={0.9}
+            toneMapped={false}
           />
         </mesh>
       ))}

@@ -11,7 +11,6 @@ import {
   createCameraFrustumPlanes,
   getCameraOpticHeight,
 } from './camera-collision-utils'
-import {WallCollisionSurface} from './camera-collision-wall'
 
 interface CameraCollisionSurfacesProps {
   cameras: CameraEntity[]
@@ -31,15 +30,6 @@ export const CameraCollisionSurfaces: React.FC<
     })
     return map
   }, [entities])
-
-  const wallEntities = React.useMemo(
-    () =>
-      entities.filter(
-        (entity): entity is Extract<WorldEntity, {type: 'wall'}> =>
-          entity.type === 'wall',
-      ),
-    [entities],
-  )
 
   const shapeEntities = React.useMemo(
     () =>
@@ -62,17 +52,6 @@ export const CameraCollisionSurfaces: React.FC<
 
         return (
           <group key={camera.id}>
-            {wallEntities
-              .filter((wall) => wall.entity.areaId === camera.areaId)
-              .map((wall) => (
-                <WallCollisionSurface
-                  data={wall}
-                  key={`${camera.id}-${wall.entity.id}-${wall.segmentIndex}`}
-                  planes={planes}
-                  color={camera.color}
-                  opacity={wall.entity.height >= camera.height ? 0.35 : 0.2}
-                />
-              ))}
             {shapeEntities
               .filter((shape) => shape.entity.areaId === camera.areaId)
               .map((shape) => (
