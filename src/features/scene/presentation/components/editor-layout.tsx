@@ -383,7 +383,10 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       ) : null}
 
       <main
-        className={`flex min-h-0 min-w-0 flex-1 flex-col gap-4 size-full ${viewMode === 'editor' ? 'pt-14' : ''} ${viewMode === 'preview' ? 'overflow-hidden' : ''}`}
+        className={cn(
+          'flex min-h-0 min-w-0 flex-1 flex-col size-full',
+          viewMode === 'editor' ? 'gap-4 pt-14' : 'gap-0 overflow-hidden',
+        )}
       >
         {viewMode === 'editor' ? (
           <ViewportShell

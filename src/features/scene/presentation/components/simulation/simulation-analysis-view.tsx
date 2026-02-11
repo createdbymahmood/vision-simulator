@@ -51,6 +51,8 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   const radarPanelSize = {width: 360, height: 180}
 
   const feedTargets = useCameraFeedTargets({cameras: scene.cameras})
+  const hasCameraFeedTiles = feedTargets.length > 0
+  const showSimulationSidePanels = showAuxiliaryPanels && hasCameraFeedTiles
 
   const handleSelectEntity = useCallbackRef((id?: string) => {
     setSelection(id ? [id] : [])
@@ -136,7 +138,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
             showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
           />
         </SimulationViewport>
-        {showAuxiliaryPanels ? (
+        {showSimulationSidePanels ? (
           <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>
             <SimulationRadar
               size={radarPanelSize}
@@ -144,12 +146,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
               selectedEntityIds={selectedEntityIds}
               onSelectEntity={handleSelectEntity}
             />
-            {scene.cameras.length > 0 ? (
-              <SimulationCameraSidebar
-                feedTargets={feedTargets}
-                scene={scene}
-              />
-            ) : null}
+            <SimulationCameraSidebar feedTargets={feedTargets} scene={scene} />
           </div>
         ) : null}
       </div>
