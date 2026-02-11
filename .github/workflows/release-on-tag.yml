@@ -1,0 +1,60 @@
+name: Release Package On Tag
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: yarn
+          registry-url: https://npm.pkg.github.com
+          scope: '@vega-tek-hub'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Verify Publish Token
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "Missing required GITHUB_TOKEN."
+            exit 1
+          fi
+
+      - name: Verify Tag Matches Package Version
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          EXPECTED_TAG="v${PACKAGE_VERSION}"
+
+          if [ "$TAG_NAME" != "$EXPECTED_TAG" ]; then
+            echo "Tag '$TAG_NAME' does not match package.json version '$PACKAGE_VERSION'."
+            exit 1
+          fi
+
+      - name: Build Library
+        run: yarn build:lib
+
+      - name: Publish To GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish --registry=https://npm.pkg.github.com/
