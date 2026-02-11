@@ -10,47 +10,131 @@ import {
 
 import type {CoordinateTransformer} from './simulation-helpers'
 
-import {DEBUG_LAYER} from './simulation-layers'
+import {getCameraOpticHeight} from './camera-collision-utils'
 
 interface FovFootprintMeshProps {
   points: THREE.Vector3[]
+  apex: THREE.Vector3
   color: string
+  renderOrderBase: number
 }
 
-const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({points, color}) => {
-  const groundOffset = 0.02
+const POINT_MATCH_EPSILON = 1e-8
+
+const sanitizeGroundContour = (points: THREE.Vector3[]) => {
+  if (points.length === 0) {
+    return []
+  }
+  const contour: THREE.Vector3[] = []
+  points.forEach((point) => {
+    const last = contour[contour.length - 1]
+    if (!last || last.distanceToSquared(point) > POINT_MATCH_EPSILON) {
+      contour.push(point.clone())
+    }
+  })
+  if (
+    contour.length > 1 &&
+    contour[0].distanceToSquared(contour[contour.length - 1]) <=
+      POINT_MATCH_EPSILON
+  ) {
+    contour.pop()
+  }
+  return contour
+}
+
+// eslint-disable-next-line max-lines-per-function
+const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({
+  points,
+  apex,
+  color,
+  renderOrderBase,
+}) => {
+  const groundOffset = 0.03
 
   const lineRef = React.useRef<THREE.LineSegments | null>(null)
 
-  const {surfaceGeometry, lineGeometry} = React.useMemo(() => {
-    if (points.length < 3) {
-      return {surfaceGeometry: null, lineGeometry: null}
-    }
-    const shape = new THREE.Shape()
-    points.forEach((point, index) => {
-      const projectedY = -point.z
-      if (index === 0) {
-        shape.moveTo(point.x, projectedY)
-      } else {
-        shape.lineTo(point.x, projectedY)
+  const {surfaceGeometry, lineGeometry, volumeGeometry, volumeEdgeGeometry} =
+    React.useMemo(() => {
+      const contour = sanitizeGroundContour(points)
+      if (contour.length < 3) {
+        return {
+          surfaceGeometry: null,
+          lineGeometry: null,
+          volumeGeometry: null,
+          volumeEdgeGeometry: null,
+        }
       }
-    })
-    const surface = new THREE.ShapeGeometry(shape)
-    surface.rotateX(-Math.PI / 2)
+      const shape = new THREE.Shape()
+      contour.forEach((point, index) => {
+        const projectedY = -point.z
+        if (index === 0) {
+          shape.moveTo(point.x, projectedY)
+        } else {
+          shape.lineTo(point.x, projectedY)
+        }
+      })
+      const surface = new THREE.ShapeGeometry(shape)
+      surface.rotateX(-Math.PI / 2)
 
-    const linePoints = points.map(
-      (point) => new THREE.Vector3(point.x, groundOffset, point.z),
-    )
-    const outlineGeometry = new THREE.BufferGeometry().setFromPoints(linePoints)
-    return {surfaceGeometry: surface, lineGeometry: outlineGeometry}
-  }, [points])
+      const linePoints: THREE.Vector3[] = []
+      for (let index = 0; index < contour.length; index += 1) {
+        const start = contour[index]
+        const end = contour[(index + 1) % contour.length]
+        linePoints.push(
+          new THREE.Vector3(start.x, groundOffset, start.z),
+          new THREE.Vector3(end.x, groundOffset, end.z),
+        )
+      }
+      const outlineGeometry = new THREE.BufferGeometry().setFromPoints(
+        linePoints,
+      )
+
+      const volumePositions = new Float32Array((contour.length + 1) * 3)
+      volumePositions[0] = apex.x
+      volumePositions[1] = apex.y
+      volumePositions[2] = apex.z
+      contour.forEach((point, index) => {
+        const base = (index + 1) * 3
+        volumePositions[base] = point.x
+        volumePositions[base + 1] = point.y + groundOffset * 0.5
+        volumePositions[base + 2] = point.z
+      })
+      const volumeIndices: number[] = []
+      for (let index = 0; index < contour.length; index += 1) {
+        const current = index + 1
+        const next = ((index + 1) % contour.length) + 1
+        volumeIndices.push(0, current, next)
+      }
+      const volume = new THREE.BufferGeometry()
+      volume.setAttribute(
+        'position',
+        new THREE.BufferAttribute(volumePositions, 3),
+      )
+      volume.setIndex(volumeIndices)
+      volume.computeVertexNormals()
+
+      const edgePoints: THREE.Vector3[] = []
+      contour.forEach((point) => {
+        edgePoints.push(apex.clone(), point.clone())
+      })
+      const volumeEdges = new THREE.BufferGeometry().setFromPoints(edgePoints)
+
+      return {
+        surfaceGeometry: surface,
+        lineGeometry: outlineGeometry,
+        volumeGeometry: volume,
+        volumeEdgeGeometry: volumeEdges,
+      }
+    }, [apex, points])
 
   React.useEffect(() => {
     return () => {
       surfaceGeometry?.dispose()
       lineGeometry?.dispose()
+      volumeGeometry?.dispose()
+      volumeEdgeGeometry?.dispose()
     }
-  }, [lineGeometry, surfaceGeometry])
+  }, [lineGeometry, surfaceGeometry, volumeEdgeGeometry, volumeGeometry])
 
   React.useEffect(() => {
     if (lineRef.current) {
@@ -58,36 +142,73 @@ const FovFootprintMesh: React.FC<FovFootprintMeshProps> = ({points, color}) => {
     }
   }, [lineGeometry])
 
-  if (!surfaceGeometry || !lineGeometry) {
+  if (
+    !surfaceGeometry ||
+    !lineGeometry ||
+    !volumeGeometry ||
+    !volumeEdgeGeometry
+  ) {
     return null
   }
 
   return (
     <group>
+      <mesh renderOrder={renderOrderBase} geometry={volumeGeometry}>
+        <meshBasicMaterial
+          transparent
+          blending={THREE.NormalBlending}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+          color={color}
+          opacity={0.14}
+          toneMapped={false}
+        />
+      </mesh>
+      <lineSegments
+        renderOrder={renderOrderBase + 1}
+        geometry={volumeEdgeGeometry}
+      >
+        <lineBasicMaterial
+          transparent
+          depthWrite={false}
+          color={color}
+          opacity={0.35}
+          toneMapped={false}
+        />
+      </lineSegments>
       <mesh
+        renderOrder={renderOrderBase + 2}
         geometry={surfaceGeometry}
-        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
         position={[0, groundOffset, 0]}
       >
         <meshBasicMaterial
           transparent
+          depthTest={false}
           depthWrite={false}
+          side={THREE.DoubleSide}
           color={color}
-          opacity={0.15}
+          opacity={0.2}
+          polygonOffset
+          polygonOffsetFactor={1}
+          polygonOffsetUnits={1}
+          toneMapped={false}
         />
       </mesh>
       <lineSegments
         ref={lineRef}
+        renderOrder={renderOrderBase + 3}
         geometry={lineGeometry}
-        onUpdate={(line) => line.layers.set(DEBUG_LAYER)}
-        position={[0, 0.001, 0]}
+        position={[0, 0.002, 0]}
       >
         <lineDashedMaterial
           transparent
           dashSize={0.6}
+          depthTest={false}
+          depthWrite={false}
           gapSize={0.6}
           color={color}
-          opacity={0.9}
+          opacity={1}
+          toneMapped={false}
         />
       </lineSegments>
     </group>
@@ -134,15 +255,18 @@ export const CameraFovFootprints: React.FC<CameraFovFootprintsProps> = ({
         obstacles,
       })
       const points = ring.map((point) => transformer.toVector3(point, 0))
-      return {id: camera.id, color: camera.color, points}
+      const apex = transformer.toVector3(origin, getCameraOpticHeight(camera))
+      return {id: camera.id, color: camera.color, points, apex}
     })
   }, [cameras, obstaclesByArea, scene.areas, transformer])
 
   return (
     <>
-      {footprints.map((footprint) => (
+      {footprints.map((footprint, index) => (
         <FovFootprintMesh
+          apex={footprint.apex}
           key={footprint.id}
+          renderOrderBase={160 + index * 4}
           color={footprint.color}
           points={footprint.points}
         />
