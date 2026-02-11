@@ -1,12 +1,15 @@
 import {lineString, length as turfLength} from '@turf/turf'
 import React from 'react'
 
+import type {SceneRoot} from '@/features/scene/domain/types'
+
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Slider} from '@/components/ui/slider'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {useFrameSceneUpdate} from '@/features/scene/presentation/hooks/use-frame-scene-update'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
@@ -33,6 +36,7 @@ export const WallPropertiesSheet: React.FC = () => {
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const walls = useSceneStore((state) => state.scene.walls)
   const updateScene = useSceneStore((state) => state.updateScene)
+  const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
   const isOpen = openPanels['wall-properties'] ?? false
   const selectedWall = React.useMemo(() => {
@@ -42,57 +46,74 @@ export const WallPropertiesSheet: React.FC = () => {
   }, [selectedEntityIds, walls])
 
   const updateSelectedWall = React.useCallback(
-    (updater: (wall: (typeof walls)[number]) => void) => {
-      if (!selectedWall) return
-      return updateScene((scene) => {
+    (
+      updater: (wall: (typeof walls)[number]) => void,
+      onApplied?: (scene: SceneRoot) => void,
+    ) => {
+      if (!selectedWall) {
+        return
+      }
+      scheduleSceneUpdate((scene) => {
         const target = scene.walls.find((wall) => wall.id === selectedWall.id)
         if (target) {
           updater(target)
         }
-      })
+      }, onApplied)
     },
-    [selectedWall, updateScene],
+    [scheduleSceneUpdate, selectedWall],
   )
 
   const handleColorChange = (value: string) => {
-    const updated = updateSelectedWall((wall) => {
-      wall.color = value
-    })
-    if (updated && selectedWall) {
-      recordActionDebounced(
-        `wall-${selectedWall.id}`,
-        {type: 'update', entity: 'wall'},
-        updated,
-      )
-    }
+    if (!selectedWall) return
+    const wallId = selectedWall.id
+    updateSelectedWall(
+      (wall) => {
+        wall.color = value
+      },
+      (updated) => {
+        recordActionDebounced(
+          `wall-${wallId}`,
+          {type: 'update', entity: 'wall'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleThicknessChange = (values: number[]) => {
+    if (!selectedWall) return
     const [thickness] = values
-    const updated = updateSelectedWall((wall) => {
-      wall.thickness = thickness
-    })
-    if (updated && selectedWall) {
-      recordActionDebounced(
-        `wall-${selectedWall.id}`,
-        {type: 'update', entity: 'wall'},
-        updated,
-      )
-    }
+    const wallId = selectedWall.id
+    updateSelectedWall(
+      (wall) => {
+        wall.thickness = thickness
+      },
+      (updated) => {
+        recordActionDebounced(
+          `wall-${wallId}`,
+          {type: 'update', entity: 'wall'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleHeightChange = (values: number[]) => {
+    if (!selectedWall) return
     const [height] = values
-    const updated = updateSelectedWall((wall) => {
-      wall.height = height
-    })
-    if (updated && selectedWall) {
-      recordActionDebounced(
-        `wall-${selectedWall.id}`,
-        {type: 'update', entity: 'wall'},
-        updated,
-      )
-    }
+    const wallId = selectedWall.id
+    updateSelectedWall(
+      (wall) => {
+        wall.height = height
+      },
+      (updated) => {
+        recordActionDebounced(
+          `wall-${wallId}`,
+          {type: 'update', entity: 'wall'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleNumericInput = (

@@ -1,7 +1,7 @@
 import {lineString, length as turfLength} from '@turf/turf'
 import React from 'react'
 
-import type {ShapeEntity} from '@/features/scene/domain/types'
+import type {SceneRoot, ShapeEntity} from '@/features/scene/domain/types'
 
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
@@ -19,6 +19,7 @@ import {
   getBoundsCenter,
   scalePoints,
 } from '@/features/scene/presentation/components/map-view/selection-geometry'
+import {useFrameSceneUpdate} from '@/features/scene/presentation/hooks/use-frame-scene-update'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
@@ -45,6 +46,7 @@ export const ShapePropertiesSheet: React.FC = () => {
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const shapes = useSceneStore((state) => state.scene.shapes)
   const updateScene = useSceneStore((state) => state.updateScene)
+  const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
   const isOpen = openPanels['shape-properties'] ?? false
   const selectedShape = React.useMemo(() => {
@@ -54,18 +56,23 @@ export const ShapePropertiesSheet: React.FC = () => {
   }, [selectedEntityIds, shapes])
 
   const updateSelectedShape = React.useCallback(
-    (updater: (shape: (typeof shapes)[number]) => void) => {
-      if (!selectedShape) return
-      return updateScene((scene) => {
+    (
+      updater: (shape: (typeof shapes)[number]) => void,
+      onApplied?: (scene: SceneRoot) => void,
+    ) => {
+      if (!selectedShape) {
+        return
+      }
+      scheduleSceneUpdate((scene) => {
         const target = scene.shapes.find(
           (shape) => shape.id === selectedShape.id,
         )
         if (target) {
           updater(target)
         }
-      })
+      }, onApplied)
     },
-    [selectedShape, updateScene],
+    [scheduleSceneUpdate, selectedShape],
   )
 
   const getCenter = React.useCallback((shape: ShapeEntity) => {
@@ -77,61 +84,76 @@ export const ShapePropertiesSheet: React.FC = () => {
   }, [])
 
   const handleHeightChange = (values: number[]) => {
+    if (!selectedShape) return
     const [height] = values
-    const updated = updateSelectedShape((shape) => {
-      shape.height = height
-    })
-    if (updated && selectedShape) {
-      recordActionDebounced(
-        `shape-${selectedShape.id}`,
-        {type: 'update', entity: 'shape'},
-        updated,
-      )
-    }
+    const shapeId = selectedShape.id
+    updateSelectedShape(
+      (shape) => {
+        shape.height = height
+      },
+      (updated) => {
+        recordActionDebounced(
+          `shape-${shapeId}`,
+          {type: 'update', entity: 'shape'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleColorChange = (value: string) => {
-    const updated = updateSelectedShape((shape) => {
-      shape.color = value
-    })
-    if (updated && selectedShape) {
-      recordActionDebounced(
-        `shape-${selectedShape.id}`,
-        {type: 'update', entity: 'shape'},
-        updated,
-      )
-    }
+    if (!selectedShape) return
+    const shapeId = selectedShape.id
+    updateSelectedShape(
+      (shape) => {
+        shape.color = value
+      },
+      (updated) => {
+        recordActionDebounced(
+          `shape-${shapeId}`,
+          {type: 'update', entity: 'shape'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleScale = (scaleX: number, scaleY: number) => {
     if (!selectedShape) return
+    const shapeId = selectedShape.id
     const center = getCenter(selectedShape)
-    const updated = updateSelectedShape((shape) => {
-      shape.geometry = scalePoints(shape.geometry, center, scaleX, scaleY)
-    })
-    if (updated && selectedShape) {
-      recordActionDebounced(
-        `shape-${selectedShape.id}`,
-        {type: 'update', entity: 'shape'},
-        updated,
-      )
-    }
+    updateSelectedShape(
+      (shape) => {
+        shape.geometry = scalePoints(shape.geometry, center, scaleX, scaleY)
+      },
+      (updated) => {
+        recordActionDebounced(
+          `shape-${shapeId}`,
+          {type: 'update', entity: 'shape'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleThicknessChange = (values: number[]) => {
+    if (!selectedShape) return
     const [thickness] = values
-    const updated = updateSelectedShape((shape) => {
-      if (shape.shapeType === 'line') {
-        ;(shape as {thickness?: number}).thickness = thickness
-      }
-    })
-    if (updated && selectedShape) {
-      recordActionDebounced(
-        `shape-${selectedShape.id}`,
-        {type: 'update', entity: 'shape'},
-        updated,
-      )
-    }
+    const shapeId = selectedShape.id
+    updateSelectedShape(
+      (shape) => {
+        if (shape.shapeType === 'line') {
+          ;(shape as {thickness?: number}).thickness = thickness
+        }
+      },
+      (updated) => {
+        recordActionDebounced(
+          `shape-${shapeId}`,
+          {type: 'update', entity: 'shape'},
+          updated,
+        )
+      },
+    )
   }
 
   const bounds = selectedShape ? computeBounds(selectedShape.geometry) : null
@@ -297,16 +319,19 @@ export const ShapePropertiesSheet: React.FC = () => {
                   onChange={(event) => {
                     const next = Number.parseFloat(event.target.value)
                     if (!Number.isFinite(next) || !center) return
-                    const updated = updateSelectedShape((shape) => {
-                      shape.geometry = createCircleRing(center, next)
-                    })
-                    if (updated && selectedShape) {
-                      recordActionDebounced(
-                        `shape-${selectedShape.id}`,
-                        {type: 'update', entity: 'shape'},
-                        updated,
-                      )
-                    }
+                    const shapeId = selectedShape.id
+                    updateSelectedShape(
+                      (shape) => {
+                        shape.geometry = createCircleRing(center, next)
+                      },
+                      (updated) => {
+                        recordActionDebounced(
+                          `shape-${shapeId}`,
+                          {type: 'update', entity: 'shape'},
+                          updated,
+                        )
+                      },
+                    )
                   }}
                 />
               </div>

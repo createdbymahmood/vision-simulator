@@ -1,5 +1,7 @@
 import React from 'react'
 
+import type {SceneRoot} from '@/features/scene/domain/types'
+
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Slider} from '@/components/ui/slider'
@@ -11,6 +13,7 @@ import {
   formatArea,
   formatMeters,
 } from '@/features/scene/presentation/components/map-view/map-view-helpers'
+import {useFrameSceneUpdate} from '@/features/scene/presentation/hooks/use-frame-scene-update'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
@@ -38,6 +41,7 @@ export const AreaPropertiesSheet: React.FC = () => {
   const areas = useSceneStore((state) => state.scene.areas)
   const updateScene = useSceneStore((state) => state.updateScene)
   const updateAreaName = useSceneStore((state) => state.updateAreaName)
+  const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
   const isOpen = openPanels['area-properties'] ?? false
   const selectedArea = React.useMemo(() => {
@@ -47,16 +51,21 @@ export const AreaPropertiesSheet: React.FC = () => {
   }, [areas, selectedEntityIds])
 
   const updateSelectedArea = React.useCallback(
-    (updater: (area: (typeof areas)[number]) => void) => {
-      if (!selectedArea) return
-      return updateScene((scene) => {
+    (
+      updater: (area: (typeof areas)[number]) => void,
+      onApplied?: (scene: SceneRoot) => void,
+    ) => {
+      if (!selectedArea) {
+        return
+      }
+      scheduleSceneUpdate((scene) => {
         const target = scene.areas.find((area) => area.id === selectedArea.id)
         if (target) {
           updater(target)
         }
-      })
+      }, onApplied)
     },
-    [selectedArea, updateScene],
+    [scheduleSceneUpdate, selectedArea],
   )
 
   const handleNameChange = (value: string) => {
@@ -70,57 +79,73 @@ export const AreaPropertiesSheet: React.FC = () => {
   }
 
   const handleFillChange = (value: string) => {
-    const updated = updateSelectedArea((area) => {
-      area.style.fillColor = value
-    })
-    if (updated && selectedArea) {
-      recordActionDebounced(
-        `area-${selectedArea.id}`,
-        {type: 'update', entity: 'area'},
-        updated,
-      )
-    }
+    if (!selectedArea) return
+    const areaId = selectedArea.id
+    updateSelectedArea(
+      (area) => {
+        area.style.fillColor = value
+      },
+      (updated) => {
+        recordActionDebounced(
+          `area-${areaId}`,
+          {type: 'update', entity: 'area'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleBorderColorChange = (value: string) => {
-    const updated = updateSelectedArea((area) => {
-      area.style.borderColor = value
-    })
-    if (updated && selectedArea) {
-      recordActionDebounced(
-        `area-${selectedArea.id}`,
-        {type: 'update', entity: 'area'},
-        updated,
-      )
-    }
+    if (!selectedArea) return
+    const areaId = selectedArea.id
+    updateSelectedArea(
+      (area) => {
+        area.style.borderColor = value
+      },
+      (updated) => {
+        recordActionDebounced(
+          `area-${areaId}`,
+          {type: 'update', entity: 'area'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleFillOpacityChange = (values: number[]) => {
+    if (!selectedArea) return
     const [opacity] = values
-    const updated = updateSelectedArea((area) => {
-      area.style.fillOpacity = opacity
-    })
-    if (updated && selectedArea) {
-      recordActionDebounced(
-        `area-${selectedArea.id}`,
-        {type: 'update', entity: 'area'},
-        updated,
-      )
-    }
+    const areaId = selectedArea.id
+    updateSelectedArea(
+      (area) => {
+        area.style.fillOpacity = opacity
+      },
+      (updated) => {
+        recordActionDebounced(
+          `area-${areaId}`,
+          {type: 'update', entity: 'area'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleBorderWidthChange = (values: number[]) => {
+    if (!selectedArea) return
     const [width] = values
-    const updated = updateSelectedArea((area) => {
-      area.style.borderWidth = width
-    })
-    if (updated && selectedArea) {
-      recordActionDebounced(
-        `area-${selectedArea.id}`,
-        {type: 'update', entity: 'area'},
-        updated,
-      )
-    }
+    const areaId = selectedArea.id
+    updateSelectedArea(
+      (area) => {
+        area.style.borderWidth = width
+      },
+      (updated) => {
+        recordActionDebounced(
+          `area-${areaId}`,
+          {type: 'update', entity: 'area'},
+          updated,
+        )
+      },
+    )
   }
 
   const perimeter = selectedArea

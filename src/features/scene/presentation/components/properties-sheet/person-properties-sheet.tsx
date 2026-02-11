@@ -1,10 +1,13 @@
 import React from 'react'
 
+import type {SceneRoot} from '@/features/scene/domain/types'
+
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Slider} from '@/components/ui/slider'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {useFrameSceneUpdate} from '@/features/scene/presentation/hooks/use-frame-scene-update'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
@@ -18,6 +21,7 @@ export const PersonPropertiesSheet: React.FC = () => {
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const people = useSceneStore((state) => state.scene.people)
   const updateScene = useSceneStore((state) => state.updateScene)
+  const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
   const isOpen = openPanels['person-properties'] ?? false
   const selectedPerson = React.useMemo(() => {
@@ -33,46 +37,59 @@ export const PersonPropertiesSheet: React.FC = () => {
   ).toString()
 
   const updateSelectedPerson = React.useCallback(
-    (updater: (person: (typeof people)[number]) => void) => {
-      if (!selectedPerson) return
-      return updateScene((scene) => {
+    (
+      updater: (person: (typeof people)[number]) => void,
+      onApplied?: (scene: SceneRoot) => void,
+    ) => {
+      if (!selectedPerson) {
+        return
+      }
+      scheduleSceneUpdate((scene) => {
         const target = scene.people.find(
           (person) => person.id === selectedPerson.id,
         )
         if (target) {
           updater(target)
         }
-      })
+      }, onApplied)
     },
-    [selectedPerson, updateScene],
+    [scheduleSceneUpdate, selectedPerson],
   )
 
   const handleHeightChange = (values: number[]) => {
+    if (!selectedPerson) return
     const [height] = values
-    const updated = updateSelectedPerson((person) => {
-      person.height = height
-    })
-    if (updated && selectedPerson) {
-      recordActionDebounced(
-        `person-${selectedPerson.id}`,
-        {type: 'update', entity: 'person'},
-        updated,
-      )
-    }
+    const personId = selectedPerson.id
+    updateSelectedPerson(
+      (person) => {
+        person.height = height
+      },
+      (updated) => {
+        recordActionDebounced(
+          `person-${personId}`,
+          {type: 'update', entity: 'person'},
+          updated,
+        )
+      },
+    )
   }
 
   const handleSpeedChange = (values: number[]) => {
+    if (!selectedPerson) return
     const [speed] = values
-    const updated = updateSelectedPerson((person) => {
-      person.speed = speed
-    })
-    if (updated && selectedPerson) {
-      recordActionDebounced(
-        `person-${selectedPerson.id}`,
-        {type: 'update', entity: 'person'},
-        updated,
-      )
-    }
+    const personId = selectedPerson.id
+    updateSelectedPerson(
+      (person) => {
+        person.speed = speed
+      },
+      (updated) => {
+        recordActionDebounced(
+          `person-${personId}`,
+          {type: 'update', entity: 'person'},
+          updated,
+        )
+      },
+    )
   }
 
   return (
@@ -94,16 +111,20 @@ export const PersonPropertiesSheet: React.FC = () => {
                 id='person-name'
                 value={personName}
                 onChange={(event) => {
-                  const updated = updateSelectedPerson((person) => {
-                    person.name = event.target.value
-                  })
-                  if (updated && selectedPerson) {
-                    recordActionDebounced(
-                      `person-${selectedPerson.id}`,
-                      {type: 'update', entity: 'person'},
-                      updated,
-                    )
-                  }
+                  if (!selectedPerson) return
+                  const personId = selectedPerson.id
+                  updateSelectedPerson(
+                    (person) => {
+                      person.name = event.target.value
+                    },
+                    (updated) => {
+                      recordActionDebounced(
+                        `person-${personId}`,
+                        {type: 'update', entity: 'person'},
+                        updated,
+                      )
+                    },
+                  )
                 }}
               />
             </div>
