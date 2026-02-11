@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
-import {Switch} from '@/components/ui/switch'
 import {CAMERA_PRESETS} from '@/features/scene/domain/constants/camera-presets'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
@@ -132,13 +131,6 @@ export const CameraPropertiesSheet: React.FC = () => {
   const handleColorChange = (value: string) => {
     const updated = updateSelectedCamera((camera) => {
       camera.color = value
-    })
-    recordCameraUpdate(updated)
-  }
-
-  const handleShowCollisionsChange = (enabled: boolean) => {
-    const updated = updateSelectedCamera((camera) => {
-      camera.showCollisions = enabled
     })
     recordCameraUpdate(updated)
   }
@@ -373,14 +365,6 @@ export const CameraPropertiesSheet: React.FC = () => {
                 type='color'
                 value={selectedCamera.color}
                 onChange={(event) => handleColorChange(event.target.value)}
-              />
-            </div>
-            <div className='flex items-center justify-between rounded-md border px-3 py-2'>
-              <Label htmlFor='camera-show-collisions'>Show Collisions</Label>
-              <Switch
-                checked={selectedCamera.showCollisions}
-                id='camera-show-collisions'
-                onCheckedChange={handleShowCollisionsChange}
               />
             </div>
           </PropertiesSection>

@@ -90,7 +90,6 @@ Shape-specific fields:
 - `color`: string
 - `ptz`: `{ pan, tilt, zoom, limits }`
 - `ptzPresets`: `{ name, pan, tilt, zoom }[]`
-- `showCollisions`: boolean
 
 ### PersonEntity
 

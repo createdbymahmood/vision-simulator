@@ -16,7 +16,7 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - Collision surfaces must follow the rendering rules (opacity, pulsing) and respond to camera/obstacle changes; compute selectively for performance.
 - People movement must be deterministic (seeded RNG + fixed timestep) and respect all area/obstacle/person constraints.
 - PTZ floating panel must mirror editor controls and be draggable/minimizable.
-- Use toggles (global and per-camera) for collision visualization; do not remove frustum wireframes when disabled.
+- Keep collision visualization always visible in 3D simulation.
 
 ---
 
@@ -104,15 +104,7 @@ Implement advanced 3D simulation features including FOV collision visualization,
 
 #### UI Controls (Section 5.4.4)
 
-- [ ] **Collision Visualization Toggle** (3D view, top-right):
-  - Icon: eye-slash
-  - Label: "Show FOV Collisions"
-  - Default: ON
-  - When OFF: only FOV frustum wireframe
-
-- [ ] **Per-Camera Toggle** (Properties panel):
-  - "Show Collisions" checkbox
-  - Per-camera visibility control
+- [ ] Collision visualization is always visible in 3D preview (no toggle).
 
 ### Physics & Movement (Section 6.6)
 
@@ -241,8 +233,7 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - [ ] Camera FOV shows collision quads on wall intersections
 - [ ] Collision surfaces pulse with glow effect
 - [ ] Floor footprint renders as dashed polygon
-- [ ] Collision toggle hides/shows surfaces globally
-- [ ] Per-camera collision toggle works
+- [ ] Collision rendering is always-on without per-camera or global toggles
 - [ ] People wander around within area boundaries
 - [ ] People avoid walls and shapes
 - [ ] People avoid each other (2m separation)
@@ -274,7 +265,5 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - Section 6.2.2: Main Viewport (Trail visualization)
 - Section 6.2.5: Right Sidebar (Camera List)
 - Section 6.6: Physics & Movement (entire section)
-
-
 
 

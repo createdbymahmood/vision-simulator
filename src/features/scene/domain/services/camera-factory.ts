@@ -62,6 +62,5 @@ export const createCameraEntity = (
     color,
     ptz: createDefaultPtzState(resolvedPreset.zoom),
     ptzPresets: [],
-    showCollisions: true,
   }
 }

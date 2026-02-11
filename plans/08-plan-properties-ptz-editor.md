@@ -126,9 +126,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 
 - [ ] **PTZ Section** (see below for full details)
 
-- [ ] **Advanced Section**:
-  - Show Collisions (toggle)
-
 ### Person Properties Panel
 
 - [ ] **Fields**:
@@ -263,5 +260,4 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - Section 5.5.2: PTZ UI Component (Always Available)
 - Section 5.5.3: PTZ Behavior in Editor
 - Section 5.5.5: PTZ Data Model (presets)
-
 

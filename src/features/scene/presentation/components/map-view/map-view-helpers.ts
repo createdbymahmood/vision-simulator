@@ -344,6 +344,7 @@ export const buildOccludedFovRing = ({
         polygon([closeRing(area.geometry.coordinates)]),
       ) as Feature<LineString | MultiLineString>)
     : null
+  const safeDepth = Math.max(depth, MIN_FOV_DISTANCE)
 
   for (let i = 0; i <= segments; i += 1) {
     const bearing = start + step * i
@@ -359,15 +360,20 @@ export const buildOccludedFovRing = ({
     }
 
     obstacles.forEach((obstacle) => {
-      if (cameraHeight > obstacle.height) {
-        return
-      }
       const hitDistance = getIntersectionDistance(
         origin,
         ray,
         obstacle.boundary,
       )
-      if (hitDistance !== null && hitDistance < maxDistance) {
+      if (hitDistance === null) {
+        return
+      }
+      const normalizedDistance = Math.min(hitDistance / safeDepth, 1)
+      const rayHeightAtHit = cameraHeight * (1 - normalizedDistance)
+      if (obstacle.height < rayHeightAtHit) {
+        return
+      }
+      if (hitDistance < maxDistance) {
         maxDistance = hitDistance
       }
     })

@@ -15,7 +15,6 @@ import type {SimulationCaptureApi} from './simulation-capture'
 import type {WorldEntity} from './simulation-helpers'
 
 import {computeBounds} from '../map-view/selection-geometry'
-import {CameraCollisionSurfaces} from './camera-collision-surfaces'
 import {CameraFovFootprints} from './camera-fov-footprints'
 import {
   buildObstacleSegmentsByArea,
@@ -138,7 +137,6 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   onCaptureReady,
 }) => {
   const {camera, gl, scene: threeScene, size} = useThree()
-  const showFovCollisions = useUiStore((state) => state.showFovCollisions)
   const setVisionState = useUiStore((state) => state.setVisionState)
   const mapboxToken = useUiStore((state) => state.mapboxToken)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
@@ -338,11 +336,8 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   )
 
   const collisionCameras = React.useMemo(() => {
-    if (!showFovCollisions) {
-      return []
-    }
-    return scene.cameras.filter((cameraEntity) => cameraEntity.showCollisions)
-  }, [scene.cameras, showFovCollisions])
+    return scene.cameras
+  }, [scene.cameras])
 
   const bounds = React.useMemo(() => {
     const points = entities
@@ -494,23 +489,18 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
         selectedEntityIds={selectedEntityIds}
         onFocus={requestFocus}
         onSelectEntity={onSelectEntity}
+        showCameraFrustums={false}
       />
       <PersonTrail
         positions={simulatedPeoplePositions}
         selectedPersonId={selectedPersonId}
       />
       {collisionCameras.length > 0 ? (
-        <>
-          <CameraFovFootprints
-            cameras={collisionCameras}
-            scene={scene}
-            transformer={transformer}
-          />
-          <CameraCollisionSurfaces
-            cameras={collisionCameras}
-            entities={entities}
-          />
-        </>
+        <CameraFovFootprints
+          cameras={collisionCameras}
+          scene={scene}
+          transformer={transformer}
+        />
       ) : null}
 
       <OrbitControls

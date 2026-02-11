@@ -17,7 +17,7 @@ Execution mode is active: this document now defines **build order**, **PR slices
 - Treat this as scoped completion of existing 3D collision work, not a net-new subsystem.
 - Reuse existing geometry/visibility pipelines; do not introduce a second collision engine.
 - Keep wall base materials color-stable; collision visuals are overlays only.
-- Respect existing domain contracts (`CameraEntity.showCollisions`, scene entities, area scoping).
+- Respect existing scene entity contracts and area scoping.
 - Merge only after each PR slice meets its validation gate.
 
 ---
@@ -26,7 +26,7 @@ Execution mode is active: this document now defines **build order**, **PR slices
 
 ### Plan/PRD alignment reviewed
 
-- `plan.md` Section 5.4 requires 3D FOV collision rendering for walls/shapes, with collision toggles.
+- `plan.md` Section 5.4 requires 3D FOV collision rendering for walls/shapes.
 - `plans/10-plan-3d-advanced-features.md` defines wall/shape/floor collision surfaces and performance expectations.
 - `plans/09.1-plan-fov-wedge-shapes-collision.md` already defines 2D occlusion behavior and height-aware logic.
 
@@ -39,8 +39,7 @@ Execution mode is active: this document now defines **build order**, **PR slices
   - `src/features/scene/presentation/components/simulation/camera-collision-surfaces.tsx`
   - `src/features/scene/presentation/components/simulation/camera-collision-wall.tsx`
   - `src/features/scene/presentation/components/simulation/camera-collision-shape.tsx`
-- `CameraEntity.showCollisions` exists in domain but is not fully wired into 3D rendering gates.
-- Global collision visibility toggle from PRD is not currently exposed in 3D top controls.
+- Collision visibility controls previously created divergence between expected always-on behavior and actual rendering.
 
 ---
 
@@ -49,7 +48,7 @@ Execution mode is active: this document now defines **build order**, **PR slices
 ### Included
 
 - Plan to restore/guarantee wall + shape collision surfaces in 3D preview.
-- Plan to wire global and per-camera collision visibility controls.
+- Plan to enforce always-on collision visibility in 3D preview.
 - Plan to define stable visual rules (opacity, blending, layering, no base-wall tint side effects).
 - Plan to add verification strategy (manual + automated where feasible).
 
@@ -58,7 +57,7 @@ Execution mode is active: this document now defines **build order**, **PR slices
 - Physics/people steering redesign.
 - Radar redesign.
 - Camera feed realism changes unrelated to collision overlays.
-- Any scene schema change beyond already existing `showCollisions` usage.
+- Any scene schema change unrelated to collision rendering.
 
 ---
 
@@ -66,21 +65,18 @@ Execution mode is active: this document now defines **build order**, **PR slices
 
 - In 3D preview, each camera can render collision overlays on **both** walls and shapes within its area.
 - Collision overlays update when camera PTZ/FOV/depth changes or when walls/shapes change.
-- Global collision toggle can hide/show all collision overlays.
-- Per-camera `showCollisions` can hide/show overlays for that camera.
+- Collision visualization is always visible in 3D preview (no visibility toggles).
 - Wall base color remains exactly as configured; collision overlays do not cause perceived wall color animation or whitening.
 
 ---
 
 ## Architecture Strategy
 
-### 1) Single Collision Visibility Policy
+### 1) Always-On Collision Visibility
 
-- Create one decision path for visibility gating:
-  - Global toggle (UI store)
-  - Per-camera `showCollisions`
-  - Area match and entity eligibility
-- Apply this policy before creating any collision mesh.
+- Remove legacy global/per-camera visibility controls from rendering decisions.
+- Always render collision visualization for all cameras.
+- Keep area/entity eligibility filtering only.
 
 ### 2) Keep 2D Occlusion and 3D Collision Responsibilities Separate
 
@@ -114,12 +110,10 @@ Execution mode is active: this document now defines **build order**, **PR slices
 
 ## Implementation Workstreams
 
-### Workstream A: Collision Visibility Controls
+### Workstream A: Always-On Visibility Cleanup
 
-- [ ] Add global `showFovCollisions` UI state (default `true`).
-- [ ] Add preview top-bar toggle to control global collision visibility.
-- [ ] Wire per-camera `showCollisions` control in camera properties.
-- [ ] Enforce precedence: global OFF overrides per-camera ON.
+- [ ] Remove legacy collision visibility state from UI and camera properties.
+- [ ] Ensure renderer does not branch on collision visibility flags.
 
 ### Workstream B: 3D Rendering for Walls + Shapes
 
@@ -136,9 +130,8 @@ Execution mode is active: this document now defines **build order**, **PR slices
 
 ### Workstream D: Scene Integration
 
-- [ ] Update `simulation-scene` so collision overlays mount conditionally via visibility policy.
-- [ ] Update UI store for global toggle state and persistence behavior.
-- [ ] Update preview controls and camera properties for collision control discoverability.
+- [ ] Update `simulation-scene` so collision visualization mounts through one always-on render path.
+- [ ] Keep preview top bar and camera properties free of collision visibility controls.
 
 ### Workstream E: Performance
 
@@ -149,25 +142,24 @@ Execution mode is active: this document now defines **build order**, **PR slices
 ### Workstream F: Validation & QA
 
 - [ ] Run scenario matrix: wall-only, shape-only, mixed, multi-camera.
-- [ ] Verify toggle matrix: global ON/OFF × per-camera ON/OFF.
+- [ ] Verify collision rendering remains visible after camera/property updates.
 - [ ] Verify regression: wall base color remains stable with collisions visible.
 - [ ] Verify update triggers: PTZ, FOV, depth, wall edit, shape edit, area change.
 
 ### Workstream G: Documentation
 
-- [ ] Update user guide preview section with collision toggle behavior.
+- [ ] Update user guide preview section to document always-on collision visibility.
 - [ ] Add developer note for collision pipeline boundaries (footprint vs 3D overlays).
 
 ---
 
 ## Execution Sequence (PR Slices)
 
-### PR-1: Visibility State + UI Wiring
+### PR-1: Always-On Visibility Cleanup
 
 Scope:
-- Global collision toggle state in UI store.
-- Preview top-bar toggle.
-- Camera property control wiring for `showCollisions`.
+- Remove legacy collision visibility state from UI store.
+- Keep top bar and camera properties free of collision visibility controls.
 
 Primary files:
 - `src/features/scene/infrastructure/stores/ui.store.ts`
@@ -176,13 +168,13 @@ Primary files:
 - `src/features/scene/presentation/components/simulation/simulation-analysis-view.tsx`
 
 Gate:
-- Global/per-camera visibility can be toggled without rendering regressions.
+- Collision rendering remains visible without visibility controls.
 
 ### PR-2: Wall + Shape Collision Rendering Parity
 
 Scope:
-- Ensure wall and shape collision surfaces are both rendered under same gating policy.
-- Ensure area filtering and per-camera filtering are consistent.
+- Ensure wall and shape collision surfaces are both rendered under the same always-on policy.
+- Ensure area filtering is consistent.
 
 Primary files:
 - `src/features/scene/presentation/components/simulation/camera-collision-surfaces.tsx`
@@ -190,7 +182,7 @@ Primary files:
 - `src/features/scene/presentation/components/simulation/camera-collision-shape.tsx`
 
 Gate:
-- Wall and shape collisions are both visible when enabled and hidden when disabled.
+- Wall and shape collisions remain visible across supported camera/scene updates.
 
 ### PR-3: Height Rules + Visual Stability
 
@@ -243,16 +235,13 @@ Gate:
 - `src/features/scene/presentation/components/simulation/camera-collision-wall.tsx`
 - `src/features/scene/presentation/components/simulation/camera-collision-shape.tsx`
 - `src/features/scene/presentation/components/simulation/camera-collision-utils.ts`
-- `src/features/scene/presentation/components/simulation/simulation-top-bar.tsx`
-- `src/features/scene/presentation/components/properties-sheet/camera-properties-sheet.tsx`
-- `src/features/scene/infrastructure/stores/ui.store.ts`
 
 ---
 
 ## Acceptance Checklist (Release Gate)
 
 - [ ] Plan explicitly covers rendering collisions for both walls and shapes in 3D mode.
-- [ ] Plan includes both global and per-camera collision toggles.
+- [ ] Plan enforces always-on collision visibility (no visibility controls).
 - [ ] Plan protects wall base color fidelity while overlays are active.
 - [ ] Plan defines height-aware collision rendering behavior.
 - [ ] Plan includes performance and QA validation strategy.
@@ -263,8 +252,8 @@ Gate:
 
 - **Risk**: Overlay rendering causes perceived wall color drift.
   - **Mitigation**: Keep collision overlays independent from wall base material; verify with side-by-side checks.
-- **Risk**: Collision toggles become inconsistent across UI and renderer.
-  - **Mitigation**: Single visibility policy function consumed by scene and controls.
+- **Risk**: Legacy visibility branches suppress collision rendering unexpectedly.
+  - **Mitigation**: Remove branch-driven visibility logic; keep one always-on render path.
 - **Risk**: Performance drops in multi-camera scenes.
   - **Mitigation**: Memoization, update gating, optional throttling.
 
@@ -275,5 +264,5 @@ Gate:
 - `plan.md` Section 5.4.1: Collision surfaces on walls/shapes/floor
 - `plan.md` Section 5.4.2: Height-aware collision rules
 - `plan.md` Section 5.4.3: Collision rendering performance constraints
-- `plan.md` Section 5.4.4: Global + per-camera collision visualization controls
+- `plan.md` Section 5.4.4: Always-on collision visibility behavior
 - `plan.md` Section 9: QA acceptance for 3D FOV collision rendering

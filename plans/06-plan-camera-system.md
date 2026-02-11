@@ -192,7 +192,6 @@ This ensures camera visualizations integrate seamlessly with the map and area sy
 - [ ] `nearClipping`
 - [ ] `resolution: { width, height }`
 - [ ] `color` (auto-assigned)
-- [ ] `showCollisions: boolean` (default true)
 
 ### Devices in Use Panel (Section 5.1.4)
 

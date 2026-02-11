@@ -84,9 +84,6 @@ export const CameraCollisionSurfaces: React.FC<
   return (
     <>
       {cameras.map((camera) => {
-        if (!camera.showCollisions) {
-          return null
-        }
         const position = cameraWorldPositions.get(camera.id)
         if (!position) {
           return null

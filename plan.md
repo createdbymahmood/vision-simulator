@@ -459,17 +459,8 @@ No client-side routing is used. View switching is handled by state management.
 
 #### 5.4.4 UI Controls
 
-**Collision Visualization Toggle** (3D view, top-right):
-
-- Icon: eye-slash
-- Label: "Show FOV Collisions"
-- Default: ON
-- When OFF: only FOV frustum wireframe shown, no collision surfaces
-
-**Per-Camera Toggle** (Properties panel):
-
-- "Show Collisions" checkbox
-- Allows hiding collision for specific camera while keeping others visible
+FOV collision visualization is always enabled in 3D preview.
+No global or per-camera visibility toggle is provided.
 
 ---
 
@@ -1929,8 +1920,7 @@ renderer.setSize(originalSize.x, originalSize.y)
       "tilt": -10,
       "zoom": 1.5
     }
-  ],
-  "showCollisions": true
+  ]
 }
 ```
 

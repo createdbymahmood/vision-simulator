@@ -380,7 +380,6 @@ export const useCameraPlacement = ({
         nearClipping: preset.nearClipping,
         resolution: preset.resolution,
         color,
-        showCollisions: true,
       })
       recordAction({type: 'add', entity: 'camera'}, updatedScene)
 

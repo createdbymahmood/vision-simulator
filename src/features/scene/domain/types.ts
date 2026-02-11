@@ -98,7 +98,6 @@ export interface CameraEntity {
   color: string
   ptz: PtzState
   ptzPresets: PtzPreset[]
-  showCollisions: boolean
 }
 
 export interface PersonEntity {

@@ -77,7 +77,6 @@ Establish the foundational architecture, data models, routing structure, and sta
   - `color` (from 20-color palette)
   - `ptz: { pan, tilt, zoom, limits: { panMin, panMax, tiltMin, tiltMax, zoomMin, zoomMax } }`
   - `ptzPresets: Array<{ name, pan, tilt, zoom }>`
-  - `showCollisions: boolean`
 
 - [ ] **Person Entity** (Section 7.2)
   - `id`, `type: "person"`, `areaId`

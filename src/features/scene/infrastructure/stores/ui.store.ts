@@ -49,7 +49,6 @@ export interface UiState {
   flyToActiveAreaTick: number
   radarSettings: RadarSettings
   visionState: VisionState
-  showFovCollisions: boolean
 
   setViewMode: (mode: ViewMode) => ViewMode
   toggleViewMode: () => ViewMode
@@ -79,7 +78,6 @@ export interface UiState {
   triggerFlyToActiveArea: () => number
   setRadarSettings: (settings: Partial<RadarSettings>) => RadarSettings
   setVisionState: (state: VisionState) => VisionState
-  setShowFovCollisions: (enabled: boolean) => boolean
   resetUi: () => UiState
 }
 
@@ -219,19 +217,6 @@ const setVisionState = (set: SetState, get: GetState, state: VisionState) => {
   return get().visionState
 }
 
-const setShowFovCollisions = (
-  set: SetState,
-  get: GetState,
-  enabled: boolean,
-) => {
-  const nextValue = produce<UiState>((state) => {
-    state.showFovCollisions = enabled
-  })
-
-  set(nextValue)
-  return get().showFovCollisions
-}
-
 const resetUi = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.viewMode = 'editor'
@@ -251,7 +236,6 @@ const resetUi = (set: SetState, get: GetState) => {
       detectionsCount: 0,
       updatedAt: 0,
     }
-    state.showFovCollisions = true
   })
 
   set(nextValue)
@@ -280,7 +264,6 @@ const defaultUiState = {
     detectionsCount: 0,
     updatedAt: 0,
   },
-  showFovCollisions: true,
 }
 
 const mergeUiState = (initialValues: Partial<UiState>) => ({
@@ -342,7 +325,6 @@ const createUiStore: (
   triggerFlyToActiveArea: () => triggerFlyToActiveArea(set, get),
   setRadarSettings: (settings) => setRadarSettings(set, get, settings),
   setVisionState: (state) => setVisionState(set, get, state),
-  setShowFovCollisions: (enabled) => setShowFovCollisions(set, get, enabled),
   resetUi: () => resetUi(set, get),
 })
 

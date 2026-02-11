@@ -354,7 +354,6 @@ const addCamera = (
       nearClipping: camera.nearClipping ?? newCamera.nearClipping,
       height: camera.height ?? newCamera.height,
       resolution: camera.resolution ?? newCamera.resolution,
-      showCollisions: camera.showCollisions ?? newCamera.showCollisions,
       areaId: camera.areaId,
     })
     state.scene.meta.updatedAt = new Date().toISOString()
