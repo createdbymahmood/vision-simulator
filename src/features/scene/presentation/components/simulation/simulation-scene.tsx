@@ -335,9 +335,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     [selectedEntityIds],
   )
 
-  const collisionCameras = React.useMemo(() => {
-    return scene.cameras
-  }, [scene.cameras])
+  const collisionCameras = scene.cameras
 
   const bounds = React.useMemo(() => {
     const points = entities
@@ -350,15 +348,6 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     }
     return new THREE.Box3().setFromPoints(points)
   }, [entities])
-
-  const maxFrustumDepth = React.useMemo(() => {
-    if (!bounds) {
-      return undefined
-    }
-    const boundsSize = new THREE.Vector3()
-    bounds.getSize(boundsSize)
-    return Math.max(boundsSize.x, boundsSize.z)
-  }, [bounds])
 
   const [focusRequest, setFocusRequest] = React.useState<FocusRequest | null>(
     null,
@@ -485,7 +474,6 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
 
       <EntitiesMesh
         entities={renderedEntities}
-        maxFrustumDepth={maxFrustumDepth}
         selectedEntityIds={selectedEntityIds}
         onFocus={requestFocus}
         onSelectEntity={onSelectEntity}

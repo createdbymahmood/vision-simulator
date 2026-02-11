@@ -135,8 +135,8 @@ Execution mode is active: this document now defines **build order**, **PR slices
 
 ### Workstream E: Performance
 
-- [ ] Define and apply memoization keys for collision dependencies.
-- [ ] Define recompute vs reuse policy for collision overlay geometry.
+- [x] Define and apply memoization keys for collision dependencies.
+- [x] Define recompute vs reuse policy for collision overlay geometry.
 - [ ] Validate stress target and acceptable FPS in collision-on mode.
 
 ### Workstream F: Validation & QA
@@ -207,8 +207,7 @@ Scope:
 
 Primary files:
 - `src/features/scene/presentation/components/simulation/simulation-scene.tsx`
-- `src/features/scene/presentation/components/simulation/camera-collision-surfaces.tsx`
-- `src/features/scene/presentation/components/simulation/camera-collision-utils.ts`
+- `src/features/scene/presentation/components/simulation/camera-fov-footprints.tsx`
 
 Gate:
 - No major FPS regression in multi-camera mixed-obstacle scenes.

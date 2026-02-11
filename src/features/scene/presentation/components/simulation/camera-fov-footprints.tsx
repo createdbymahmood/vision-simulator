@@ -1,7 +1,13 @@
 import React from 'react'
 import * as THREE from 'three'
 
-import type {CameraEntity, SceneRoot} from '@/features/scene/domain/types'
+import type {
+  AreaEntity,
+  CameraEntity,
+  SceneRoot,
+  ShapeEntity,
+  WallEntity,
+} from '@/features/scene/domain/types'
 
 import {
   buildFovOcclusionObstacles,
@@ -19,7 +25,40 @@ interface FovFootprintMeshProps {
   renderOrderBase: number
 }
 
+interface CameraFootprintData {
+  id: string
+  color: string
+  points: THREE.Vector3[]
+  apex: THREE.Vector3
+}
+
+interface CachedCameraFootprint {
+  signature: string
+  areaRef: AreaEntity | undefined
+  obstaclesRef: ReturnType<typeof buildFovOcclusionObstacles>
+  value: CameraFootprintData
+}
+
 const POINT_MATCH_EPSILON = 1e-8
+const EMPTY_WALLS: WallEntity[] = []
+const EMPTY_SHAPES: ShapeEntity[] = []
+const EMPTY_OBSTACLES: ReturnType<typeof buildFovOcclusionObstacles> = []
+
+const getCameraFootprintSignature = (camera: CameraEntity) => {
+  const zoom = Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+  const effectivePan = camera.ptz?.pan ?? camera.direction
+  const effectiveFov = camera.fov / zoom
+  return [
+    camera.areaId,
+    camera.x,
+    camera.y,
+    camera.height,
+    effectivePan,
+    effectiveFov,
+    camera.depth,
+    camera.color,
+  ].join('|')
+}
 
 const sanitizeGroundContour = (points: THREE.Vector3[]) => {
   if (points.length === 0) {
@@ -226,25 +265,75 @@ export const CameraFovFootprints: React.FC<CameraFovFootprintsProps> = ({
   scene,
   transformer,
 }) => {
-  const obstaclesByArea = React.useMemo(() => {
-    const map = new Map<string, ReturnType<typeof buildFovOcclusionObstacles>>()
+  const {areaById, obstaclesByArea} = React.useMemo(() => {
+    const areaMap = new Map<string, AreaEntity>()
+    const wallGroups = new Map<string, WallEntity[]>()
+    const shapeGroups = new Map<string, ShapeEntity[]>()
+
     scene.areas.forEach((area) => {
-      const areaWalls = scene.walls.filter((wall) => wall.areaId === area.id)
-      const areaShapes = scene.shapes.filter(
-        (shape) => shape.areaId === area.id,
-      )
-      map.set(area.id, buildFovOcclusionObstacles(areaWalls, areaShapes))
+      areaMap.set(area.id, area)
     })
-    return map
+
+    scene.walls.forEach((wall) => {
+      const group = wallGroups.get(wall.areaId)
+      if (group) {
+        group.push(wall)
+      } else {
+        wallGroups.set(wall.areaId, [wall])
+      }
+    })
+
+    scene.shapes.forEach((shape) => {
+      const group = shapeGroups.get(shape.areaId)
+      if (group) {
+        group.push(shape)
+      } else {
+        shapeGroups.set(shape.areaId, [shape])
+      }
+    })
+
+    const obstacleMap = new Map<
+      string,
+      ReturnType<typeof buildFovOcclusionObstacles>
+    >()
+    areaMap.forEach((_area, areaId) => {
+      obstacleMap.set(
+        areaId,
+        buildFovOcclusionObstacles(
+          wallGroups.get(areaId) ?? EMPTY_WALLS,
+          shapeGroups.get(areaId) ?? EMPTY_SHAPES,
+        ),
+      )
+    })
+
+    return {areaById: areaMap, obstaclesByArea: obstacleMap}
   }, [scene.areas, scene.shapes, scene.walls])
 
+  const footprintCacheRef = React.useRef<Map<string, CachedCameraFootprint>>(
+    new Map(),
+  )
+
   const footprints = React.useMemo(() => {
-    return cameras.map((camera) => {
+    const nextCache = new Map<string, CachedCameraFootprint>()
+    const nextFootprints = cameras.map((camera) => {
       const origin: [number, number] = [camera.x, camera.y]
       const effectivePan = camera.ptz?.pan ?? camera.direction
       const effectiveFov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
-      const area = scene.areas.find((item) => item.id === camera.areaId)
-      const obstacles = area ? (obstaclesByArea.get(area.id) ?? []) : []
+      const area = areaById.get(camera.areaId)
+      const obstacles = obstaclesByArea.get(camera.areaId) ?? EMPTY_OBSTACLES
+      const signature = getCameraFootprintSignature(camera)
+
+      const cached = footprintCacheRef.current.get(camera.id)
+      if (
+        cached &&
+        cached.signature === signature &&
+        cached.areaRef === area &&
+        cached.obstaclesRef === obstacles
+      ) {
+        nextCache.set(camera.id, cached)
+        return cached.value
+      }
+
       const ring = buildOccludedFovRing({
         origin,
         direction: effectivePan,
@@ -256,9 +345,18 @@ export const CameraFovFootprints: React.FC<CameraFovFootprintsProps> = ({
       })
       const points = ring.map((point) => transformer.toVector3(point, 0))
       const apex = transformer.toVector3(origin, getCameraOpticHeight(camera))
-      return {id: camera.id, color: camera.color, points, apex}
+      const value = {id: camera.id, color: camera.color, points, apex}
+      nextCache.set(camera.id, {
+        signature,
+        areaRef: area,
+        obstaclesRef: obstacles,
+        value,
+      })
+      return value
     })
-  }, [cameras, obstaclesByArea, scene.areas, transformer])
+    footprintCacheRef.current = nextCache
+    return nextFootprints
+  }, [areaById, cameras, obstaclesByArea, transformer])
 
   return (
     <>
