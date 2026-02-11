@@ -11,6 +11,7 @@ import {
   createCameraFrustumPlanes,
   getCameraOpticHeight,
 } from './camera-collision-utils'
+import {WallCollisionSurface} from './camera-collision-wall'
 
 interface CameraCollisionSurfacesProps {
   cameras: CameraEntity[]
@@ -31,20 +32,51 @@ export const CameraCollisionSurfaces: React.FC<
     return map
   }, [entities])
 
-  const shapeEntities = React.useMemo(
-    () =>
-      entities.filter(
-        (entity): entity is Extract<WorldEntity, {type: 'shape'}> =>
-          entity.type === 'shape',
-      ),
-    [entities],
-  )
+  const wallEntitiesByArea = React.useMemo(() => {
+    const map = new Map<string, Extract<WorldEntity, {type: 'wall'}>[]>()
+    entities.forEach((entity) => {
+      if (entity.type !== 'wall') {
+        return
+      }
+      const areaWalls = map.get(entity.entity.areaId)
+      if (areaWalls) {
+        areaWalls.push(entity)
+      } else {
+        map.set(entity.entity.areaId, [entity])
+      }
+    })
+    return map
+  }, [entities])
+
+  const shapeEntitiesByArea = React.useMemo(() => {
+    const map = new Map<string, Extract<WorldEntity, {type: 'shape'}>[]>()
+    entities.forEach((entity) => {
+      if (entity.type !== 'shape') {
+        return
+      }
+      const areaShapes = map.get(entity.entity.areaId)
+      if (areaShapes) {
+        areaShapes.push(entity)
+      } else {
+        map.set(entity.entity.areaId, [entity])
+      }
+    })
+    return map
+  }, [entities])
 
   return (
     <>
       {cameras.map((camera) => {
+        if (!camera.showCollisions) {
+          return null
+        }
         const position = cameraWorldPositions.get(camera.id)
         if (!position) {
+          return null
+        }
+        const walls = wallEntitiesByArea.get(camera.areaId) ?? []
+        const shapes = shapeEntitiesByArea.get(camera.areaId) ?? []
+        if (walls.length === 0 && shapes.length === 0) {
           return null
         }
         const opticHeight = getCameraOpticHeight(camera)
@@ -52,19 +84,26 @@ export const CameraCollisionSurfaces: React.FC<
 
         return (
           <group key={camera.id}>
-            {shapeEntities
-              .filter((shape) => shape.entity.areaId === camera.areaId)
-              .map((shape) => (
-                <ShapeCollisionSurface
-                  data={shape}
-                  key={`${camera.id}-${shape.entity.id}`}
-                  planes={planes}
-                  color={camera.color}
-                  opacity={
-                    (shape.entity.height ?? 0) >= camera.height ? 0.4 : 0.2
-                  }
-                />
-              ))}
+            {walls.map((wall) => (
+              <WallCollisionSurface
+                data={wall}
+                key={`${camera.id}-${wall.entity.id}-${wall.segmentIndex}`}
+                planes={planes}
+                color={camera.color}
+                opacity={wall.entity.height >= camera.height ? 0.35 : 0.2}
+              />
+            ))}
+            {shapes.map((shape) => (
+              <ShapeCollisionSurface
+                data={shape}
+                key={`${camera.id}-${shape.entity.id}`}
+                planes={planes}
+                color={camera.color}
+                opacity={
+                  (shape.entity.height ?? 0) >= camera.height ? 0.4 : 0.2
+                }
+              />
+            ))}
           </group>
         )
       })}

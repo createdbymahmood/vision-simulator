@@ -138,6 +138,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   onCaptureReady,
 }) => {
   const {camera, gl, scene: threeScene, size} = useThree()
+  const showFovCollisions = useUiStore((state) => state.showFovCollisions)
   const setVisionState = useUiStore((state) => state.setVisionState)
   const mapboxToken = useUiStore((state) => state.mapboxToken)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
@@ -336,7 +337,12 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     [selectedEntityIds],
   )
 
-  const collisionCameras = React.useMemo(() => scene.cameras, [scene.cameras])
+  const collisionCameras = React.useMemo(() => {
+    if (!showFovCollisions) {
+      return []
+    }
+    return scene.cameras.filter((cameraEntity) => cameraEntity.showCollisions)
+  }, [scene.cameras, showFovCollisions])
 
   const bounds = React.useMemo(() => {
     const points = entities
