@@ -354,7 +354,6 @@ export const useCameraPlacement = ({
         y: mapPoint[1],
         name: profile.name,
         height: profile.optics.height,
-        direction: 0,
         fovHorizontal: profile.optics.fovHorizontal,
         fovVertical: profile.optics.fovVertical,
         depth: profile.optics.depth,

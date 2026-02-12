@@ -237,28 +237,6 @@ export const CameraPropertiesSheet: React.FC = () => {
     })
   }
 
-  const handleDirectionLiveChange = (values: number[]) => {
-    const [direction] = values
-    if (!Number.isFinite(direction)) {
-      return
-    }
-    applyCameraUpdateLive((camera) => {
-      camera.direction = normalizePan(direction)
-      camera.ptz.pan = normalizePan(direction)
-    })
-  }
-
-  const handleDirectionChange = (values: number[]) => {
-    const [direction] = values
-    if (!Number.isFinite(direction)) {
-      return
-    }
-    commitCameraUpdate((camera) => {
-      camera.direction = normalizePan(direction)
-      camera.ptz.pan = normalizePan(direction)
-    })
-  }
-
   const handleHorizontalFovLiveChange = (values: number[]) => {
     const [fovHorizontal] = values
     if (!Number.isFinite(fovHorizontal)) {
@@ -367,7 +345,6 @@ export const CameraPropertiesSheet: React.FC = () => {
         limits.zoomMax,
       )
       camera.ptz = {...camera.ptz, pan, tilt, zoom}
-      camera.direction = pan
       camera.zoom = zoom
     })
   }
@@ -389,7 +366,6 @@ export const CameraPropertiesSheet: React.FC = () => {
         limits.zoomMax,
       )
       camera.ptz = {...camera.ptz, pan, tilt, zoom}
-      camera.direction = pan
       camera.zoom = zoom
     })
   }
@@ -546,17 +522,6 @@ export const CameraPropertiesSheet: React.FC = () => {
                 value={[selectedCamera.height]}
                 onValueChange={handleHeightLiveChange}
                 onValueCommit={handleHeightChange}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label>Direction ({selectedCamera.direction.toFixed(0)}°)</Label>
-              <Slider
-                max={360}
-                min={0}
-                step={1}
-                value={[selectedCamera.direction]}
-                onValueChange={handleDirectionLiveChange}
-                onValueCommit={handleDirectionChange}
               />
             </div>
           </PropertiesSection>

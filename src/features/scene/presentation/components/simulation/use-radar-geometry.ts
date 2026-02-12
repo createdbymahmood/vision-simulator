@@ -107,7 +107,7 @@ export const useRadarGeometry = ({
       scene.cameras.map((camera) => {
         const world = transformer.toVector3([camera.x, camera.y])
         const point = toRadar({x: world.x, z: world.z})
-        const pan = camera.ptz?.pan ?? camera.direction
+        const pan = camera.ptz.pan
         const arrowDistance = Math.max(camera.depth * 0.15, 2)
         const directionGeo = projectPoint(
           [camera.x, camera.y],

@@ -590,7 +590,7 @@ export const buildCameraFeatures = (
       id: camera.id,
       areaId: camera.areaId,
       entityType: 'camera',
-      direction: camera.ptz?.pan ?? camera.direction,
+      direction: camera.ptz.pan,
       color: camera.color,
     },
     geometry: {
@@ -682,7 +682,7 @@ export const buildCameraLayerData = (
 
   cameras.forEach((camera) => {
     const origin: GeoPoint = [camera.x, camera.y]
-    const effectivePan = camera.ptz?.pan ?? camera.direction
+    const effectivePan = camera.ptz.pan
     const effectiveFov = getEffectiveHorizontalFov(camera)
     const signature = buildCameraLayerSignature(
       camera,

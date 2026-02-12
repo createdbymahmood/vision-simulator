@@ -326,6 +326,20 @@ const getNextId = (existingIds: string[], prefix: string) => {
   return `${prefix}-${maxSuffix + 1}`
 }
 
+const createDefaultPtzState = (zoom: number, pan: number) => ({
+  pan,
+  tilt: 0,
+  zoom,
+  limits: {
+    panMin: 0,
+    panMax: 360,
+    tiltMin: -45,
+    tiltMax: 90,
+    zoomMin: 1,
+    zoomMax: 10,
+  },
+})
+
 const addCamera = (
   set: SetState,
   get: GetState,
@@ -354,7 +368,7 @@ const addCamera = (
         },
         position: [camera.x, camera.y],
         color: camera.color,
-        direction: camera.direction,
+        pan: 0,
       },
       state.scene.cameras.length,
     )
@@ -516,9 +530,10 @@ const mergeSceneRoot = (base: SceneRoot, override: Partial<SceneRoot>) => ({
   meta: {...base.meta, ...override.meta},
 })
 
-type LegacyCameraFields = CameraEntity & {
+type CameraNormalizationInput = CameraEntity & {
   fov?: number
   sourceDeviceFeatures?: CameraSourceFeature[]
+  ptz?: CameraEntity['ptz']
 }
 
 const resolveNormalizedSourceDeviceId = (camera: CameraEntity) =>
@@ -530,14 +545,25 @@ const resolveNormalizedSourceDeviceName = (camera: CameraEntity) =>
 const resolveNormalizedSourceDeviceKind = (camera: CameraEntity) =>
   camera.sourceDeviceKind ?? 'real'
 
+const resolveNormalizedPtz = (
+  camera: CameraEntity,
+  normalizationInput: CameraNormalizationInput,
+) => {
+  if (normalizationInput.ptz) {
+    return normalizationInput.ptz
+  }
+  const zoom = Number.isFinite(camera.zoom) ? camera.zoom : 1
+  return createDefaultPtzState(zoom, 0)
+}
+
 const normalizeCameraEntity = (camera: CameraEntity): CameraEntity => {
-  const legacyCamera = camera as LegacyCameraFields
+  const normalizationInput = camera as CameraNormalizationInput
 
   const optics = createDefaultCameraOptics({
     fovHorizontal:
       Number.isFinite(camera.fovHorizontal) && camera.fovHorizontal > 0
         ? camera.fovHorizontal
-        : legacyCamera.fov,
+        : normalizationInput.fov,
     fovVertical:
       Number.isFinite(camera.fovVertical) && camera.fovVertical > 0
         ? camera.fovVertical
@@ -554,7 +580,8 @@ const normalizeCameraEntity = (camera: CameraEntity): CameraEntity => {
     sourceDeviceName: resolveNormalizedSourceDeviceName(camera),
     sourceDeviceKind: resolveNormalizedSourceDeviceKind(camera),
     sourceDeviceFeatures:
-      camera.sourceDeviceFeatures ?? legacyCamera.sourceDeviceFeatures ?? [],
+      camera.sourceDeviceFeatures ?? normalizationInput.sourceDeviceFeatures ?? [],
+    ptz: resolveNormalizedPtz(camera, normalizationInput),
     fovHorizontal: optics.fovHorizontal,
     fovVertical: optics.fovVertical,
     depth: optics.depth,

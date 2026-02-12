@@ -119,7 +119,6 @@ export interface CameraEntity {
   x: number
   y: number
   height: number
-  direction: number
   fovHorizontal: number
   fovVertical: number
   depth: number

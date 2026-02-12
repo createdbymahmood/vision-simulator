@@ -30,7 +30,7 @@ export const createCameraFrustumPlanes = (
   const near = MIN_CAMERA_NEAR_DISTANCE
   const far = Math.max(camera.depth, near + 0.1)
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
-  const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)
+  const yaw = -degToRad(camera.ptz.pan)
   const halfFov = horizontalFov / 2
   const radialSegments = 32
 

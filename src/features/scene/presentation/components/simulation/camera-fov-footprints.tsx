@@ -46,7 +46,7 @@ const EMPTY_SHAPES: ShapeEntity[] = []
 const EMPTY_OBSTACLES: ReturnType<typeof buildFovOcclusionObstacles> = []
 
 const getCameraFootprintSignature = (camera: CameraEntity) => {
-  const effectivePan = camera.ptz?.pan ?? camera.direction
+  const effectivePan = camera.ptz.pan
   const effectiveFov = getEffectiveHorizontalFov(camera)
   return [
     camera.areaId,
@@ -317,7 +317,7 @@ export const CameraFovFootprints: React.FC<CameraFovFootprintsProps> = ({
     const nextCache = new Map<string, CachedCameraFootprint>()
     const nextFootprints = cameras.map((camera) => {
       const origin: [number, number] = [camera.x, camera.y]
-      const effectivePan = camera.ptz?.pan ?? camera.direction
+      const effectivePan = camera.ptz.pan
       const effectiveFov = getEffectiveHorizontalFov(camera)
       const area = areaById.get(camera.areaId)
       const obstacles = obstaclesByArea.get(camera.areaId) ?? EMPTY_OBSTACLES

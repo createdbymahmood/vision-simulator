@@ -20,7 +20,7 @@ export const buildFovGroundRing = ({
   opticHeight: number
   segments?: number
 }) => {
-  const pan = camera.ptz?.pan ?? camera.direction
+  const pan = camera.ptz.pan
   const fov = getEffectiveHorizontalFov(camera)
   const halfFov = fov / 2
   const start = pan - halfFov

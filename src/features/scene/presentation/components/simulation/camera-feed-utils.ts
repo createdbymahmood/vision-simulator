@@ -67,7 +67,7 @@ export const computeFeedBoundingBoxes = ({
   const fov = getFeedVerticalFov(camera, safeAspect)
   const near = MIN_CAMERA_NEAR_DISTANCE
   const far = Math.max(camera.depth, near + 0.1)
-  const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)
+  const yaw = -degToRad(camera.ptz.pan)
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
   const cameraView = new THREE.PerspectiveCamera(fov, safeAspect, near, far)
   cameraView.position.set(base.x, opticHeight, base.z)

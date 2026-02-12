@@ -41,7 +41,7 @@ export const updateFeedCamera = ({
   const fov = getFeedVerticalFov(cameraEntity, aspect)
   const near = MIN_CAMERA_NEAR_DISTANCE
   const far = Math.max(cameraEntity.depth, near + 0.1)
-  const yaw = -degToRad(cameraEntity.ptz?.pan ?? cameraEntity.direction)
+  const yaw = -degToRad(cameraEntity.ptz.pan)
   const tilt = degToRad(cameraEntity.ptz?.tilt ?? 0)
 
   camera.position.set(base.x, opticHeight, base.z)

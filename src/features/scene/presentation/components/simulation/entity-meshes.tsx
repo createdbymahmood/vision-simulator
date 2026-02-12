@@ -482,7 +482,7 @@ export const CameraMesh: React.FC<{
   const standHeight = Math.max(entity.height - bodyHeight, 0.4)
   const color = entity.color
   const opticHeight = standHeight + bodyHeight * 0.5
-  const yaw = -degToRad(entity.ptz?.pan ?? entity.direction)
+  const yaw = -degToRad(entity.ptz.pan)
   const groundPlane = React.useMemo(
     () => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
     [],

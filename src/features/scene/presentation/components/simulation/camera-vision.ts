@@ -129,7 +129,7 @@ export const computeCameraVisionState = ({
   const areaById = new Map(scene.areas.map((area) => [area.id, area]))
 
   scene.cameras.forEach((camera) => {
-    const direction = camera.ptz?.pan ?? camera.direction
+    const direction = camera.ptz.pan
     const area = areaById.get(camera.areaId)
     const obstacles = obstaclesByArea.get(camera.areaId) ?? []
     const fovRing = buildOccludedFovRing({

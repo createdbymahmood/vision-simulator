@@ -13,11 +13,11 @@ export interface CreateCameraParams {
   optics?: Partial<CameraOptics>
   position: GeoPoint
   color?: string
-  direction?: number
+  pan?: number
 }
 
-const createDefaultPtzState = (zoom: number): PtzState => ({
-  pan: 0,
+const createDefaultPtzState = (zoom: number, pan: number): PtzState => ({
+  pan,
   tilt: 0,
   zoom,
   limits: {
@@ -36,6 +36,7 @@ export const createCameraEntity = (
 ): CameraEntity => {
   const resolvedOptics = createDefaultCameraOptics(params.optics)
   const color = params.color ?? assignCameraColor(index)
+  const pan = params.pan ?? 0
 
   return {
     id: params.id,
@@ -48,7 +49,6 @@ export const createCameraEntity = (
     x: params.position[0],
     y: params.position[1],
     height: resolvedOptics.height,
-    direction: params.direction ?? 0,
     fovHorizontal: resolvedOptics.fovHorizontal,
     fovVertical: resolvedOptics.fovVertical,
     depth: resolvedOptics.depth,
@@ -56,7 +56,7 @@ export const createCameraEntity = (
     resolution: resolvedOptics.resolution,
     color,
     sourceDeviceFeatures: [],
-    ptz: createDefaultPtzState(resolvedOptics.zoom),
+    ptz: createDefaultPtzState(resolvedOptics.zoom, pan),
     ptzPresets: [],
   }
 }
