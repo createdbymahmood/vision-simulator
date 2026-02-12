@@ -18,7 +18,6 @@ const AppRouteContent: React.FC = () => (
     accessToken={import.meta.env.VITE_ACCESS_TOKEN}
     isolationMode='none'
     mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}
-    mode='preview'
     visionSimulatorId={import.meta.env.VITE_VISION_SIMULATOR_ID}
   />
 )
