@@ -240,7 +240,12 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
   mode,
   unsavedChanges,
 }) => {
-  const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId)
+  const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId, {
+    query: {
+      gcTime: 0,
+      staleTime: 0,
+    },
+  })
   const initialSceneState = React.useMemo(
     () => createInitialSceneState(vision),
     [vision],
