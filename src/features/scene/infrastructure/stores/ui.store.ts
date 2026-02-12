@@ -118,7 +118,7 @@ const setEditMode = (set: SetState, get: GetState, enabled: boolean) => {
   const nextValue = produce<UiState>((state) => {
     state.isEditMode = enabled
     if (!enabled) {
-      state.activeTool = 'select'
+      state.activeTool = 'hand'
     }
   })
 
@@ -130,7 +130,7 @@ const toggleEditMode = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.isEditMode = !state.isEditMode
     if (!state.isEditMode) {
-      state.activeTool = 'select'
+      state.activeTool = 'hand'
     }
   })
 
