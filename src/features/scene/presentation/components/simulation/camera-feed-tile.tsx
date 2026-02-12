@@ -15,6 +15,7 @@ interface CameraFeedTileProps {
   camera: CameraEntity
   feedTarget: CameraFeedTarget
   peopleIds: string[]
+  selectedPersonIds: string[]
   peopleWorld: Record<string, {x: number; y: number; z: number; height: number}>
   transformer: ReturnType<typeof createCoordinateTransformer>
   feedCount: number
@@ -26,6 +27,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   camera,
   feedTarget,
   peopleIds,
+  selectedPersonIds,
   peopleWorld,
   transformer,
   feedCount,
@@ -79,8 +81,12 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
             <div className='pointer-events-none absolute inset-0'>
               {boxes.map((box) => (
                 <div
-                  className='absolute border-2 border-yellow-300'
                   key={box.id}
+                  className={`absolute border-2 ${
+                    selectedPersonIds.includes(box.id)
+                      ? 'border-purple-500'
+                      : 'border-yellow-300'
+                  }`}
                   style={{
                     left: `${box.left * 100}%`,
                     top: `${box.top * 100}%`,
@@ -88,7 +94,13 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
                     height: `${box.height * 100}%`,
                   }}
                 >
-                  <span className='absolute -top-5 left-0 bg-yellow-300/90 text-black text-[10px] px-1 rounded'>
+                  <span
+                    className={`absolute -top-5 left-0 text-[10px] px-1 rounded ${
+                      selectedPersonIds.includes(box.id)
+                        ? 'bg-purple-500/90 text-white'
+                        : 'bg-yellow-300/90 text-black'
+                    }`}
+                  >
                     {box.id}
                   </span>
                 </div>

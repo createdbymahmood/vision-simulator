@@ -1,6 +1,20 @@
 import type {CameraEntity} from '@/features/scene/domain/types'
 
-import {getEffectiveVerticalFov} from '@/features/scene/domain/services/camera-optics'
+import {
+  getCameraAspect,
+  getEffectiveHorizontalFov,
+  resolveVerticalFovFromHorizontal,
+} from '@/features/scene/domain/services/camera-optics'
 
-export const getFeedVerticalFov = (camera: CameraEntity) =>
-  getEffectiveVerticalFov(camera)
+const resolveAspect = (camera: CameraEntity, aspect?: number) => {
+  if (typeof aspect === 'number' && Number.isFinite(aspect) && aspect > 0) {
+    return aspect
+  }
+  return getCameraAspect(camera)
+}
+
+export const getFeedVerticalFov = (camera: CameraEntity, aspect?: number) =>
+  resolveVerticalFovFromHorizontal(
+    getEffectiveHorizontalFov(camera),
+    resolveAspect(camera, aspect),
+  )

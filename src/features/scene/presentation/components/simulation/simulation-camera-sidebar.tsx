@@ -3,6 +3,7 @@ import React from 'react'
 import type {SceneRoot} from '@/features/scene/domain/types'
 
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
 import type {CameraFeedTarget} from './camera-feed-types'
@@ -22,11 +23,17 @@ export const SimulationCameraSidebar: React.FC<
   SimulationCameraSidebarProps
 > = ({scene, feedTargets}) => {
   const visionState = useUiStore((state) => state.visionState)
+  const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
 
   const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
   const transformer = React.useMemo(
     () => createCoordinateTransformer(originPoint),
     [originPoint],
+  )
+  const selectedPersonIds = React.useMemo(
+    () =>
+      selectedEntityIds.filter((entityId) => entityId.startsWith('person-')),
+    [selectedEntityIds],
   )
 
   const detectionsByCamera = visionState.visibleByCameraId
@@ -55,6 +62,7 @@ export const SimulationCameraSidebar: React.FC<
                   feedCount={feedTargets.length}
                   peopleIds={peopleIds}
                   peopleWorld={peopleWorld}
+                  selectedPersonIds={selectedPersonIds}
                   transformer={transformer}
                 />
               )

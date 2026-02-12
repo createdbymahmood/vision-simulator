@@ -508,6 +508,7 @@ export const CameraMesh: React.FC<{
             )
           }
         }}
+        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
         position={[0, standHeight / 2, 0]}
         receiveShadow
       >
@@ -527,6 +528,7 @@ export const CameraMesh: React.FC<{
             )
           }
         }}
+        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
         position={[0, standHeight + bodyHeight / 2, 0]}
         receiveShadow
       >
@@ -548,6 +550,7 @@ export const CameraMesh: React.FC<{
           event.stopPropagation()
           onSelect(entity.id)
         }}
+        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
         position={[0, standHeight + bodyHeight * 0.8, 0.28]}
       >
         <coneGeometry args={[0.14, 0.25, 16]} />

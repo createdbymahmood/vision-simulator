@@ -61,14 +61,15 @@ export const computeFeedBoundingBoxes = ({
   if (peopleIds.length === 0) {
     return []
   }
+  const safeAspect = Number.isFinite(aspect) && aspect > 0 ? aspect : 1
   const base = transformer.toVector3([camera.x, camera.y], 0)
   const opticHeight = getCameraOpticHeight(camera)
-  const fov = getFeedVerticalFov(camera)
+  const fov = getFeedVerticalFov(camera, safeAspect)
   const near = MIN_CAMERA_NEAR_DISTANCE
   const far = Math.max(camera.depth, near + 0.1)
   const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
-  const cameraView = new THREE.PerspectiveCamera(fov, aspect || 1, near, far)
+  const cameraView = new THREE.PerspectiveCamera(fov, safeAspect, near, far)
   cameraView.position.set(base.x, opticHeight, base.z)
   cameraView.rotation.set(tilt, yaw, 0, 'YXZ')
   cameraView.updateProjectionMatrix()
