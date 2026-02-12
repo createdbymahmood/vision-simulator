@@ -136,7 +136,10 @@ export const CameraPropertiesSheet: React.FC = () => {
   )
 
   const syncDeviceFeatures = useCallbackRef((camera: CameraEntity) => {
-    if (!camera.sourceDeviceId) {
+    if (
+      !camera.sourceDeviceId ||
+      camera.sourceDeviceId.startsWith('virtual-')
+    ) {
       return
     }
 
