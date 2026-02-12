@@ -23,6 +23,7 @@ import {
 import {cn} from '@/lib/utils'
 
 import type {
+  CameraPlacementProfile,
   EditorMode,
   SceneMapStyle,
   SceneRoot,
@@ -233,9 +234,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     seedHistory(nextScene)
   }
 
-  const handleSelectDevicePreset = (presetId: string) => {
+  const handleSelectDeviceProfile = (profile: CameraPlacementProfile) => {
     setActiveTool('place-camera')
-    setCameraPlacement(presetId, nextCameraColor)
+    setCameraPlacement(profile, nextCameraColor)
     setPlaceDeviceOpen(false)
   }
 
@@ -438,7 +439,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           <PlaceDeviceDialog
             nextColor={nextCameraColor}
             onOpenChange={setPlaceDeviceOpen}
-            onSelectDevice={handleSelectDevicePreset}
+            onSelectDevice={handleSelectDeviceProfile}
             open={placeDeviceOpen}
           />
 

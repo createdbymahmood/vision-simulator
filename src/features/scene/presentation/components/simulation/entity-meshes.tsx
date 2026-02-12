@@ -4,6 +4,10 @@ import * as THREE from 'three'
 import type {CameraEntity} from '@/features/scene/domain/types'
 
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
+import {
+  getEffectiveHorizontalFov,
+  getEffectiveVerticalFov,
+} from '@/features/scene/domain/services/camera-optics'
 
 import type {WorldEntity} from './simulation-helpers'
 
@@ -17,6 +21,7 @@ const MAX_RENDER_VERTICAL_FOV_DEG = 70
 const WALL_CORNER_KEY_PRECISION = 1000
 const WALL_COLLINEAR_DOT_THRESHOLD = 0.995
 const MIN_WALL_CAP_RADIUS = 0.01
+const MIN_CAMERA_NEAR_DISTANCE = 0.1
 
 const degToRad = (deg: number) => (deg * Math.PI) / 180
 type WallWorldEntity = Extract<WorldEntity, {type: 'wall'}>
@@ -168,22 +173,13 @@ const buildWallCornerCaps = (walls: WallWorldEntity[]): WallCornerCapData[] => {
 const isWallEntity = (entity: WorldEntity): entity is WallWorldEntity =>
   entity.type === 'wall'
 
-const getCameraAspect = (camera: CameraEntity) => {
-  const width = Math.max(camera.resolution?.width ?? 16, 1)
-  const height = Math.max(camera.resolution?.height ?? 9, 1)
-  return width / height
-}
-
 const getCameraFovAngles = (camera: CameraEntity) => {
-  const zoom = Math.max(camera.ptz?.zoom ?? 1, 0.0001)
-  const aspect = getCameraAspect(camera)
-  const clampedFov = Math.min(camera.fov / zoom, MAX_RENDER_FOV_DEG)
-  const diagonal = degToRad(clampedFov)
-  const tanDiagonal = Math.tan(diagonal / 2)
-  const tanVertical = tanDiagonal / Math.sqrt(1 + aspect * aspect)
-  let vertical = 2 * Math.atan(tanVertical)
-  vertical = Math.min(vertical, degToRad(MAX_RENDER_VERTICAL_FOV_DEG))
-  const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * aspect)
+  const horizontal = degToRad(
+    Math.min(getEffectiveHorizontalFov(camera), MAX_RENDER_FOV_DEG),
+  )
+  const vertical = degToRad(
+    Math.min(getEffectiveVerticalFov(camera), MAX_RENDER_VERTICAL_FOV_DEG),
+  )
   return {horizontal, vertical}
 }
 
@@ -375,7 +371,7 @@ const buildFrustumGeometry = (
   const yaw = 0 // yaw comes from parent group rotation
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
   const {horizontal} = getCameraFovAngles(camera)
-  const near = Math.max(camera.nearClipping, 0.1)
+  const near = MIN_CAMERA_NEAR_DISTANCE
   const unclampedFar = Math.max(camera.depth, near + 0.1)
   const far = Math.max(
     near + 0.1,

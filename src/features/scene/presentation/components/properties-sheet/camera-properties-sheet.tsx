@@ -1,3 +1,4 @@
+import {debounce} from '@lodash-es'
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {
   ArrowDown,
@@ -9,7 +10,7 @@ import {
 } from 'lucide-react'
 import React from 'react'
 
-import type {PtzPreset} from '@/features/scene/domain/types'
+import type {CameraEntity, PtzPreset} from '@/features/scene/domain/types'
 
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
@@ -22,11 +23,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
-import {CAMERA_PRESETS} from '@/features/scene/domain/constants/camera-presets'
+import {useUpdateDevice} from '@/data-provider/api/services/v2/device'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {formatMeters} from '@/features/scene/presentation/components/map-view/map-view-helpers'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
+import {mergeCameraFeaturesWithCamera} from '@/features/scene/presentation/utils/camera-device-features'
 
 import {PropertiesSection, PropertiesShell} from './properties-shell'
 
@@ -87,6 +89,7 @@ const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
 // eslint-disable-next-line max-lines-per-function
 export const CameraPropertiesSheet: React.FC = () => {
   const {recordActionDebounced} = useHistoryRecorder()
+  const {mutate: updateDevice} = useUpdateDevice()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
@@ -108,7 +111,7 @@ export const CameraPropertiesSheet: React.FC = () => {
   >(null)
 
   const updateSelectedCamera = React.useCallback(
-    (updater: (camera: (typeof cameras)[number]) => void) => {
+    (updater: (camera: CameraEntity) => void) => {
       if (!selectedCamera) return
       return updateCamera(selectedCamera.id, updater)
     },
@@ -128,52 +131,100 @@ export const CameraPropertiesSheet: React.FC = () => {
     },
   )
 
+  const syncDeviceFeatures = useCallbackRef((camera: CameraEntity) => {
+    if (!camera.sourceDeviceId) {
+      return
+    }
+
+    updateDevice({
+      deviceId: camera.sourceDeviceId,
+      data: {
+        features: mergeCameraFeaturesWithCamera(camera),
+      },
+    })
+  })
+
+  const debouncedSyncDeviceFeatures = React.useMemo(
+    () => debounce((camera: CameraEntity) => syncDeviceFeatures(camera), 800),
+    [syncDeviceFeatures],
+  )
+
+  React.useEffect(
+    () => () => {
+      debouncedSyncDeviceFeatures.cancel()
+    },
+    [debouncedSyncDeviceFeatures],
+  )
+
+  const queueDeviceSync = useCallbackRef(
+    (updated?: ReturnType<typeof updateCamera>) => {
+      if (!updated || !selectedCamera) {
+        return
+      }
+
+      const nextCamera = updated.cameras.find(
+        (camera) => camera.id === selectedCamera.id,
+      )
+      if (!nextCamera) {
+        return
+      }
+
+      debouncedSyncDeviceFeatures(nextCamera)
+    },
+  )
+
+  const commitCameraUpdate = useCallbackRef(
+    (updater: (camera: CameraEntity) => void) => {
+      const updated = updateSelectedCamera((camera) => {
+        updater(camera)
+        camera.sourceDeviceFeatures = mergeCameraFeaturesWithCamera(camera)
+      })
+      recordCameraUpdate(updated)
+      queueDeviceSync(updated)
+      return updated
+    },
+  )
+
   const handleColorChange = (value: string) => {
-    const updated = updateSelectedCamera((camera) => {
+    commitCameraUpdate((camera) => {
       camera.color = value
     })
-    recordCameraUpdate(updated)
   }
 
   const handleDirectionChange = (values: number[]) => {
     const [direction] = values
-    const updated = updateSelectedCamera((camera) => {
+    commitCameraUpdate((camera) => {
       camera.direction = normalizePan(direction)
       camera.ptz.pan = normalizePan(direction)
     })
-    recordCameraUpdate(updated)
   }
 
-  const handleFovChange = (values: number[]) => {
-    const [fov] = values
-    const updated = updateSelectedCamera((camera) => {
-      camera.fov = fov
+  const handleHorizontalFovChange = (values: number[]) => {
+    const [fovHorizontal] = values
+    commitCameraUpdate((camera) => {
+      camera.fovHorizontal = fovHorizontal
     })
-    recordCameraUpdate(updated)
+  }
+
+  const handleVerticalFovChange = (values: number[]) => {
+    const [fovVertical] = values
+    commitCameraUpdate((camera) => {
+      camera.fovVertical = fovVertical
+    })
   }
 
   const handleDepthChange = (values: number[]) => {
     const [depth] = values
-    const updated = updateSelectedCamera((camera) => {
+    commitCameraUpdate((camera) => {
       camera.depth = depth
     })
-    recordCameraUpdate(updated)
-  }
-
-  const handleNearClipChange = (values: number[]) => {
-    const [nearClipping] = values
-    const updated = updateSelectedCamera((camera) => {
-      camera.nearClipping = nearClipping
-    })
-    recordCameraUpdate(updated)
   }
 
   const handleHeightChange = (values: number[]) => {
     const [height] = values
-    const updated = updateSelectedCamera((camera) => {
+    commitCameraUpdate((camera) => {
       camera.height = height
     })
-    recordCameraUpdate(updated)
   }
 
   const handleResolutionChange = (key: 'height' | 'width', value: string) => {
@@ -181,16 +232,16 @@ export const CameraPropertiesSheet: React.FC = () => {
     if (!Number.isFinite(next) || next <= 0) {
       return
     }
-    const updated = updateSelectedCamera((camera) => {
+
+    commitCameraUpdate((camera) => {
       camera.resolution = {...camera.resolution, [key]: next}
     })
-    recordCameraUpdate(updated)
   }
 
   const applyPtz = (
     next: Partial<{pan: number; tilt: number; zoom: number}>,
   ) => {
-    const updated = updateSelectedCamera((camera) => {
+    commitCameraUpdate((camera) => {
       const limits = camera.ptz.limits
       const pan = normalizePan(next.pan ?? camera.ptz.pan)
       const tilt = clamp(
@@ -207,7 +258,6 @@ export const CameraPropertiesSheet: React.FC = () => {
       camera.direction = pan
       camera.zoom = zoom
     })
-    recordCameraUpdate(updated)
   }
 
   const handleSavePreset = () => {
@@ -215,8 +265,8 @@ export const CameraPropertiesSheet: React.FC = () => {
     if (!presetName.trim()) return
     if (selectedCamera.ptzPresets.length >= 5) return
     const trimmed = presetName.trim()
-    applyPtz({})
-    const updated = updateSelectedCamera((camera) => {
+
+    commitCameraUpdate((camera) => {
       const exists = camera.ptzPresets.find((preset) => preset.name === trimmed)
       const nextPreset: PtzPreset = {
         name: trimmed,
@@ -230,7 +280,6 @@ export const CameraPropertiesSheet: React.FC = () => {
           )
         : [...camera.ptzPresets, nextPreset]
     })
-    recordCameraUpdate(updated)
     setPresetName('')
   }
 
@@ -317,46 +366,22 @@ export const CameraPropertiesSheet: React.FC = () => {
                 id='camera-name'
                 value={cameraName}
                 onChange={(event) => {
-                  const updated = updateSelectedCamera((camera) => {
+                  commitCameraUpdate((camera) => {
                     camera.name = event.target.value
                   })
-                  recordCameraUpdate(updated)
                 }}
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='camera-preset'>Type Preset</Label>
-              <Select
-                value={selectedCamera.typePreset}
-                onValueChange={(value) => {
-                  const preset = CAMERA_PRESETS.find(
-                    (item) => item.id === value,
-                  )
-                  if (!preset) return
-                  const updated = updateSelectedCamera((camera) => {
-                    camera.typePreset = value
-                    camera.fov = preset.fov
-                    camera.depth = preset.depth
-                    camera.nearClipping = preset.nearClipping
-                    camera.resolution = preset.resolution
-                    camera.height = preset.height
-                    camera.zoom = preset.zoom
-                    camera.ptz = {...camera.ptz, zoom: preset.zoom}
-                  })
-                  recordCameraUpdate(updated)
-                }}
-              >
-                <SelectTrigger id='camera-preset'>
-                  <SelectValue placeholder='Select preset' />
-                </SelectTrigger>
-                <SelectContent>
-                  {CAMERA_PRESETS.map((preset) => (
-                    <SelectItem key={preset.id} value={preset.id}>
-                      {preset.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor='camera-source-device'>Source Device</Label>
+              <Input
+                readOnly
+                id='camera-source-device'
+                value={
+                  selectedCamera.sourceDeviceName ||
+                  selectedCamera.sourceDeviceId
+                }
+              />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='camera-color'>Color</Label>
@@ -394,13 +419,27 @@ export const CameraPropertiesSheet: React.FC = () => {
 
           <PropertiesSection title='Optics'>
             <div className='space-y-2'>
-              <Label>Field of View ({selectedCamera.fov.toFixed(0)}°)</Label>
+              <Label>
+                Horizontal FOV ({selectedCamera.fovHorizontal.toFixed(0)}°)
+              </Label>
               <Slider
                 max={180}
-                min={10}
+                min={1}
                 step={1}
-                value={[selectedCamera.fov]}
-                onValueChange={handleFovChange}
+                value={[selectedCamera.fovHorizontal]}
+                onValueChange={handleHorizontalFovChange}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>
+                Vertical FOV ({selectedCamera.fovVertical.toFixed(0)}°)
+              </Label>
+              <Slider
+                max={180}
+                min={1}
+                step={1}
+                value={[selectedCamera.fovVertical]}
+                onValueChange={handleVerticalFovChange}
               />
             </div>
             <div className='space-y-2'>
@@ -411,18 +450,6 @@ export const CameraPropertiesSheet: React.FC = () => {
                 step={1}
                 value={[selectedCamera.depth]}
                 onValueChange={handleDepthChange}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label>
-                Near Clipping ({selectedCamera.nearClipping.toFixed(2)} m)
-              </Label>
-              <Slider
-                max={5}
-                min={0.1}
-                step={0.1}
-                value={[selectedCamera.nearClipping]}
-                onValueChange={handleNearClipChange}
               />
             </div>
             <div className='space-y-2'>

@@ -8,6 +8,7 @@ import {getCameraOpticHeight} from './camera-collision-utils'
 import {getFeedVerticalFov} from './camera-feed-fov'
 
 const degToRad = (deg: number) => (deg * Math.PI) / 180
+const MIN_CAMERA_NEAR_DISTANCE = 0.1
 
 export const createFeedRenderer = (canvas: HTMLCanvasElement) => {
   const renderer = new THREE.WebGLRenderer({
@@ -38,7 +39,7 @@ export const updateFeedCamera = ({
   const base = transformer.toVector3([cameraEntity.x, cameraEntity.y], 0)
   const opticHeight = getCameraOpticHeight(cameraEntity)
   const fov = getFeedVerticalFov(cameraEntity)
-  const near = Math.max(cameraEntity.nearClipping ?? 0.1, 0.1)
+  const near = MIN_CAMERA_NEAR_DISTANCE
   const far = Math.max(cameraEntity.depth, near + 0.1)
   const yaw = -degToRad(cameraEntity.ptz?.pan ?? cameraEntity.direction)
   const tilt = degToRad(cameraEntity.ptz?.tilt ?? 0)

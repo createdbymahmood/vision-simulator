@@ -527,7 +527,9 @@ No global or per-camera visibility toggle is provided.
 4. **Zoom Slider**:
    - Range: 1.0x to 10.0x (or camera-specific max zoom)
    - Logarithmic scale (feels natural)
-   - Affects FOV: `effectiveFOV = baseFOV / zoomFactor`
+   - Affects FOV:
+     - `effectiveHorizontalFov = baseHorizontalFov / zoomFactor`
+     - `effectiveVerticalFov = baseVerticalFov / zoomFactor`
    - Label: "Zoom: 1.5x"
 
 5. **Reset Button**:
@@ -602,10 +604,11 @@ No global or per-camera visibility toggle is provided.
 }
 ```
 
-**Effective FOV Calculation**:
+**Effective Horizontal/Vertical FOV Calculation**:
 
 ```javascript
-effectiveFOV = baseFOV / ptz.zoom
+effectiveHorizontalFov = baseHorizontalFov / ptz.zoom
+effectiveVerticalFov = baseVerticalFov / ptz.zoom
 direction = ptz.pan // horizontal rotation
 elevation = ptz.tilt // vertical angle
 ```
@@ -1199,7 +1202,7 @@ Each area has:
 - Width: 600px, height: 400px
 - Search input: Autofocus
 - Camera types list:
-  - Each item: Icon (32px) + Name + FOV/Depth specs
+  - Each item: Icon (32px) + Name + HFOV/VFOV/Depth specs
   - Hover: Background highlight, shows more details
   - Selected: Press Enter or click
 
@@ -1407,7 +1410,7 @@ Each area has:
   ```
   ┌────────────────────────────────┐
   │ 🎥 cam-1      [PTZ] [Focus]    │  ← Color dot next to name
-  │ FOV: 60° • Depth: 20m          │
+  │ HFOV: 60° • VFOV: 40° • Depth: 20m │
   │ Detections: 2 🟢               │
   └────────────────────────────────┘
   ```
@@ -1670,9 +1673,9 @@ function updatePerson(person, dt) {
   - Position (x, y, height)
   - Direction (pan angle)
   - Elevation (tilt angle)
-  - FOV (horizontal)
+  - FOV (horizontal + vertical)
   - Depth (far plane)
-  - Zoom (affects effective FOV)
+  - Zoom (affects effective horizontal/vertical FOV)
 - Test each person: Is person's position inside frustum?
   - If NO: person not visible, skip
   - If YES: proceed to narrow phase
@@ -1700,7 +1703,8 @@ function updatePerson(person, dt) {
 - Set camera parameters:
   - Position: camera (x, y, height)
   - Rotation: (tilt, pan, 0)
-  - FOV: baseFOV / zoom
+  - Horizontal FOV: baseHorizontalFov / zoom
+  - Vertical FOV: baseVerticalFov / zoom
   - Aspect: POV feed aspect ratio
   - Near: 0.1m
   - Far: camera depth
@@ -1886,20 +1890,22 @@ renderer.setSize(originalSize.x, originalSize.y)
   "id": "camera-1",
   "type": "camera",
   "areaId": "area-1",
-  "typePreset": "basic",
+  "sourceDeviceId": "camera-device-1",
+  "sourceDeviceName": "IP Camera 1",
   "x": 10,
   "y": 10,
   "height": 2.5,
   "direction": 90,
-  "fov": 60,
+  "fovHorizontal": 60,
+  "fovVertical": 40,
   "depth": 20,
   "zoom": 1.0,
-  "nearClipping": 0.1,
   "resolution": {
     "width": 1280,
     "height": 720
   },
   "color": "#FF6B6B",
+  "sourceDeviceFeatures": [],
   "ptz": {
     "pan": 90,
     "tilt": 0,

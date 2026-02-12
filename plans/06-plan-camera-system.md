@@ -80,7 +80,7 @@ This ensures camera visualizations integrate seamlessly with the map and area sy
 - [ ] **Dimensions**: Width 600px, height 400px
 - [ ] **Search input**: Autofocus
 - [ ] **Camera types list**:
-  - Each item: Icon (32px) + Name + FOV/Depth specs
+  - Each item: Icon (32px) + Name + HFOV/VFOV/Depth specs
   - Hover: Background highlight, shows more details
   - Selected: Press Enter or click
 - [ ] **Close behavior**: 200ms fade on selection or ESC
@@ -180,17 +180,17 @@ This ensures camera visualizations integrate seamlessly with the map and area sy
   - Tooltip: `"Camera • Range: 20 m"`
 
 - [ ] **After Placement** (adjusting FOV):
-  - Dragging FOV cone edge: `"FOV: 75° • Depth: 20 m"`
+  - Dragging FOV cone edge: `"HFOV: 75° • VFOV: 50° • Depth: 20 m"`
 
 ### Camera Entity Properties
 
 - [ ] `id`, `type: "camera"`, `areaId`
-- [ ] `typePreset` (from CMDK selection)
+- [ ] `sourceDeviceId`, `sourceDeviceName` (from CMDK device selection)
 - [ ] `x`, `y`, `height`
 - [ ] `direction` (0-360)
-- [ ] `fov`, `depth`, `zoom`
-- [ ] `nearClipping`
+- [ ] `fovHorizontal`, `fovVertical`, `depth`, `zoom`
 - [ ] `resolution: { width, height }`
+- [ ] `sourceDeviceFeatures: Array<{ field, label, path, unit, value }>`
 - [ ] `color` (auto-assigned)
 
 ### Devices in Use Panel (Section 5.1.4)
@@ -202,7 +202,7 @@ This ensures camera visualizations integrate seamlessly with the map and area sy
   - List of all cameras with:
     - Color dot
     - Name (editable)
-    - FOV/Depth specs
+    - HFOV/VFOV/Depth specs
     - Click to select/focus
 
 ---

@@ -7,6 +7,7 @@ import {toast} from 'sonner'
 import type {
   AreaEntity,
   CameraEntity,
+  CameraPlacementProfile,
   GeoPoint,
   SceneRoot,
   ShapeEntity,
@@ -15,7 +16,7 @@ import type {
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {TooltipState} from '@/features/scene/presentation/components/map-view/map-view-types'
 
-import {getCameraPreset} from '@/features/scene/domain/constants/camera-presets'
+import {createDefaultCameraOptics} from '@/features/scene/domain/services/camera-optics'
 import {assignCameraColor} from '@/features/scene/domain/services/color-assignment'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
@@ -31,26 +32,16 @@ import {
 
 type MapLayerMouseEvent = MapMouseEvent
 
-const DEFAULT_CAMERA_PLACEMENT_PRESET = {
-  id: 'static-hd',
+const DEFAULT_CAMERA_PLACEMENT_PROFILE: CameraPlacementProfile = {
+  id: 'manual-camera',
   name: 'Camera',
-  fov: 90,
-  depth: 20,
-  zoom: 1,
-  nearClipping: 0.5,
-  height: 3,
-  resolution: {width: 1920, height: 1080},
+  description: 'Generic camera',
+  optics: createDefaultCameraOptics(),
+  features: [],
 }
 
-const resolvePlacementPreset = (
-  preset?: ReturnType<typeof getCameraPreset>,
-) => ({
-  ...DEFAULT_CAMERA_PLACEMENT_PRESET,
-  ...(preset ?? {}),
-})
-
 interface CameraPlacementState {
-  presetId: string | null
+  profile: CameraPlacementProfile | null
   color: string | null
 }
 
@@ -62,7 +53,10 @@ interface UseCameraPlacementParams {
   walls: WallEntity[]
   shapes: ShapeEntity[]
   cameraPlacement: CameraPlacementState
-  setCameraPlacement: (presetId: string | null, color: string | null) => void
+  setCameraPlacement: (
+    profile: CameraPlacementProfile | null,
+    color: string | null,
+  ) => void
   clearCameraPlacement: () => void
   addCamera: (
     camera: Omit<CameraEntity, 'id' | 'ptz' | 'ptzPresets' | 'type'>,
@@ -88,21 +82,6 @@ interface UseCameraPlacementResult {
   onPointerMove: (event: MapLayerMouseEvent) => boolean
   onMapClick: (event: MapLayerMouseEvent) => boolean
 }
-
-const createEmptyPreview = (): CameraPreviewData => ({
-  point: {type: 'FeatureCollection', features: []} as FeatureCollection<Point>,
-  fov: {type: 'FeatureCollection', features: []} as FeatureCollection<Polygon>,
-  direction: {
-    type: 'FeatureCollection',
-    features: [],
-  } as FeatureCollection<LineString>,
-  range: {
-    type: 'FeatureCollection',
-    features: [],
-  } as FeatureCollection<LineString>,
-  isValid: false,
-  isBlocked: false,
-})
 
 const MIN_FOV_PREVIEW_AREA = 0.5
 
@@ -133,22 +112,21 @@ export const useCameraPlacement = ({
     [areas],
   )
 
-  const resolvePreset = React.useCallback(() => {
-    const defaultPresetId = 'static-hd'
-    const presetId = cameraPlacement.presetId ?? defaultPresetId
-    return getCameraPreset(presetId) ?? getCameraPreset(defaultPresetId)
-  }, [cameraPlacement.presetId])
+  const resolvePlacementProfile = React.useCallback(
+    () => cameraPlacement.profile ?? DEFAULT_CAMERA_PLACEMENT_PROFILE,
+    [cameraPlacement.profile],
+  )
 
   const ensurePlacementColor = React.useCallback(() => {
     if (cameraPlacement.color) {
       return cameraPlacement.color
     }
     const nextColor = assignCameraColor(cameras.length)
-    setCameraPlacement(cameraPlacement.presetId, nextColor)
+    setCameraPlacement(cameraPlacement.profile, nextColor)
     return nextColor
   }, [
     cameraPlacement.color,
-    cameraPlacement.presetId,
+    cameraPlacement.profile,
     cameras.length,
     setCameraPlacement,
   ])
@@ -165,10 +143,8 @@ export const useCameraPlacement = ({
 
   const updatePreview = React.useCallback(
     (point: GeoPoint) => {
-      const preset = resolvePreset()
-      if (!preset) {
-        return createEmptyPreview()
-      }
+      const profile = resolvePlacementProfile()
+      const optics = profile.optics
       const color = ensurePlacementColor()
       const areaForPoint = getAreaAtPoint(point)
       const obstacles = areaForPoint
@@ -177,14 +153,14 @@ export const useCameraPlacement = ({
       const ring = buildOccludedFovRing({
         origin: point,
         direction: 0,
-        fov: preset.fov,
-        depth: preset.depth,
-        cameraHeight: preset.height ?? 3,
+        fov: optics.fovHorizontal,
+        depth: optics.depth,
+        cameraHeight: optics.height,
         area: areaForPoint,
         obstacles,
       })
-      const directionPoint = projectPoint(point, 0, preset.depth * 0.6)
-      const rangeRing = createCircleRing(point, preset.depth, 72)
+      const directionPoint = projectPoint(point, 0, optics.depth * 0.6)
+      const rangeRing = createCircleRing(point, optics.depth, 72)
       const fovArea = computeArea(ring)
       const hasVisibleFov = fovArea > MIN_FOV_PREVIEW_AREA
       const isBlocked = Boolean(areaForPoint) && !hasVisibleFov
@@ -248,7 +224,7 @@ export const useCameraPlacement = ({
       ensurePlacementColor,
       getAreaAtPoint,
       occlusionObstaclesByArea,
-      resolvePreset,
+      resolvePlacementProfile,
     ],
   )
 
@@ -259,6 +235,7 @@ export const useCameraPlacement = ({
       }
       const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
       const nextPreview = updatePreview(point)
+      const profile = resolvePlacementProfile()
       setPreview(nextPreview)
       if (areas.length === 0) {
         setTooltip({
@@ -292,7 +269,7 @@ export const useCameraPlacement = ({
       }
       setCursorOverride('none')
       setTooltip({
-        text: `Camera • Range: ${formatMeters(resolvePreset()?.depth ?? 0)}`,
+        text: `Camera • HFOV ${profile.optics.fovHorizontal.toFixed(0)}° • VFOV ${profile.optics.fovVertical.toFixed(0)}° • Range ${formatMeters(profile.optics.depth)}`,
         x: event.point.x + 12,
         y: event.point.y + 12,
         visible: true,
@@ -303,7 +280,7 @@ export const useCameraPlacement = ({
       activeTool,
       isEditMode,
       areas.length,
-      resolvePreset,
+      resolvePlacementProfile,
       setCursorOverride,
       setTooltip,
       updatePreview,
@@ -327,15 +304,15 @@ export const useCameraPlacement = ({
     (
       mapPoint: GeoPoint,
       areaForPlacement: AreaEntity,
-      preset: typeof DEFAULT_CAMERA_PLACEMENT_PRESET,
+      profile: CameraPlacementProfile,
     ) => {
       const obstacles = occlusionObstaclesByArea.get(areaForPlacement.id) ?? []
       const fovRing = buildOccludedFovRing({
         origin: mapPoint,
         direction: 0,
-        fov: preset.fov,
-        depth: preset.depth,
-        cameraHeight: preset.height,
+        fov: profile.optics.fovHorizontal,
+        depth: profile.optics.depth,
+        cameraHeight: profile.optics.height,
         area: areaForPlacement,
         obstacles,
       })
@@ -355,30 +332,32 @@ export const useCameraPlacement = ({
         return false
       }
       const mapPoint: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
-      const preset = resolvePlacementPreset(resolvePreset())
+      const profile = resolvePlacementProfile()
       const color = ensurePlacementColor()
 
       const areaForPlacement = resolvePlacementArea(mapPoint)
       if (!areaForPlacement) {
         return true
       }
-      if (!isFovPlacementValid(mapPoint, areaForPlacement, preset)) {
+      if (!isFovPlacementValid(mapPoint, areaForPlacement, profile)) {
         return true
       }
 
       const updatedScene = addCamera({
-        typePreset: preset.id,
+        sourceDeviceId: profile.id,
+        sourceDeviceName: profile.name,
+        sourceDeviceFeatures: profile.features.map((feature) => ({...feature})),
         areaId: areaForPlacement.id,
         x: mapPoint[0],
         y: mapPoint[1],
-        name: preset.name,
-        height: preset.height,
+        name: profile.name,
+        height: profile.optics.height,
         direction: 0,
-        fov: preset.fov,
-        depth: preset.depth,
-        zoom: preset.zoom,
-        nearClipping: preset.nearClipping,
-        resolution: preset.resolution,
+        fovHorizontal: profile.optics.fovHorizontal,
+        fovVertical: profile.optics.fovVertical,
+        depth: profile.optics.depth,
+        zoom: profile.optics.zoom,
+        resolution: profile.optics.resolution,
         color,
       })
       recordAction({type: 'add', entity: 'camera'}, updatedScene)
@@ -403,7 +382,7 @@ export const useCameraPlacement = ({
       openCameraPanel,
       recordAction,
       resolvePlacementArea,
-      resolvePreset,
+      resolvePlacementProfile,
       setActiveTool,
       setSelection,
     ],

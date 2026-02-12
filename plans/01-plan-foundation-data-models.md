@@ -71,9 +71,10 @@ Establish the foundational architecture, data models, routing structure, and sta
   - `style: { fillColor, fillOpacity, borderColor, borderWidth }`
 
 - [ ] **Camera Entity** (Section 7.2 + Section 5.5.5)
-  - `id`, `type: "camera"`, `areaId`, `typePreset`
-  - `x`, `y`, `height`, `direction`, `fov`, `depth`, `zoom`, `nearClipping`
+  - `id`, `type: "camera"`, `areaId`, `sourceDeviceId`, `sourceDeviceName`
+  - `x`, `y`, `height`, `direction`, `fovHorizontal`, `fovVertical`, `depth`, `zoom`
   - `resolution: { width, height }`
+  - `sourceDeviceFeatures: Array<{ field, label, path, unit, value }>`
   - `color` (from 20-color palette)
   - `ptz: { pan, tilt, zoom, limits: { panMin, panMax, tiltMin, tiltMax, zoomMin, zoomMax } }`
   - `ptzPresets: Array<{ name, pan, tilt, zoom }>`

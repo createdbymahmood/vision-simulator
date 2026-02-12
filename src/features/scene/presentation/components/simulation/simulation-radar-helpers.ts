@@ -1,5 +1,7 @@
 import type {CameraEntity, GeoPoint} from '@/features/scene/domain/types'
 
+import {getEffectiveHorizontalFov} from '@/features/scene/domain/services/camera-optics'
+
 import {projectPoint} from '../map-view/map-view-helpers'
 
 export const clamp = (value: number, min: number, max: number) =>
@@ -19,7 +21,7 @@ export const buildFovGroundRing = ({
   segments?: number
 }) => {
   const pan = camera.ptz?.pan ?? camera.direction
-  const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+  const fov = getEffectiveHorizontalFov(camera)
   const halfFov = fov / 2
   const start = pan - halfFov
   const step = fov / segments

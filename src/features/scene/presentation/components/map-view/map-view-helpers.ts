@@ -48,6 +48,7 @@ import {
   DEFAULT_WALL_COLOR,
   DEFAULT_WALL_THICKNESS,
 } from '@/features/scene/domain/constants/wall-style'
+import {getEffectiveHorizontalFov} from '@/features/scene/domain/services/camera-optics'
 
 const DEFAULT_FOV_SEGMENTS = 24
 const DEFAULT_LINE_SHAPE_THICKNESS = 0.1
@@ -634,7 +635,7 @@ export const buildCameraLayerData = (
   cameras.forEach((camera) => {
     const origin: GeoPoint = [camera.x, camera.y]
     const effectivePan = camera.ptz?.pan ?? camera.direction
-    const effectiveFov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+    const effectiveFov = getEffectiveHorizontalFov(camera)
     const area = areaMap.get(camera.areaId)
     const obstacles =
       obstacleGroups.get(camera.areaId) ??

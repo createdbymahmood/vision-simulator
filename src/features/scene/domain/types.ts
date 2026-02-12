@@ -80,22 +80,49 @@ export interface PtzState {
   limits: PtzLimits
 }
 
+export interface CameraSourceFeature {
+  field?: string
+  label?: string
+  path?: string
+  unit?: string
+  value?: string
+}
+
+export interface CameraOptics {
+  fovHorizontal: number
+  fovVertical: number
+  depth: number
+  zoom: number
+  height: number
+  resolution: Resolution
+}
+
+export interface CameraPlacementProfile {
+  id: string
+  name: string
+  description: string
+  optics: CameraOptics
+  features: CameraSourceFeature[]
+}
+
 export interface CameraEntity {
   id: string
   type: 'camera'
   name: string
   areaId: string
-  typePreset: string
+  sourceDeviceId: string
+  sourceDeviceName: string
   x: number
   y: number
   height: number
   direction: number
-  fov: number
+  fovHorizontal: number
+  fovVertical: number
   depth: number
   zoom: number
-  nearClipping: number
   resolution: Resolution
   color: string
+  sourceDeviceFeatures: CameraSourceFeature[]
   ptz: PtzState
   ptzPresets: PtzPreset[]
 }

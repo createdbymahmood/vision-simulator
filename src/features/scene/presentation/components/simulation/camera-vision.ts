@@ -7,6 +7,7 @@ import type {
 } from '@/features/scene/domain/types'
 
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
+import {getEffectiveHorizontalFov} from '@/features/scene/domain/services/camera-optics'
 
 import type {CoordinateTransformer} from './simulation-helpers'
 
@@ -15,6 +16,7 @@ import {getLineShapeGeometryEndpoints} from './simulation-helpers'
 
 const DEFAULT_LINE_THICKNESS = 0.1
 const EPSILON = 1e-5
+const MIN_CAMERA_NEAR_DISTANCE = 0.1
 
 interface ObstacleSegment {
   start: THREE.Vector2
@@ -244,12 +246,12 @@ const isPersonVisibleAtHeight = ({
   )
   const toPerson = personTarget.clone().sub(cameraOrigin)
   const distance = toPerson.length()
-  const near = Math.max(camera.nearClipping ?? 0.1, 0.1)
+  const near = MIN_CAMERA_NEAR_DISTANCE
   const far = Math.max(camera.depth, near + 0.1)
   if (distance < near || distance > far) {
     return false
   }
-  const fov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+  const fov = getEffectiveHorizontalFov(camera)
   const halfFov = degToRad(fov) / 2
   const direction = toPerson.clone().normalize()
   if (direction.dot(forward) < Math.cos(halfFov)) {

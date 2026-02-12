@@ -4,10 +4,11 @@ import {produce} from 'immer'
 
 import type {
   CameraEntity,
+  CameraSourceFeature,
+  EditorMode,
   PersonEntity,
   PolygonGeometry,
   SceneMapStyle,
-  EditorMode,
   SceneRoot,
   ShapeEntity,
   WallEntity,
@@ -19,6 +20,7 @@ import {createDefaultShape} from '@/features/scene/domain/constants/shape-style'
 import {createDefaultWall} from '@/features/scene/domain/constants/wall-style'
 import {createAreaEntity} from '@/features/scene/domain/services/area-factory'
 import {createCameraEntity} from '@/features/scene/domain/services/camera-factory'
+import {createDefaultCameraOptics} from '@/features/scene/domain/services/camera-optics'
 import {createInitialScene} from '@/features/scene/domain/services/scene-factory'
 
 export interface SceneState {
@@ -338,7 +340,17 @@ const addCamera = (
       {
         id,
         areaId: camera.areaId,
-        presetId: camera.typePreset,
+        sourceDeviceId: camera.sourceDeviceId,
+        sourceDeviceName: camera.sourceDeviceName,
+        name: camera.name,
+        optics: {
+          fovHorizontal: camera.fovHorizontal,
+          fovVertical: camera.fovVertical,
+          depth: camera.depth,
+          zoom: camera.zoom,
+          height: camera.height,
+          resolution: camera.resolution,
+        },
         position: [camera.x, camera.y],
         color: camera.color,
         direction: camera.direction,
@@ -348,10 +360,12 @@ const addCamera = (
     state.scene.cameras.push({
       ...newCamera,
       name: camera.name ?? newCamera.name,
-      fov: camera.fov ?? newCamera.fov,
+      sourceDeviceFeatures:
+        camera.sourceDeviceFeatures ?? newCamera.sourceDeviceFeatures,
+      fovHorizontal: camera.fovHorizontal ?? newCamera.fovHorizontal,
+      fovVertical: camera.fovVertical ?? newCamera.fovVertical,
       depth: camera.depth ?? newCamera.depth,
       zoom: camera.zoom ?? newCamera.zoom,
-      nearClipping: camera.nearClipping ?? newCamera.nearClipping,
       height: camera.height ?? newCamera.height,
       resolution: camera.resolution ?? newCamera.resolution,
       areaId: camera.areaId,
@@ -500,6 +514,48 @@ const mergeSceneRoot = (base: SceneRoot, override: Partial<SceneRoot>) => ({
   meta: {...base.meta, ...override.meta},
 })
 
+const normalizeCameraEntity = (camera: CameraEntity): CameraEntity => {
+  const legacyCamera = camera as CameraEntity & {
+    fov?: number
+    typePreset?: string
+    sourceDeviceFeatures?: CameraSourceFeature[]
+  }
+
+  const optics = createDefaultCameraOptics({
+    fovHorizontal:
+      Number.isFinite(camera.fovHorizontal) && camera.fovHorizontal > 0
+        ? camera.fovHorizontal
+        : legacyCamera.fov,
+    fovVertical:
+      Number.isFinite(camera.fovVertical) && camera.fovVertical > 0
+        ? camera.fovVertical
+        : undefined,
+    depth: camera.depth,
+    zoom: camera.zoom,
+    height: camera.height,
+    resolution: camera.resolution,
+  })
+
+  return {
+    ...camera,
+    sourceDeviceId:
+      camera.sourceDeviceId ?? legacyCamera.typePreset ?? camera.id,
+    sourceDeviceName:
+      camera.sourceDeviceName ??
+      camera.name ??
+      legacyCamera.typePreset ??
+      camera.id,
+    sourceDeviceFeatures:
+      camera.sourceDeviceFeatures ?? legacyCamera.sourceDeviceFeatures ?? [],
+    fovHorizontal: optics.fovHorizontal,
+    fovVertical: optics.fovVertical,
+    depth: optics.depth,
+    zoom: optics.zoom,
+    height: optics.height,
+    resolution: optics.resolution,
+  }
+}
+
 const resolveInitialScene = (initialValues: SceneStoreInitialState) => {
   const baseScene = createInitialScene()
   const persistedScene = loadSceneFromStorage()
@@ -513,11 +569,17 @@ const resolveInitialScene = (initialValues: SceneStoreInitialState) => {
     ? mergeSceneRoot(withInitialScene, initialValues.sceneOverrides)
     : withInitialScene
   if (!initialValues.editorMode) {
-    return mergedScene
+    return {
+      ...mergedScene,
+      cameras: mergedScene.cameras.map((camera) =>
+        normalizeCameraEntity(camera),
+      ),
+    }
   }
   return {
     ...mergedScene,
     editorMode: initialValues.editorMode,
+    cameras: mergedScene.cameras.map((camera) => normalizeCameraEntity(camera)),
   }
 }
 

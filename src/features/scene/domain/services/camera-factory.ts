@@ -1,24 +1,18 @@
-import type {CameraEntity, GeoPoint, PtzState} from '../types'
+import type {CameraEntity, CameraOptics, GeoPoint, PtzState} from '../types'
 
-import {getCameraPreset} from '../constants/camera-presets'
+import {createDefaultCameraOptics} from './camera-optics'
 import {assignCameraColor} from './color-assignment'
 
 export interface CreateCameraParams {
   id: string
   areaId: string
-  presetId: string
+  sourceDeviceId: string
+  sourceDeviceName: string
+  name?: string
+  optics?: Partial<CameraOptics>
   position: GeoPoint
   color?: string
   direction?: number
-}
-
-const DEFAULT_CAMERA_PRESET = {
-  fov: 90,
-  depth: 20,
-  zoom: 1,
-  nearClipping: 0.5,
-  height: 3,
-  resolution: {width: 1920, height: 1080},
 }
 
 const createDefaultPtzState = (zoom: number): PtzState => ({
@@ -39,28 +33,28 @@ export const createCameraEntity = (
   params: CreateCameraParams,
   index: number,
 ): CameraEntity => {
-  const preset = getCameraPreset(params.presetId)
-  const resolvedPreset = {...DEFAULT_CAMERA_PRESET, ...(preset ?? {})}
-
+  const resolvedOptics = createDefaultCameraOptics(params.optics)
   const color = params.color ?? assignCameraColor(index)
 
   return {
     id: params.id,
     type: 'camera',
-    name: params.id,
+    name: params.name ?? params.sourceDeviceName ?? params.id,
     areaId: params.areaId,
-    typePreset: preset?.id ?? params.presetId,
+    sourceDeviceId: params.sourceDeviceId,
+    sourceDeviceName: params.sourceDeviceName,
     x: params.position[0],
     y: params.position[1],
-    height: resolvedPreset.height,
+    height: resolvedOptics.height,
     direction: params.direction ?? 0,
-    fov: resolvedPreset.fov,
-    depth: resolvedPreset.depth,
-    zoom: resolvedPreset.zoom,
-    nearClipping: resolvedPreset.nearClipping,
-    resolution: resolvedPreset.resolution,
+    fovHorizontal: resolvedOptics.fovHorizontal,
+    fovVertical: resolvedOptics.fovVertical,
+    depth: resolvedOptics.depth,
+    zoom: resolvedOptics.zoom,
+    resolution: resolvedOptics.resolution,
     color,
-    ptz: createDefaultPtzState(resolvedPreset.zoom),
+    sourceDeviceFeatures: [],
+    ptz: createDefaultPtzState(resolvedOptics.zoom),
     ptzPresets: [],
   }
 }

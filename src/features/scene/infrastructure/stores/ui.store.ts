@@ -2,7 +2,10 @@ import type {StateCreator, StoreApi} from 'zustand'
 
 import {produce} from 'immer'
 
-import type {ViewMode} from '@/features/scene/domain/types'
+import type {
+  CameraPlacementProfile,
+  ViewMode,
+} from '@/features/scene/domain/types'
 
 import {createZustandContextStore} from '@/components/shared/zustand'
 
@@ -43,7 +46,7 @@ export interface UiState {
   openPopovers: Record<string, boolean>
   mapboxToken?: string
   cameraPlacement: {
-    presetId: string | null
+    profile: CameraPlacementProfile | null
     color: string | null
   }
   flyToActiveAreaTick: number
@@ -65,14 +68,14 @@ export interface UiState {
   closeAllPanels: () => Record<string, boolean>
   closeAllPopovers: () => Record<string, boolean>
   setCameraPlacement: (
-    presetId: string | null,
+    profile: CameraPlacementProfile | null,
     color: string | null,
   ) => {
-    presetId: string | null
+    profile: CameraPlacementProfile | null
     color: string | null
   }
   clearCameraPlacement: () => {
-    presetId: string | null
+    profile: CameraPlacementProfile | null
     color: string | null
   }
   triggerFlyToActiveArea: () => number
@@ -224,7 +227,7 @@ const resetUi = (set: SetState, get: GetState) => {
     state.isEditMode = true
     state.openPanels = {}
     state.openPopovers = {}
-    state.cameraPlacement = {presetId: null, color: null}
+    state.cameraPlacement = {profile: null, color: null}
     state.flyToActiveAreaTick = 0
     state.radarSettings = {
       zoom: 1.1,
@@ -250,7 +253,7 @@ const defaultUiState = {
   openPopovers: {} as Record<string, boolean>,
   mapboxToken: undefined as string | undefined,
   cameraPlacement: {
-    presetId: null,
+    profile: null,
     color: null,
   },
   flyToActiveAreaTick: 0,
@@ -308,16 +311,16 @@ const createUiStore: (
     setPopoverState(set, get, popoverId, isOpen),
   closeAllPanels: () => closeAllPanels(set, get),
   closeAllPopovers: () => closeAllPopovers(set, get),
-  setCameraPlacement: (presetId, color) => {
+  setCameraPlacement: (profile, color) => {
     const nextValue = produce<UiState>((state) => {
-      state.cameraPlacement = {presetId, color}
+      state.cameraPlacement = {profile, color}
     })
     set(nextValue)
     return get().cameraPlacement
   },
   clearCameraPlacement: () => {
     const nextValue = produce<UiState>((state) => {
-      state.cameraPlacement = {presetId: null, color: null}
+      state.cameraPlacement = {profile: null, color: null}
     })
     set(nextValue)
     return get().cameraPlacement

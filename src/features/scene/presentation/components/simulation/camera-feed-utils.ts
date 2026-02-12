@@ -21,6 +21,7 @@ export interface FeedBoundingBox {
 const degToRad = (deg: number) => (deg * Math.PI) / 180
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
+const MIN_CAMERA_NEAR_DISTANCE = 0.1
 
 export const useElementSize = (ref: React.RefObject<HTMLDivElement>) => {
   const [size, setSize] = React.useState({width: 1, height: 1})
@@ -63,7 +64,7 @@ export const computeFeedBoundingBoxes = ({
   const base = transformer.toVector3([camera.x, camera.y], 0)
   const opticHeight = getCameraOpticHeight(camera)
   const fov = getFeedVerticalFov(camera)
-  const near = Math.max(camera.nearClipping ?? 0.1, 0.1)
+  const near = MIN_CAMERA_NEAR_DISTANCE
   const far = Math.max(camera.depth, near + 0.1)
   const yaw = -degToRad(camera.ptz?.pan ?? camera.direction)
   const tilt = degToRad(camera.ptz?.tilt ?? 0)

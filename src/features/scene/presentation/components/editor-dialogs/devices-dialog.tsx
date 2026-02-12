@@ -70,9 +70,13 @@ export const DevicesDialog: React.FC<DevicesDialogProps> = ({
                       <AvatarFallback style={{backgroundColor: camera.color}} />
                     </Avatar>
                     <div className='flex flex-col'>
-                      <span className='font-medium'>{camera.typePreset}</span>
+                      <span className='font-medium'>
+                        {camera.sourceDeviceName || camera.name}
+                      </span>
                       <span className='text-xs text-muted-foreground'>
-                        FOV {camera.fov}° • Depth {camera.depth} m
+                        HFOV {camera.fovHorizontal.toFixed(0)}° • VFOV{' '}
+                        {camera.fovVertical.toFixed(0)}° • Depth {camera.depth}{' '}
+                        m
                       </span>
                     </div>
                   </div>

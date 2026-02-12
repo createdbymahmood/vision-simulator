@@ -78,16 +78,18 @@ Shape-specific fields:
 - `type`: "camera"
 - `name`: string
 - `areaId`: string
-- `typePreset`: string
+- `sourceDeviceId`: string
+- `sourceDeviceName`: string
 - `x`, `y`: number (map coordinates)
 - `height`: number
 - `direction`: number
-- `fov`: number
+- `fovHorizontal`: number
+- `fovVertical`: number
 - `depth`: number
 - `zoom`: number
-- `nearClipping`: number
 - `resolution`: `{ width, height }`
 - `color`: string
+- `sourceDeviceFeatures`: `{ field, label, path, unit, value }[]`
 - `ptz`: `{ pan, tilt, zoom, limits }`
 - `ptzPresets`: `{ name, pan, tilt, zoom }[]`
 

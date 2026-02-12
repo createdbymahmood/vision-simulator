@@ -9,6 +9,7 @@ import type {
   WallEntity,
 } from '@/features/scene/domain/types'
 
+import {getEffectiveHorizontalFov} from '@/features/scene/domain/services/camera-optics'
 import {
   buildFovOcclusionObstacles,
   buildOccludedFovRing,
@@ -45,9 +46,8 @@ const EMPTY_SHAPES: ShapeEntity[] = []
 const EMPTY_OBSTACLES: ReturnType<typeof buildFovOcclusionObstacles> = []
 
 const getCameraFootprintSignature = (camera: CameraEntity) => {
-  const zoom = Math.max(camera.ptz?.zoom ?? 1, 0.0001)
   const effectivePan = camera.ptz?.pan ?? camera.direction
-  const effectiveFov = camera.fov / zoom
+  const effectiveFov = getEffectiveHorizontalFov(camera)
   return [
     camera.areaId,
     camera.x,
@@ -318,7 +318,7 @@ export const CameraFovFootprints: React.FC<CameraFovFootprintsProps> = ({
     const nextFootprints = cameras.map((camera) => {
       const origin: [number, number] = [camera.x, camera.y]
       const effectivePan = camera.ptz?.pan ?? camera.direction
-      const effectiveFov = camera.fov / Math.max(camera.ptz?.zoom ?? 1, 0.0001)
+      const effectiveFov = getEffectiveHorizontalFov(camera)
       const area = areaById.get(camera.areaId)
       const obstacles = obstaclesByArea.get(camera.areaId) ?? EMPTY_OBSTACLES
       const signature = getCameraFootprintSignature(camera)
