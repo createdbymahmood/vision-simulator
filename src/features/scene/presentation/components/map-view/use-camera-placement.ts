@@ -60,7 +60,7 @@ interface UseCameraPlacementParams {
   ) => void
   clearCameraPlacement: () => void
   addCamera: (
-    camera: Omit<CameraEntity, 'id' | 'ptz' | 'ptzPresets' | 'type'>,
+    camera: Omit<CameraEntity, 'id' | 'ptz' | 'type'>,
   ) => SceneRoot
   setSelection: (ids: string[]) => void
   setActiveTool: (tool: EditorTool) => void

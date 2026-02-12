@@ -77,7 +77,6 @@ Establish the foundational architecture, data models, routing structure, and sta
   - `sourceDeviceFeatures: Array<{ field, label, path, unit, value }>`
   - `color` (from 20-color palette)
   - `ptz: { pan, tilt, zoom, limits: { panMin, panMax, tiltMin, tiltMax, zoomMin, zoomMax } }`
-  - `ptzPresets: Array<{ name, pan, tilt, zoom }>`
 
 - [ ] **Person Entity** (Section 7.2)
   - `id`, `type: "person"`, `areaId`

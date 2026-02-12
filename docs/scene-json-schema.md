@@ -91,7 +91,6 @@ Shape-specific fields:
 - `color`: string
 - `sourceDeviceFeatures`: `{ field, label, path, unit, value }[]`
 - `ptz`: `{ pan, tilt, zoom, limits }`
-- `ptzPresets`: `{ name, pan, tilt, zoom }[]`
 
 ### PersonEntity
 

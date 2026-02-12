@@ -43,7 +43,7 @@ export interface SceneState {
   addWall: (wall: Omit<WallEntity, 'id'>) => SceneRoot
   addShape: (shape: Omit<ShapeEntity, 'id'>) => SceneRoot
   addCamera: (
-    camera: Omit<CameraEntity, 'id' | 'ptz' | 'ptzPresets' | 'type'>,
+    camera: Omit<CameraEntity, 'id' | 'ptz' | 'type'>,
   ) => SceneRoot
   updateCamera: (
     id: string,
@@ -343,7 +343,7 @@ const createDefaultPtzState = (zoom: number, pan: number) => ({
 const addCamera = (
   set: SetState,
   get: GetState,
-  camera: Omit<CameraEntity, 'id' | 'ptz' | 'ptzPresets' | 'type'>,
+  camera: Omit<CameraEntity, 'id' | 'ptz' | 'type'>,
 ) => {
   const nextValue = produce<SceneState>((state) => {
     const id = getNextId(

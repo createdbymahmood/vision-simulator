@@ -173,7 +173,7 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - [ ] Backdrop blur, semi-transparent
 - [ ] Minimize button (collapses to 48px × 48px floating icon)
 - [ ] Drag handle at top
-- [ ] **Content**: Same PTZ controls as editor (D-pad, sliders, presets)
+- [ ] **Content**: Same PTZ controls as editor (D-pad, sliders)
 
 #### Live Operation (Section 5.5.4)
 
@@ -265,5 +265,4 @@ Implement advanced 3D simulation features including FOV collision visualization,
 - Section 6.2.2: Main Viewport (Trail visualization)
 - Section 6.2.5: Right Sidebar (Camera List)
 - Section 6.6: Physics & Movement (entire section)
-
 

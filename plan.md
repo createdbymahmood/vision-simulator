@@ -536,12 +536,6 @@ No global or per-camera visibility toggle is provided.
    - Returns to default: Pan 0°, Tilt 0°, Zoom 1x
    - Animates smoothly (500ms ease-out)
 
-6. **Preset Dropdown**:
-   - Save current PTZ as preset (up to 5 per camera)
-   - Named presets: "Entrance", "Parking", "Main Hall"
-   - Quick apply presets
-   - Presets stored in camera entity
-
 #### 5.5.3 PTZ Behavior in Editor
 
 - **Real-time FOV update**: As user adjusts Pan/Tilt/Zoom, FOV wedge/cone redraws immediately
@@ -592,15 +586,7 @@ No global or per-camera visibility toggle is provided.
       "zoomMin": 1.0,
       "zoomMax": 10.0
     }
-  },
-  "ptzPresets": [
-    {
-      "name": "Entrance",
-      "pan": 45,
-      "tilt": -10,
-      "zoom": 1.5
-    }
-  ]
+  }
 }
 ```
 
@@ -1918,15 +1904,7 @@ renderer.setSize(originalSize.x, originalSize.y)
       "zoomMin": 1.0,
       "zoomMax": 10.0
     }
-  },
-  "ptzPresets": [
-    {
-      "name": "Entrance",
-      "pan": 45,
-      "tilt": -10,
-      "zoom": 1.5
-    }
-  ]
+  }
 }
 ```
 
@@ -2025,7 +2003,6 @@ renderer.setSize(originalSize.x, originalSize.y)
 - [ ] Each camera has unique color from palette
 - [ ] Camera colors visible in: editor FOV, 3D frustum, radar
 - [ ] PTZ controls adjust camera direction/tilt/zoom in real-time
-- [ ] PTZ presets save and load correctly
 - [ ] 3D FOV collision surfaces render on walls/shapes
 - [ ] Collision surfaces update when camera moves or obstacles change
 - [ ] Collision visualization toggle works

@@ -5,23 +5,15 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Plus,
   RotateCcw,
 } from 'lucide-react'
 import React from 'react'
 
-import type {CameraEntity, PtzPreset} from '@/features/scene/domain/types'
+import type {CameraEntity} from '@/features/scene/domain/types'
 
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {Slider} from '@/components/ui/slider'
 import {useUpdateDevice} from '@/data-provider/api/services/v2/device'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
@@ -105,10 +97,6 @@ export const CameraPropertiesSheet: React.FC = () => {
     return cameras.find((camera) => camera.id === cameraId) ?? null
   }, [cameras, selectedEntityIds])
 
-  const [presetName, setPresetName] = React.useState('')
-  const [selectedPresetName, setSelectedPresetName] = React.useState<
-    string | null
-  >(null)
   const liveUpdateFrameRef = React.useRef<number | null>(null)
   const pendingLiveCameraUpdaterRef = React.useRef<
     ((camera: CameraEntity) => void) | null
@@ -370,37 +358,6 @@ export const CameraPropertiesSheet: React.FC = () => {
     })
   }
 
-  const handleSavePreset = () => {
-    if (!selectedCamera) return
-    if (!presetName.trim()) return
-    if (selectedCamera.ptzPresets.length >= 5) return
-    const trimmed = presetName.trim()
-
-    commitCameraUpdate((camera) => {
-      const exists = camera.ptzPresets.find((preset) => preset.name === trimmed)
-      const nextPreset: PtzPreset = {
-        name: trimmed,
-        pan: camera.ptz.pan,
-        tilt: camera.ptz.tilt,
-        zoom: camera.ptz.zoom,
-      }
-      camera.ptzPresets = exists
-        ? camera.ptzPresets.map((preset) =>
-            preset.name === trimmed ? nextPreset : preset,
-          )
-        : [...camera.ptzPresets, nextPreset]
-    })
-    setPresetName('')
-  }
-
-  const handleApplyPreset = (name: string) => {
-    if (!selectedCamera) return
-    const preset = selectedCamera.ptzPresets.find((item) => item.name === name)
-    if (!preset) return
-    applyPtz({pan: preset.pan, tilt: preset.tilt, zoom: preset.zoom})
-    setSelectedPresetName(name)
-  }
-
   const handleResetPtz = () => {
     applyPtz({pan: 0, tilt: 0, zoom: 1})
   }
@@ -639,36 +596,6 @@ export const CameraPropertiesSheet: React.FC = () => {
               <Button size='sm' variant='outline' onClick={handleResetPtz}>
                 <RotateCcw className='mr-2 size-4' />
                 Reset
-              </Button>
-              <Select
-                value={selectedPresetName ?? undefined}
-                onValueChange={(value) => handleApplyPreset(value)}
-              >
-                <SelectTrigger className='w-40'>
-                  <SelectValue placeholder='Preset' />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedCamera.ptzPresets.map((preset) => (
-                    <SelectItem key={preset.name} value={preset.name}>
-                      {preset.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='flex items-center gap-2'>
-              <Input
-                value={presetName}
-                onChange={(event) => setPresetName(event.target.value)}
-                placeholder='Save preset name'
-              />
-              <Button
-                size='icon'
-                disabled={!presetName.trim()}
-                variant='secondary'
-                onClick={handleSavePreset}
-              >
-                <Plus className='size-4' />
               </Button>
             </div>
           </PropertiesSection>

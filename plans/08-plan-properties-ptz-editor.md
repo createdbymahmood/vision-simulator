@@ -28,7 +28,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - Properties Panel shell and behavior
 - Per-entity-type property forms (Area, Wall, Shape, Camera, Person)
 - PTZ controls in editor properties panel
-- PTZ presets management
 - Real-time property updates
 - History integration (debounced commits)
 - Camera color picker
@@ -191,13 +190,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - [ ] Returns to default: Pan 0°, Tilt 0°, Zoom 1x
 - [ ] Animates smoothly (500ms ease-out)
 
-#### Preset Dropdown
-
-- [ ] Save current PTZ as preset (up to 5 per camera)
-- [ ] Named presets: "Entrance", "Parking", "Main Hall"
-- [ ] Quick apply presets
-- [ ] Presets stored in camera entity
-
 ### PTZ Behavior in Editor (Section 5.5.3)
 
 - [ ] **Real-time FOV update**: FOV wedge/cone redraws immediately on adjustment
@@ -226,7 +218,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 ### From Section 9 (QA)
 
 - [ ] PTZ controls adjust camera direction/tilt/zoom in real-time
-- [ ] PTZ presets save and load correctly
 
 ### Additional Criteria
 
@@ -237,7 +228,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - [ ] D-pad buttons adjust pan/tilt with visual feedback
 - [ ] Slider handles show camera color
 - [ ] Reset button animates PTZ back to defaults
-- [ ] Presets can be saved, named, and applied
 - [ ] Arrow keys work for PTZ when camera selected
 - [ ] FOV wedge updates live during PTZ adjustment
 - [ ] Coordinate display shows meters format correctly
@@ -249,7 +239,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 | Risk                                      | Mitigation                                           |
 | ----------------------------------------- | ---------------------------------------------------- |
 | Circular slider interaction complexity    | Provide linear slider alternative; test thoroughly   |
-| Preset management UX confusion            | Clear UI for save/apply/delete presets               |
 
 ---
 
@@ -259,5 +248,3 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - Section 5.2: Coordinate System & Units (display in properties)
 - Section 5.5.2: PTZ UI Component (Always Available)
 - Section 5.5.3: PTZ Behavior in Editor
-- Section 5.5.5: PTZ Data Model (presets)
-

@@ -66,13 +66,6 @@ export interface PtzLimits {
   zoomMax: number
 }
 
-export interface PtzPreset {
-  name: string
-  pan: number
-  tilt: number
-  zoom: number
-}
-
 export interface PtzState {
   pan: number
   tilt: number
@@ -127,7 +120,6 @@ export interface CameraEntity {
   color: string
   sourceDeviceFeatures: CameraSourceFeature[]
   ptz: PtzState
-  ptzPresets: PtzPreset[]
 }
 
 export interface PersonEntity {

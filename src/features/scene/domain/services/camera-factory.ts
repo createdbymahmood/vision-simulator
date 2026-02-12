@@ -57,6 +57,5 @@ export const createCameraEntity = (
     color,
     sourceDeviceFeatures: [],
     ptz: createDefaultPtzState(resolvedOptics.zoom, pan),
-    ptzPresets: [],
   }
 }
