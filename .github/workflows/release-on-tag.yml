@@ -3,7 +3,7 @@ name: Release Package On Tag
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 jobs:
   publish:
@@ -19,15 +19,16 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '24.5.0'
-          cache: yarn
-          registry-url: https://npm.pkg.github.com
-          scope: '@vega-tek-hub'
+          node-version: "24.5.0"
+          cache: "yarn"
 
       - name: Configure npm for GitHub Packages (scoped)
         run: |
           echo "@${{ github.repository_owner }}:registry=https://npm.pkg.github.com/" > ~/.npmrc
           echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+          npm config list
+          npm whoami --registry=https://npm.pkg.github.com || true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -36,23 +37,12 @@ jobs:
 
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
-  
+
       - name: Debug package identity
         run: |
-          pwd
-          ls -la
           node -p "require('./package.json').name"
           node -p "require('./package.json').version"
           npm pkg get name version
-
-      - name: Verify Publish Token
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -z "$GITHUB_TOKEN" ]; then
-            echo "Missing required GITHUB_TOKEN."
-            exit 1
-          fi
 
       - name: Verify Tag Matches Package Version
         env:
