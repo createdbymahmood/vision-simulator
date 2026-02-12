@@ -25,7 +25,7 @@ The `VisionSimulator` export requires an `apiBaseUrl`, `mapboxToken`,
 not fall back to `import.meta.env` internally.
 
 ```tsx
-import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
+import {VisionSimulator} from '@vega-tek-hub/simulator-vision'
 
 interface AppProps {
   apiBaseUrl: string
