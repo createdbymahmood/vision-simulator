@@ -97,10 +97,13 @@ export interface CameraOptics {
   resolution: Resolution
 }
 
+export type CameraSourceDeviceKind = 'real' | 'virtual'
+
 export interface CameraPlacementProfile {
   id: string
   name: string
   description: string
+  sourceDeviceKind: CameraSourceDeviceKind
   optics: CameraOptics
   features: CameraSourceFeature[]
 }
@@ -112,6 +115,7 @@ export interface CameraEntity {
   areaId: string
   sourceDeviceId: string
   sourceDeviceName: string
+  sourceDeviceKind: CameraSourceDeviceKind
   x: number
   y: number
   height: number

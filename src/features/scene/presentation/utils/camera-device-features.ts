@@ -196,6 +196,7 @@ export const createCameraPlacementProfileFromDevice = (
     id: device.id ?? device.deviceId ?? 'unknown-device',
     name: device.name ?? device.deviceId ?? 'IP Camera',
     description: device.description ?? 'IP camera',
+    sourceDeviceKind: 'real',
     optics,
     features,
   }

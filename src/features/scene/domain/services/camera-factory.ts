@@ -8,6 +8,7 @@ export interface CreateCameraParams {
   areaId: string
   sourceDeviceId: string
   sourceDeviceName: string
+  sourceDeviceKind: 'real' | 'virtual'
   name?: string
   optics?: Partial<CameraOptics>
   position: GeoPoint
@@ -43,6 +44,7 @@ export const createCameraEntity = (
     areaId: params.areaId,
     sourceDeviceId: params.sourceDeviceId,
     sourceDeviceName: params.sourceDeviceName,
+    sourceDeviceKind: params.sourceDeviceKind,
     x: params.position[0],
     y: params.position[1],
     height: resolvedOptics.height,

@@ -342,6 +342,7 @@ const addCamera = (
         areaId: camera.areaId,
         sourceDeviceId: camera.sourceDeviceId,
         sourceDeviceName: camera.sourceDeviceName,
+        sourceDeviceKind: camera.sourceDeviceKind,
         name: camera.name,
         optics: {
           fovHorizontal: camera.fovHorizontal,
@@ -360,6 +361,7 @@ const addCamera = (
     state.scene.cameras.push({
       ...newCamera,
       name: camera.name ?? newCamera.name,
+      sourceDeviceKind: camera.sourceDeviceKind ?? newCamera.sourceDeviceKind,
       sourceDeviceFeatures:
         camera.sourceDeviceFeatures ?? newCamera.sourceDeviceFeatures,
       fovHorizontal: camera.fovHorizontal ?? newCamera.fovHorizontal,
@@ -514,12 +516,22 @@ const mergeSceneRoot = (base: SceneRoot, override: Partial<SceneRoot>) => ({
   meta: {...base.meta, ...override.meta},
 })
 
+type LegacyCameraFields = CameraEntity & {
+  fov?: number
+  sourceDeviceFeatures?: CameraSourceFeature[]
+}
+
+const resolveNormalizedSourceDeviceId = (camera: CameraEntity) =>
+  camera.sourceDeviceId ?? camera.id
+
+const resolveNormalizedSourceDeviceName = (camera: CameraEntity) =>
+  camera.sourceDeviceName ?? camera.name ?? camera.sourceDeviceId ?? camera.id
+
+const resolveNormalizedSourceDeviceKind = (camera: CameraEntity) =>
+  camera.sourceDeviceKind ?? 'real'
+
 const normalizeCameraEntity = (camera: CameraEntity): CameraEntity => {
-  const legacyCamera = camera as CameraEntity & {
-    fov?: number
-    typePreset?: string
-    sourceDeviceFeatures?: CameraSourceFeature[]
-  }
+  const legacyCamera = camera as LegacyCameraFields
 
   const optics = createDefaultCameraOptics({
     fovHorizontal:
@@ -538,13 +550,9 @@ const normalizeCameraEntity = (camera: CameraEntity): CameraEntity => {
 
   return {
     ...camera,
-    sourceDeviceId:
-      camera.sourceDeviceId ?? legacyCamera.typePreset ?? camera.id,
-    sourceDeviceName:
-      camera.sourceDeviceName ??
-      camera.name ??
-      legacyCamera.typePreset ??
-      camera.id,
+    sourceDeviceId: resolveNormalizedSourceDeviceId(camera),
+    sourceDeviceName: resolveNormalizedSourceDeviceName(camera),
+    sourceDeviceKind: resolveNormalizedSourceDeviceKind(camera),
     sourceDeviceFeatures:
       camera.sourceDeviceFeatures ?? legacyCamera.sourceDeviceFeatures ?? [],
     fovHorizontal: optics.fovHorizontal,

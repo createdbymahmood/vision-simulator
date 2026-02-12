@@ -136,6 +136,7 @@ const createVirtualPlacementProfile = (
     id,
     name: definition.name,
     description: definition.description,
+    sourceDeviceKind: 'virtual',
     optics,
     features: createVirtualCameraFeatures({
       id,

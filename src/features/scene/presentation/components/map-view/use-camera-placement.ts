@@ -36,6 +36,7 @@ const DEFAULT_CAMERA_PLACEMENT_PROFILE: CameraPlacementProfile = {
   id: 'manual-camera',
   name: 'Camera',
   description: 'Generic camera',
+  sourceDeviceKind: 'virtual',
   optics: createDefaultCameraOptics(),
   features: [],
 }
@@ -346,6 +347,7 @@ export const useCameraPlacement = ({
       const updatedScene = addCamera({
         sourceDeviceId: profile.id,
         sourceDeviceName: profile.name,
+        sourceDeviceKind: profile.sourceDeviceKind,
         sourceDeviceFeatures: profile.features.map((feature) => ({...feature})),
         areaId: areaForPlacement.id,
         x: mapPoint[0],
