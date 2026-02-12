@@ -3,6 +3,7 @@ import React from 'react'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 
 interface UseMapViewHotkeysParams {
+  enabled?: boolean
   activeTool: EditorTool
   isEditMode: boolean
   wallDrawingActive: boolean
@@ -16,6 +17,7 @@ interface UseMapViewHotkeysParams {
 }
 
 export const useMapViewHotkeys = ({
+  enabled = true,
   activeTool,
   isEditMode,
   wallDrawingActive,
@@ -28,6 +30,10 @@ export const useMapViewHotkeys = ({
   onShapeBackspace,
 }: UseMapViewHotkeysParams) => {
   React.useEffect(() => {
+    if (!enabled) {
+      return
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat) {
         return
@@ -76,6 +82,7 @@ export const useMapViewHotkeys = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [
     activeTool,
+    enabled,
     isEditMode,
     onAreaBackspace,
     onAreaEnter,

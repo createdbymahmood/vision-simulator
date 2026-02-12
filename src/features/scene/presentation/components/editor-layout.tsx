@@ -333,7 +333,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   }, [closeTransientUi, setEditMode, viewMode])
 
   useEditorShortcuts({
-    enabled: viewMode === 'editor',
+    // NOTE: Shortcuts are intentionally disabled for now. Do not re-enable
+    // this without an explicit product request.
+    enabled: false,
     isEditMode,
     hasAreas,
     isMapMode: editorMode === 'map',

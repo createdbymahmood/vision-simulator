@@ -429,8 +429,13 @@ export const CameraPropertiesSheet: React.FC = () => {
     applyPtz({pan: 0, tilt: 0, zoom: 1})
   }
 
+  // NOTE: PTZ keyboard shortcuts are intentionally disabled for now.
+  // Do not re-enable this without an explicit product request.
+  const ptzKeyboardShortcutsEnabled = false
+
   // eslint-disable-next-line complexity
   const handleKeyboard = useCallbackRef((event: KeyboardEvent) => {
+    if (!ptzKeyboardShortcutsEnabled) return
     if (!selectedCamera) return
     if (
       event.key === 'ArrowUp' ||
@@ -468,9 +473,12 @@ export const CameraPropertiesSheet: React.FC = () => {
   })
 
   React.useEffect(() => {
+    if (!ptzKeyboardShortcutsEnabled) {
+      return
+    }
     window.addEventListener('keydown', handleKeyboard)
     return () => window.removeEventListener('keydown', handleKeyboard)
-  }, [handleKeyboard])
+  }, [handleKeyboard, ptzKeyboardShortcutsEnabled])
 
   const panDegrees = selectedCamera ? normalizePan(selectedCamera.ptz.pan) : 0
 

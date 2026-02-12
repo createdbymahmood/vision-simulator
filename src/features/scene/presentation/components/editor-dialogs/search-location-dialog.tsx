@@ -86,6 +86,7 @@ export const SearchLocationDialog: React.FC<SearchLocationDialogProps> = ({
     <CommandDialog onOpenChange={onOpenChange} open={open}>
       <CommandInput
         value={query}
+        autoFocus
         onValueChange={setQuery}
         placeholder='Search location...'
       />

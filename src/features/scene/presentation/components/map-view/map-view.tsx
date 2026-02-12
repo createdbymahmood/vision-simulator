@@ -561,6 +561,9 @@ export const MapView: React.FC<MapViewProps> = ({
   ])
 
   useMapViewHotkeys({
+    // NOTE: Shortcuts are intentionally disabled for now. Do not re-enable
+    // this without an explicit product request.
+    enabled: false,
     activeTool,
     isEditMode,
     wallDrawingActive: wallDrawing.isActive,
