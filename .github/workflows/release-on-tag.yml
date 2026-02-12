@@ -24,6 +24,11 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@vega-tek-hub'
 
+      - name: Configure npm for GitHub Packages (scoped)
+        run: |
+          echo "@${{ github.repository_owner }}:registry=https://npm.pkg.github.com/" > ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> ~/.npmrc
+
       - name: Enable Corepack
         run: corepack enable
 
