@@ -86,7 +86,7 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({
 }) => (
   <div className={cn('space-y-3', className)}>
     <div className='flex items-center justify-between'>
-      <p className='text-sm font-medium text-foreground'>{title}</p>
+      <p className='text-xs font-medium text-muted-foreground'>{title}</p>
     </div>
     <Separator />
     <div className='space-y-4'>{children}</div>
