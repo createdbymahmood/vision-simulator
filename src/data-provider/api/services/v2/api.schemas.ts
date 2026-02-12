@@ -1475,6 +1475,224 @@ export type AddDeviceGroupWithTemplateFromFileBody = {
  */
 export type WorkspaceCreateDtoBody = WorkspaceCreateDto
 
+export type GetAllDevicesParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+  /**
+   * Filters
+   */
+  filters?: string
+}
+
+export type GetAllDeviceConnectorsParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+}
+
+export type GetAllDeviceConnectorByDeviceIdParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+}
+
+export type GetLabelExistParams = {
+  /**
+   * Field label
+   */
+  label: string
+}
+
+export type GetSupportedConnectors200 = {[key: string]: ConnectorSchema}
+
+export type GetSupportedControllers200 = {[key: string]: ControllerSchema}
+
+export type GetAllDeviceDataParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+}
+
+export type GetMockGPSRouteParams = {
+  /**
+   * Lat,long
+   */
+  start?: string
+  /**
+   * Lat,long
+   */
+  end?: string
+  /**
+   * Distance between sampled points (meters)
+   */
+  step?: number
+}
+
+export type GetAllDevicesForOptionsParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+  /**
+   * Filters
+   */
+  filters?: string
+}
+
+export type GetDeviceGroupsParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Number of items per page
+   */
+  limit?: number
+  /**
+   * Filters
+   */
+  filters?: string
+}
+
+export type GetDeviceGroupsWithDevicesParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Number of items per page
+   */
+  limit?: number
+  /**
+   * Filters
+   */
+  filters?: string
+}
+
+export type DeleteDeviceGroup200 = {[key: string]: string}
+
+export type GetGroupTemplatesParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Number of items per page
+   */
+  limit?: number
+  /**
+   * Filters
+   */
+  filters?: string
+}
+
+export type GetGroupTemplatesRoleParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Number of items per page
+   */
+  limit?: number
+  /**
+   * Filters
+   */
+  filters?: string
+}
+
+export type GetGroupTemplatesWithDevicesParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Number of items per page
+   */
+  limit?: number
+  /**
+   * Filters
+   */
+  filters?: string
+}
+
+export type DeleteGroupTemplate200 = {[key: string]: string}
+
+export type GetDeviceRulesParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+}
+
+export type GetAllDeviceTagsParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+  /**
+   * Filters
+   */
+  filters?: string
+}
+
+export type GetDevicesWithConnectorsParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+}
+
+export type GetDevicesWithoutConnectorsParams = {
+  /**
+   * Page number
+   */
+  page?: number
+  /**
+   * Page size
+   */
+  limit?: number
+}
+
+export type TriggerDeviceActuatorBody = {[key: string]: unknown}
+
 export type GetAllVisionsParams = {
   /**
    * Page number
