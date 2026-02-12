@@ -3256,7 +3256,7 @@
   dependencies:
     "@use-gesture/core" "10.3.1"
 
-"@vega-tek-hub/simulator-vision@file:..":
+"@vega-tek-hub/vision-simulator-v2@file:..":
   version "0.25.0"
   dependencies:
     "@floating-ui/core" "1.7.3"

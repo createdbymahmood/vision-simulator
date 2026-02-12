@@ -5,8 +5,8 @@ import {
   createRoute,
   createRouter,
 } from '@tanstack/react-router'
-import {VisionSimulator} from '@vega-tek-hub/simulator-vision'
-import simulatorStylesUrl from '@vega-tek-hub/simulator-vision/styles.css?url'
+import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
+import simulatorStylesUrl from '@vega-tek-hub/vision-simulator-v2/styles.css?url'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import React from 'react'
 

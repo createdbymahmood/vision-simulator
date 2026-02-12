@@ -1,6 +1,6 @@
 # Vision Simulator Example (Vite + React + TanStack Router)
 
-This example consumes the local `@vega-tek-hub/simulator-vision` package and demonstrates the Phase 21 leave guard:
+This example consumes the local `@vega-tek-hub/vision-simulator-v2` package and demonstrates the Phase 21 leave guard:
 
 - route blocking when navigating away with unsaved changes
 - browser unload/reload warning when unsaved changes exist
