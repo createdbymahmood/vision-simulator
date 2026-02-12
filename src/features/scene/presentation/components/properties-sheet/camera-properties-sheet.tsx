@@ -86,7 +86,7 @@ const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
   </div>
 )
 
-// eslint-disable-next-line max-lines-per-function
+// eslint-disable-next-line max-lines-per-function, max-statements
 export const CameraPropertiesSheet: React.FC = () => {
   const {recordActionDebounced} = useHistoryRecorder()
   const {mutate: updateDevice} = useUpdateDevice()
@@ -108,6 +108,10 @@ export const CameraPropertiesSheet: React.FC = () => {
   const [presetName, setPresetName] = React.useState('')
   const [selectedPresetName, setSelectedPresetName] = React.useState<
     string | null
+  >(null)
+  const liveUpdateFrameRef = React.useRef<number | null>(null)
+  const pendingLiveCameraUpdaterRef = React.useRef<
+    ((camera: CameraEntity) => void) | null
   >(null)
 
   const updateSelectedCamera = React.useCallback(
@@ -173,11 +177,53 @@ export const CameraPropertiesSheet: React.FC = () => {
     },
   )
 
+  const applyCameraUpdateLive = useCallbackRef(
+    (updater: (camera: CameraEntity) => void) => {
+      pendingLiveCameraUpdaterRef.current = updater
+
+      if (liveUpdateFrameRef.current !== null) {
+        return
+      }
+
+      if (typeof window === 'undefined') {
+        const nextUpdater = pendingLiveCameraUpdaterRef.current
+        pendingLiveCameraUpdaterRef.current = null
+        if (!nextUpdater) {
+          return
+        }
+        updateSelectedCamera(nextUpdater)
+        return
+      }
+
+      liveUpdateFrameRef.current = window.requestAnimationFrame(() => {
+        liveUpdateFrameRef.current = null
+        const nextUpdater = pendingLiveCameraUpdaterRef.current
+        pendingLiveCameraUpdaterRef.current = null
+        if (!nextUpdater) {
+          return
+        }
+        updateSelectedCamera(nextUpdater)
+      })
+    },
+  )
+
+  React.useEffect(
+    () => () => {
+      if (
+        typeof window !== 'undefined' &&
+        liveUpdateFrameRef.current !== null
+      ) {
+        window.cancelAnimationFrame(liveUpdateFrameRef.current)
+      }
+      pendingLiveCameraUpdaterRef.current = null
+    },
+    [],
+  )
+
   const commitCameraUpdate = useCallbackRef(
     (updater: (camera: CameraEntity) => void) => {
       const updated = updateSelectedCamera((camera) => {
         updater(camera)
-        camera.sourceDeviceFeatures = mergeCameraFeaturesWithCamera(camera)
       })
       recordCameraUpdate(updated)
       queueDeviceSync(updated)
@@ -191,37 +237,103 @@ export const CameraPropertiesSheet: React.FC = () => {
     })
   }
 
+  const handleDirectionLiveChange = (values: number[]) => {
+    const [direction] = values
+    if (!Number.isFinite(direction)) {
+      return
+    }
+    applyCameraUpdateLive((camera) => {
+      camera.direction = normalizePan(direction)
+      camera.ptz.pan = normalizePan(direction)
+    })
+  }
+
   const handleDirectionChange = (values: number[]) => {
     const [direction] = values
+    if (!Number.isFinite(direction)) {
+      return
+    }
     commitCameraUpdate((camera) => {
       camera.direction = normalizePan(direction)
       camera.ptz.pan = normalizePan(direction)
     })
   }
 
+  const handleHorizontalFovLiveChange = (values: number[]) => {
+    const [fovHorizontal] = values
+    if (!Number.isFinite(fovHorizontal)) {
+      return
+    }
+    applyCameraUpdateLive((camera) => {
+      camera.fovHorizontal = fovHorizontal
+    })
+  }
+
   const handleHorizontalFovChange = (values: number[]) => {
     const [fovHorizontal] = values
+    if (!Number.isFinite(fovHorizontal)) {
+      return
+    }
     commitCameraUpdate((camera) => {
       camera.fovHorizontal = fovHorizontal
     })
   }
 
+  const handleVerticalFovLiveChange = (values: number[]) => {
+    const [fovVertical] = values
+    if (!Number.isFinite(fovVertical)) {
+      return
+    }
+    applyCameraUpdateLive((camera) => {
+      camera.fovVertical = fovVertical
+    })
+  }
+
   const handleVerticalFovChange = (values: number[]) => {
     const [fovVertical] = values
+    if (!Number.isFinite(fovVertical)) {
+      return
+    }
     commitCameraUpdate((camera) => {
       camera.fovVertical = fovVertical
     })
   }
 
+  const handleDepthLiveChange = (values: number[]) => {
+    const [depth] = values
+    if (!Number.isFinite(depth)) {
+      return
+    }
+    applyCameraUpdateLive((camera) => {
+      camera.depth = depth
+    })
+  }
+
   const handleDepthChange = (values: number[]) => {
     const [depth] = values
+    if (!Number.isFinite(depth)) {
+      return
+    }
     commitCameraUpdate((camera) => {
       camera.depth = depth
     })
   }
 
+  const handleHeightLiveChange = (values: number[]) => {
+    const [height] = values
+    if (!Number.isFinite(height)) {
+      return
+    }
+    applyCameraUpdateLive((camera) => {
+      camera.height = height
+    })
+  }
+
   const handleHeightChange = (values: number[]) => {
     const [height] = values
+    if (!Number.isFinite(height)) {
+      return
+    }
     commitCameraUpdate((camera) => {
       camera.height = height
     })
@@ -242,6 +354,28 @@ export const CameraPropertiesSheet: React.FC = () => {
     next: Partial<{pan: number; tilt: number; zoom: number}>,
   ) => {
     commitCameraUpdate((camera) => {
+      const limits = camera.ptz.limits
+      const pan = normalizePan(next.pan ?? camera.ptz.pan)
+      const tilt = clamp(
+        next.tilt ?? camera.ptz.tilt,
+        limits.tiltMin,
+        limits.tiltMax,
+      )
+      const zoom = clamp(
+        next.zoom ?? camera.ptz.zoom,
+        limits.zoomMin,
+        limits.zoomMax,
+      )
+      camera.ptz = {...camera.ptz, pan, tilt, zoom}
+      camera.direction = pan
+      camera.zoom = zoom
+    })
+  }
+
+  const applyPtzLive = (
+    next: Partial<{pan: number; tilt: number; zoom: number}>,
+  ) => {
+    applyCameraUpdateLive((camera) => {
       const limits = camera.ptz.limits
       const pan = normalizePan(next.pan ?? camera.ptz.pan)
       const tilt = clamp(
@@ -402,7 +536,8 @@ export const CameraPropertiesSheet: React.FC = () => {
                 min={0.5}
                 step={0.1}
                 value={[selectedCamera.height]}
-                onValueChange={handleHeightChange}
+                onValueChange={handleHeightLiveChange}
+                onValueCommit={handleHeightChange}
               />
             </div>
             <div className='space-y-2'>
@@ -412,7 +547,8 @@ export const CameraPropertiesSheet: React.FC = () => {
                 min={0}
                 step={1}
                 value={[selectedCamera.direction]}
-                onValueChange={handleDirectionChange}
+                onValueChange={handleDirectionLiveChange}
+                onValueCommit={handleDirectionChange}
               />
             </div>
           </PropertiesSection>
@@ -427,7 +563,8 @@ export const CameraPropertiesSheet: React.FC = () => {
                 min={1}
                 step={1}
                 value={[selectedCamera.fovHorizontal]}
-                onValueChange={handleHorizontalFovChange}
+                onValueChange={handleHorizontalFovLiveChange}
+                onValueCommit={handleHorizontalFovChange}
               />
             </div>
             <div className='space-y-2'>
@@ -439,7 +576,8 @@ export const CameraPropertiesSheet: React.FC = () => {
                 min={1}
                 step={1}
                 value={[selectedCamera.fovVertical]}
-                onValueChange={handleVerticalFovChange}
+                onValueChange={handleVerticalFovLiveChange}
+                onValueCommit={handleVerticalFovChange}
               />
             </div>
             <div className='space-y-2'>
@@ -449,7 +587,8 @@ export const CameraPropertiesSheet: React.FC = () => {
                 min={1}
                 step={1}
                 value={[selectedCamera.depth]}
-                onValueChange={handleDepthChange}
+                onValueChange={handleDepthLiveChange}
+                onValueCommit={handleDepthChange}
               />
             </div>
             <div className='space-y-2'>
@@ -494,6 +633,9 @@ export const CameraPropertiesSheet: React.FC = () => {
                 step={1}
                 value={[panDegrees]}
                 onValueChange={(values) =>
+                  applyPtzLive({pan: values[0] ?? panDegrees})
+                }
+                onValueCommit={(values) =>
                   applyPtz({pan: values[0] ?? panDegrees})
                 }
               />
@@ -505,7 +647,8 @@ export const CameraPropertiesSheet: React.FC = () => {
                 min={selectedCamera.ptz.limits.tiltMin}
                 step={1}
                 value={[selectedCamera.ptz.tilt]}
-                onValueChange={(values) => applyPtz({tilt: values[0] ?? 0})}
+                onValueChange={(values) => applyPtzLive({tilt: values[0] ?? 0})}
+                onValueCommit={(values) => applyPtz({tilt: values[0] ?? 0})}
               />
             </div>
             <div className='space-y-2'>
@@ -515,7 +658,8 @@ export const CameraPropertiesSheet: React.FC = () => {
                 min={selectedCamera.ptz.limits.zoomMin}
                 step={0.1}
                 value={[selectedCamera.ptz.zoom]}
-                onValueChange={(values) => applyPtz({zoom: values[0] ?? 1})}
+                onValueChange={(values) => applyPtzLive({zoom: values[0] ?? 1})}
+                onValueCommit={(values) => applyPtz({zoom: values[0] ?? 1})}
               />
             </div>
             <div className='flex items-center gap-2'>

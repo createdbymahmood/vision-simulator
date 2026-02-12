@@ -606,19 +606,67 @@ export interface CameraLayerData {
   directions: FeatureCollection<LineString>
 }
 
+interface CameraLayerDataCacheEntry {
+  signature: string
+  point: Feature<Point>
+  fov: Feature<Polygon>
+  direction: Feature<LineString>
+}
+
+export interface CameraLayerDataCache {
+  areasRef?: AreaEntity[]
+  wallsRef?: WallEntity[]
+  shapesRef?: ShapeEntity[]
+  entriesByCameraId: Map<string, CameraLayerDataCacheEntry>
+}
+
+export const createCameraLayerDataCache = (): CameraLayerDataCache => ({
+  entriesByCameraId: new Map(),
+})
+
+const buildCameraLayerSignature = (
+  camera: CameraEntity,
+  effectivePan: number,
+  effectiveFov: number,
+) =>
+  [
+    camera.areaId,
+    camera.x,
+    camera.y,
+    effectivePan,
+    effectiveFov,
+    camera.depth,
+    camera.height,
+    camera.color,
+  ].join('|')
+
+// eslint-disable-next-line max-lines-per-function
 export const buildCameraLayerData = (
   cameras: CameraEntity[],
   areas: AreaEntity[],
   walls: WallEntity[],
   shapes: ShapeEntity[],
+  cache?: CameraLayerDataCache,
 ): CameraLayerData => {
   const pointFeatures: Feature<Point>[] = []
   const fovFeatures: Feature<Polygon>[] = []
   const directionFeatures: Feature<LineString>[] = []
+
+  const canReuseCache = Boolean(
+    cache &&
+      cache.areasRef === areas &&
+      cache.wallsRef === walls &&
+      cache.shapesRef === shapes,
+  )
+  if (cache && !canReuseCache) {
+    cache.entriesByCameraId.clear()
+  }
+
   const areaMap = new Map(areas.map((area) => [area.id, area]))
   const wallGroups = new Map<string, WallEntity[]>()
   const shapeGroups = new Map<string, ShapeEntity[]>()
   const obstacleGroups = new Map<string, FovOcclusionObstacle[]>()
+  const seenCameraIds = new Set<string>()
 
   walls.forEach((wall) => {
     const group = wallGroups.get(wall.areaId) ?? []
@@ -636,6 +684,23 @@ export const buildCameraLayerData = (
     const origin: GeoPoint = [camera.x, camera.y]
     const effectivePan = camera.ptz?.pan ?? camera.direction
     const effectiveFov = getEffectiveHorizontalFov(camera)
+    const signature = buildCameraLayerSignature(
+      camera,
+      effectivePan,
+      effectiveFov,
+    )
+
+    const cached = canReuseCache
+      ? cache?.entriesByCameraId.get(camera.id)
+      : undefined
+    if (cached && cached.signature === signature) {
+      pointFeatures.push(cached.point)
+      fovFeatures.push(cached.fov)
+      directionFeatures.push(cached.direction)
+      seenCameraIds.add(camera.id)
+      return
+    }
+
     const area = areaMap.get(camera.areaId)
     const obstacles =
       obstacleGroups.get(camera.areaId) ??
@@ -659,7 +724,7 @@ export const buildCameraLayerData = (
       camera.depth * 0.6,
     )
 
-    pointFeatures.push({
+    const pointFeature: Feature<Point> = {
       type: 'Feature',
       id: camera.id,
       properties: {
@@ -673,9 +738,9 @@ export const buildCameraLayerData = (
         type: 'Point',
         coordinates: origin,
       },
-    })
+    }
 
-    fovFeatures.push({
+    const fovFeature: Feature<Polygon> = {
       type: 'Feature',
       id: camera.id,
       properties: {
@@ -689,9 +754,9 @@ export const buildCameraLayerData = (
         type: 'Polygon',
         coordinates: [fovRing],
       },
-    })
+    }
 
-    directionFeatures.push({
+    const directionFeature: Feature<LineString> = {
       type: 'Feature',
       id: camera.id,
       properties: {
@@ -705,8 +770,33 @@ export const buildCameraLayerData = (
         type: 'LineString',
         coordinates: [origin, directionPoint],
       },
-    })
+    }
+
+    pointFeatures.push(pointFeature)
+    fovFeatures.push(fovFeature)
+    directionFeatures.push(directionFeature)
+    seenCameraIds.add(camera.id)
+
+    if (cache) {
+      cache.entriesByCameraId.set(camera.id, {
+        signature,
+        point: pointFeature,
+        fov: fovFeature,
+        direction: directionFeature,
+      })
+    }
   })
+
+  if (cache) {
+    Array.from(cache.entriesByCameraId.keys()).forEach((cameraId) => {
+      if (!seenCameraIds.has(cameraId)) {
+        cache.entriesByCameraId.delete(cameraId)
+      }
+    })
+    cache.areasRef = areas
+    cache.wallsRef = walls
+    cache.shapesRef = shapes
+  }
 
   return {
     points: {type: 'FeatureCollection', features: pointFeatures},

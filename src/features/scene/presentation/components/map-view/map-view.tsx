@@ -41,6 +41,7 @@ import {
   computeArea,
   computePerimeter,
   computeSegmentLength,
+  createCameraLayerDataCache,
   createPolygonGeometry,
   formatArea,
   formatMeters,
@@ -112,6 +113,7 @@ export const MapView: React.FC<MapViewProps> = ({
     getNextAreaColor(initialAreas),
   )
   const [previewPath, setPreviewPath] = React.useState<GeoPoint[]>([])
+  const cameraLayerDataCacheRef = React.useRef(createCameraLayerDataCache())
   const {recordAction} = useHistoryRecorder()
 
   const isEditMode = useUiStore((state) => state.isEditMode)
@@ -847,7 +849,14 @@ export const MapView: React.FC<MapViewProps> = ({
   )
 
   const cameraLayerData = React.useMemo(
-    () => buildCameraLayerData(cameras, areas, walls, shapes),
+    () =>
+      buildCameraLayerData(
+        cameras,
+        areas,
+        walls,
+        shapes,
+        cameraLayerDataCacheRef.current,
+      ),
     [areas, cameras, shapes, walls],
   )
 
