@@ -1,6 +1,6 @@
 {
   "name": "@vega-tek-hub/vision-simulator-v2",
-  "private": false,
+  "private": true,
   "version": "1.0.1",
   "type": "module",
   "main": "./dist/index.js",
