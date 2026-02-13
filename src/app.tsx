@@ -30,6 +30,13 @@ const DEFAULT_SHADOW_STYLE_URLS = [
   new URL('./styles.css', import.meta.url).href,
 ]
 const SHADOW_HOST_SLOT = 'vision-simulator-shadow-host'
+const STATIC_VISION_QUERY_OPTIONS = {
+  gcTime: Number.POSITIVE_INFINITY,
+  staleTime: Number.POSITIVE_INFINITY,
+  refetchOnMount: false,
+  refetchOnReconnect: false,
+  refetchOnWindowFocus: false,
+} as const
 
 export interface AppProps {
   children?: React.ReactNode
@@ -247,8 +254,7 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
 }) => {
   const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId, {
     query: {
-      gcTime: 0,
-      staleTime: 0,
+      ...STATIC_VISION_QUERY_OPTIONS,
     },
   })
   const initialSceneState = React.useMemo(
