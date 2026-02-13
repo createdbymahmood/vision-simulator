@@ -1,5 +1,16 @@
 import React from 'react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import {Badge} from '@/components/ui/badge'
 import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
@@ -97,16 +108,37 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
                     >
                       {area.id === activeAreaId ? 'Active' : 'Select'}
                     </Button>
-                    <Button
-                      size='icon'
-                      variant='ghost'
-                      onClick={() => {
-                        const updated = deleteArea(area.id)
-                        recordAction({type: 'delete', entity: 'area'}, updated)
-                      }}
-                    >
-                      ×
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size='icon' variant='ghost'>
+                          ×
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete area?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Deleting "{area.name}" will also remove its walls,
+                            shapes, cameras, and people.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            variant='destructive'
+                            onClick={() => {
+                              const updated = deleteArea(area.id)
+                              recordAction(
+                                {type: 'delete', entity: 'area'},
+                                updated,
+                              )
+                            }}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               ))}
