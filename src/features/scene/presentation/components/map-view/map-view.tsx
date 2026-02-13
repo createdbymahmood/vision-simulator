@@ -59,7 +59,6 @@ import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/
 import {MapViewWallLayers} from '@/features/scene/presentation/components/map-view/map-view-wall-layers'
 import {ensureCanvasGridImages} from '@/features/scene/presentation/components/map-view/mapbox-grid-images'
 import {getCanvasGridStyle} from '@/features/scene/presentation/components/map-view/mapbox-grid-style'
-import {SelectionOverlay} from '@/features/scene/presentation/components/map-view/selection-overlay'
 import {useCameraPlacement} from '@/features/scene/presentation/components/map-view/use-camera-placement'
 import {useCanvasEmptyZoom} from '@/features/scene/presentation/components/map-view/use-canvas-empty-zoom'
 import {useFlyToActiveArea} from '@/features/scene/presentation/components/map-view/use-fly-to-active-area'
@@ -225,13 +224,11 @@ export const MapView: React.FC<MapViewProps> = ({
     selectionBoundsFeature,
     handleFeatures,
     rotationHandle,
-    selectionCount,
     onPointerMove: handleSelectionPointerMove,
     onMouseDown: handleSelectionMouseDown,
     onMapClick: handleSelectionMapClick,
     onMouseUp: handleSelectionMouseUp,
     onMapLoad: handleSelectionMapLoad,
-    onDeleteSelection,
     mapLoaded,
   } = useSelectionTransform({
     mapRef,
@@ -1011,12 +1008,6 @@ export const MapView: React.FC<MapViewProps> = ({
           mapLoaded={mapLoaded}
         />
       </Mapbox>
-
-      <SelectionOverlay
-        count={selectionCount}
-        isEditMode={isEditMode}
-        onDelete={onDeleteSelection}
-      />
 
       {tooltip ? <MapViewTooltip tooltip={tooltip} /> : null}
 

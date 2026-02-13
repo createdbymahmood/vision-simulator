@@ -22,7 +22,11 @@ import {
 import {useFrameSceneUpdate} from '@/features/scene/presentation/hooks/use-frame-scene-update'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
-import {PropertiesSection, PropertiesShell} from './properties-shell'
+import {
+  PropertiesDeleteAction,
+  PropertiesSection,
+  PropertiesShell,
+} from './properties-shell'
 
 interface MetricProps {
   label: string
@@ -38,22 +42,25 @@ const Metric: React.FC<MetricProps> = ({label, value}) => (
 
 // eslint-disable-next-line max-lines-per-function
 export const ShapePropertiesSheet: React.FC = () => {
-  const {recordActionDebounced} = useHistoryRecorder()
+  const {recordAction, recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
 
+  const clearSelection = useSceneStore((state) => state.clearSelection)
+  const deleteEntities = useSceneStore((state) => state.deleteEntities)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const shapes = useSceneStore((state) => state.scene.shapes)
   const updateScene = useSceneStore((state) => state.updateScene)
   const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
-  const isOpen = openPanels['shape-properties'] ?? false
+  const isPanelOpen = openPanels['shape-properties'] ?? false
   const selectedShape = React.useMemo(() => {
     const shapeId = selectedEntityIds.find((id) => id.startsWith('shape-'))
     if (!shapeId) return null
     return shapes.find((shape) => shape.id === shapeId) ?? null
   }, [selectedEntityIds, shapes])
+  const isOpen = isPanelOpen && Boolean(selectedShape)
 
   const updateSelectedShape = React.useCallback(
     (
@@ -217,11 +224,30 @@ export const ShapePropertiesSheet: React.FC = () => {
     return {length, angle, thickness}
   }, [selectedShape])
 
+  const handleDeleteShape = () => {
+    if (!selectedShape) {
+      return
+    }
+    const updated = deleteEntities([selectedShape.id])
+    recordAction({type: 'delete', entity: 'shape', count: 1}, updated)
+    clearSelection()
+    closePanel('shape-properties')
+  }
+
   return (
     <PropertiesShell
       entityId={selectedShape?.id}
       title='Shape Properties'
       accentColor={selectedShape?.color}
+      actions={
+        selectedShape ? (
+          <PropertiesDeleteAction
+            confirmDescription='This shape will be permanently removed.'
+            confirmTitle='Delete shape?'
+            onConfirm={handleDeleteShape}
+          />
+        ) : null
+      }
       onOpenChange={(open) =>
         open ? openPanel('shape-properties') : closePanel('shape-properties')
       }

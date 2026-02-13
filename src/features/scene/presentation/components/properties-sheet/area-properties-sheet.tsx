@@ -16,7 +16,11 @@ import {
 import {useFrameSceneUpdate} from '@/features/scene/presentation/hooks/use-frame-scene-update'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
-import {PropertiesSection, PropertiesShell} from './properties-shell'
+import {
+  PropertiesDeleteAction,
+  PropertiesSection,
+  PropertiesShell,
+} from './properties-shell'
 
 interface MetricProps {
   label: string
@@ -32,23 +36,26 @@ const Metric: React.FC<MetricProps> = ({label, value}) => (
 
 // eslint-disable-next-line max-lines-per-function
 export const AreaPropertiesSheet: React.FC = () => {
-  const {recordActionDebounced} = useHistoryRecorder()
+  const {recordAction, recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
 
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
+  const clearSelection = useSceneStore((state) => state.clearSelection)
+  const deleteEntities = useSceneStore((state) => state.deleteEntities)
   const areas = useSceneStore((state) => state.scene.areas)
   const updateScene = useSceneStore((state) => state.updateScene)
   const updateAreaName = useSceneStore((state) => state.updateAreaName)
   const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
-  const isOpen = openPanels['area-properties'] ?? false
+  const isPanelOpen = openPanels['area-properties'] ?? false
   const selectedArea = React.useMemo(() => {
     const areaId = selectedEntityIds.find((id) => id.startsWith('area-'))
     if (!areaId) return null
     return areas.find((area) => area.id === areaId) ?? null
   }, [areas, selectedEntityIds])
+  const isOpen = isPanelOpen && Boolean(selectedArea)
 
   const updateSelectedArea = React.useCallback(
     (
@@ -155,12 +162,31 @@ export const AreaPropertiesSheet: React.FC = () => {
     ? computeArea(selectedArea.geometry.coordinates)
     : 0
 
+  const handleDeleteArea = () => {
+    if (!selectedArea) {
+      return
+    }
+    const updated = deleteEntities([selectedArea.id])
+    recordAction({type: 'delete', entity: 'area', count: 1}, updated)
+    clearSelection()
+    closePanel('area-properties')
+  }
+
   return (
     <PropertiesShell
       entityId={selectedArea?.id}
       entityName={selectedArea?.name}
       title='Area Properties'
       accentColor={selectedArea?.style.fillColor}
+      actions={
+        selectedArea ? (
+          <PropertiesDeleteAction
+            confirmDescription='Deleting this area also removes its walls, shapes, cameras, and people.'
+            confirmTitle='Delete area?'
+            onConfirm={handleDeleteArea}
+          />
+        ) : null
+      }
       onOpenChange={(open) =>
         open ? openPanel('area-properties') : closePanel('area-properties')
       }

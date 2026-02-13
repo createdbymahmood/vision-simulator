@@ -27,7 +27,7 @@ interface RealDeviceFeedControlsProps {
   statusLabel: string
   title: string
   onToggleFullscreen: () => void
-  onTogglePlayback: () => void
+  onTogglePlayback?: () => void
 }
 
 interface UseRealDevicePlayerInput {
@@ -100,9 +100,9 @@ const useRealDevicePlayer = ({
       protocol: 'auto',
       video: {
         controls: false,
-        muted: false,
+        muted: autoPlay,
         autoplay: autoPlay,
-        playsInline: false,
+        playsInline: true,
       },
       token: accessToken,
       reconnect: true,
@@ -162,19 +162,21 @@ const RealDeviceFeedControls: React.FC<RealDeviceFeedControlsProps> = ({
         <span className='line-clamp-1 text-xs font-medium'>{title}</span>
       </div>
       <div className='flex items-center gap-2'>
-        <Button
-          size='icon-sm'
-          className='text-white hover:bg-white/15 hover:text-white'
-          disabled={!canControlPlayback || isBusy}
-          variant='ghost'
-          onClick={onTogglePlayback}
-        >
-          {isPlaying ? (
-            <Square className='size-4' />
-          ) : (
-            <Play className='size-4' />
-          )}
-        </Button>
+        {onTogglePlayback ? (
+          <Button
+            size='icon-sm'
+            className='text-white hover:bg-white/15 hover:text-white'
+            disabled={!canControlPlayback || isBusy}
+            variant='ghost'
+            onClick={() => onTogglePlayback()}
+          >
+            {isPlaying ? (
+              <Square className='size-4' />
+            ) : (
+              <Play className='size-4' />
+            )}
+          </Button>
+        ) : null}
         <span className='text-xs text-white/90'>{statusLabel}</span>
 
         {allowFullscreen ? (
@@ -261,7 +263,7 @@ export const RealDeviceFeedPlayer: React.FC<RealDeviceFeedPlayerProps> = ({
         allowFullscreen={allowFullscreen}
         canControlPlayback={canControlPlayback}
         onToggleFullscreen={() => setIsExpanded((previous) => !previous)}
-        onTogglePlayback={togglePlayback}
+        onTogglePlayback={autoPlay ? undefined : togglePlayback}
         showControls={showControls}
       />
     </div>

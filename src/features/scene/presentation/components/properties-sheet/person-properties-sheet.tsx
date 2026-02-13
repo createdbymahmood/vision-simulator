@@ -10,25 +10,33 @@ import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 import {useFrameSceneUpdate} from '@/features/scene/presentation/hooks/use-frame-scene-update'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
-import {PropertiesSection, PropertiesShell} from './properties-shell'
+import {
+  PropertiesDeleteAction,
+  PropertiesSection,
+  PropertiesShell,
+} from './properties-shell'
 
+// eslint-disable-next-line max-lines-per-function
 export const PersonPropertiesSheet: React.FC = () => {
-  const {recordActionDebounced} = useHistoryRecorder()
+  const {recordAction, recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
 
+  const clearSelection = useSceneStore((state) => state.clearSelection)
+  const deleteEntities = useSceneStore((state) => state.deleteEntities)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const people = useSceneStore((state) => state.scene.people)
   const updateScene = useSceneStore((state) => state.updateScene)
   const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
-  const isOpen = openPanels['person-properties'] ?? false
+  const isPanelOpen = openPanels['person-properties'] ?? false
   const selectedPerson = React.useMemo(() => {
     const personId = selectedEntityIds.find((id) => id.startsWith('person-'))
     if (!personId) return null
     return people.find((person) => person.id === personId) ?? null
   }, [people, selectedEntityIds])
+  const isOpen = isPanelOpen && Boolean(selectedPerson)
 
   const personName = (
     selectedPerson?.name ??
@@ -92,11 +100,30 @@ export const PersonPropertiesSheet: React.FC = () => {
     )
   }
 
+  const handleDeletePerson = () => {
+    if (!selectedPerson) {
+      return
+    }
+    const updated = deleteEntities([selectedPerson.id])
+    recordAction({type: 'delete', entity: 'person', count: 1}, updated)
+    clearSelection()
+    closePanel('person-properties')
+  }
+
   return (
     <PropertiesShell
       entityId={selectedPerson?.id}
       entityName={selectedPerson?.name}
       title='Person Properties'
+      actions={
+        selectedPerson ? (
+          <PropertiesDeleteAction
+            confirmDescription='This person will be permanently removed.'
+            confirmTitle='Delete person?'
+            onConfirm={handleDeletePerson}
+          />
+        ) : null
+      }
       onOpenChange={(open) =>
         open ? openPanel('person-properties') : closePanel('person-properties')
       }

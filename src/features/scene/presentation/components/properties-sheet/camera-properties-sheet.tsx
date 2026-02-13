@@ -22,7 +22,11 @@ import {formatMeters} from '@/features/scene/presentation/components/map-view/ma
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 import {mergeCameraFeaturesWithCamera} from '@/features/scene/presentation/utils/camera-device-features'
 
-import {PropertiesSection, PropertiesShell} from './properties-shell'
+import {
+  PropertiesDeleteAction,
+  PropertiesSection,
+  PropertiesShell,
+} from './properties-shell'
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
@@ -80,22 +84,25 @@ const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
 
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const CameraPropertiesSheet: React.FC = () => {
-  const {recordActionDebounced} = useHistoryRecorder()
+  const {recordAction, recordActionDebounced} = useHistoryRecorder()
   const {mutate: updateDevice} = useUpdateDevice()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
 
+  const clearSelection = useSceneStore((state) => state.clearSelection)
+  const deleteEntities = useSceneStore((state) => state.deleteEntities)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const cameras = useSceneStore((state) => state.scene.cameras)
   const updateCamera = useSceneStore((state) => state.updateCamera)
 
-  const isOpen = openPanels['camera-properties'] ?? false
+  const isPanelOpen = openPanels['camera-properties'] ?? false
   const selectedCamera = React.useMemo(() => {
     const cameraId = selectedEntityIds.find((id) => id.startsWith('camera-'))
     if (!cameraId) return null
     return cameras.find((camera) => camera.id === cameraId) ?? null
   }, [cameras, selectedEntityIds])
+  const isOpen = isPanelOpen && Boolean(selectedCamera)
 
   const liveUpdateFrameRef = React.useRef<number | null>(null)
   const pendingLiveCameraUpdaterRef = React.useRef<
@@ -421,12 +428,33 @@ export const CameraPropertiesSheet: React.FC = () => {
     ''
   ).toString()
 
+  const handleDeleteCamera = () => {
+    if (!selectedCamera) {
+      return
+    }
+
+    debouncedSyncDeviceFeatures.cancel()
+    const updated = deleteEntities([selectedCamera.id])
+    recordAction({type: 'delete', entity: 'camera', count: 1}, updated)
+    clearSelection()
+    closePanel('camera-properties')
+  }
+
   return (
     <PropertiesShell
       entityId={selectedCamera?.id}
       entityName={selectedCamera?.name}
       title='Camera Properties'
       accentColor={selectedCamera?.color}
+      actions={
+        selectedCamera ? (
+          <PropertiesDeleteAction
+            confirmDescription='This camera will be permanently removed.'
+            confirmTitle='Delete camera?'
+            onConfirm={handleDeleteCamera}
+          />
+        ) : null
+      }
       onOpenChange={(open) =>
         open ? openPanel('camera-properties') : closePanel('camera-properties')
       }

@@ -80,7 +80,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
         <CardContent className='px-0'>
           <div className='relative w-full aspect-video overflow-hidden bg-muted text-left'>
             {isRealDeviceFeed ? (
-              <RealDeviceFeedPlayer camera={camera} />
+              <RealDeviceFeedPlayer camera={camera} autoPlay />
             ) : (
               <>
                 <div

@@ -12,7 +12,11 @@ import {formatMeters} from '@/features/scene/presentation/components/map-view/ma
 import {useFrameSceneUpdate} from '@/features/scene/presentation/hooks/use-frame-scene-update'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
-import {PropertiesSection, PropertiesShell} from './properties-shell'
+import {
+  PropertiesDeleteAction,
+  PropertiesSection,
+  PropertiesShell,
+} from './properties-shell'
 
 interface MetricProps {
   label: string
@@ -28,22 +32,25 @@ const Metric: React.FC<MetricProps> = ({label, value}) => (
 
 // eslint-disable-next-line max-lines-per-function
 export const WallPropertiesSheet: React.FC = () => {
-  const {recordActionDebounced} = useHistoryRecorder()
+  const {recordAction, recordActionDebounced} = useHistoryRecorder()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
 
+  const clearSelection = useSceneStore((state) => state.clearSelection)
+  const deleteEntities = useSceneStore((state) => state.deleteEntities)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const walls = useSceneStore((state) => state.scene.walls)
   const updateScene = useSceneStore((state) => state.updateScene)
   const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
-  const isOpen = openPanels['wall-properties'] ?? false
+  const isPanelOpen = openPanels['wall-properties'] ?? false
   const selectedWall = React.useMemo(() => {
     const wallId = selectedEntityIds.find((id) => id.startsWith('wall-'))
     if (!wallId) return null
     return walls.find((wall) => wall.id === wallId) ?? null
   }, [selectedEntityIds, walls])
+  const isOpen = isPanelOpen && Boolean(selectedWall)
 
   const updateSelectedWall = React.useCallback(
     (
@@ -134,11 +141,30 @@ export const WallPropertiesSheet: React.FC = () => {
     ? Math.max(0, selectedWall.points.length - 1)
     : 0
 
+  const handleDeleteWall = () => {
+    if (!selectedWall) {
+      return
+    }
+    const updated = deleteEntities([selectedWall.id])
+    recordAction({type: 'delete', entity: 'wall', count: 1}, updated)
+    clearSelection()
+    closePanel('wall-properties')
+  }
+
   return (
     <PropertiesShell
       entityId={selectedWall?.id}
       title='Wall Properties'
       accentColor={selectedWall?.color}
+      actions={
+        selectedWall ? (
+          <PropertiesDeleteAction
+            confirmDescription='This wall will be permanently removed.'
+            confirmTitle='Delete wall?'
+            onConfirm={handleDeleteWall}
+          />
+        ) : null
+      }
       onOpenChange={(open) =>
         open ? openPanel('wall-properties') : closePanel('wall-properties')
       }
