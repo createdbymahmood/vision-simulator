@@ -1,6 +1,5 @@
 import React from 'react'
 
-import {ScrollArea} from '@/components/ui/scroll-area'
 import {Separator} from '@/components/ui/separator'
 import {
   Sheet,
@@ -38,6 +37,7 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
       className='w-[360px] gap-0 border-l bg-background px-0 backdrop-blur'
       side='right'
       style={{width: 360}}
+      onWheelCapture={(event) => event.stopPropagation()}
     >
       <SheetHeader className='border-b px-4 py-3'>
         <div className='flex items-center justify-between gap-3'>
@@ -68,7 +68,7 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
         </div>
       </SheetHeader>
 
-      <ScrollArea className='h-[calc(100vh-56px)] p-4'>{children}</ScrollArea>
+      <div className='h-[calc(100vh-56px)] overflow-y-auto p-4'>{children}</div>
     </SheetContent>
   </Sheet>
 )
