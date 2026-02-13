@@ -149,8 +149,8 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
         </div>
 
         <Collapsible className='min-h-0 flex flex-1 flex-col' open={!collapsed}>
-          <CollapsibleContent className='min-h-0 flex-1 overflow-hidden'>
-            <div className='h-full min-h-0 overflow-y-auto p-4'>{children}</div>
+          <CollapsibleContent className='min-h-0 flex-1 overflow-y-auto p-4'>
+            {children}
           </CollapsibleContent>
         </Collapsible>
       </div>
