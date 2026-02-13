@@ -148,7 +148,7 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 │  Tilt: [===•=====] 15° │
 │  Zoom: [==•======] 1.5x│
 │                         │
-│  [Reset] [Preset ▼]    │ ← Actions
+│  [Preset ▼]            │ ← Actions
 └─────────────────────────┘
 ```
 
@@ -185,11 +185,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - [ ] Affects FOV: `effectiveFOV = baseFOV / zoomFactor`
 - [ ] Label: "Zoom: 1.5x"
 
-#### Reset Button
-
-- [ ] Returns to default: Pan 0°, Tilt 0°, Zoom 1x
-- [ ] Animates smoothly (500ms ease-out)
-
 ### PTZ Behavior in Editor (Section 5.5.3)
 
 - [ ] **Real-time FOV update**: FOV wedge/cone redraws immediately on adjustment
@@ -198,7 +193,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - [ ] **Keyboard shortcuts** (when camera selected):
   - Arrow keys: Pan/Tilt (5° increments)
   - `+` / `-`: Zoom in/out
-  - `0`: Reset PTZ
 
 ### Coordinate Display in Properties (Section 5.2)
 
@@ -227,7 +221,6 @@ Implement the complete Properties Panel system for all entity types and the PTZ 
 - [ ] Camera color picker updates FOV wedge color in real-time
 - [ ] D-pad buttons adjust pan/tilt with visual feedback
 - [ ] Slider handles show camera color
-- [ ] Reset button animates PTZ back to defaults
 - [ ] Arrow keys work for PTZ when camera selected
 - [ ] FOV wedge updates live during PTZ adjustment
 - [ ] Coordinate display shows meters format correctly

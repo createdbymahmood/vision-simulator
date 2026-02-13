@@ -181,7 +181,6 @@ Implement recording functionality (video capture of 3D view), snapshot export, J
 - [ ] **Vertex hover expand**: 8px→10px scale
 - [ ] **Close indication pulse**: first vertex faster pulse
 - [ ] **Measurement tooltip fade**: in 100ms, out 200ms
-- [ ] **PTZ Reset animation**: 500ms ease-out smooth transition
 - [ ] **FlyTo animation**: 1000ms ease-in-out, smooth arc
 - [ ] **Mode switch fade**: 400ms texture transition
 - [ ] **Focus selection**: 800ms ease-out camera move
@@ -314,5 +313,4 @@ Implement recording functionality (video capture of 3D view), snapshot export, J
 8. **Bezier curve sampling rate**: 1000 points per curve specified - verify if sufficient
 9. **Spatial hash grid cell size**: 10m × 10m specified - verify performance
 10. **Trail history buffer size**: 600 positions (20s × 30FPS) - verify memory usage
-
 

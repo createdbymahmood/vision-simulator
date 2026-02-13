@@ -1,12 +1,6 @@
 import {debounce} from '@lodash-es'
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  RotateCcw,
-} from 'lucide-react'
+import {ArrowDown, ArrowLeft, ArrowRight, ArrowUp} from 'lucide-react'
 import React from 'react'
 
 import type {CameraEntity} from '@/features/scene/domain/types'
@@ -365,10 +359,6 @@ export const CameraPropertiesSheet: React.FC = () => {
     })
   }
 
-  const handleResetPtz = () => {
-    applyPtz({pan: 0, tilt: 0, zoom: 1})
-  }
-
   // NOTE: PTZ keyboard shortcuts are intentionally disabled for now.
   // Do not re-enable this without an explicit product request.
   const ptzKeyboardShortcutsEnabled = false
@@ -384,8 +374,7 @@ export const CameraPropertiesSheet: React.FC = () => {
       event.key === 'ArrowRight' ||
       event.key === '+' ||
       event.key === '-' ||
-      event.key === '=' ||
-      event.key === '0'
+      event.key === '='
     ) {
       event.preventDefault()
     }
@@ -406,9 +395,6 @@ export const CameraPropertiesSheet: React.FC = () => {
     }
     if (event.key === '-') {
       applyPtz({zoom: selectedCamera.ptz.zoom - 0.1})
-    }
-    if (event.key === '0') {
-      handleResetPtz()
     }
   })
 
@@ -619,12 +605,6 @@ export const CameraPropertiesSheet: React.FC = () => {
                 onValueChange={(values) => applyPtzLive({zoom: values[0] ?? 1})}
                 onValueCommit={(values) => applyPtz({zoom: values[0] ?? 1})}
               />
-            </div>
-            <div className='flex items-center gap-2'>
-              <Button size='sm' variant='outline' onClick={handleResetPtz}>
-                <RotateCcw className='mr-2 size-4' />
-                Reset
-              </Button>
             </div>
           </PropertiesSection>
         </div>
