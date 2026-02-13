@@ -73,7 +73,11 @@ export const UnsavedChangesLeaveDialog: React.FC<
           <AlertDialogCancel disabled={isSaving} onClick={handleStay}>
             Stay
           </AlertDialogCancel>
-          <AlertDialogAction disabled={isSaving} onClick={handleDiscardChanges}>
+          <AlertDialogAction
+            disabled={isSaving}
+            variant='destructive'
+            onClick={handleDiscardChanges}
+          >
             Discard changes
           </AlertDialogAction>
           <AlertDialogAction disabled={isSaving} onClick={handleSaveAndLeave}>

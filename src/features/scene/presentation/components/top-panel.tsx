@@ -1,14 +1,5 @@
 import {Eraser, FlipBackward, FlipForward, Share01} from '@untitledui/icons'
-import {
-  ArrowLeft,
-  MoreHorizontal,
-  Play,
-  RotateCcw,
-  RotateCw,
-  Save,
-  Share2,
-  Trash2,
-} from 'lucide-react'
+import {ArrowLeft, MoreHorizontal, Play, Save} from 'lucide-react'
 import React from 'react'
 
 import type {EditorMode} from '@/features/scene/domain/types'
@@ -24,7 +15,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import {Badge} from '@/components/ui/badge'
 import {Button} from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -152,7 +142,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={onClearBoard}>
+                <AlertDialogAction variant='destructive' onClick={onClearBoard}>
                   Clear
                 </AlertDialogAction>
               </AlertDialogFooter>

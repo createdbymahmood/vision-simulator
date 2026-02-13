@@ -55,7 +55,9 @@ export const PropertiesDeleteAction: React.FC<PropertiesDeleteActionProps> = ({
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={onConfirm}>Delete</AlertDialogAction>
+        <AlertDialogAction variant='destructive' onClick={onConfirm}>
+          Delete
+        </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
