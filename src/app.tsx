@@ -36,6 +36,7 @@ export interface AppProps {
   visionSimulatorId: string
   accessToken: string
   apiBaseUrl: string
+  mediaMtxUrl?: string
   mapboxToken?: string
   mode?: VisionSimulatorMode
   isolationMode?: 'none' | 'shadow'
@@ -50,6 +51,8 @@ interface ShadowIsolatedRootProps {
 
 interface VisionSimulatorProvidersProps {
   visionSimulatorId: string
+  accessToken: string
+  mediaMtxUrl?: string
   mapboxToken?: string
   mode: VisionSimulatorMode
   unsavedChanges?: UnsavedChangesOptions
@@ -236,6 +239,8 @@ const usePackageDocumentStyles = (enabled: boolean) => {
 
 const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
   visionSimulatorId,
+  accessToken,
+  mediaMtxUrl,
   mapboxToken,
   mode,
   unsavedChanges,
@@ -260,6 +265,8 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
       <HistoryStoreProvider initialState={{}}>
         <UiStoreProvider
           initialState={{
+            accessToken,
+            mediaMtxUrl,
             mapboxToken,
             viewMode: modePolicy.initialViewMode,
           }}
@@ -331,6 +338,8 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
 }
 
 const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
+  accessToken,
+  mediaMtxUrl,
   mapboxToken,
   mode,
   visionSimulatorId,
@@ -339,7 +348,9 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
   <Suspense fallback={<Pending />}>
     <QueryClientProvider client={queryClient}>
       <VisionSimulatorProviders
+        mediaMtxUrl={mediaMtxUrl}
         unsavedChanges={unsavedChanges}
+        accessToken={accessToken}
         mapboxToken={mapboxToken}
         mode={mode}
         visionSimulatorId={visionSimulatorId}
@@ -350,6 +361,7 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
 
 export const App: React.FC<AppProps> = ({
   apiBaseUrl,
+  mediaMtxUrl,
   mapboxToken,
   mode,
   accessToken,
@@ -363,7 +375,9 @@ export const App: React.FC<AppProps> = ({
 
   const appShell = (
     <VisionSimulatorAppShell
+      mediaMtxUrl={mediaMtxUrl}
       unsavedChanges={unsavedChanges}
+      accessToken={accessToken}
       mapboxToken={mapboxToken}
       mode={effectiveMode}
       visionSimulatorId={visionSimulatorId}

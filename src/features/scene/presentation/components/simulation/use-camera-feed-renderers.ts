@@ -22,7 +22,95 @@ interface FeedRendererState {
   aspect: number
 }
 
-// eslint-disable-next-line max-lines-per-function
+type RendererMapRef = React.MutableRefObject<Map<string, FeedRendererState>>
+type SizeMapRef = React.MutableRefObject<
+  Map<string, {width: number; height: number}>
+>
+type ObserverMapRef = React.MutableRefObject<Map<string, ResizeObserver>>
+
+const disposeRendererForTarget = (rendererMap: RendererMapRef, id: string) => {
+  const state = rendererMap.current.get(id)
+  if (!state) {
+    return
+  }
+  state.renderer.dispose()
+  rendererMap.current.delete(id)
+}
+
+const disconnectObserverForTarget = (
+  observerMap: ObserverMapRef,
+  sizeMap: SizeMapRef,
+  id: string,
+) => {
+  const observer = observerMap.current.get(id)
+  if (observer) {
+    observer.disconnect()
+    observerMap.current.delete(id)
+  }
+  sizeMap.current.delete(id)
+}
+
+const clearTargetResources = (
+  rendererMap: RendererMapRef,
+  observerMap: ObserverMapRef,
+  sizeMap: SizeMapRef,
+  id: string,
+) => {
+  disposeRendererForTarget(rendererMap, id)
+  disconnectObserverForTarget(observerMap, sizeMap, id)
+}
+
+const ensureContainerObserver = (
+  target: CameraFeedTarget,
+  observerMap: ObserverMapRef,
+  sizeMap: SizeMapRef,
+) => {
+  const container = target.containerRef.current
+  if (!container || observerMap.current.has(target.id)) {
+    return
+  }
+
+  const observer = new ResizeObserver((entries) => {
+    const entry = entries[0]
+    if (!entry) {
+      return
+    }
+    const {width, height} = entry.contentRect
+    sizeMap.current.set(target.id, {width, height})
+  })
+  observer.observe(container)
+  observerMap.current.set(target.id, observer)
+  const rect = container.getBoundingClientRect()
+  sizeMap.current.set(target.id, {
+    width: rect.width,
+    height: rect.height,
+  })
+}
+
+const ensureFeedRendererState = (
+  rendererMap: RendererMapRef,
+  targetId: string,
+  canvas: HTMLCanvasElement,
+) => {
+  const existingState = rendererMap.current.get(targetId)
+  if (existingState) {
+    return existingState
+  }
+
+  const renderer = createFeedRenderer(canvas)
+  const camera = new THREE.PerspectiveCamera()
+  camera.layers.set(WORLD_LAYER)
+  const nextState: FeedRendererState = {
+    renderer,
+    camera,
+    lastRender: 0,
+    renderSize: {width: 0, height: 0},
+    aspect: 1,
+  }
+  rendererMap.current.set(targetId, nextState)
+  return nextState
+}
+
 export const useCameraFeedRenderers = ({
   cameraFeedTargets,
   cameras,
@@ -91,45 +179,21 @@ export const useCameraFeedRenderers = ({
     const minInterval = 1 / getFeedFps(feedCount)
 
     targets.forEach((target) => {
-      const container = target.containerRef.current
-      if (container && !observerMap.current.has(target.id)) {
-        const observer = new ResizeObserver((entries) => {
-          const entry = entries[0]
-          if (!entry) {
-            return
-          }
-          const {width, height} = entry.contentRect
-          sizeMap.current.set(target.id, {width, height})
-        })
-        observer.observe(container)
-        observerMap.current.set(target.id, observer)
-        const rect = container.getBoundingClientRect()
-        sizeMap.current.set(target.id, {
-          width: rect.width,
-          height: rect.height,
-        })
-      }
-
       const cameraEntity = camerasById.get(target.id)
-      const canvas = target.canvasRef.current
-      if (!cameraEntity || !canvas) {
+      if (!cameraEntity || cameraEntity.sourceDeviceKind === 'real') {
+        clearTargetResources(rendererMap, observerMap, sizeMap, target.id)
         return
       }
 
-      let state = rendererMap.current.get(target.id)
-      if (!state) {
-        const renderer = createFeedRenderer(canvas)
-        const camera = new THREE.PerspectiveCamera()
-        camera.layers.set(WORLD_LAYER)
-        state = {
-          renderer,
-          camera,
-          lastRender: 0,
-          renderSize: {width: 0, height: 0},
-          aspect: 1,
-        }
-        rendererMap.current.set(target.id, state)
+      ensureContainerObserver(target, observerMap, sizeMap)
+
+      const canvas = target.canvasRef.current
+      if (!canvas) {
+        disposeRendererForTarget(rendererMap, target.id)
+        return
       }
+
+      const state = ensureFeedRendererState(rendererMap, target.id, canvas)
 
       if (clock.elapsedTime - state.lastRender < minInterval) {
         return

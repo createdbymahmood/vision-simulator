@@ -139,7 +139,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
           />
         </SimulationViewport>
         {showSimulationSidePanels ? (
-          <div className='flex h-full min-h-0 shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain border-l'>
+          <div className='flex h-full min-h-0 w-[360px] max-w-[360px] shrink-0 flex-col gap-4 overflow-x-hidden overflow-y-auto overscroll-contain border-l'>
             <SimulationRadar
               size={radarPanelSize}
               scene={scene}

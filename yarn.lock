@@ -4545,6 +4545,11 @@
   dependencies:
     "@use-gesture/core" "10.3.1"
 
+"@vega-tek-hub/media-mtx-player@0.0.2":
+  version "0.0.2"
+  resolved "https://npm.pkg.github.com/download/@vega-tek-hub/media-mtx-player/0.0.2/7b5159d91599cb898bb0c4661b060ab83ac94cc8#7b5159d91599cb898bb0c4661b060ab83ac94cc8"
+  integrity sha512-E63VFXBGm6MswQkBi/i8SQBnr2Sfl2NKLpqdVobvPi8M4rRRczR//pft9m+31c3uaKMdxvvj6J0m5G9mxiSZ+Q==
+
 "@vis.gl/react-mapbox@8.1.0":
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/@vis.gl/react-mapbox/-/react-mapbox-8.1.0.tgz#ce08f2942ddd92784ae1cedb35dccad61c613ab0"

@@ -44,6 +44,8 @@ export interface UiState {
   isEditMode: boolean
   openPanels: Record<string, boolean>
   openPopovers: Record<string, boolean>
+  accessToken?: string
+  mediaMtxUrl?: string
   mapboxToken?: string
   cameraPlacement: {
     profile: CameraPlacementProfile | null
@@ -251,6 +253,8 @@ const defaultUiState = {
   isEditMode: true,
   openPanels: {} as Record<string, boolean>,
   openPopovers: {} as Record<string, boolean>,
+  accessToken: undefined as string | undefined,
+  mediaMtxUrl: undefined as string | undefined,
   mapboxToken: undefined as string | undefined,
   cameraPlacement: {
     profile: null,
