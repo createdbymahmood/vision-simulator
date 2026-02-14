@@ -39,8 +39,6 @@ const STATIC_VISION_QUERY_OPTIONS = {
   refetchOnWindowFocus: false,
 } as const
 
-export type ShadowStyleScope = 'document' | 'package'
-
 export interface AppProps {
   children?: React.ReactNode
   visionSimulatorId: string
@@ -51,7 +49,6 @@ export interface AppProps {
   mode?: VisionSimulatorMode
   isolationMode?: 'none' | 'shadow'
   shadowStyleUrls?: string[]
-  shadowStyleScope?: ShadowStyleScope
   unsavedChanges?: UnsavedChangesOptions
   uiOverrides?: EditorUiOverrides
 }
@@ -59,7 +56,7 @@ export interface AppProps {
 interface ShadowIsolatedRootProps {
   children: React.ReactNode
   shadowStyleUrls?: string[]
-  shadowStyleScope: ShadowStyleScope
+  mirrorDocumentStyles: boolean
 }
 
 interface VisionSimulatorProvidersProps {
@@ -105,9 +102,9 @@ const isVisionSimulatorStyleSource = (value: string | null | undefined) => {
 
 const shouldIncludeInlineStyle = (
   styleElement: HTMLStyleElement,
-  shadowStyleScope: ShadowStyleScope,
+  mirrorDocumentStyles: boolean,
 ) => {
-  if (shadowStyleScope === 'document') {
+  if (mirrorDocumentStyles) {
     return true
   }
 
@@ -122,16 +119,16 @@ const shouldIncludeInlineStyle = (
 
 const shouldIncludeStyleLink = (
   href: string,
-  shadowStyleScope: ShadowStyleScope,
+  mirrorDocumentStyles: boolean,
 ) => {
-  if (shadowStyleScope === 'document') {
+  if (mirrorDocumentStyles) {
     return true
   }
   return isVisionSimulatorStyleSource(href)
 }
 
 const collectDocumentStyles = (
-  shadowStyleScope: ShadowStyleScope,
+  mirrorDocumentStyles: boolean,
 ): ShadowResolvedStyles => {
   if (typeof document === 'undefined') {
     return {inline: [], links: []}
@@ -139,7 +136,7 @@ const collectDocumentStyles = (
 
   const inline = Array.from(document.querySelectorAll('style'))
     .filter((styleElement) =>
-      shouldIncludeInlineStyle(styleElement, shadowStyleScope),
+      shouldIncludeInlineStyle(styleElement, mirrorDocumentStyles),
     )
     .map((styleElement, index) => ({
       key: `inline-style-${index}`,
@@ -152,7 +149,7 @@ const collectDocumentStyles = (
       Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
         .map((linkElement) => linkElement.getAttribute('href'))
         .filter((href): href is string => Boolean(href))
-        .filter((href) => shouldIncludeStyleLink(href, shadowStyleScope)),
+        .filter((href) => shouldIncludeStyleLink(href, mirrorDocumentStyles)),
     ),
   ]
 
@@ -260,7 +257,7 @@ const useMirrorDarkModeClass = (
 
 const useDocumentStyles = (
   enabled: boolean,
-  shadowStyleScope: ShadowStyleScope,
+  mirrorDocumentStyles: boolean,
 ) => {
   const [documentStyles, setDocumentStyles] =
     React.useState<ShadowResolvedStyles>({
@@ -273,8 +270,8 @@ const useDocumentStyles = (
       return
     }
 
-    setDocumentStyles(collectDocumentStyles(shadowStyleScope))
-  }, [enabled, shadowStyleScope])
+    setDocumentStyles(collectDocumentStyles(mirrorDocumentStyles))
+  }, [enabled, mirrorDocumentStyles])
 
   return documentStyles
 }
@@ -330,8 +327,8 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
 
 const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
   children,
+  mirrorDocumentStyles,
   shadowStyleUrls,
-  shadowStyleScope,
 }) => {
   const hostRef = React.useRef<HTMLDivElement>(null)
   const shadowRoot = useOpenShadowRoot(hostRef)
@@ -341,7 +338,7 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
   const hasExplicitStyleUrls = (shadowStyleUrls?.length ?? 0) > 0
   const documentStyles = useDocumentStyles(
     !hasExplicitStyleUrls,
-    shadowStyleScope,
+    mirrorDocumentStyles,
   )
 
   const styleUrls = React.useMemo(
@@ -417,14 +414,12 @@ export const App: React.FC<AppProps> = ({
   visionSimulatorId,
   isolationMode = 'shadow',
   shadowStyleUrls,
-  shadowStyleScope,
   unsavedChanges,
   uiOverrides,
 }) => {
   configureDataProvider({apiBaseUrl, accessToken})
   const effectiveMode = resolveVisionSimulatorMode(mode)
-  const effectiveShadowStyleScope: ShadowStyleScope =
-    shadowStyleScope ?? (uiOverrides ? 'document' : 'package')
+  const mirrorDocumentStyles = Boolean(uiOverrides)
 
   const appShell = (
     <VisionSimulatorAppShell
@@ -448,7 +443,7 @@ export const App: React.FC<AppProps> = ({
 
   return (
     <ShadowIsolatedRoot
-      shadowStyleScope={effectiveShadowStyleScope}
+      mirrorDocumentStyles={mirrorDocumentStyles}
       shadowStyleUrls={shadowStyleUrls}
     >
       {appShell}
