@@ -82,11 +82,21 @@ function CommandInput({
 
 function CommandList({
   className,
+  onWheelCapture,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
+  const handleWheelCapture = React.useCallback(
+    (event: React.WheelEvent<HTMLDivElement>) => {
+      event.stopPropagation()
+      onWheelCapture?.(event)
+    },
+    [onWheelCapture],
+  )
+
   return (
     <CommandPrimitive.List
       data-slot='command-list'
+      onWheelCapture={handleWheelCapture}
       className={cn(
         'max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto',
         className,
