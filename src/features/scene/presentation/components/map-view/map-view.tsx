@@ -618,6 +618,16 @@ export const MapView: React.FC<MapViewProps> = ({
     setActiveArea,
   ])
 
+  const completeWallDrawing = React.useCallback(() => {
+    const updated = finalizeWall()
+    const createdWallId = updated?.walls.at(-1)?.id
+    if (!createdWallId) {
+      return
+    }
+    setSelection([createdWallId])
+    openPanel('wall-properties')
+  }, [finalizeWall, openPanel, setSelection])
+
   useMapViewHotkeys({
     // NOTE: Shortcuts are intentionally disabled for now. Do not re-enable
     // this without an explicit product request.
@@ -635,7 +645,7 @@ export const MapView: React.FC<MapViewProps> = ({
     onAreaBackspace: handleAreaBackspace,
     onAreaEnter: finalizeArea,
     onWallBackspace: popWallPoint,
-    onWallEnter: finalizeWall,
+    onWallEnter: completeWallDrawing,
     onShapeBackspace: resetShapeDrawing,
   })
 
@@ -846,7 +856,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const handleDoubleClick = (event: MapLayerMouseEvent) => {
     event.preventDefault()
     if (activeTool === 'draw-wall') {
-      finalizeWall()
+      completeWallDrawing()
       return
     }
     if (activeTool === 'draw-area') {
