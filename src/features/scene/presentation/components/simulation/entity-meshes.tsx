@@ -270,23 +270,35 @@ export const AreaMesh: React.FC<{
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selected: boolean
 }> = ({data, onSelect, onFocus}) => {
-  if (data.points.length < 3) {
+  const extrude = React.useMemo(() => {
+    if (data.points.length < 3) {
+      return null
+    }
+    const shape = new THREE.Shape()
+    data.points.forEach((point, index) => {
+      const projectedY = -point.z
+      if (index === 0) {
+        shape.moveTo(point.x, projectedY)
+      } else {
+        shape.lineTo(point.x, projectedY)
+      }
+    })
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: 0.02,
+      bevelEnabled: false,
+    })
+    geometry.rotateX(-Math.PI / 2)
+    return geometry
+  }, [data.points])
+  React.useEffect(
+    () => () => {
+      extrude?.dispose()
+    },
+    [extrude],
+  )
+  if (!extrude) {
     return null
   }
-  const shape = new THREE.Shape()
-  data.points.forEach((point, index) => {
-    const projectedY = -point.z
-    if (index === 0) {
-      shape.moveTo(point.x, projectedY)
-    } else {
-      shape.lineTo(point.x, projectedY)
-    }
-  })
-  const extrude = new THREE.ExtrudeGeometry(shape, {
-    depth: 0.02,
-    bevelEnabled: false,
-  })
-  extrude.rotateX(-Math.PI / 2)
   const fillColorParsed = parseColorAndAlpha(
     data.entity.style.fillColor ?? data.entity.color,
   )
@@ -295,7 +307,7 @@ export const AreaMesh: React.FC<{
   const fillColor = fillColorParsed.color
   return (
     <mesh
-      renderOrder={0}
+      renderOrder={20}
       castShadow
       geometry={extrude}
       onClick={(event) => {
@@ -311,17 +323,15 @@ export const AreaMesh: React.FC<{
           onFocus(focusPoint, Math.max(size.x, size.z, 20))
         }
       }}
-      position={[0, 0.01, 0]}
+      position={[0, 0.015, 0]}
       receiveShadow
     >
       <meshBasicMaterial
         transparent
+        depthWrite={false}
         side={THREE.DoubleSide}
         color={fillColor}
         opacity={appliedOpacity}
-        polygonOffset
-        polygonOffsetFactor={3}
-        polygonOffsetUnits={3}
       />
     </mesh>
   )

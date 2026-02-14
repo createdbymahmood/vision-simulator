@@ -78,10 +78,15 @@ export const GroundPlane: React.FC<GroundPlaneProps> = ({
 
   return (
     <>
-      <mesh position={[0, mapOffset, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        renderOrder={-20}
+        position={[0, mapOffset, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <planeGeometry args={[mapPlaneSize.width, mapPlaneSize.height]} />
         <meshBasicMaterial
           transparent
+          depthWrite={false}
           map={mapTexture ?? undefined}
           color={mapTexture ? undefined : '#E5E7EB'}
           opacity={mapOpacity}
@@ -90,10 +95,15 @@ export const GroundPlane: React.FC<GroundPlaneProps> = ({
           polygonOffsetUnits={1}
         />
       </mesh>
-      <mesh position={[0, gridOffset, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh
+        renderOrder={-19}
+        position={[0, gridOffset, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
         <planeGeometry args={[gridPlaneSize.width, gridPlaneSize.height]} />
         <meshBasicMaterial
           transparent
+          depthWrite={false}
           map={gridTexture ?? undefined}
           color={gridTexture ? undefined : '#F8FAFC'}
           opacity={gridOpacity}
