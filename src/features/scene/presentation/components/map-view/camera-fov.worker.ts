@@ -32,6 +32,7 @@ let staticSnapshot: StaticSnapshot = {
 let layerDataCache = createCameraLayerDataCache()
 let activeCompute: CameraFovWorkerComputeMessage | null = null
 let queuedCompute: CameraFovWorkerComputeMessage | null = null
+let isWorkerBooted = false
 
 const postResponse = (message: CameraFovWorkerResponse) => {
   self.postMessage(message)
@@ -70,21 +71,28 @@ const processCompute = (message: CameraFovWorkerComputeMessage) => {
   activeCompute = null
 }
 
-self.onmessage = (event: MessageEvent<CameraFovWorkerRequest>) => {
-  const message = event.data
-  if (message.type === 'set-static') {
-    staticSnapshot = {
-      areas: message.areas,
-      walls: message.walls,
-      shapes: message.shapes,
-    }
-    layerDataCache = createCameraLayerDataCache()
+export const bootCameraFovWorker = () => {
+  if (isWorkerBooted) {
     return
   }
+  isWorkerBooted = true
 
-  if (activeCompute) {
-    queuedCompute = message
-    return
+  self.onmessage = (event: MessageEvent<CameraFovWorkerRequest>) => {
+    const message = event.data
+    if (message.type === 'set-static') {
+      staticSnapshot = {
+        areas: message.areas,
+        walls: message.walls,
+        shapes: message.shapes,
+      }
+      layerDataCache = createCameraLayerDataCache()
+      return
+    }
+
+    if (activeCompute) {
+      queuedCompute = message
+      return
+    }
+    processCompute(message)
   }
-  processCompute(message)
 }

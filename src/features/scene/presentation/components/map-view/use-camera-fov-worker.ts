@@ -71,7 +71,7 @@ export const useCameraFovWorker = ({
     }
 
     const worker = new Worker(
-      new URL('./camera-fov.worker.ts', import.meta.url),
+      new URL('./camera-fov.worker.js', import.meta.url),
       {type: 'module'},
     )
     workerRef.current = worker

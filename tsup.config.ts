@@ -1,7 +1,11 @@
 import {defineConfig} from 'tsup'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: {
+    index: 'src/index.ts',
+    'camera-fov.worker':
+      'src/features/scene/presentation/components/map-view/camera-fov.worker.js',
+  },
   format: ['esm'],
   dts: true,
   sourcemap: true,
