@@ -59,27 +59,35 @@ export const ToolButton: React.FC<ToolButtonProps> = ({
 interface CreateAreaPopoverProps {
   activeTool: EditorTool
   disabled: boolean
+  tooltip?: string
   onSelectTool: () => void
 }
 
 export const CreateAreaPopover: React.FC<CreateAreaPopoverProps> = ({
   activeTool,
   disabled,
+  tooltip,
   onSelectTool,
 }) => {
   return (
-    <Button
-      className={TOOL_ITEM_CLASS}
-      disabled={disabled}
-      variant={activeTool === 'draw-area' ? 'default' : 'ghost'}
-      onClick={() => {
-        onSelectTool()
-      }}
-    >
-      <div className='relative'>
-        <Hexagon className='size-5' />
-      </div>
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          aria-label='Create Area'
+          className={TOOL_ITEM_CLASS}
+          disabled={disabled}
+          variant={activeTool === 'draw-area' ? 'default' : 'ghost'}
+          onClick={() => {
+            onSelectTool()
+          }}
+        >
+          <div className='relative'>
+            <Hexagon className='size-5' />
+          </div>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{tooltip ?? 'Create Area'}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -88,6 +96,7 @@ interface ShapePopoverProps {
   shapeMode: ShapeDrawMode
   disabled: boolean
   open: boolean
+  tooltip?: string
   onOpenChange: (open: boolean) => void
   onSelectTool: () => void
   onSelectShape: (mode: ShapeDrawMode) => void
@@ -110,21 +119,28 @@ export const ShapePopover: React.FC<ShapePopoverProps> = ({
   shapeMode,
   disabled,
   open,
+  tooltip,
   onOpenChange,
   onSelectTool,
   onSelectShape,
 }) => {
   return (
     <Popover onOpenChange={onOpenChange} open={open}>
-      <PopoverTrigger asChild>
-        <Button
-          className={TOOL_ITEM_CLASS}
-          disabled={disabled}
-          variant={activeTool === 'draw-shape' ? 'default' : 'ghost'}
-        >
-          <Shapes className='size-5' />
-        </Button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              aria-label='Draw Shape'
+              className={TOOL_ITEM_CLASS}
+              disabled={disabled}
+              variant={activeTool === 'draw-shape' ? 'default' : 'ghost'}
+            >
+              <Shapes className='size-5' />
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{tooltip ?? 'Draw Shape'}</TooltipContent>
+      </Tooltip>
       <PopoverContent align='center' className='w-56 p-3' side='top'>
         <div className='grid grid-cols-2 gap-2'>
           {SHAPE_OPTIONS.map((option) => {

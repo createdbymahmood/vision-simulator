@@ -66,6 +66,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <CreateAreaPopover
           disabled={!isEditMode}
           activeTool={activeTool}
+          tooltip={!isEditMode ? 'Editing is disabled' : undefined}
           onSelectTool={() => onSelectTool('draw-area')}
         />
 
@@ -86,6 +87,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           onSelectTool={() => onSelectTool('draw-shape')}
           open={!!popovers['draw-shape']}
           shapeMode={shapeMode}
+          tooltip={dependentDisabled ? disabledToolTooltip : undefined}
         />
 
         <PlacementButtons
