@@ -3,6 +3,7 @@ import {ArrowLeft, MoreHorizontal, Play, Save} from 'lucide-react'
 import React from 'react'
 
 import type {EditorMode} from '@/features/scene/domain/types'
+import type {EditorTopPanelUiOverrides} from '@/features/scene/presentation/types/editor-ui-overrides'
 
 import {
   AlertDialog,
@@ -46,6 +47,7 @@ interface TopPanelProps {
   saveLoading: boolean
   onExportSceneJson: () => void
   onExportSceneImage: () => void
+  uiOverrides?: EditorTopPanelUiOverrides
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -68,19 +70,29 @@ export const TopPanel: React.FC<TopPanelProps> = ({
   saveLoading,
   onExportSceneJson,
   onExportSceneImage,
+  uiOverrides,
 }) => {
+  const defaultBackButton = (
+    <Button size='icon' aria-label='Back' variant='ghost' onClick={onBack}>
+      <ArrowLeft className='size-5' />
+    </Button>
+  )
+  const renderBackButton = uiOverrides?.slots?.backButton
+  const backButton = renderBackButton
+    ? renderBackButton({
+        defaultButton: defaultBackButton,
+        editorMode,
+        isEditMode,
+        onBack,
+        projectName,
+      })
+    : defaultBackButton
+
   return (
     <div className='fixed left-0 right-0 top-0 z-40 h-14 border-b backdrop-blur'>
       <div className='mx-auto flex h-full items-center justify-between px-4'>
         <div className='flex items-center gap-3'>
-          <Button
-            size='icon'
-            aria-label='Back'
-            variant='ghost'
-            onClick={onBack}
-          >
-            <ArrowLeft className='size-5' />
-          </Button>
+          {backButton}
 
           <span className='text-xl font-semibold'>{projectName}</span>
 

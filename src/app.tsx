@@ -5,6 +5,7 @@ import {createPortal} from 'react-dom'
 import type {SceneStoreInitialState} from '@/features/scene/infrastructure/stores/scene.store'
 import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
 import type {VisionSimulatorMode} from '@/features/scene/presentation/modes/vision-simulator-mode'
+import type {EditorUiOverrides} from '@/features/scene/presentation/types/editor-ui-overrides'
 
 import {Pending} from '@/components/shared/pending'
 import {Toaster} from '@/components/ui/sonner'
@@ -49,6 +50,7 @@ export interface AppProps {
   isolationMode?: 'none' | 'shadow'
   shadowStyleUrls?: string[]
   unsavedChanges?: UnsavedChangesOptions
+  uiOverrides?: EditorUiOverrides
 }
 
 interface ShadowIsolatedRootProps {
@@ -63,6 +65,7 @@ interface VisionSimulatorProvidersProps {
   mapboxToken?: string
   mode: VisionSimulatorMode
   unsavedChanges?: UnsavedChangesOptions
+  uiOverrides?: EditorUiOverrides
 }
 
 interface ShadowInlineStyleEntry {
@@ -251,6 +254,7 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
   mapboxToken,
   mode,
   unsavedChanges,
+  uiOverrides,
 }) => {
   const {data: vision} = useGetVisionByIDSuspense(visionSimulatorId, {
     query: {
@@ -279,6 +283,7 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
         >
           <TooltipProvider delayDuration={0}>
             <EditorLayout
+              uiOverrides={uiOverrides}
               unsavedChanges={unsavedChanges}
               mode={mode}
               visionSimulatorId={visionSimulatorId}
@@ -350,11 +355,13 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
   mode,
   visionSimulatorId,
   unsavedChanges,
+  uiOverrides,
 }) => (
   <Suspense fallback={<Pending />}>
     <QueryClientProvider client={queryClient}>
       <VisionSimulatorProviders
         mediaMtxUrl={mediaMtxUrl}
+        uiOverrides={uiOverrides}
         unsavedChanges={unsavedChanges}
         accessToken={accessToken}
         mapboxToken={mapboxToken}
@@ -375,6 +382,7 @@ export const App: React.FC<AppProps> = ({
   isolationMode = 'shadow',
   shadowStyleUrls,
   unsavedChanges,
+  uiOverrides,
 }) => {
   configureDataProvider({apiBaseUrl, accessToken})
   const effectiveMode = resolveVisionSimulatorMode(mode)
@@ -382,6 +390,7 @@ export const App: React.FC<AppProps> = ({
   const appShell = (
     <VisionSimulatorAppShell
       mediaMtxUrl={mediaMtxUrl}
+      uiOverrides={uiOverrides}
       unsavedChanges={unsavedChanges}
       accessToken={accessToken}
       mapboxToken={mapboxToken}

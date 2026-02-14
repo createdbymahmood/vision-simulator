@@ -6,6 +6,7 @@ import {toast} from 'sonner'
 
 import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
 import type {VisionSimulatorMode} from '@/features/scene/presentation/modes/vision-simulator-mode'
+import type {EditorUiOverrides} from '@/features/scene/presentation/types/editor-ui-overrides'
 
 import {serializeScene} from '@/features/scene/application/utils/scene-serializer'
 import {useHistoryStore} from '@/features/scene/infrastructure/stores/history.store'
@@ -57,6 +58,7 @@ export interface EditorLayoutProps {
   visionSimulatorId: string
   mode: VisionSimulatorMode
   unsavedChanges?: UnsavedChangesOptions
+  uiOverrides?: EditorUiOverrides
 }
 
 // eslint-disable-next-line max-lines-per-function, max-statements
@@ -64,6 +66,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   visionSimulatorId,
   mode,
   unsavedChanges,
+  uiOverrides,
 }) => {
   const [shapeMode, setShapeMode] = React.useState<ShapeDrawMode>('rectangle')
   const [placeDeviceOpen, setPlaceDeviceOpen] = React.useState(false)
@@ -364,6 +367,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     >
       {viewMode === 'editor' ? (
         <TopPanel
+          uiOverrides={uiOverrides?.topPanel}
           canRedo={canRedo}
           canUndo={canUndo}
           editorMode={editorMode}
