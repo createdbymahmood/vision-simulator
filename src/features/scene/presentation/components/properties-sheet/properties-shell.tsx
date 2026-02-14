@@ -1,3 +1,4 @@
+import {Trash01} from '@untitledui/icons'
 import {ChevronDown, ChevronUp, X} from 'lucide-react'
 import React from 'react'
 
@@ -44,8 +45,13 @@ export const PropertiesDeleteAction: React.FC<PropertiesDeleteActionProps> = ({
 }) => (
   <AlertDialog>
     <AlertDialogTrigger asChild>
-      <Button size='sm' variant='destructive'>
-        {buttonLabel}
+      <Button
+        size='icon-sm'
+        aria-label={buttonLabel}
+        title={buttonLabel}
+        variant='destructive'
+      >
+        <Trash01 className='size-4' />
       </Button>
     </AlertDialogTrigger>
     <AlertDialogContent>
