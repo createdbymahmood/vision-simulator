@@ -80,6 +80,17 @@ export const App: React.FC<AppProps> = ({
 />
 ```
 
+## Shadow DOM Styles for `uiOverrides`
+
+By default, `isolationMode='shadow'` renders the simulator inside a Shadow DOM.
+
+- If `uiOverrides` is provided, the simulator now defaults `shadowStyleScope`
+  to `'document'` so host app CSS is available to override components.
+- Set `shadowStyleScope='package'` to keep strict package-only styles in shadow
+  mode.
+- If `shadowStyleUrls` is passed, those URLs still take precedence over
+  `shadowStyleScope`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
