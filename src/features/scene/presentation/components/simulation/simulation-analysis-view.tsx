@@ -2,6 +2,13 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {
   createSnapshotFilename,
@@ -25,6 +32,7 @@ interface SimulationAnalysisViewProps {
   onBackToEditor: () => void
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   showTopBar = true,
   showAuxiliaryPanels = true,
@@ -32,6 +40,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   onBackToEditor,
 }) => {
   const scene = useSceneStore((state) => state.scene)
+  const setActiveArea = useSceneStore((state) => state.setActiveArea)
   const setSelection = useSceneStore((state) => state.setSelection)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
 
@@ -49,13 +58,29 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     stopRecording,
   } = useSimulationRecording({captureRef})
   const radarPanelSize = {width: 360, height: 180}
+  const activePreviewAreaId = React.useMemo(
+    () => scene.activeAreaId ?? scene.areas[0]?.id,
+    [scene.activeAreaId, scene.areas],
+  )
 
-  const feedTargets = useCameraFeedTargets({cameras: scene.cameras})
+  const visibleCameras = React.useMemo(
+    () =>
+      activePreviewAreaId
+        ? scene.cameras.filter(
+            (camera) => camera.areaId === activePreviewAreaId,
+          )
+        : scene.cameras,
+    [activePreviewAreaId, scene.cameras],
+  )
+  const feedTargets = useCameraFeedTargets({cameras: visibleCameras})
   const hasCameraFeedTiles = feedTargets.length > 0
   const showSimulationSidePanels = showAuxiliaryPanels && hasCameraFeedTiles
 
   const handleSelectEntity = useCallbackRef((id?: string) => {
     setSelection(id ? [id] : [])
+  })
+  const handleActiveAreaChange = useCallbackRef((areaId: string) => {
+    setActiveArea(areaId)
   })
 
   const [flashActive, setFlashActive] = React.useState(false)
@@ -104,6 +129,11 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     },
     [],
   )
+  React.useEffect(() => {
+    if (!scene.activeAreaId && scene.areas[0]) {
+      setActiveArea(scene.areas[0].id)
+    }
+  }, [scene.activeAreaId, scene.areas, setActiveArea])
 
   return (
     <div className='flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden overscroll-none'>
@@ -132,11 +162,32 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
             scene={scene}
             selectedEntityIds={selectedEntityIds}
             editorMode={scene.editorMode}
-            focusAreaId={scene.activeAreaId}
+            focusAreaId={activePreviewAreaId}
             onCaptureReady={handleCaptureReady}
             onSelectEntity={handleSelectEntity}
             showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
           />
+          {scene.areas.length > 1 ? (
+            <div className='pointer-events-none absolute left-4 top-4 z-20'>
+              <div className='pointer-events-auto'>
+                <Select
+                  value={activePreviewAreaId}
+                  onValueChange={handleActiveAreaChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select area' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {scene.areas.map((area) => (
+                      <SelectItem key={area.id} value={area.id}>
+                        {area.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ) : null}
         </SimulationViewport>
         {showSimulationSidePanels ? (
           <div className='flex h-full min-h-0 w-[360px] max-w-[360px] shrink-0 flex-col gap-4 overflow-x-hidden overflow-y-auto overscroll-contain border-l'>
@@ -144,6 +195,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
               size={radarPanelSize}
               scene={scene}
               selectedEntityIds={selectedEntityIds}
+              focusAreaId={activePreviewAreaId}
               onSelectEntity={handleSelectEntity}
             />
             <SimulationCameraSidebar feedTargets={feedTargets} scene={scene} />

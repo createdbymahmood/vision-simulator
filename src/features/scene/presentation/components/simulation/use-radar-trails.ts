@@ -7,6 +7,7 @@ import type {RadarPoint, RadarTrailPath} from './simulation-radar-svg'
 
 interface UseRadarTrailsInput {
   scene: SceneRoot
+  focusAreaId?: string
   peopleWorld: VisionState['peopleWorld']
   updatedAt: number
   toRadar: (point: {x: number; z: number}) => RadarPoint
@@ -14,6 +15,7 @@ interface UseRadarTrailsInput {
 
 export const useRadarTrails = ({
   scene,
+  focusAreaId,
   peopleWorld,
   updatedAt,
   toRadar,
@@ -22,10 +24,21 @@ export const useRadarTrails = ({
   const trailsRef = React.useRef<
     Map<string, {points: {x: number; z: number; time: number}[]}>
   >(new Map())
+  const visiblePeople = React.useMemo(
+    () =>
+      focusAreaId
+        ? scene.people.filter((person) => person.areaId === focusAreaId)
+        : scene.people,
+    [focusAreaId, scene.people],
+  )
+  const visiblePeopleIds = React.useMemo(
+    () => new Set(visiblePeople.map((person) => person.id)),
+    [visiblePeople],
+  )
 
   React.useEffect(() => {
     const now = performance.now()
-    scene.people.forEach((person) => {
+    visiblePeople.forEach((person) => {
       const world = peopleWorld[person.id]
       if (!world) {
         return
@@ -35,13 +48,21 @@ export const useRadarTrails = ({
       entry.points = entry.points.filter((point) => now - point.time <= 5000)
       trailsRef.current.set(person.id, entry)
     })
+    trailsRef.current.forEach((_trail, personId) => {
+      if (!visiblePeopleIds.has(personId)) {
+        trailsRef.current.delete(personId)
+      }
+    })
     setTrailTick((prev) => prev + 1)
-  }, [peopleWorld, scene.people, updatedAt])
+  }, [peopleWorld, updatedAt, visiblePeople, visiblePeopleIds])
 
   const trailPaths = React.useMemo<RadarTrailPath[]>(() => {
     void trailTick
     const paths: RadarTrailPath[] = []
     trailsRef.current.forEach((trail, id) => {
+      if (!visiblePeopleIds.has(id)) {
+        return
+      }
       if (trail.points.length < 2) {
         return
       }
@@ -54,7 +75,7 @@ export const useRadarTrails = ({
       paths.push({id, path})
     })
     return paths
-  }, [toRadar, trailTick])
+  }, [toRadar, trailTick, visiblePeopleIds])
 
   return trailPaths
 }

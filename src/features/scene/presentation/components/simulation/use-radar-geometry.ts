@@ -22,6 +22,7 @@ import {buildFovGroundRing} from './simulation-radar-helpers'
 
 interface UseRadarGeometryInput {
   scene: SceneRoot
+  focusAreaId?: string
   radarSettings: RadarSettings
   size: {width: number; height: number}
   transformer: CoordinateTransformer
@@ -32,26 +33,53 @@ interface UseRadarGeometryInput {
 // eslint-disable-next-line max-lines-per-function
 export const useRadarGeometry = ({
   scene,
+  focusAreaId,
   radarSettings,
   size,
   transformer,
   peopleWorld,
   cameraDetections,
 }: UseRadarGeometryInput) => {
+  const visibleAreas = React.useMemo(
+    () =>
+      focusAreaId
+        ? scene.areas.filter((area) => area.id === focusAreaId)
+        : scene.areas,
+    [focusAreaId, scene.areas],
+  )
+  const visibleCameras = React.useMemo(
+    () =>
+      focusAreaId
+        ? scene.cameras.filter((camera) => camera.areaId === focusAreaId)
+        : scene.cameras,
+    [focusAreaId, scene.cameras],
+  )
+  const visiblePeople = React.useMemo(
+    () =>
+      focusAreaId
+        ? scene.people.filter((person) => person.areaId === focusAreaId)
+        : scene.people,
+    [focusAreaId, scene.people],
+  )
+  const visiblePeopleIds = React.useMemo(
+    () => new Set(visiblePeople.map((person) => person.id)),
+    [visiblePeople],
+  )
+
   const worldPoints = React.useMemo(() => {
     const points: {x: number; z: number}[] = []
-    scene.areas.forEach((area) => {
+    visibleAreas.forEach((area) => {
       closeRing(area.geometry.coordinates).forEach((coord) => {
         const vec = transformer.toVector3(coord)
         points.push({x: vec.x, z: vec.z})
       })
     })
-    scene.cameras.forEach((camera) => {
+    visibleCameras.forEach((camera) => {
       const vec = transformer.toVector3([camera.x, camera.y])
       points.push({x: vec.x, z: vec.z})
     })
     return points
-  }, [scene.areas, scene.cameras, transformer])
+  }, [transformer, visibleAreas, visibleCameras])
 
   const worldBounds = React.useMemo(() => {
     if (worldPoints.length === 0) {
@@ -104,7 +132,7 @@ export const useRadarGeometry = ({
 
   const cameraMarkers = React.useMemo<RadarCameraMarker[]>(
     () =>
-      scene.cameras.map((camera) => {
+      visibleCameras.map((camera) => {
         const world = transformer.toVector3([camera.x, camera.y])
         const point = toRadar({x: world.x, z: world.z})
         const pan = camera.ptz.pan
@@ -118,23 +146,23 @@ export const useRadarGeometry = ({
         const arrowPoint = toRadar({x: directionWorld.x, z: directionWorld.z})
         return {camera, point, arrowPoint}
       }),
-    [scene.cameras, toRadar, transformer],
+    [toRadar, transformer, visibleCameras],
   )
 
   const peopleMarkers = React.useMemo<RadarPersonMarker[]>(
     () =>
-      scene.people
+      visiblePeople
         .map((person) => {
           const world = peopleWorld[person.id]
           const point = world ? toRadar({x: world.x, z: world.z}) : null
           return point ? {id: person.id, point} : null
         })
         .filter((item): item is RadarPersonMarker => item !== null),
-    [peopleWorld, scene.people, toRadar],
+    [peopleWorld, toRadar, visiblePeople],
   )
 
   const wedges = React.useMemo<RadarWedge[]>(() => {
-    return scene.cameras.map((camera) => {
+    return visibleCameras.map((camera) => {
       const opticHeight = getCameraOpticHeight(camera)
       const ring = buildFovGroundRing({
         camera,
@@ -148,18 +176,24 @@ export const useRadarGeometry = ({
       const origin = toRadar({x: originWorld.x, z: originWorld.z})
       return {camera, origin, points}
     })
-  }, [scene.cameras, toRadar, transformer])
+  }, [toRadar, transformer, visibleCameras])
 
   const connections = React.useMemo<RadarConnectionLine[]>(() => {
     const lines: RadarConnectionLine[] = []
+    const cameraById = new Map(
+      visibleCameras.map((camera) => [camera.id, camera]),
+    )
     Object.entries(cameraDetections).forEach(([cameraId, personIds]) => {
-      const camera = scene.cameras.find((item) => item.id === cameraId)
+      const camera = cameraById.get(cameraId)
       if (!camera) {
         return
       }
       const cameraWorld = transformer.toVector3([camera.x, camera.y])
       const cameraPoint = toRadar({x: cameraWorld.x, z: cameraWorld.z})
       personIds.forEach((personId) => {
+        if (!visiblePeopleIds.has(personId)) {
+          return
+        }
         const world = peopleWorld[personId]
         if (!world) {
           return
@@ -172,7 +206,14 @@ export const useRadarGeometry = ({
       })
     })
     return lines
-  }, [cameraDetections, peopleWorld, scene.cameras, toRadar, transformer])
+  }, [
+    cameraDetections,
+    peopleWorld,
+    toRadar,
+    transformer,
+    visibleCameras,
+    visiblePeopleIds,
+  ])
 
   const gridLines = React.useMemo<RadarGridLine[]>(() => {
     const step = 5
@@ -200,7 +241,7 @@ export const useRadarGeometry = ({
 
   const areaPaths = React.useMemo<RadarAreaPath[]>(
     () =>
-      scene.areas.map((area) => {
+      visibleAreas.map((area) => {
         const points = closeRing(area.geometry.coordinates).map((coord) => {
           const vec = transformer.toVector3(coord)
           return toRadar({x: vec.x, z: vec.z})
@@ -212,7 +253,7 @@ export const useRadarGeometry = ({
           .join(' ')
         return {id: area.id, path: `${path} Z`}
       }),
-    [scene.areas, toRadar, transformer],
+    [toRadar, transformer, visibleAreas],
   )
 
   return {

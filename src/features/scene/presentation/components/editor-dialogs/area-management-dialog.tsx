@@ -1,3 +1,4 @@
+import {Trash01} from '@untitledui/icons'
 import React from 'react'
 
 import {
@@ -111,7 +112,7 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button size='icon' variant='ghost'>
-                          ×
+                          <Trash01 className='size-4' />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

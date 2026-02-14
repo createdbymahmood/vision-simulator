@@ -18,13 +18,16 @@ import {useRadarTrails} from './use-radar-trails'
 
 interface SimulationRadarProps {
   scene: SceneRoot
+  focusAreaId?: string
   size: {width: number; height: number}
   selectedEntityIds: string[]
   onSelectEntity: (id?: string) => void
 }
 
+// eslint-disable-next-line max-lines-per-function
 export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   scene,
+  focusAreaId,
   size,
   selectedEntityIds,
   onSelectEntity,
@@ -57,6 +60,7 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     wedges,
   } = useRadarGeometry({
     scene,
+    focusAreaId,
     radarSettings,
     size,
     transformer,
@@ -66,10 +70,50 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
 
   const trailPaths = useRadarTrails({
     scene,
+    focusAreaId,
     peopleWorld,
     updatedAt: visionState.updatedAt,
     toRadar,
   })
+  const visiblePeopleCount = React.useMemo(
+    () =>
+      focusAreaId
+        ? scene.people.filter((person) => person.areaId === focusAreaId).length
+        : scene.people.length,
+    [focusAreaId, scene.people],
+  )
+  const visibleCameraCount = React.useMemo(
+    () =>
+      focusAreaId
+        ? scene.cameras.filter((camera) => camera.areaId === focusAreaId).length
+        : scene.cameras.length,
+    [focusAreaId, scene.cameras],
+  )
+  const visibleDetectionCount = React.useMemo(() => {
+    if (!focusAreaId) {
+      return visionState.detectionsCount
+    }
+    const visiblePeopleIds = new Set(
+      scene.people
+        .filter((person) => person.areaId === focusAreaId)
+        .map((person) => person.id),
+    )
+    return scene.cameras
+      .filter((camera) => camera.areaId === focusAreaId)
+      .reduce((total, camera) => {
+        const visible = visionState.visibleByCameraId[camera.id] ?? []
+        const count = visible.filter((personId) =>
+          visiblePeopleIds.has(personId),
+        ).length
+        return total + count
+      }, 0)
+  }, [
+    focusAreaId,
+    scene.cameras,
+    scene.people,
+    visionState.detectionsCount,
+    visionState.visibleByCameraId,
+  ])
 
   const [pingKey, setPingKey] = React.useState(0)
   const [pingPersonId, setPingPersonId] = React.useState<string | null>(null)
@@ -141,9 +185,9 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
           </CardContent>
           <CardFooter>
             <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
-              <span>People: {scene.people.length}</span>
-              <span>Cameras: {scene.cameras.length}</span>
-              <span>Detections: {visionState.detectionsCount}</span>
+              <span>People: {visiblePeopleCount}</span>
+              <span>Cameras: {visibleCameraCount}</span>
+              <span>Detections: {visibleDetectionCount}</span>
               <span>Update: 30 FPS</span>
             </div>
           </CardFooter>

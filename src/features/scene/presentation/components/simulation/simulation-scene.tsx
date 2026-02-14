@@ -329,45 +329,69 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       return {...entity, position: nextPosition}
     })
   }, [entities, simulatedPeoplePositions])
+  const visibleAreaEntities = React.useMemo(
+    () =>
+      entities.filter(
+        (entity) =>
+          entity.type === 'area' &&
+          (!focusAreaId || entity.entity.id === focusAreaId),
+      ) as Extract<WorldEntity, {type: 'area'}>[],
+    [entities, focusAreaId],
+  )
+  const visibleEntities = React.useMemo(() => {
+    if (!focusAreaId) {
+      return renderedEntities
+    }
+    return renderedEntities.filter((entity) => {
+      if (entity.type === 'area') {
+        return entity.entity.id === focusAreaId
+      }
+      return entity.entity.areaId === focusAreaId
+    })
+  }, [focusAreaId, renderedEntities])
+  const visibleSimulatedPeoplePositions = React.useMemo(() => {
+    if (!focusAreaId) {
+      return simulatedPeoplePositions
+    }
+    const visiblePersonIds = new Set(
+      scene.people
+        .filter((person) => person.areaId === focusAreaId)
+        .map((person) => person.id),
+    )
+    return new Map(
+      [...simulatedPeoplePositions].filter(([personId]) =>
+        visiblePersonIds.has(personId),
+      ),
+    )
+  }, [focusAreaId, scene.people, simulatedPeoplePositions])
 
   const selectedPersonId = React.useMemo(
     () => selectedEntityIds.find((id) => id.startsWith('person-')),
     [selectedEntityIds],
   )
 
-  const collisionCameras = scene.cameras
+  const collisionCameras = React.useMemo(
+    () =>
+      scene.cameras.filter(
+        (sceneCamera) => !focusAreaId || sceneCamera.areaId === focusAreaId,
+      ),
+    [focusAreaId, scene.cameras],
+  )
 
   const bounds = React.useMemo(() => {
-    const points = entities
-      .filter((entity) => entity.type === 'area')
-      .flatMap(
-        (entity) => (entity as Extract<WorldEntity, {type: 'area'}>).points,
-      )
+    const points = visibleAreaEntities.flatMap((entity) => entity.points)
     if (!points.length) {
       return null
     }
     return new THREE.Box3().setFromPoints(points)
-  }, [entities])
+  }, [visibleAreaEntities])
 
   const [focusRequest, setFocusRequest] = React.useState<FocusRequest | null>(
     null,
   )
 
   const areaFocus = React.useMemo(() => {
-    const targetAreas = entities.filter(
-      (entity) =>
-        entity.type === 'area' &&
-        (!focusAreaId || entity.entity.id === focusAreaId),
-    ) as Extract<WorldEntity, {type: 'area'}>[]
-    const points =
-      targetAreas.length > 0
-        ? targetAreas.flatMap((area) => area.points)
-        : entities
-            .filter((entity) => entity.type === 'area')
-            .flatMap(
-              (entity) =>
-                (entity as Extract<WorldEntity, {type: 'area'}>).points,
-            )
+    const points = visibleAreaEntities.flatMap((area) => area.points)
     if (!points.length) {
       return null
     }
@@ -378,15 +402,15 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     box.getSize(focusBoundsSize)
     const distance = Math.max(focusBoundsSize.x, focusBoundsSize.z, 10) * 1.2
     return {point: center, distance}
-  }, [entities, focusAreaId])
+  }, [visibleAreaEntities])
 
   React.useEffect(() => {
     if (areaFocus) {
       setFocusRequest(areaFocus)
-    } else if (!focusAreaId) {
+    } else {
       setFocusRequest(null)
     }
-  }, [areaFocus, focusAreaId])
+  }, [areaFocus])
 
   const requestFocus = useCallbackRef((point: THREE.Vector3, distance = 10) => {
     setFocusRequest({point, distance})
@@ -473,14 +497,14 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       />
 
       <EntitiesMesh
-        entities={renderedEntities}
+        entities={visibleEntities}
         selectedEntityIds={selectedEntityIds}
         onFocus={requestFocus}
         onSelectEntity={onSelectEntity}
         showCameraFrustums={false}
       />
       <PersonTrail
-        positions={simulatedPeoplePositions}
+        positions={visibleSimulatedPeoplePositions}
         selectedPersonId={selectedPersonId}
       />
       {collisionCameras.length > 0 ? (
