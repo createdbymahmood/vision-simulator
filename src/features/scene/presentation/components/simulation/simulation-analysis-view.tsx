@@ -174,7 +174,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
                   value={activePreviewAreaId}
                   onValueChange={handleActiveAreaChange}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className='bg-background'>
                     <SelectValue placeholder='Select area' />
                   </SelectTrigger>
                   <SelectContent>
