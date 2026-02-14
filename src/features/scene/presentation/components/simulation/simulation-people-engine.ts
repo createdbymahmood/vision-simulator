@@ -47,7 +47,6 @@ export const resolveNextTarget = (
     const blockedByShape = shapes.some(
       (shape) =>
         shape.areaId === person.areaId &&
-        shape.height >= person.height &&
         isPointInPolygon(candidate, shape.points),
     )
     if (blockedByShape) {
@@ -133,7 +132,6 @@ export const stepPeopleSimulation = (
     const blockedByShape = shapePolygons.some(
       (shape) =>
         shape.areaId === person.areaId &&
-        shape.height >= person.height &&
         isPointInPolygon(nextPosition, shape.points),
     )
     if (blockedByShape) {

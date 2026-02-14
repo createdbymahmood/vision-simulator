@@ -30,6 +30,62 @@ export interface AreaPolygon {
   bounds: THREE.Box3
 }
 
+const LINE_SHAPE_DEFAULT_THICKNESS = 0.1
+const LINE_SHAPE_MIN_THICKNESS = 0.01
+const LINE_SHAPE_EPSILON = 1e-9
+
+const areGeoPointsEqual = (a: [number, number], b: [number, number]) =>
+  Math.abs(a[0] - b[0]) <= LINE_SHAPE_EPSILON &&
+  Math.abs(a[1] - b[1]) <= LINE_SHAPE_EPSILON
+
+const getLineShapeEndpoints = (points: [number, number][]) => {
+  if (points.length < 2) {
+    return null
+  }
+  const start = points[0]
+  const end =
+    points.find(
+      (point, index) => index > 0 && !areGeoPointsEqual(point, start),
+    ) ?? points[points.length - 1]
+  if (!end || areGeoPointsEqual(start, end)) {
+    return null
+  }
+  return {start, end}
+}
+
+const buildLineShapePolygon = (
+  shape: Extract<ShapeEntity, {shapeType: 'line'}>,
+  transformer: CoordinateTransformer,
+) => {
+  const endpoints = getLineShapeEndpoints(shape.geometry)
+  if (!endpoints) {
+    return null
+  }
+
+  const start = transformer.toVector3(endpoints.start, 0)
+  const end = transformer.toVector3(endpoints.end, 0)
+  const direction = new THREE.Vector3().subVectors(end, start).setY(0)
+  if (direction.lengthSq() <= LINE_SHAPE_EPSILON) {
+    return null
+  }
+
+  direction.normalize()
+  const normal = new THREE.Vector3(-direction.z, 0, direction.x)
+  const thickness = Math.max(
+    shape.thickness ?? LINE_SHAPE_DEFAULT_THICKNESS,
+    LINE_SHAPE_MIN_THICKNESS,
+  )
+  const halfThickness = thickness / 2
+
+  const ring = [
+    start.clone().addScaledVector(normal, halfThickness),
+    end.clone().addScaledVector(normal, halfThickness),
+    end.clone().addScaledVector(normal, -halfThickness),
+    start.clone().addScaledVector(normal, -halfThickness),
+  ]
+  return [...ring, ring[0].clone()]
+}
+
 /* eslint-disable no-bitwise */
 export const createRng = (seed: number) => {
   let t = seed + 0x6d2b79f5
@@ -171,6 +227,15 @@ export const buildShapePolygons = (
   const polygons: ObstaclePolygon[] = []
   shapes.forEach((shape) => {
     if (shape.shapeType === 'line') {
+      const points = buildLineShapePolygon(shape, transformer)
+      if (!points) {
+        return
+      }
+      polygons.push({
+        areaId: shape.areaId,
+        points,
+        height: shape.height ?? 0,
+      })
       return
     }
     if (shape.geometry.length < 3) {
