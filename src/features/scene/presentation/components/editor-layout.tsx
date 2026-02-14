@@ -296,6 +296,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   }, [pastEntries.length, scene, seedHistory])
 
   React.useEffect(() => {
+    if (activeTool === 'select') {
+      return
+    }
     closeAllPanels()
   }, [activeTool, closeAllPanels])
 
