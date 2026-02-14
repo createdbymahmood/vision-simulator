@@ -32,8 +32,8 @@ const DEFAULT_SHADOW_STYLE_URLS = [
 ]
 const SHADOW_HOST_SLOT = 'vision-simulator-shadow-host'
 const STATIC_VISION_QUERY_OPTIONS = {
-  gcTime: Number.POSITIVE_INFINITY,
-  staleTime: Number.POSITIVE_INFINITY,
+  gcTime: 0,
+  staleTime: 0,
   refetchOnMount: false,
   refetchOnReconnect: false,
   refetchOnWindowFocus: false,
