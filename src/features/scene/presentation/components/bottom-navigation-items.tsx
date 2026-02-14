@@ -19,7 +19,7 @@ import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import type {ShapeDrawMode} from '../types'
 
 export const TOOL_ITEM_CLASS =
-  'h-10 w-10 flex items-center justify-center rounded-full'
+  'h-10 w-10 flex items-center justify-center rounded-lg'
 
 interface ToolButtonProps {
   label: string
