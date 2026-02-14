@@ -13,11 +13,20 @@ interface MapViewShapeLayersProps {
   shapePreviewFeature: FeatureCollection | null
 }
 
+const DEFAULT_LINE_SHAPE_THICKNESS = 0.1
+const LINE_WIDTH_SCALE = 8
+const SELECTED_LINE_WIDTH_SCALE = 10
+
 export const MapViewShapeLayers: React.FC<MapViewShapeLayersProps> = ({
   shapeFeatures,
   shapePreviewFeature,
 }) => {
   const hasShapes = shapeFeatures.features.length > 0
+  const baseLineThickness = [
+    'coalesce',
+    ['get', 'thickness'],
+    DEFAULT_LINE_SHAPE_THICKNESS,
+  ]
 
   return (
     <>
@@ -78,8 +87,8 @@ export const MapViewShapeLayers: React.FC<MapViewShapeLayersProps> = ({
               'line-width': [
                 'case',
                 ['boolean', ['feature-state', 'selected'], false],
-                4,
-                3,
+                ['*', baseLineThickness, SELECTED_LINE_WIDTH_SCALE],
+                ['*', baseLineThickness, LINE_WIDTH_SCALE],
               ],
             }}
           />

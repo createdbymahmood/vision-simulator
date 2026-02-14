@@ -553,6 +553,9 @@ export const buildShapeFeatures = (
     .filter((shape) => shape.geometry.length >= 2)
     .map((shape) => {
       const isLine = shape.shapeType === 'line'
+      const lineThickness = isLine
+        ? (shape.thickness ?? DEFAULT_LINE_SHAPE_THICKNESS)
+        : undefined
       const lineCoordinates = [...shape.geometry] as number[][]
       const polygonCoordinates = [closeRing([...shape.geometry]) as number[][]]
       const geometry: Geometry = isLine
@@ -573,6 +576,7 @@ export const buildShapeFeatures = (
           entityType: 'shape',
           color: shape.color ?? SHAPE_STROKE_COLOR,
           shapeType: shape.shapeType,
+          thickness: lineThickness,
         },
         geometry,
       } as Feature<Geometry, GeoJsonProperties>
