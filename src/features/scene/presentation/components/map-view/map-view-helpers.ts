@@ -23,6 +23,7 @@ import {
   polygon,
   polygonToLine,
   area as turfArea,
+  bearing as turfBearing,
   distance as turfDistance,
   length as turfLength,
 } from '@turf/turf'
@@ -51,9 +52,18 @@ import {
 import {getEffectiveHorizontalFov} from '@/features/scene/domain/services/camera-optics'
 
 const DEFAULT_FOV_SEGMENTS = 24
+const MIN_DYNAMIC_FOV_SEGMENTS = 64
+const MAX_DYNAMIC_FOV_SEGMENTS = 720
+const MAX_OCCLUSION_RAYS = 2400
+const OBSTACLE_RAY_MARGIN_DEG = 0.75
+const OBSTACLE_RAY_OFFSET_DEG = 0.25
+const OBSTACLE_RAY_BUCKET_DEG = 0.05
+const OBSTACLE_FOOTPRINT_RAY_SAMPLE_STEPS = 96
+const OCCLUSION_CIRCLE_SEGMENTS = 256
 const DEFAULT_LINE_SHAPE_THICKNESS = 0.1
+const FULL_OCCLUSION_HEIGHT_EPSILON = 0.02
 const MIN_FOV_DISTANCE = 0
-const MIN_INTERSECTION_DISTANCE = 0.05
+const MIN_INTERSECTION_DISTANCE = 0.01
 
 export const getBaseCursor = (
   activeTool: EditorTool,
@@ -227,8 +237,9 @@ export const createFovRing = (
   return closeRing(ring)
 }
 
-interface FovOcclusionObstacle {
+export interface FovOcclusionObstacle {
   boundary: Feature<LineString | MultiLineString>
+  footprint: Feature<MultiPolygon | Polygon>
   height: number
 }
 
@@ -236,6 +247,7 @@ const getIntersectionDistance = (
   origin: GeoPoint,
   ray: Feature<LineString>,
   boundary: Feature<LineString | MultiLineString>,
+  minDistanceMeters = MIN_INTERSECTION_DISTANCE,
 ) => {
   const intersections = lineIntersect(ray, boundary)
   if (!intersections.features.length) {
@@ -246,11 +258,221 @@ const getIntersectionDistance = (
     const coords = feature.geometry.coordinates as GeoPoint
     const meters =
       turfDistance(point(origin), point(coords), {units: 'kilometers'}) * 1000
-    if (meters > MIN_INTERSECTION_DISTANCE && meters < closest) {
+    if (meters > minDistanceMeters && meters < closest) {
       closest = meters
     }
   })
   return Number.isFinite(closest) ? closest : null
+}
+
+const getFootprintIntersectionDistance = (
+  origin: GeoPoint,
+  ray: Feature<LineString>,
+  footprint: Feature<MultiPolygon | Polygon>,
+) => {
+  const intersections = lineIntersect(ray, footprint)
+  if (!intersections.features.length) {
+    return null
+  }
+  let closest = Infinity
+  intersections.features.forEach((feature) => {
+    const geometry = feature.geometry
+    if (!geometry) {
+      return
+    }
+    if (geometry.type === 'Point') {
+      const coords = geometry.coordinates as GeoPoint
+      const meters =
+        turfDistance(point(origin), point(coords), {units: 'kilometers'}) * 1000
+      if (meters >= 0 && meters < closest) {
+        closest = meters
+      }
+      return
+    }
+    if (geometry.type === 'MultiPoint') {
+      geometry.coordinates.forEach((coordinate) => {
+        const coords = coordinate as GeoPoint
+        const meters =
+          turfDistance(point(origin), point(coords), {units: 'kilometers'}) *
+          1000
+        if (meters >= 0 && meters < closest) {
+          closest = meters
+        }
+      })
+    }
+  })
+  return Number.isFinite(closest) ? closest : null
+}
+
+const getSampledFootprintIntersectionDistance = ({
+  origin,
+  ray,
+  footprint,
+}: {
+  origin: GeoPoint
+  ray: Feature<LineString>
+  footprint: Feature<MultiPolygon | Polygon>
+}) => {
+  const coordinates = ray.geometry.coordinates
+  if (coordinates.length < 2) {
+    return null
+  }
+  const end = coordinates[coordinates.length - 1] as GeoPoint
+  for (let step = 1; step <= OBSTACLE_FOOTPRINT_RAY_SAMPLE_STEPS; step += 1) {
+    const t = step / OBSTACLE_FOOTPRINT_RAY_SAMPLE_STEPS
+    const samplePoint: GeoPoint = [
+      origin[0] + (end[0] - origin[0]) * t,
+      origin[1] + (end[1] - origin[1]) * t,
+    ]
+    if (!booleanPointInPolygon(point(samplePoint), footprint)) {
+      continue
+    }
+    return (
+      turfDistance(point(origin), point(samplePoint), {units: 'kilometers'}) *
+      1000
+    )
+  }
+  return null
+}
+
+const getObstacleIntersectionDistance = (
+  origin: GeoPoint,
+  originPoint: Feature<Point>,
+  ray: Feature<LineString>,
+  obstacle: FovOcclusionObstacle,
+) => {
+  if (booleanPointInPolygon(originPoint, obstacle.footprint)) {
+    return 0
+  }
+  const hitDistance = getIntersectionDistance(origin, ray, obstacle.boundary, 0)
+  if (hitDistance !== null) {
+    return hitDistance
+  }
+  const footprintHit = getFootprintIntersectionDistance(
+    origin,
+    ray,
+    obstacle.footprint,
+  )
+  if (footprintHit !== null) {
+    return footprintHit
+  }
+  const sampledHit = getSampledFootprintIntersectionDistance({
+    origin,
+    ray,
+    footprint: obstacle.footprint,
+  })
+  if (sampledHit !== null) {
+    return sampledHit
+  }
+  return null
+}
+
+const normalizeSignedAngleDeg = (angle: number) => {
+  const normalized = ((((angle + 180) % 360) + 360) % 360) - 180
+  return normalized === -180 ? 180 : normalized
+}
+
+const quantizeAngleDeg = (angle: number) =>
+  Math.round(angle / OBSTACLE_RAY_BUCKET_DEG) * OBSTACLE_RAY_BUCKET_DEG
+
+const collectRingPointsAndMidpoints = (
+  ring: GeoPoint[],
+  output: GeoPoint[],
+) => {
+  if (ring.length === 0) {
+    return
+  }
+  for (let index = 0; index < ring.length; index += 1) {
+    const current = ring[index]
+    output.push(current)
+    const next = ring[index + 1] ?? ring[0]
+    output.push([(current[0] + next[0]) / 2, (current[1] + next[1]) / 2])
+  }
+}
+
+const collectFootprintSamplePoints = (obstacle: FovOcclusionObstacle) => {
+  const points: GeoPoint[] = []
+  const geometry = obstacle.footprint.geometry
+  if (geometry.type === 'Polygon') {
+    geometry.coordinates.forEach((ring) => {
+      collectRingPointsAndMidpoints(ring as GeoPoint[], points)
+    })
+    return points
+  }
+  geometry.coordinates.forEach((polygonCoordinates) => {
+    polygonCoordinates.forEach((ring) => {
+      collectRingPointsAndMidpoints(ring as GeoPoint[], points)
+    })
+  })
+  return points
+}
+
+const buildOcclusionRayAngles = ({
+  origin,
+  direction,
+  halfFov,
+  depth,
+  baseSegments,
+  obstacles,
+}: {
+  origin: GeoPoint
+  direction: number
+  halfFov: number
+  depth: number
+  baseSegments: number
+  obstacles: FovOcclusionObstacle[]
+}) => {
+  const angleSet = new Set<number>()
+  const angleStart = -halfFov
+  const angleEnd = halfFov
+  const angleStep = (halfFov * 2) / Math.max(baseSegments, 1)
+  const originPoint = point(origin)
+  const addAngle = (angle: number) => {
+    if (angle < angleStart || angle > angleEnd) {
+      return
+    }
+    angleSet.add(quantizeAngleDeg(angle))
+  }
+
+  for (let i = 0; i <= baseSegments; i += 1) {
+    addAngle(angleStart + i * angleStep)
+  }
+
+  obstacles.forEach((obstacle) => {
+    const samplePoints = collectFootprintSamplePoints(obstacle)
+    samplePoints.forEach((samplePoint) => {
+      const meters =
+        turfDistance(originPoint, point(samplePoint), {units: 'kilometers'}) *
+        1000
+      if (meters <= MIN_INTERSECTION_DISTANCE || meters > depth) {
+        return
+      }
+      const bearing = turfBearing(originPoint, point(samplePoint))
+      const relative = normalizeSignedAngleDeg(bearing - direction)
+      if (Math.abs(relative) > halfFov + OBSTACLE_RAY_MARGIN_DEG) {
+        return
+      }
+      addAngle(relative - OBSTACLE_RAY_OFFSET_DEG)
+      addAngle(relative)
+      addAngle(relative + OBSTACLE_RAY_OFFSET_DEG)
+    })
+  })
+
+  addAngle(angleStart)
+  addAngle(angleEnd)
+
+  let sorted = [...angleSet].sort((a, b) => a - b)
+  if (sorted.length <= MAX_OCCLUSION_RAYS) {
+    return sorted
+  }
+
+  const downsampled: number[] = []
+  const step = (sorted.length - 1) / (MAX_OCCLUSION_RAYS - 1)
+  for (let index = 0; index < MAX_OCCLUSION_RAYS; index += 1) {
+    downsampled.push(sorted[Math.round(index * step)] ?? 0)
+  }
+  sorted = [...new Set(downsampled)].sort((a, b) => a - b)
+  return sorted
 }
 
 const buildLineBuffer = (points: GeoPoint[], thickness: number) => {
@@ -275,6 +497,47 @@ const buildPolygonObstacle = (
   return polygon([closeRing(points)])
 }
 
+const areGeoPointsEqual = (a: GeoPoint, b: GeoPoint) =>
+  a[0] === b[0] && a[1] === b[1]
+
+const buildCircleObstacle = (
+  points: GeoPoint[],
+): Feature<MultiPolygon | Polygon> | null => {
+  if (points.length < 4) {
+    return null
+  }
+  const openPoints =
+    areGeoPointsEqual(points[0], points[points.length - 1]) && points.length > 1
+      ? points.slice(0, -1)
+      : points
+  if (openPoints.length < 3) {
+    return null
+  }
+  const center: GeoPoint = openPoints.reduce<GeoPoint>(
+    (accumulator, pointValue) => [
+      accumulator[0] + pointValue[0] / openPoints.length,
+      accumulator[1] + pointValue[1] / openPoints.length,
+    ],
+    [0, 0],
+  )
+  const radiusMeters =
+    openPoints.reduce((sum, pointValue) => {
+      return (
+        sum +
+        turfDistance(point(center), point(pointValue), {units: 'kilometers'}) *
+          1000
+      )
+    }, 0) / openPoints.length
+  if (
+    !Number.isFinite(radiusMeters) ||
+    radiusMeters <= MIN_INTERSECTION_DISTANCE
+  ) {
+    return null
+  }
+  const ring = createCircleRing(center, radiusMeters, OCCLUSION_CIRCLE_SEGMENTS)
+  return buildPolygonObstacle(ring)
+}
+
 export const buildFovOcclusionObstacles = (
   walls: WallEntity[],
   shapes: ShapeEntity[],
@@ -292,7 +555,11 @@ export const buildFovOcclusionObstacles = (
     const boundary = polygonToLine(buffered) as Feature<
       LineString | MultiLineString
     >
-    obstacles.push({boundary, height: wall.height ?? 0})
+    obstacles.push({
+      boundary,
+      footprint: buffered,
+      height: wall.height ?? 0,
+    })
   })
 
   shapes.forEach((shape) => {
@@ -302,6 +569,8 @@ export const buildFovOcclusionObstacles = (
         (shape as ShapeEntity & {thickness?: number}).thickness ??
         DEFAULT_LINE_SHAPE_THICKNESS
       polygonFeature = buildLineBuffer(shape.geometry, thickness)
+    } else if (shape.shapeType === 'circle') {
+      polygonFeature = buildCircleObstacle(shape.geometry)
     } else {
       polygonFeature = buildPolygonObstacle(shape.geometry)
     }
@@ -311,10 +580,54 @@ export const buildFovOcclusionObstacles = (
     const boundary = polygonToLine(polygonFeature) as Feature<
       LineString | MultiLineString
     >
-    obstacles.push({boundary, height: shape.height ?? 0})
+    obstacles.push({
+      boundary,
+      footprint: polygonFeature,
+      height: shape.height ?? 0,
+    })
   })
 
   return obstacles
+}
+
+export const isLineOfSightBlockedByObstacles = ({
+  origin,
+  target,
+  originHeight,
+  obstacles,
+}: {
+  origin: GeoPoint
+  target: GeoPoint
+  originHeight: number
+  obstacles: FovOcclusionObstacle[]
+}) => {
+  if (obstacles.length === 0) {
+    return false
+  }
+  const distanceMeters =
+    turfDistance(point(origin), point(target), {units: 'kilometers'}) * 1000
+  if (distanceMeters <= MIN_INTERSECTION_DISTANCE) {
+    return false
+  }
+  const ray = lineString([origin, target]) as Feature<LineString>
+  const originPoint = point(origin)
+  for (const obstacle of obstacles) {
+    const fullOcclusionThreshold = originHeight - FULL_OCCLUSION_HEIGHT_EPSILON
+    if (obstacle.height < fullOcclusionThreshold) {
+      continue
+    }
+    const hitDistance = getObstacleIntersectionDistance(
+      origin,
+      originPoint,
+      ray,
+      obstacle,
+    )
+    if (hitDistance === null) {
+      continue
+    }
+    return true
+  }
+  return false
 }
 
 export const buildOccludedFovRing = ({
@@ -337,41 +650,57 @@ export const buildOccludedFovRing = ({
   segments?: number
 }) => {
   const halfFov = fov / 2
-  const start = direction - halfFov
-  const step = fov / segments
+  const resolvedSegments = Math.min(
+    MAX_DYNAMIC_FOV_SEGMENTS,
+    Math.max(segments, MIN_DYNAMIC_FOV_SEGMENTS, Math.ceil(fov * 1.5)),
+  )
   const ring: GeoPoint[] = [origin]
+  const originPoint = point(origin)
+  const rayAngles = buildOcclusionRayAngles({
+    origin,
+    direction,
+    halfFov,
+    depth,
+    baseSegments: resolvedSegments,
+    obstacles,
+  })
   const areaBoundary = area
     ? (polygonToLine(
         polygon([closeRing(area.geometry.coordinates)]),
       ) as Feature<LineString | MultiLineString>)
     : null
-  const safeDepth = Math.max(depth, MIN_FOV_DISTANCE)
 
-  for (let i = 0; i <= segments; i += 1) {
-    const bearing = start + step * i
+  for (const relativeAngle of rayAngles) {
+    const bearing = direction + relativeAngle
     const rayEnd = projectPoint(origin, bearing, depth)
     const ray = lineString([origin, rayEnd]) as Feature<LineString>
     let maxDistance = depth
 
     if (areaBoundary) {
-      const boundaryHit = getIntersectionDistance(origin, ray, areaBoundary)
+      const boundaryHit = getIntersectionDistance(
+        origin,
+        ray,
+        areaBoundary,
+        MIN_INTERSECTION_DISTANCE,
+      )
       if (boundaryHit !== null && boundaryHit < maxDistance) {
         maxDistance = boundaryHit
       }
     }
 
     obstacles.forEach((obstacle) => {
-      const hitDistance = getIntersectionDistance(
+      const hitDistance = getObstacleIntersectionDistance(
         origin,
+        originPoint,
         ray,
-        obstacle.boundary,
+        obstacle,
       )
       if (hitDistance === null) {
         return
       }
-      const normalizedDistance = Math.min(hitDistance / safeDepth, 1)
-      const rayHeightAtHit = cameraHeight * (1 - normalizedDistance)
-      if (obstacle.height < rayHeightAtHit) {
+      const fullOcclusionThreshold =
+        cameraHeight - FULL_OCCLUSION_HEIGHT_EPSILON
+      if (obstacle.height < fullOcclusionThreshold) {
         return
       }
       if (hitDistance < maxDistance) {

@@ -115,6 +115,9 @@ export const MapView: React.FC<MapViewProps> = ({
   )
   const [previewPath, setPreviewPath] = React.useState<GeoPoint[]>([])
   const cameraLayerDataCacheRef = React.useRef(createCameraLayerDataCache())
+  const frozenCameraLayerDataRef = React.useRef<ReturnType<
+    typeof buildCameraLayerData
+  > | null>(null)
   const {recordAction} = useHistoryRecorder()
 
   const isEditMode = useUiStore((state) => state.isEditMode)
@@ -226,6 +229,7 @@ export const MapView: React.FC<MapViewProps> = ({
     selectionBoundsFeature,
     handleFeatures,
     rotationHandle,
+    isTransforming: isSelectionTransforming,
     onPointerMove: handleSelectionPointerMove,
     onMouseDown: handleSelectionMouseDown,
     onMapClick: handleSelectionMapClick,
@@ -927,17 +931,20 @@ export const MapView: React.FC<MapViewProps> = ({
     [shapes],
   )
 
-  const cameraLayerData = React.useMemo(
-    () =>
-      buildCameraLayerData(
-        cameras,
-        areas,
-        walls,
-        shapes,
-        cameraLayerDataCacheRef.current,
-      ),
-    [areas, cameras, shapes, walls],
-  )
+  const cameraLayerData = React.useMemo(() => {
+    if (isSelectionTransforming && frozenCameraLayerDataRef.current) {
+      return frozenCameraLayerDataRef.current
+    }
+    const nextLayerData = buildCameraLayerData(
+      cameras,
+      areas,
+      walls,
+      shapes,
+      cameraLayerDataCacheRef.current,
+    )
+    frozenCameraLayerDataRef.current = nextLayerData
+    return nextLayerData
+  }, [areas, cameras, isSelectionTransforming, shapes, walls])
 
   const personFeatures = React.useMemo(
     () => buildPersonFeatures(people),

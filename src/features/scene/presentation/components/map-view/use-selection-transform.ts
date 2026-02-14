@@ -159,6 +159,7 @@ interface UseSelectionTransformResult {
   } | null
   cursor: string | undefined
   selectionCount: number
+  isTransforming: boolean
   onPointerMove: (event: MapLayerMouseEvent) => boolean
   onMouseDown: (event: MapLayerMouseEvent) => boolean
   onMapClick: (event: MapLayerMouseEvent) => boolean
@@ -1815,6 +1816,7 @@ export const useSelectionTransform = ({
     hoveredFeature,
     cursor,
     selectionCount,
+    isTransforming: Boolean(transformSession),
     onPointerMove,
     onMouseDown,
     onMapClick,
