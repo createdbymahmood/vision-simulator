@@ -33,7 +33,7 @@ import {MapViewCameraPreviewLayer} from '@/features/scene/presentation/component
 import {MapViewCursorOverlay} from '@/features/scene/presentation/components/map-view/map-view-cursor-overlay'
 import {
   buildAreaFeatureCollection,
-  buildCameraLayerData,
+  buildCameraFeatures,
   buildOverlapFeatures,
   buildPersonFeatures,
   buildShapeFeatures,
@@ -41,7 +41,6 @@ import {
   computeArea,
   computePerimeter,
   computeSegmentLength,
-  createCameraLayerDataCache,
   createPolygonGeometry,
   formatArea,
   formatMeters,
@@ -59,6 +58,7 @@ import {MapViewTooltip} from '@/features/scene/presentation/components/map-view/
 import {MapViewWallLayers} from '@/features/scene/presentation/components/map-view/map-view-wall-layers'
 import {ensureCanvasGridImages} from '@/features/scene/presentation/components/map-view/mapbox-grid-images'
 import {getCanvasGridStyle} from '@/features/scene/presentation/components/map-view/mapbox-grid-style'
+import {useCameraFovWorker} from '@/features/scene/presentation/components/map-view/use-camera-fov-worker'
 import {useCameraPlacement} from '@/features/scene/presentation/components/map-view/use-camera-placement'
 import {useCanvasEmptyZoom} from '@/features/scene/presentation/components/map-view/use-canvas-empty-zoom'
 import {useFlyToActiveArea} from '@/features/scene/presentation/components/map-view/use-fly-to-active-area'
@@ -114,10 +114,6 @@ export const MapView: React.FC<MapViewProps> = ({
     getNextAreaColor(initialAreas),
   )
   const [previewPath, setPreviewPath] = React.useState<GeoPoint[]>([])
-  const cameraLayerDataCacheRef = React.useRef(createCameraLayerDataCache())
-  const frozenCameraLayerDataRef = React.useRef<ReturnType<
-    typeof buildCameraLayerData
-  > | null>(null)
   const {recordAction} = useHistoryRecorder()
 
   const isEditMode = useUiStore((state) => state.isEditMode)
@@ -222,6 +218,13 @@ export const MapView: React.FC<MapViewProps> = ({
     () => getBaseCursor(activeTool, isEditMode, isDragging),
     [activeTool, isDragging, isEditMode],
   )
+  const shouldShowAreaCursorOverlay = isEditMode && activeTool === 'draw-area'
+
+  React.useEffect(() => {
+    if (!shouldShowAreaCursorOverlay) {
+      setCursorPoint(null)
+    }
+  }, [shouldShowAreaCursorOverlay])
 
   const cursor = cursorOverride ?? baseCursor
 
@@ -229,7 +232,6 @@ export const MapView: React.FC<MapViewProps> = ({
     selectionBoundsFeature,
     handleFeatures,
     rotationHandle,
-    isTransforming: isSelectionTransforming,
     onPointerMove: handleSelectionPointerMove,
     onMouseDown: handleSelectionMouseDown,
     onMapClick: handleSelectionMapClick,
@@ -454,6 +456,17 @@ export const MapView: React.FC<MapViewProps> = ({
     },
     [activeTool, showTooltip],
   )
+
+  const updateCursorPointForOverlay = React.useCallback(
+    (event: MapLayerMouseEvent) => {
+      if (!shouldShowAreaCursorOverlay) {
+        return
+      }
+      setCursorPoint({x: event.point.x, y: event.point.y})
+    },
+    [shouldShowAreaCursorOverlay],
+  )
+
   const handleMouseDown = React.useCallback(
     (event: MapLayerMouseEvent) => {
       pointerDownRef.current = true
@@ -525,7 +538,7 @@ export const MapView: React.FC<MapViewProps> = ({
     if (pointerDownRef.current) {
       pointerMovedWhileDownRef.current = true
     }
-    setCursorPoint({x: event.point.x, y: event.point.y})
+    updateCursorPointForOverlay(event)
 
     if (handleSelectionPointerMove(event)) {
       return
@@ -931,20 +944,20 @@ export const MapView: React.FC<MapViewProps> = ({
     [shapes],
   )
 
+  const cameraFovData = useCameraFovWorker({
+    cameras,
+    areas,
+    walls,
+    shapes,
+  })
+
   const cameraLayerData = React.useMemo(() => {
-    if (isSelectionTransforming && frozenCameraLayerDataRef.current) {
-      return frozenCameraLayerDataRef.current
+    return {
+      points: buildCameraFeatures(cameras),
+      fovs: cameraFovData.fovs,
+      directions: cameraFovData.directions,
     }
-    const nextLayerData = buildCameraLayerData(
-      cameras,
-      areas,
-      walls,
-      shapes,
-      cameraLayerDataCacheRef.current,
-    )
-    frozenCameraLayerDataRef.current = nextLayerData
-    return nextLayerData
-  }, [areas, cameras, isSelectionTransforming, shapes, walls])
+  }, [cameraFovData.directions, cameraFovData.fovs, cameras])
 
   const personFeatures = React.useMemo(
     () => buildPersonFeatures(people),
@@ -1099,7 +1112,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
       {tooltip ? <MapViewTooltip tooltip={tooltip} /> : null}
 
-      {activeTool === 'draw-area' && isEditMode && cursorPoint ? (
+      {shouldShowAreaCursorOverlay && cursorPoint ? (
         <MapViewCursorOverlay color={drawingColor} cursorPoint={cursorPoint} />
       ) : null}
     </div>

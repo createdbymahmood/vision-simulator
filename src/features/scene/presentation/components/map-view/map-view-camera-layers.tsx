@@ -5,10 +5,12 @@ import type {CameraLayerData} from './map-view-helpers'
 
 interface MapViewCameraLayersProps {
   data: CameraLayerData
+  hideFov?: boolean
 }
 
-export const MapViewCameraLayers: React.FC<MapViewCameraLayersProps> = ({
+const MapViewCameraLayersComponent: React.FC<MapViewCameraLayersProps> = ({
   data,
+  hideFov = false,
 }) => {
   const hasCameras = data.points.features.length > 0
 
@@ -22,6 +24,7 @@ export const MapViewCameraLayers: React.FC<MapViewCameraLayersProps> = ({
         <Layer
           id='camera-fov-fill'
           type='fill'
+          layout={{visibility: hideFov ? 'none' : 'visible'}}
           paint={{
             'fill-color': ['coalesce', ['get', 'color'], '#2563EB'],
             'fill-opacity': [
@@ -38,6 +41,7 @@ export const MapViewCameraLayers: React.FC<MapViewCameraLayersProps> = ({
           id='camera-fov-outline'
           type='line'
           layout={{
+            visibility: hideFov ? 'none' : 'visible',
             'line-cap': 'round',
             'line-join': 'round',
           }}
@@ -95,3 +99,7 @@ export const MapViewCameraLayers: React.FC<MapViewCameraLayersProps> = ({
     </>
   )
 }
+
+MapViewCameraLayersComponent.displayName = 'MapViewCameraLayers'
+
+export const MapViewCameraLayers = React.memo(MapViewCameraLayersComponent)
