@@ -98,6 +98,8 @@ export const MapView: React.FC<MapViewProps> = ({
   onMapReady,
 }) => {
   const mapRef = React.useRef<MapRef | null>(null)
+  const pointerDownRef = React.useRef(false)
+  const pointerMovedWhileDownRef = React.useRef(false)
   const [drawing, setDrawing] = React.useState<DrawingState>({
     isActive: false,
     points: [],
@@ -448,18 +450,77 @@ export const MapView: React.FC<MapViewProps> = ({
     },
     [activeTool, showTooltip],
   )
-  const handleMouseDown = (event: MapLayerMouseEvent) => {
-    handleSelectionMouseDown(event)
-  }
+  const handleMouseDown = React.useCallback(
+    (event: MapLayerMouseEvent) => {
+      pointerDownRef.current = true
+      pointerMovedWhileDownRef.current = false
+      handleSelectionMouseDown(event)
 
-  const handleMouseUp = () => {
-    handleSelectionMouseUp()
-    if (isDragging) {
-      setIsDragging(false)
-    }
-  }
+      if (
+        !isEditMode ||
+        activeTool !== 'draw-shape' ||
+        shapeMode === 'triangle' ||
+        shapeDrawing.isActive
+      ) {
+        return
+      }
+
+      const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
+      startShape(point)
+    },
+    [
+      activeTool,
+      handleSelectionMouseDown,
+      isEditMode,
+      shapeMode,
+      shapeDrawing.isActive,
+      startShape,
+    ],
+  )
+
+  const handleMouseUp = React.useCallback(
+    (event: MapLayerMouseEvent) => {
+      pointerDownRef.current = false
+      handleSelectionMouseUp()
+      if (isDragging) {
+        setIsDragging(false)
+      }
+
+      if (
+        !isEditMode ||
+        activeTool !== 'draw-shape' ||
+        shapeMode === 'triangle' ||
+        !shapeDrawing.isActive
+      ) {
+        return
+      }
+
+      const didDrag = pointerMovedWhileDownRef.current
+      pointerMovedWhileDownRef.current = false
+      if (!didDrag) {
+        resetShapeDrawing()
+        return
+      }
+
+      const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
+      finalizeShape(point, shapeMode)
+    },
+    [
+      activeTool,
+      finalizeShape,
+      handleSelectionMouseUp,
+      isDragging,
+      isEditMode,
+      resetShapeDrawing,
+      shapeDrawing.isActive,
+      shapeMode,
+    ],
+  )
 
   const handlePointerMove = (event: MapLayerMouseEvent) => {
+    if (pointerDownRef.current) {
+      pointerMovedWhileDownRef.current = true
+    }
     setCursorPoint({x: event.point.x, y: event.point.y})
 
     if (handleSelectionPointerMove(event)) {
@@ -617,6 +678,9 @@ export const MapView: React.FC<MapViewProps> = ({
 
   const handleShapeClick = React.useCallback(
     (point: GeoPoint) => {
+      if (shapeMode !== 'triangle') {
+        return
+      }
       if (!shapeDrawing.isActive) {
         startShape(point)
         return
@@ -707,6 +771,10 @@ export const MapView: React.FC<MapViewProps> = ({
         return
       }
 
+      if (activeTool === 'draw-shape' && shapeMode !== 'triangle') {
+        return
+      }
+
       const clickDetail =
         (event.originalEvent as MouseEvent | undefined)?.detail ?? 1
       if (
@@ -728,6 +796,7 @@ export const MapView: React.FC<MapViewProps> = ({
       handlePlacementMapClick,
       handleSelectionMapClick,
       isEditMode,
+      shapeMode,
     ],
   )
 
@@ -869,7 +938,9 @@ export const MapView: React.FC<MapViewProps> = ({
     if (!shapePreview || shapePreview.length < 2) {
       return null
     }
-    const isLine = shapeMode === 'line'
+    const isLine =
+      shapeMode === 'line' ||
+      (shapeMode === 'triangle' && shapePreview.length < 4)
     const geometry: LineString | Polygon = isLine
       ? {
           type: 'LineString',

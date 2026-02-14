@@ -315,20 +315,27 @@ export const useShapeDrawing = ({
 
       if (shapeMode === 'triangle') {
         const points = [...shapeDrawing.points, point]
+        if (points.length === 2) {
+          preview = createLineGeometry(points[0], points[1])
+        }
         if (points.length === 3) {
           preview = createTriangleRing(points)
         }
-        const isValid = preview
-          ? isGeometryInsideArea(preview, targetArea)
-          : true
+        const isTrianglePolygon = Boolean(preview && preview.length >= 4)
+        const isValid =
+          preview && isTrianglePolygon
+            ? isGeometryInsideArea(preview, targetArea)
+            : true
         const hitsPerson =
           preview &&
+          isTrianglePolygon &&
           doesShapeHitPerson(
             {geometry: preview, shapeType: 'triangle'} as ShapeEntity,
             people,
           )
         const hitsWall =
           preview &&
+          isTrianglePolygon &&
           doesShapeCollideWithWalls(
             {geometry: preview, shapeType: 'triangle'} as ShapeEntity,
             walls.filter((wall) => wall.areaId === targetArea.id),
@@ -359,8 +366,13 @@ export const useShapeDrawing = ({
       }
       let geometry: GeoPoint[] = []
       const previewGeometry = shapePreview
+      const canUsePreviewGeometry = Boolean(
+        previewGeometry &&
+          previewGeometry.length > 0 &&
+          (shapeMode !== 'triangle' || previewGeometry.length >= 4),
+      )
 
-      if (previewGeometry && previewGeometry.length > 0) {
+      if (canUsePreviewGeometry) {
         geometry = previewGeometry
       } else {
         if (shapeMode === 'rectangle') {
