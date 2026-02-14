@@ -66,8 +66,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
         <CreateAreaPopover
           disabled={!isEditMode}
           activeTool={activeTool}
-          tooltip={!isEditMode ? 'Editing is disabled' : undefined}
           onSelectTool={() => onSelectTool('draw-area')}
+          tooltip={!isEditMode ? 'Editing is disabled' : undefined}
         />
 
         <ToolButton
