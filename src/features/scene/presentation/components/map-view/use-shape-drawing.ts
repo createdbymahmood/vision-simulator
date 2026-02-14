@@ -12,6 +12,7 @@ import type {
 } from '@/features/scene/domain/types'
 import type {ShapeDrawMode} from '@/features/scene/presentation/types'
 
+import {DEFAULT_SHAPE_HEIGHT_METERS} from '@/features/scene/domain/constants/shape-style'
 import {useHistoryRecorder} from '@/features/scene/presentation/hooks/use-history-recorder'
 
 import type {TooltipState} from './map-view-types'
@@ -438,7 +439,7 @@ export const useShapeDrawing = ({
         areaId: targetArea.id,
         geometry,
         shapeType: shapeMode,
-        height: 0,
+        height: DEFAULT_SHAPE_HEIGHT_METERS,
         color: strokeColor,
         type: 'shape',
       })

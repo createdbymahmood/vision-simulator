@@ -2,6 +2,7 @@ import type {ShapeEntity} from '../types'
 
 export const SHAPE_STROKE_COLOR = '#1A9FFF'
 export const SHAPE_FILL_COLOR = 'rgba(26,159,255,0.15)'
+export const DEFAULT_SHAPE_HEIGHT_METERS = 1
 
 export const createDefaultShape = (
   id: string,
@@ -14,7 +15,7 @@ export const createDefaultShape = (
     type: 'shape' as const,
     areaId,
     geometry,
-    height: 0,
+    height: DEFAULT_SHAPE_HEIGHT_METERS,
     color: SHAPE_STROKE_COLOR,
   }
 
