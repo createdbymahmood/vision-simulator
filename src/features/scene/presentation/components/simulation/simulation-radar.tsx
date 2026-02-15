@@ -148,6 +148,10 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   )
 
   React.useEffect(() => {
+    setRadarSettings({pan: {x: 0, y: 0}})
+  }, [focusAreaId, setRadarSettings])
+
+  React.useEffect(() => {
     if (selectedPersonId) {
       setPingPersonId(selectedPersonId)
       setPingKey((prev) => prev + 1)

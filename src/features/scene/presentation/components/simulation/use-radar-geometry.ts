@@ -251,7 +251,14 @@ export const useRadarGeometry = ({
             index === 0 ? `M ${point.x} ${point.y}` : `L ${point.x} ${point.y}`,
           )
           .join(' ')
-        return {id: area.id, path: `${path} Z`}
+        return {
+          id: area.id,
+          path: `${path} Z`,
+          fillColor: area.style.fillColor,
+          fillOpacity: area.style.fillOpacity,
+          borderColor: area.style.borderColor,
+          borderWidth: area.style.borderWidth,
+        }
       }),
     [toRadar, transformer, visibleAreas],
   )

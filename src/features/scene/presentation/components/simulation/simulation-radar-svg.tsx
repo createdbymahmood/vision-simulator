@@ -16,6 +16,10 @@ export interface RadarGridLine {
 export interface RadarAreaPath {
   id: string
   path: string
+  fillColor: string
+  fillOpacity: number
+  borderColor: string
+  borderWidth: number
 }
 
 export interface RadarWedge {
@@ -113,10 +117,11 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
     {areaPaths.map((area) => (
       <path
         d={area.path}
-        fill='transparent'
+        fill={area.fillColor}
+        fillOpacity={area.fillOpacity}
         key={area.id}
-        stroke='rgba(255,255,255,0.2)'
-        strokeWidth={1}
+        stroke={area.borderColor}
+        strokeWidth={area.borderWidth}
       />
     ))}
     {wedges.map((wedge) => {
