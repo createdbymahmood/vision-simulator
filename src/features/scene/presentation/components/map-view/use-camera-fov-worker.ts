@@ -83,7 +83,7 @@ export const useCameraFovWorker = ({
       if (message.requestId !== latestRequestIdRef.current) {
         return
       }
-      if (message.type === 'error') {
+      if (message.type !== 'result') {
         return
       }
       setFovData({

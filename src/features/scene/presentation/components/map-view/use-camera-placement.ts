@@ -25,10 +25,12 @@ import {
   buildOccludedFovRing,
   computeArea,
   createCircleRing,
+  createFovRing,
   formatMeters,
   isPointInsideArea,
   projectPoint,
 } from './map-view-helpers'
+import {useCameraPreviewFovWorker} from './use-camera-preview-fov-worker'
 
 type MapLayerMouseEvent = MapMouseEvent
 
@@ -59,9 +61,7 @@ interface UseCameraPlacementParams {
     color: string | null,
   ) => void
   clearCameraPlacement: () => void
-  addCamera: (
-    camera: Omit<CameraEntity, 'id' | 'ptz' | 'type'>,
-  ) => SceneRoot
+  addCamera: (camera: Omit<CameraEntity, 'id' | 'ptz' | 'type'>) => SceneRoot
   setSelection: (ids: string[]) => void
   setActiveTool: (tool: EditorTool) => void
   openCameraPanel: () => void
@@ -85,6 +85,17 @@ interface UseCameraPlacementResult {
 }
 
 const MIN_FOV_PREVIEW_AREA = 0.5
+const PREVIEW_FOV_SEGMENTS = 18
+const PREVIEW_RANGE_SEGMENTS = 36
+
+interface PreviewComputationMeta {
+  requestId: number
+  areaId?: string
+  point: GeoPoint
+  pointer: {x: number; y: number}
+  color: string
+  profile: CameraPlacementProfile
+}
 
 // eslint-disable-next-line max-lines-per-function
 export const useCameraPlacement = ({
@@ -142,30 +153,27 @@ export const useCameraPlacement = ({
     return map
   }, [areas, shapes, walls])
 
-  const updatePreview = React.useCallback(
-    (point: GeoPoint) => {
-      const profile = resolvePlacementProfile()
-      const optics = profile.optics
-      const color = ensurePlacementColor()
-      const areaForPoint = getAreaAtPoint(point)
-      const obstacles = areaForPoint
-        ? (occlusionObstaclesByArea.get(areaForPoint.id) ?? [])
-        : []
-      const ring = buildOccludedFovRing({
-        origin: point,
-        direction: 0,
-        fov: optics.fovHorizontal,
-        depth: optics.depth,
-        cameraHeight: optics.height,
-        area: areaForPoint,
-        obstacles,
-      })
-      const directionPoint = projectPoint(point, 0, optics.depth * 0.6)
-      const rangeRing = createCircleRing(point, optics.depth, 72)
-      const fovArea = computeArea(ring)
-      const hasVisibleFov = fovArea > MIN_FOV_PREVIEW_AREA
-      const isBlocked = Boolean(areaForPoint) && !hasVisibleFov
+  const latestPreviewRequestRef = React.useRef(0)
+  const latestPreviewMetaRef = React.useRef<PreviewComputationMeta | null>(null)
 
+  const buildPreviewData = React.useCallback(
+    ({
+      point,
+      color,
+      depth,
+      ring,
+      isValid,
+      isBlocked,
+    }: {
+      point: GeoPoint
+      color: string
+      depth: number
+      ring: GeoPoint[]
+      isValid: boolean
+      isBlocked: boolean
+    }) => {
+      const directionPoint = projectPoint(point, 0, depth * 0.6)
+      const rangeRing = createCircleRing(point, depth, PREVIEW_RANGE_SEGMENTS)
       return {
         point: {
           type: 'FeatureCollection' as const,
@@ -217,17 +225,47 @@ export const useCameraPlacement = ({
             },
           ],
         } as FeatureCollection<LineString>,
-        isValid: Boolean(areaForPoint && hasVisibleFov),
+        isValid,
         isBlocked,
       }
     },
-    [
-      ensurePlacementColor,
-      getAreaAtPoint,
-      occlusionObstaclesByArea,
-      resolvePlacementProfile,
-    ],
+    [],
   )
+
+  const {requestPreviewFov} = useCameraPreviewFovWorker({
+    areas,
+    walls,
+    shapes,
+    onPreviewResult: (result) => {
+      const meta = latestPreviewMetaRef.current
+      if (!meta || result.requestId !== meta.requestId) {
+        return
+      }
+      const hasVisibleFov = result.area > MIN_FOV_PREVIEW_AREA
+      const isBlocked = Boolean(meta.areaId) && !hasVisibleFov
+      const nextPreview = buildPreviewData({
+        point: meta.point,
+        color: meta.color,
+        depth: meta.profile.optics.depth,
+        ring: result.ring,
+        isValid: Boolean(meta.areaId && hasVisibleFov),
+        isBlocked,
+      })
+      setPreview(nextPreview)
+      if (!meta.areaId) {
+        return
+      }
+      if (isBlocked) {
+        setCursorOverride('not-allowed')
+        setTooltip({
+          text: 'Camera FOV is blocked by obstacles',
+          x: meta.pointer.x + 12,
+          y: meta.pointer.y + 12,
+          visible: true,
+        })
+      }
+    },
+  })
 
   const onPointerMove = React.useCallback(
     (event: MapLayerMouseEvent) => {
@@ -235,10 +273,29 @@ export const useCameraPlacement = ({
         return false
       }
       const point: GeoPoint = [event.lngLat.lng, event.lngLat.lat]
-      const nextPreview = updatePreview(point)
       const profile = resolvePlacementProfile()
-      setPreview(nextPreview)
+      const color = ensurePlacementColor()
+      const areaForPoint = getAreaAtPoint(point)
+      const provisionalRing = createFovRing(
+        point,
+        0,
+        profile.optics.fovHorizontal,
+        profile.optics.depth,
+        PREVIEW_FOV_SEGMENTS,
+      )
+      setPreview(
+        buildPreviewData({
+          point,
+          color,
+          depth: profile.optics.depth,
+          ring: provisionalRing,
+          isValid: Boolean(areaForPoint),
+          isBlocked: false,
+        }),
+      )
+
       if (areas.length === 0) {
+        latestPreviewMetaRef.current = null
         setTooltip({
           text: 'Create an area first',
           x: event.point.x + 12,
@@ -248,17 +305,8 @@ export const useCameraPlacement = ({
         setCursorOverride('not-allowed')
         return true
       }
-      if (!nextPreview.isValid) {
-        if (nextPreview.isBlocked) {
-          setTooltip({
-            text: 'Camera FOV is blocked by obstacles',
-            x: event.point.x + 12,
-            y: event.point.y + 12,
-            visible: true,
-          })
-          setCursorOverride('not-allowed')
-          return true
-        }
+      if (!areaForPoint) {
+        latestPreviewMetaRef.current = null
         setTooltip({
           text: 'Cannot place camera outside area',
           x: event.point.x + 12,
@@ -275,16 +323,75 @@ export const useCameraPlacement = ({
         y: event.point.y + 12,
         visible: true,
       })
+
+      const requestId = latestPreviewRequestRef.current + 1
+      latestPreviewRequestRef.current = requestId
+      latestPreviewMetaRef.current = {
+        requestId,
+        areaId: areaForPoint.id,
+        point,
+        pointer: {x: event.point.x, y: event.point.y},
+        color,
+        profile,
+      }
+      const queuedInWorker = requestPreviewFov({
+        requestId,
+        origin: point,
+        direction: 0,
+        fov: profile.optics.fovHorizontal,
+        depth: profile.optics.depth,
+        cameraHeight: profile.optics.height,
+        areaId: areaForPoint.id,
+      })
+      if (queuedInWorker) {
+        return true
+      }
+
+      const obstacles = occlusionObstaclesByArea.get(areaForPoint.id) ?? []
+      const ring = buildOccludedFovRing({
+        origin: point,
+        direction: 0,
+        fov: profile.optics.fovHorizontal,
+        depth: profile.optics.depth,
+        cameraHeight: profile.optics.height,
+        area: areaForPoint,
+        obstacles,
+      })
+      const hasVisibleFov = computeArea(ring) > MIN_FOV_PREVIEW_AREA
+      const isBlocked = !hasVisibleFov
+      setPreview(
+        buildPreviewData({
+          point,
+          color,
+          depth: profile.optics.depth,
+          ring,
+          isValid: hasVisibleFov,
+          isBlocked,
+        }),
+      )
+      if (isBlocked) {
+        setTooltip({
+          text: 'Camera FOV is blocked by obstacles',
+          x: event.point.x + 12,
+          y: event.point.y + 12,
+          visible: true,
+        })
+        setCursorOverride('not-allowed')
+      }
       return true
     },
     [
       activeTool,
-      isEditMode,
       areas.length,
+      buildPreviewData,
+      ensurePlacementColor,
+      getAreaAtPoint,
+      isEditMode,
+      occlusionObstaclesByArea,
+      requestPreviewFov,
       resolvePlacementProfile,
       setCursorOverride,
       setTooltip,
-      updatePreview,
     ],
   )
 
@@ -391,6 +498,8 @@ export const useCameraPlacement = ({
 
   React.useEffect(() => {
     if (activeTool !== 'place-camera') {
+      latestPreviewRequestRef.current = 0
+      latestPreviewMetaRef.current = null
       setPreview(null)
       setCursorOverride(undefined)
       setTooltip(null)
