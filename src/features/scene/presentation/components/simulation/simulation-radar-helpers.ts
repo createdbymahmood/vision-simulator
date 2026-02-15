@@ -1,8 +1,14 @@
-import type {CameraEntity, GeoPoint} from '@/features/scene/domain/types'
+import type {
+  AreaEntity,
+  CameraEntity,
+  GeoPoint,
+} from '@/features/scene/domain/types'
 
 import {getEffectiveHorizontalFov} from '@/features/scene/domain/services/camera-optics'
 
-import {projectPoint} from '../map-view/map-view-helpers'
+import type {buildFovOcclusionObstacles} from '../map-view/map-view-helpers'
+
+import {buildOccludedFovRing, projectPoint} from '../map-view/map-view-helpers'
 
 export const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
@@ -13,11 +19,15 @@ export const buildFovGroundRing = ({
   camera,
   origin,
   opticHeight,
+  area,
+  obstacles = [],
   segments = 20,
 }: {
   camera: CameraEntity
   origin: GeoPoint
   opticHeight: number
+  area?: AreaEntity
+  obstacles?: ReturnType<typeof buildFovOcclusionObstacles>
   segments?: number
 }) => {
   const pan = camera.ptz.pan
@@ -30,6 +40,17 @@ export const buildFovGroundRing = ({
   let distance = camera.depth
   if (sinTilt < -1e-4) {
     distance = Math.min(distance, opticHeight / -sinTilt)
+  }
+  if (area || obstacles.length > 0) {
+    return buildOccludedFovRing({
+      origin,
+      direction: pan,
+      fov,
+      depth: distance,
+      cameraHeight: camera.height,
+      area,
+      obstacles,
+    })
   }
   const points: GeoPoint[] = []
   for (let i = 0; i <= segments; i += 1) {

@@ -18,6 +18,7 @@ import type {
 
 import {closeRing, projectPoint} from '../map-view/map-view-helpers'
 import {getCameraOpticHeight} from './camera-collision-utils'
+import {buildObstacleSegmentsByArea} from './camera-vision'
 import {buildFovGroundRing} from './simulation-radar-helpers'
 
 interface UseRadarGeometryInput {
@@ -64,6 +65,14 @@ export const useRadarGeometry = ({
   const visiblePeopleIds = React.useMemo(
     () => new Set(visiblePeople.map((person) => person.id)),
     [visiblePeople],
+  )
+  const areaById = React.useMemo(
+    () => new Map(scene.areas.map((area) => [area.id, area])),
+    [scene.areas],
+  )
+  const obstaclesByArea = React.useMemo(
+    () => buildObstacleSegmentsByArea(scene, transformer),
+    [scene, transformer],
   )
 
   const worldPoints = React.useMemo(() => {
@@ -164,10 +173,14 @@ export const useRadarGeometry = ({
   const wedges = React.useMemo<RadarWedge[]>(() => {
     return visibleCameras.map((camera) => {
       const opticHeight = getCameraOpticHeight(camera)
+      const area = areaById.get(camera.areaId)
+      const obstacles = obstaclesByArea.get(camera.areaId) ?? []
       const ring = buildFovGroundRing({
         camera,
         origin: [camera.x, camera.y],
         opticHeight,
+        area,
+        obstacles,
       })
       const points = ring
         .map((point) => transformer.toVector3(point))
@@ -176,7 +189,7 @@ export const useRadarGeometry = ({
       const origin = toRadar({x: originWorld.x, z: originWorld.z})
       return {camera, origin, points}
     })
-  }, [toRadar, transformer, visibleCameras])
+  }, [areaById, obstaclesByArea, toRadar, transformer, visibleCameras])
 
   const connections = React.useMemo<RadarConnectionLine[]>(() => {
     const lines: RadarConnectionLine[] = []
