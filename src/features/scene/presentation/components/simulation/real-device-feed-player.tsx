@@ -228,7 +228,7 @@ export const RealDeviceFeedPlayer: React.FC<RealDeviceFeedPlayerProps> = ({
   const isBusy = playerState === 'connecting' || playerState === 'reconnecting'
   const isPlaying = playerState === 'playing'
   const wrapperClassName = isFullscreen
-    ? 'fixed inset-0 z-50 flex min-h-0 w-screen flex-col bg-black'
+    ? 'fixed inset-0 z-50 flex min-h-0 w-full flex-col bg-black'
     : 'relative size-full min-w-0 max-w-full overflow-hidden bg-black'
   const hasConfigError = !streamUrl
   const hasStreamError = playerState === 'error'
