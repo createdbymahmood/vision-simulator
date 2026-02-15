@@ -24,6 +24,23 @@ interface SimulationRadarProps {
   onSelectEntity: (id?: string) => void
 }
 
+const getFramedSceneForRadar = (
+  scene: SceneRoot,
+  focusAreaId?: string,
+): SceneRoot => {
+  if (!focusAreaId) {
+    return scene
+  }
+  return {
+    ...scene,
+    areas: scene.areas.filter((area) => area.id === focusAreaId),
+    walls: scene.walls.filter((wall) => wall.areaId === focusAreaId),
+    shapes: scene.shapes.filter((shape) => shape.areaId === focusAreaId),
+    cameras: scene.cameras.filter((camera) => camera.areaId === focusAreaId),
+    people: scene.people.filter((person) => person.areaId === focusAreaId),
+  }
+}
+
 // eslint-disable-next-line max-lines-per-function
 export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   scene,
@@ -41,7 +58,14 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     [selectedEntityIds],
   )
 
-  const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
+  const framedScene = React.useMemo(
+    () => getFramedSceneForRadar(scene, focusAreaId),
+    [focusAreaId, scene],
+  )
+  const originPoint = React.useMemo(
+    () => computeSceneOrigin(framedScene),
+    [framedScene],
+  )
   const transformer = React.useMemo(
     () => createCoordinateTransformer(originPoint),
     [originPoint],

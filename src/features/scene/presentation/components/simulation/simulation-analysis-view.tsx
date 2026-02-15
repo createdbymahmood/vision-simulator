@@ -4,7 +4,11 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
-import type {AreaEntity, PreviewViewMode} from '@/features/scene/domain/types'
+import type {
+  AreaEntity,
+  PreviewViewMode,
+  SceneRoot,
+} from '@/features/scene/domain/types'
 
 import {
   Select,
@@ -107,6 +111,23 @@ interface PreviewViewportControlsProps {
   onActiveAreaChange: (areaId: string) => void
 }
 
+const getFramedSceneForPreview = (
+  scene: SceneRoot,
+  focusAreaId?: string,
+): SceneRoot => {
+  if (!focusAreaId) {
+    return scene
+  }
+  return {
+    ...scene,
+    areas: scene.areas.filter((area) => area.id === focusAreaId),
+    walls: scene.walls.filter((wall) => wall.areaId === focusAreaId),
+    shapes: scene.shapes.filter((shape) => shape.areaId === focusAreaId),
+    cameras: scene.cameras.filter((camera) => camera.areaId === focusAreaId),
+    people: scene.people.filter((person) => person.areaId === focusAreaId),
+  }
+}
+
 const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
   allowPreviewViewSwitch,
   previewViewMode,
@@ -193,7 +214,18 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     ),
   )
   const setPreviewViewMode = useUiStore((state) => state.setPreviewViewMode)
-  const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
+  const activePreviewAreaId = React.useMemo(
+    () => scene.activeAreaId ?? scene.areas[0]?.id,
+    [scene.activeAreaId, scene.areas],
+  )
+  const framedScene = React.useMemo(
+    () => getFramedSceneForPreview(scene, activePreviewAreaId),
+    [activePreviewAreaId, scene],
+  )
+  const originPoint = React.useMemo(
+    () => computeSceneOrigin(framedScene),
+    [framedScene],
+  )
   const transformer = React.useMemo(
     () => createCoordinateTransformer(originPoint),
     [originPoint],
@@ -221,10 +253,6 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     stopRecording,
   } = useSimulationRecording({captureRef})
   const radarPanelSize = {width: 360, height: 180}
-  const activePreviewAreaId = React.useMemo(
-    () => scene.activeAreaId ?? scene.areas[0]?.id,
-    [scene.activeAreaId, scene.areas],
-  )
 
   const visibleCameras = React.useMemo(
     () =>

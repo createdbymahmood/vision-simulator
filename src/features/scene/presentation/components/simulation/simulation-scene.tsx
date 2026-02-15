@@ -43,6 +43,34 @@ interface FocusRequest {
   distance: number
 }
 
+const getFramedScene = (scene: SceneRoot, focusAreaId?: string): SceneRoot => {
+  if (!focusAreaId) {
+    return scene
+  }
+  return {
+    ...scene,
+    areas: scene.areas.filter((area) => area.id === focusAreaId),
+    walls: scene.walls.filter((wall) => wall.areaId === focusAreaId),
+    shapes: scene.shapes.filter((shape) => shape.areaId === focusAreaId),
+    cameras: scene.cameras.filter(
+      (sceneCamera) => sceneCamera.areaId === focusAreaId,
+    ),
+    people: scene.people.filter((person) => person.areaId === focusAreaId),
+  }
+}
+
+const getSceneGeoPoints = (scene: SceneRoot): [number, number][] => {
+  const points: [number, number][] = []
+  scene.areas.forEach((area) => points.push(...area.geometry.coordinates))
+  scene.shapes.forEach((shape) => points.push(...shape.geometry))
+  scene.walls.forEach((wall) => points.push(...wall.points))
+  scene.people.forEach((person) => points.push([person.x, person.y]))
+  scene.cameras.forEach((sceneCamera) =>
+    points.push([sceneCamera.x, sceneCamera.y]),
+  )
+  return points
+}
+
 export interface SimulationSceneProps {
   scene: SceneRoot
   editorMode: EditorMode
@@ -147,7 +175,10 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   const setVisionState = useUiStore((state) => state.setVisionState)
   const mapboxToken = useUiStore((state) => state.mapboxToken)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
-  const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
+  const originPoint = React.useMemo(() => {
+    const nextScene = getFramedScene(scene, focusAreaId)
+    return computeSceneOrigin(nextScene)
+  }, [focusAreaId, scene])
   const transformer = React.useMemo(
     () => createCoordinateTransformer(originPoint),
     [originPoint],
@@ -209,16 +240,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   const [isStaticMapReady, setIsStaticMapReady] = React.useState(false)
 
   const geoPoints = React.useMemo(() => {
-    const points: [number, number][] = []
-    scene.areas.forEach((area) => points.push(...area.geometry.coordinates))
-    scene.shapes.forEach((shape) => points.push(...shape.geometry))
-    scene.walls.forEach((wall) => points.push(...wall.points))
-    scene.people.forEach((person) => points.push([person.x, person.y]))
-    scene.cameras.forEach((sceneCamera) =>
-      points.push([sceneCamera.x, sceneCamera.y]),
-    )
-    return points
-  }, [scene])
+    const nextScene = getFramedScene(scene, focusAreaId)
+    return getSceneGeoPoints(nextScene)
+  }, [focusAreaId, scene])
 
   const geoBounds = React.useMemo(() => computeBounds(geoPoints), [geoPoints])
 
@@ -233,13 +257,16 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     const height = Math.abs(maxZFlat.z - minFlat.z)
     const paddingMultiplier = 1
     const paddingAbsolute = 0
+    const squareSide = Math.max(
+      width * paddingMultiplier,
+      width + paddingAbsolute,
+      height * paddingMultiplier,
+      height + paddingAbsolute,
+      200,
+    )
     return {
-      width: Math.max(width * paddingMultiplier, width + paddingAbsolute, 200),
-      height: Math.max(
-        height * paddingMultiplier,
-        height + paddingAbsolute,
-        200,
-      ),
+      width: squareSide,
+      height: squareSide,
     }
   }, [geoBounds, transformer])
 
