@@ -255,10 +255,7 @@ const useMirrorDarkModeClass = (
   }, [hostRef])
 }
 
-const useDocumentStyles = (
-  enabled: boolean,
-  mirrorDocumentStyles: boolean,
-) => {
+const useDocumentStyles = (enabled: boolean, mirrorDocumentStyles: boolean) => {
   const [documentStyles, setDocumentStyles] =
     React.useState<ShadowResolvedStyles>({
       inline: [],
@@ -308,6 +305,7 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
             mediaMtxUrl,
             mapboxToken,
             viewMode: modePolicy.initialViewMode,
+            previewViewMode: modePolicy.defaultPreviewViewMode,
           }}
         >
           <TooltipProvider delayDuration={0}>

@@ -1,6 +1,10 @@
+import type {MapRef} from 'react-map-gl/mapbox'
+
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
+
+import type {PreviewViewMode} from '@/features/scene/domain/types'
 
 import {
   Select,
@@ -9,16 +13,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
+import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {MapView} from '@/features/scene/presentation/components/map-view'
 import {
   createSnapshotFilename,
   downloadDataUrl,
 } from '@/features/scene/presentation/utils/scene-export'
+import {cn} from '@/lib/utils'
 
 import type {SimulationCaptureApi} from './simulation-capture'
 
 import {SimulationCameraSidebar} from './simulation-camera-sidebar'
 import {SimulationCanvas} from './simulation-canvas'
+import {
+  computeSceneOrigin,
+  createCoordinateTransformer,
+} from './simulation-helpers'
 import {SimulationRadar} from './simulation-radar'
 import {SimulationTopBar} from './simulation-top-bar'
 import {SimulationViewport} from './simulation-viewport'
@@ -29,24 +41,55 @@ interface SimulationAnalysisViewProps {
   showTopBar?: boolean
   showAuxiliaryPanels?: boolean
   allowBackToEditor?: boolean
+  allowPreviewViewSwitch?: boolean
   onBackToEditor: () => void
 }
+
+const EMPTY_PEOPLE_WORLD: Record<
+  string,
+  {x: number; y: number; z: number; height: number}
+> = {}
 
 // eslint-disable-next-line max-lines-per-function
 export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   showTopBar = true,
   showAuxiliaryPanels = true,
   allowBackToEditor = true,
+  allowPreviewViewSwitch = true,
   onBackToEditor,
 }) => {
   const scene = useSceneStore((state) => state.scene)
   const setActiveArea = useSceneStore((state) => state.setActiveArea)
   const setSelection = useSceneStore((state) => state.setSelection)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
+  const previewViewMode = useUiStore((state) => state.previewViewMode)
+  const previewPeopleWorld = useUiStore(
+    React.useCallback(
+      (state) =>
+        previewViewMode === '2d'
+          ? state.visionState.peopleWorld
+          : EMPTY_PEOPLE_WORLD,
+      [previewViewMode],
+    ),
+  )
+  const setPreviewViewMode = useUiStore((state) => state.setPreviewViewMode)
+  const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
+  const transformer = React.useMemo(
+    () => createCoordinateTransformer(originPoint),
+    [originPoint],
+  )
 
   const captureRef = React.useRef<SimulationCaptureApi | null>(null)
+  const simulationCaptureRef = React.useRef<SimulationCaptureApi | null>(null)
+  const [previewMapRef, setPreviewMapRef] = React.useState<MapRef | null>(null)
   const handleCaptureReady = useCallbackRef((api: SimulationCaptureApi) => {
-    captureRef.current = api
+    simulationCaptureRef.current = api
+    if (previewViewMode === '3d') {
+      captureRef.current = api
+    }
+  })
+  const handlePreviewMapReady = useCallbackRef((nextMap: MapRef | null) => {
+    setPreviewMapRef(nextMap)
   })
 
   const {
@@ -75,6 +118,23 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   const feedTargets = useCameraFeedTargets({cameras: visibleCameras})
   const hasCameraFeedTiles = feedTargets.length > 0
   const showSimulationSidePanels = showAuxiliaryPanels && hasCameraFeedTiles
+  const simulatedPreviewPeople = React.useMemo(() => {
+    if (previewViewMode !== '2d') {
+      return scene.people
+    }
+    return scene.people.map((person) => {
+      const world = previewPeopleWorld[person.id]
+      if (!world) {
+        return person
+      }
+      const [lng, lat] = transformer.toGeoPoint({x: world.x, z: world.z})
+      return {
+        ...person,
+        x: lng,
+        y: lat,
+      }
+    })
+  }, [previewPeopleWorld, previewViewMode, scene.people, transformer])
 
   const handleSelectEntity = useCallbackRef((id?: string) => {
     setSelection(id ? [id] : [])
@@ -100,7 +160,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   const handleSnapshot = useCallbackRef(() => {
     const captureApi = captureRef.current
     if (!captureApi) {
-      toast.error('Snapshot unavailable: 3D view not ready')
+      toast.error('Snapshot unavailable: preview view not ready')
       return
     }
     const dataUrl = captureApi.captureFrame(2)
@@ -120,6 +180,36 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
 
     onBackToEditor()
   })
+  const handlePreviewViewModeChange = useCallbackRef(
+    (mode: PreviewViewMode) => {
+      if (!allowPreviewViewSwitch) {
+        return
+      }
+      setPreviewViewMode(mode)
+    },
+  )
+
+  React.useEffect(() => {
+    if (previewViewMode === '2d') {
+      const map = previewMapRef?.getMap?.()
+      if (!map) {
+        return
+      }
+      captureRef.current = {
+        getCanvas: () => map.getCanvas(),
+        captureFrame: () => {
+          try {
+            return map.getCanvas().toDataURL('image/png')
+          } catch {
+            return null
+          }
+        },
+      }
+      return
+    }
+
+    captureRef.current = simulationCaptureRef.current
+  }, [previewMapRef, previewViewMode])
 
   React.useEffect(
     () => () => {
@@ -139,11 +229,14 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     <div className='flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden overscroll-none'>
       {showTopBar ? (
         <SimulationTopBar
+          allowPreviewViewSwitch={allowPreviewViewSwitch}
           isRecording={isRecording}
           onBackToEditor={handleBackAction}
+          onPreviewViewModeChange={handlePreviewViewModeChange}
           onSnapshot={handleSnapshot}
           onStartRecording={startRecording}
           onStopRecording={stopRecording}
+          previewViewMode={previewViewMode}
           recordingLabel={`REC ${formattedTime}`}
           showBackButton={allowBackToEditor}
         />
@@ -154,6 +247,29 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
           fps={fps}
           isLowFps={isLowFps}
           isRecording={isRecording}
+          overlayControls={
+            !showTopBar && allowPreviewViewSwitch ? (
+              <div className='pointer-events-auto absolute bottom-4 right-4'>
+                <ToggleGroup
+                  type='single'
+                  value={previewViewMode}
+                  variant='outline'
+                  onValueChange={(value) => {
+                    if (value === '3d' || value === '2d') {
+                      handlePreviewViewModeChange(value)
+                    }
+                  }}
+                >
+                  <ToggleGroupItem aria-label='3D view' value='3d'>
+                    3D
+                  </ToggleGroupItem>
+                  <ToggleGroupItem aria-label='2D top-down view' value='2d'>
+                    2D
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            ) : null
+          }
           recordingLabel={`REC ${formattedTime}`}
           showFlash={flashActive}
         >
@@ -165,8 +281,25 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
             focusAreaId={activePreviewAreaId}
             onCaptureReady={handleCaptureReady}
             onSelectEntity={handleSelectEntity}
+            previewViewMode={previewViewMode}
             showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
+            className={cn(
+              'h-full w-full',
+              previewViewMode === '2d'
+                ? 'pointer-events-none opacity-0'
+                : 'opacity-100',
+            )}
           />
+          {previewViewMode === '2d' ? (
+            <div className='absolute inset-0 z-10'>
+              <MapView
+                activeTool='hand'
+                onMapReady={handlePreviewMapReady}
+                peopleOverride={simulatedPreviewPeople}
+                shapeMode='rectangle'
+              />
+            </div>
+          ) : null}
           {scene.areas.length > 1 ? (
             <div className='pointer-events-none absolute left-4 top-4 z-20'>
               <div className='pointer-events-auto'>

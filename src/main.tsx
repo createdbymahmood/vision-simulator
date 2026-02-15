@@ -8,10 +8,9 @@ import {
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 
+import {App} from '@/app'
 import '@/host.css'
 import '@/index.css'
-import {App} from '@/app'
-import {useGetDeviceById} from '@/data-provider/api/services/v2/device'
 
 const AppRouteContent: React.FC = () => (
   <App

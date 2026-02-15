@@ -11,6 +11,7 @@ import {toast} from 'sonner'
 import type {
   AreaEntity,
   GeoPoint,
+  PersonEntity,
   SceneMapStyle,
 } from '@/features/scene/domain/types'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
@@ -82,6 +83,7 @@ interface MapViewProps {
   activeTool: EditorTool
   shapeMode: ShapeDrawMode
   onMapReady?: (map: MapRef | null) => void
+  peopleOverride?: PersonEntity[]
 }
 
 const MAP_STYLE_URLS: Record<SceneMapStyle, string> = {
@@ -96,6 +98,7 @@ export const MapView: React.FC<MapViewProps> = ({
   activeTool,
   shapeMode,
   onMapReady,
+  peopleOverride,
 }) => {
   const mapRef = React.useRef<MapRef | null>(null)
   const pointerDownRef = React.useRef(false)
@@ -126,7 +129,8 @@ export const MapView: React.FC<MapViewProps> = ({
   const walls = useSceneStore((state) => state.scene.walls)
   const shapes = useSceneStore((state) => state.scene.shapes)
   const cameras = useSceneStore((state) => state.scene.cameras)
-  const people = useSceneStore((state) => state.scene.people)
+  const scenePeople = useSceneStore((state) => state.scene.people)
+  const people = peopleOverride ?? scenePeople
   const activeAreaId = useSceneStore((state) => state.scene.activeAreaId)
   const addArea = useSceneStore((state) => state.addArea)
   const addWall = useSceneStore((state) => state.addWall)

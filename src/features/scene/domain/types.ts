@@ -5,6 +5,7 @@ export type EditorMode = 'canvas' | 'map'
 export type Units = 'meters'
 
 export type ViewMode = 'editor' | 'preview'
+export type PreviewViewMode = '2d' | '3d'
 
 export type SceneMapStyle = 'osm' | 'satellite' | 'street' | 'traffic'
 

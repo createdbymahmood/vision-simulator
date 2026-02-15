@@ -2,27 +2,36 @@ import {VideoRecorder} from '@untitledui/icons'
 import {ArrowLeft, Camera} from 'lucide-react'
 import React from 'react'
 
+import type {PreviewViewMode} from '@/features/scene/domain/types'
+
 import {Button} from '@/components/ui/button'
+import {ToggleGroup, ToggleGroupItem} from '@/components/ui/toggle-group'
 import {cn} from '@/lib/utils'
 
 interface SimulationTopBarProps {
   showBackButton?: boolean
+  previewViewMode: PreviewViewMode
+  allowPreviewViewSwitch?: boolean
   isRecording: boolean
   recordingLabel: string
   onStartRecording: () => void
   onStopRecording: () => void
   onSnapshot: () => void
   onBackToEditor: () => void
+  onPreviewViewModeChange: (mode: PreviewViewMode) => void
 }
 
 export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
   showBackButton = true,
+  previewViewMode,
+  allowPreviewViewSwitch = true,
   isRecording,
   recordingLabel,
   onStartRecording,
   onStopRecording,
   onSnapshot,
   onBackToEditor,
+  onPreviewViewModeChange,
 }) => {
   return (
     <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
@@ -36,6 +45,25 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
           >
             <ArrowLeft className='size-5' />
           </Button>
+        ) : null}
+        {allowPreviewViewSwitch ? (
+          <ToggleGroup
+            type='single'
+            value={previewViewMode}
+            variant='outline'
+            onValueChange={(value) => {
+              if (value === '3d' || value === '2d') {
+                onPreviewViewModeChange(value)
+              }
+            }}
+          >
+            <ToggleGroupItem aria-label='3D view' value='3d'>
+              3D
+            </ToggleGroupItem>
+            <ToggleGroupItem aria-label='2D top-down view' value='2d'>
+              2D
+            </ToggleGroupItem>
+          </ToggleGroup>
         ) : null}
 
         {/* This is a very important code that should not be removed */}

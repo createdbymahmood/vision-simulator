@@ -1,4 +1,4 @@
-import type {ViewMode} from '@/features/scene/domain/types'
+import type {PreviewViewMode, ViewMode} from '@/features/scene/domain/types'
 
 export type VisionSimulatorMode = 'editor' | 'preview'
 
@@ -8,6 +8,8 @@ interface VisionSimulatorModePolicy {
   showSimulationTopBar: boolean
   showSimulationAuxiliaryPanels: boolean
   allowSimulationBackToEditor: boolean
+  defaultPreviewViewMode: PreviewViewMode
+  allowPreviewViewSwitch: boolean
 }
 
 const VISION_SIMULATOR_MODE_POLICIES: Record<
@@ -20,6 +22,8 @@ const VISION_SIMULATOR_MODE_POLICIES: Record<
     showSimulationTopBar: true,
     showSimulationAuxiliaryPanels: true,
     allowSimulationBackToEditor: true,
+    defaultPreviewViewMode: '3d',
+    allowPreviewViewSwitch: true,
   },
   preview: {
     initialViewMode: 'preview',
@@ -27,6 +31,8 @@ const VISION_SIMULATOR_MODE_POLICIES: Record<
     showSimulationTopBar: false,
     showSimulationAuxiliaryPanels: false,
     allowSimulationBackToEditor: false,
+    defaultPreviewViewMode: '3d',
+    allowPreviewViewSwitch: true,
   },
 }
 

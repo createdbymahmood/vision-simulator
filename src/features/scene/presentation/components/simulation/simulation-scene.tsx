@@ -6,7 +6,11 @@ import {useFrame, useThree} from '@react-three/fiber'
 import React from 'react'
 import * as THREE from 'three'
 
-import type {EditorMode, SceneRoot} from '@/features/scene/domain/types'
+import type {
+  EditorMode,
+  PreviewViewMode,
+  SceneRoot,
+} from '@/features/scene/domain/types'
 
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
@@ -19,6 +23,7 @@ import {CameraFovFootprints} from './camera-fov-footprints'
 import {
   buildObstacleSegmentsByArea,
   computeCameraVisionState,
+  createCameraVisionFovCache,
 } from './camera-vision'
 import {EntitiesMesh} from './entity-meshes'
 import {GroundPlane} from './ground-plane'
@@ -41,6 +46,7 @@ interface FocusRequest {
 export interface SimulationSceneProps {
   scene: SceneRoot
   editorMode: EditorMode
+  previewViewMode: PreviewViewMode
   showMapTexture: boolean
   focusAreaId?: string
   onSelectEntity: (id?: string) => void
@@ -58,8 +64,8 @@ const Lights: React.FC = () => (
       castShadow
       color='#f8fafc'
       position={[120, 180, 80]}
-      shadow-mapSize-height={2048}
-      shadow-mapSize-width={2048}
+      shadow-mapSize-height={1024}
+      shadow-mapSize-width={1024}
     />
   </>
 )
@@ -129,6 +135,7 @@ const FocusController: React.FC<{
 export const SimulationScene: React.FC<SimulationSceneProps> = ({
   scene,
   editorMode: _editorMode,
+  previewViewMode: _previewViewMode,
   showMapTexture,
   focusAreaId,
   onSelectEntity,
@@ -310,6 +317,20 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     () => buildObstacleSegmentsByArea(scene, transformer),
     [scene, transformer],
   )
+  const visionFovCacheRef = React.useRef(createCameraVisionFovCache())
+  const visionTickInterval = React.useMemo(() => {
+    const complexity = Math.max(scene.cameras.length, 1) * scene.people.length
+    if (complexity >= 200) {
+      return 1 / 10
+    }
+    if (complexity >= 80) {
+      return 1 / 15
+    }
+    if (complexity >= 30) {
+      return 1 / 20
+    }
+    return 1 / 24
+  }, [scene.cameras.length, scene.people.length])
   const lastVisionTick = React.useRef(0)
 
   const renderedEntities = React.useMemo(() => {
@@ -456,7 +477,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   }, [bounds])
 
   useFrame(({clock}) => {
-    if (clock.elapsedTime - lastVisionTick.current < 1 / 30) {
+    if (clock.elapsedTime - lastVisionTick.current < visionTickInterval) {
       return
     }
     lastVisionTick.current = clock.elapsedTime
@@ -466,15 +487,10 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
         transformer,
         simulatedPeoplePositions,
         obstaclesByArea,
+        fovCache: visionFovCacheRef.current,
       }),
     )
   })
-
-  useFrame((state) => {
-    state.gl.setViewport(0, 0, state.size.width, state.size.height)
-    state.gl.setScissorTest(false)
-    state.gl.render(state.scene, state.camera)
-  }, 1)
 
   useCameraFeedRenderers({
     cameraFeedTargets,

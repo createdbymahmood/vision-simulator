@@ -1,7 +1,7 @@
 export const MAX_CAMERA_FEEDS = 6
 export const BASE_FEED_RESOLUTION = {width: 1280, height: 720}
 
-const MAX_DEVICE_PIXEL_RATIO = 2
+const MAX_DEVICE_PIXEL_RATIO = 1.5
 
 export interface FeedRenderConfig {
   renderWidth: number
@@ -23,8 +23,15 @@ export const getFeedQualityScale = (feedCount: number) => {
   return 0.5
 }
 
-export const getFeedFps = (feedCount: number) =>
-  feedCount > MAX_CAMERA_FEEDS ? 15 : 30
+export const getFeedFps = (feedCount: number) => {
+  if (feedCount <= 2) {
+    return 24
+  }
+  if (feedCount <= MAX_CAMERA_FEEDS) {
+    return 20
+  }
+  return 15
+}
 
 export const computeFeedRenderConfig = ({
   feedCount,

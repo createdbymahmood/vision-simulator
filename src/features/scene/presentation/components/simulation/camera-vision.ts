@@ -1,6 +1,11 @@
 import * as THREE from 'three'
 
-import type {GeoPoint, SceneRoot} from '@/features/scene/domain/types'
+import type {
+  AreaEntity,
+  CameraEntity,
+  GeoPoint,
+  SceneRoot,
+} from '@/features/scene/domain/types'
 
 import {DEFAULT_PERSON_RADIUS} from '@/features/scene/domain/constants/person-defaults'
 import {getEffectiveHorizontalFov} from '@/features/scene/domain/services/camera-optics'
@@ -36,6 +41,17 @@ export interface VisionState {
   detectionsCount: number
   updatedAt: number
 }
+
+interface CameraFovCacheEntry {
+  signature: string
+  areaRef?: AreaEntity
+  obstaclesRef: ReturnType<typeof buildFovOcclusionObstacles>
+  worldRing: THREE.Vector3[]
+}
+
+export type CameraVisionFovCache = Map<string, CameraFovCacheEntry>
+
+export const createCameraVisionFovCache = (): CameraVisionFovCache => new Map()
 
 export const buildObstacleSegmentsByArea = (
   scene: SceneRoot,
@@ -124,16 +140,80 @@ const isPersonInsideFovRing = (
   return points.some((point) => isPointInPolygon(point, fovWorldRing))
 }
 
+const buildCameraFovSignature = (
+  camera: CameraEntity,
+  horizontalFov: number,
+) => {
+  return [
+    camera.areaId,
+    camera.x,
+    camera.y,
+    camera.ptz.pan,
+    horizontalFov,
+    camera.depth,
+    camera.height,
+  ].join('|')
+}
+
+const resolveCameraFovWorldRing = ({
+  camera,
+  area,
+  obstacles,
+  transformer,
+  horizontalFov,
+  fovCache,
+}: {
+  camera: CameraEntity
+  area?: AreaEntity
+  obstacles: ReturnType<typeof buildFovOcclusionObstacles>
+  transformer: CoordinateTransformer
+  horizontalFov: number
+  fovCache?: CameraVisionFovCache
+}) => {
+  const signature = buildCameraFovSignature(camera, horizontalFov)
+  const cached = fovCache?.get(camera.id)
+  if (
+    cached &&
+    cached.signature === signature &&
+    cached.areaRef === area &&
+    cached.obstaclesRef === obstacles
+  ) {
+    return cached.worldRing
+  }
+
+  const fovRing = buildOccludedFovRing({
+    origin: [camera.x, camera.y],
+    direction: camera.ptz.pan,
+    fov: horizontalFov,
+    depth: camera.depth,
+    cameraHeight: camera.height,
+    area,
+    obstacles,
+  })
+  const worldRing = fovRing.map((point) => transformer.toVector3(point, 0))
+  if (fovCache) {
+    fovCache.set(camera.id, {
+      signature,
+      areaRef: area,
+      obstaclesRef: obstacles,
+      worldRing,
+    })
+  }
+  return worldRing
+}
+
 export const computeCameraVisionState = ({
   scene,
   transformer,
   simulatedPeoplePositions,
   obstaclesByArea,
+  fovCache,
 }: {
   scene: SceneRoot
   transformer: CoordinateTransformer
   simulatedPeoplePositions: Map<string, THREE.Vector3>
   obstaclesByArea: FovObstaclesByArea
+  fovCache?: CameraVisionFovCache
 }): VisionState => {
   const peopleWorld: Record<string, VisionPersonState> = {}
   const worldToGeoPoint = createWorldToGeoPoint(transformer.origin)
@@ -171,22 +251,22 @@ export const computeCameraVisionState = ({
   const visibleByCameraId: Record<string, string[]> = {}
   let detectionsCount = 0
   const areaById = new Map(scene.areas.map((area) => [area.id, area]))
+  const activeCameraIds = fovCache ? new Set<string>() : null
 
   scene.cameras.forEach((camera) => {
-    const direction = camera.ptz.pan
+    activeCameraIds?.add(camera.id)
     const area = areaById.get(camera.areaId)
     const obstacles = obstaclesByArea.get(camera.areaId) ?? []
     const cameraOrigin: GeoPoint = [camera.x, camera.y]
-    const fovRing = buildOccludedFovRing({
-      origin: cameraOrigin,
-      direction,
-      fov: getEffectiveHorizontalFov(camera),
-      depth: camera.depth,
-      cameraHeight: camera.height,
+    const horizontalFov = getEffectiveHorizontalFov(camera)
+    const fovWorldRing = resolveCameraFovWorldRing({
+      camera,
       area,
       obstacles,
+      transformer,
+      horizontalFov,
+      fovCache,
     })
-    const fovWorldRing = fovRing.map((point) => transformer.toVector3(point, 0))
 
     const visible: string[] = []
     peopleSamples.forEach((person, personId) => {
@@ -216,6 +296,14 @@ export const computeCameraVisionState = ({
     }
     visibleByCameraId[camera.id] = visible
   })
+
+  if (fovCache && activeCameraIds) {
+    Array.from(fovCache.keys()).forEach((cameraId) => {
+      if (!activeCameraIds.has(cameraId)) {
+        fovCache.delete(cameraId)
+      }
+    })
+  }
 
   return {
     peopleWorld,

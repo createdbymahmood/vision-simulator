@@ -19,6 +19,7 @@ const GEO_POINT_EPSILON = 1e-10
 export interface CoordinateTransformer {
   toVector3: (point: GeoPoint, y?: number) => THREE.Vector3
   toFlat: (point: GeoPoint) => {x: number; z: number}
+  toGeoPoint: (point: THREE.Vector3 | {x: number; z: number}) => GeoPoint
   origin: GeoPoint
 }
 
@@ -147,6 +148,14 @@ export const computeSceneOrigin = (scene: SceneRoot): GeoPoint => {
 export const createCoordinateTransformer = (
   origin: GeoPoint,
 ): CoordinateTransformer => {
+  const metersToLngLat = (x: number, y: number): GeoPoint => {
+    const lng = (x / EARTH_RADIUS) * (180 / Math.PI)
+    const lat =
+      (2 * Math.atan(Math.exp(y / EARTH_RADIUS)) - Math.PI / 2) *
+      (180 / Math.PI)
+    return [lng, lat]
+  }
+
   const lngLatToMeters = (point: GeoPoint) => {
     const [lng, lat] = point
     const x = (EARTH_RADIUS * lng * Math.PI) / 180
@@ -166,7 +175,9 @@ export const createCoordinateTransformer = (
     const flat = toFlat(point)
     return new THREE.Vector3(flat.x, y, flat.z)
   }
-  return {toVector3, toFlat, origin}
+  const toGeoPoint = (point: THREE.Vector3 | {x: number; z: number}) =>
+    metersToLngLat(originMeters.x + point.x, originMeters.y - point.z)
+  return {toVector3, toFlat, toGeoPoint, origin}
 }
 
 export const transformAreaFeatureCollectionsToThreeJSShapes = (

@@ -9,15 +9,18 @@ import {SimulationScene} from './simulation-scene'
 
 export interface SimulationCanvasProps extends SimulationSceneProps {
   onCaptureReady?: (api: SimulationCaptureApi) => void
+  className?: string
 }
 
-export const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
+const SimulationCanvasComponent: React.FC<SimulationCanvasProps> = ({
+  className,
   onCaptureReady,
   ...props
 }) => (
   <Canvas
     camera={{fov: 50, position: [40, 30, 40], near: 0.5, far: 1200}}
-    className='h-full w-full'
+    className={className ?? 'h-full w-full'}
+    dpr={[1, 1.5]}
     gl={{antialias: true, alpha: true, logarithmicDepthBuffer: true}}
     onCreated={({gl}) => {
       gl.outputColorSpace = THREE.SRGBColorSpace
@@ -31,3 +34,7 @@ export const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     <SimulationScene {...props} onCaptureReady={onCaptureReady} />
   </Canvas>
 )
+
+SimulationCanvasComponent.displayName = 'SimulationCanvas'
+
+export const SimulationCanvas = React.memo(SimulationCanvasComponent)

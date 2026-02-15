@@ -9,6 +9,7 @@ interface SimulationViewportProps {
   isLowFps: boolean
   fps: number | null
   showFlash: boolean
+  overlayControls?: React.ReactNode
   children: React.ReactNode
 }
 
@@ -18,6 +19,7 @@ export const SimulationViewport: React.FC<SimulationViewportProps> = ({
   isLowFps,
   fps,
   showFlash,
+  overlayControls,
   children,
 }) => {
   return (
@@ -38,6 +40,12 @@ export const SimulationViewport: React.FC<SimulationViewportProps> = ({
               {fps ? `FPS ${fps}` : 'FPS low'}
             </Badge>
           ) : null}
+        </div>
+      ) : null}
+
+      {overlayControls ? (
+        <div className='pointer-events-none absolute inset-0 z-20'>
+          {overlayControls}
         </div>
       ) : null}
 

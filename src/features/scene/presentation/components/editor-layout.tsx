@@ -103,6 +103,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const setEditMode = useUiStore((state) => state.setEditMode)
   const viewMode = useUiStore((state) => state.viewMode)
   const setViewMode = useUiStore((state) => state.setViewMode)
+  const setPreviewViewMode = useUiStore((state) => state.setPreviewViewMode)
   const setCameraPlacement = useUiStore((state) => state.setCameraPlacement)
   const closeAllPanels = useUiStore((state) => state.closeAllPanels)
   const closeAllPopovers = useUiStore((state) => state.closeAllPopovers)
@@ -309,7 +310,14 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
     previousModeRef.current = mode
     setViewMode(modePolicy.initialViewMode)
-  }, [mode, modePolicy.initialViewMode, setViewMode])
+    setPreviewViewMode(modePolicy.defaultPreviewViewMode)
+  }, [
+    mode,
+    modePolicy.defaultPreviewViewMode,
+    modePolicy.initialViewMode,
+    setPreviewViewMode,
+    setViewMode,
+  ])
 
   React.useEffect(() => {
     if (!modePolicy.lockViewMode) {
@@ -410,6 +418,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
         ) : (
           <SimulationAnalysisView
             allowBackToEditor={modePolicy.allowSimulationBackToEditor}
+            allowPreviewViewSwitch={modePolicy.allowPreviewViewSwitch}
             onBackToEditor={handleBackToEditor}
             showAuxiliaryPanels={modePolicy.showSimulationAuxiliaryPanels}
             showTopBar={modePolicy.showSimulationTopBar}

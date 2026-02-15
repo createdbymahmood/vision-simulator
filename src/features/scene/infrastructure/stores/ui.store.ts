@@ -4,6 +4,7 @@ import {produce} from 'immer'
 
 import type {
   CameraPlacementProfile,
+  PreviewViewMode,
   ViewMode,
 } from '@/features/scene/domain/types'
 
@@ -40,6 +41,7 @@ export interface VisionState {
 
 export interface UiState {
   viewMode: ViewMode
+  previewViewMode: PreviewViewMode
   activeTool: EditorTool
   isEditMode: boolean
   openPanels: Record<string, boolean>
@@ -57,6 +59,8 @@ export interface UiState {
 
   setViewMode: (mode: ViewMode) => ViewMode
   toggleViewMode: () => ViewMode
+  setPreviewViewMode: (mode: PreviewViewMode) => PreviewViewMode
+  togglePreviewViewMode: () => PreviewViewMode
   setActiveTool: (tool: EditorTool) => EditorTool
   setEditMode: (enabled: boolean) => boolean
   toggleEditMode: () => boolean
@@ -105,6 +109,28 @@ const toggleViewMode = (set: SetState, get: GetState) => {
 
   set(nextValue)
   return get().viewMode
+}
+
+const setPreviewViewMode = (
+  set: SetState,
+  get: GetState,
+  mode: PreviewViewMode,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    state.previewViewMode = mode
+  })
+
+  set(nextValue)
+  return get().previewViewMode
+}
+
+const togglePreviewViewMode = (set: SetState, get: GetState) => {
+  const nextValue = produce<UiState>((state) => {
+    state.previewViewMode = state.previewViewMode === '3d' ? '2d' : '3d'
+  })
+
+  set(nextValue)
+  return get().previewViewMode
 }
 
 const setActiveTool = (set: SetState, get: GetState, tool: EditorTool) => {
@@ -225,6 +251,7 @@ const setVisionState = (set: SetState, get: GetState, state: VisionState) => {
 const resetUi = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.viewMode = 'editor'
+    state.previewViewMode = '3d'
     state.activeTool = 'select'
     state.isEditMode = true
     state.openPanels = {}
@@ -249,6 +276,7 @@ const resetUi = (set: SetState, get: GetState) => {
 
 const defaultUiState = {
   viewMode: 'editor' as ViewMode,
+  previewViewMode: '3d' as PreviewViewMode,
   activeTool: 'select' as EditorTool,
   isEditMode: true,
   openPanels: {} as Record<string, boolean>,
@@ -305,6 +333,8 @@ const createUiStore: (
   ...mergeUiState(initialValues),
   setViewMode: (mode) => setViewMode(set, get, mode),
   toggleViewMode: () => toggleViewMode(set, get),
+  setPreviewViewMode: (mode) => setPreviewViewMode(set, get, mode),
+  togglePreviewViewMode: () => togglePreviewViewMode(set, get),
   setActiveTool: (tool) => setActiveTool(set, get, tool),
   setEditMode: (enabled) => setEditMode(set, get, enabled),
   toggleEditMode: () => toggleEditMode(set, get),
