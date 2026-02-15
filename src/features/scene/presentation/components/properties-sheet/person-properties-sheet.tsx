@@ -27,6 +27,7 @@ export const PersonPropertiesSheet: React.FC = () => {
   const deleteEntities = useSceneStore((state) => state.deleteEntities)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const people = useSceneStore((state) => state.scene.people)
+  const updatePerson = useSceneStore((state) => state.updatePerson)
   const updateScene = useSceneStore((state) => state.updateScene)
   const {scheduleSceneUpdate} = useFrameSceneUpdate({updateScene})
 
@@ -100,6 +101,21 @@ export const PersonPropertiesSheet: React.FC = () => {
     )
   }
 
+  const handleNameChange = (value: string) => {
+    if (!selectedPerson) {
+      return
+    }
+    const personId = selectedPerson.id
+    const updated = updatePerson(personId, (person) => {
+      person.name = value
+    })
+    recordActionDebounced(
+      `person-${personId}`,
+      {type: 'update', entity: 'person'},
+      updated,
+    )
+  }
+
   const handleDeletePerson = () => {
     if (!selectedPerson) {
       return
@@ -137,22 +153,7 @@ export const PersonPropertiesSheet: React.FC = () => {
               <Input
                 id='person-name'
                 value={personName}
-                onChange={(event) => {
-                  if (!selectedPerson) return
-                  const personId = selectedPerson.id
-                  updateSelectedPerson(
-                    (person) => {
-                      person.name = event.target.value
-                    },
-                    (updated) => {
-                      recordActionDebounced(
-                        `person-${personId}`,
-                        {type: 'update', entity: 'person'},
-                        updated,
-                      )
-                    },
-                  )
-                }}
+                onChange={(event) => handleNameChange(event.target.value)}
               />
             </div>
           </PropertiesSection>
