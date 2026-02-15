@@ -33,6 +33,7 @@ interface AppProps {
   visionSimulatorId: string
   accessToken: string
   mode?: 'editor' | 'preview'
+  portalTarget?: 'shadow' | 'document'
 }
 
 export const App: React.FC<AppProps> = ({
@@ -87,6 +88,28 @@ By default, `isolationMode='shadow'` renders the simulator inside a Shadow DOM.
 - If `uiOverrides` is provided, host app styles are automatically mirrored
   into the Shadow DOM so passed components keep their styling.
 - If `shadowStyleUrls` is passed, those URLs still take precedence.
+
+## Portal Target for Popovers/Selects
+
+When `isolationMode='shadow'`, portal-based UI (Select, Dropdown, Popover, etc.)
+defaults to rendering inside the shadow root (`portalTarget='shadow'`).
+
+If your host page applies transforms/zoom/layout effects that cause inaccurate
+overlay positioning, use:
+
+```tsx
+<VisionSimulator
+  accessToken={accessToken}
+  apiBaseUrl={apiBaseUrl}
+  mapboxToken={mapboxToken}
+  isolationMode='shadow'
+  portalTarget='document'
+  visionSimulatorId={visionSimulatorId}
+/>
+```
+
+This keeps the main app in Shadow DOM while rendering portal overlays to
+`document.body` for more stable positioning in complex host layouts.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

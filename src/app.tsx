@@ -48,6 +48,7 @@ export interface AppProps {
   mapboxToken?: string
   mode?: VisionSimulatorMode
   isolationMode?: 'none' | 'shadow'
+  portalTarget?: 'document' | 'shadow'
   shadowStyleUrls?: string[]
   unsavedChanges?: UnsavedChangesOptions
   uiOverrides?: EditorUiOverrides
@@ -57,6 +58,7 @@ interface ShadowIsolatedRootProps {
   children: React.ReactNode
   shadowStyleUrls?: string[]
   mirrorDocumentStyles: boolean
+  portalTarget: 'document' | 'shadow'
 }
 
 interface VisionSimulatorProvidersProps {
@@ -86,6 +88,7 @@ interface ResolveShadowStyleUrlsParams {
 }
 
 const APP_SURFACE_CLASSNAME = 'block size-full min-h-0 min-w-0 overflow-hidden'
+const PORTAL_STYLE_MARKER_ATTRIBUTE = 'data-vision-simulator-portal-style'
 
 const isVisionSimulatorStyleSource = (value: string | null | undefined) => {
   if (!value) {
@@ -175,6 +178,37 @@ const resolveShadowStyleUrls = ({
   }
 
   return DEFAULT_SHADOW_STYLE_URLS
+}
+
+const ensureDocumentPortalStyles = (
+  ownerDocument: Document,
+  styleUrls: string[],
+) => {
+  const existingStyleHrefs = new Set(
+    Array.from(
+      ownerDocument.querySelectorAll<HTMLLinkElement>(
+        `link[${PORTAL_STYLE_MARKER_ATTRIBUTE}]`,
+      ),
+    )
+      .map((linkElement) => linkElement.getAttribute('href'))
+      .filter((href): href is string => Boolean(href)),
+  )
+
+  styleUrls
+    .filter(Boolean)
+    .filter((href, index, allHrefs) => allHrefs.indexOf(href) === index)
+    .forEach((href) => {
+      if (existingStyleHrefs.has(href)) {
+        return
+      }
+
+      const linkElement = ownerDocument.createElement('link')
+      linkElement.rel = 'stylesheet'
+      linkElement.href = href
+      linkElement.setAttribute(PORTAL_STYLE_MARKER_ATTRIBUTE, 'true')
+      ownerDocument.head.appendChild(linkElement)
+      existingStyleHrefs.add(href)
+    })
 }
 
 const configureDataProvider = ({
@@ -327,6 +361,7 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
   children,
   mirrorDocumentStyles,
   shadowStyleUrls,
+  portalTarget,
 }) => {
   const hostRef = React.useRef<HTMLDivElement>(null)
   const shadowRoot = useOpenShadowRoot(hostRef)
@@ -349,6 +384,22 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
     [documentStyles.links, hasExplicitStyleUrls, shadowStyleUrls],
   )
 
+  React.useEffect(() => {
+    if (portalTarget !== 'document') {
+      return
+    }
+
+    const ownerDocument = hostRef.current?.ownerDocument
+
+    if (!ownerDocument) {
+      return
+    }
+
+    ensureDocumentPortalStyles(ownerDocument, styleUrls)
+  }, [portalTarget, styleUrls])
+
+  const portalContainer = portalTarget === 'shadow' ? shadowRoot : null
+
   return (
     <div
       className={APP_SURFACE_CLASSNAME}
@@ -368,7 +419,7 @@ const ShadowIsolatedRoot: React.FC<ShadowIsolatedRootProps> = ({
               {styleUrls.map((href) => (
                 <link href={href} key={href} rel='stylesheet' />
               ))}
-              <PortalContainerProvider container={shadowRoot}>
+              <PortalContainerProvider container={portalContainer}>
                 <div className={APP_SURFACE_CLASSNAME}>{children}</div>
               </PortalContainerProvider>
             </>,
@@ -411,6 +462,7 @@ export const App: React.FC<AppProps> = ({
   accessToken,
   visionSimulatorId,
   isolationMode = 'shadow',
+  portalTarget = 'shadow',
   shadowStyleUrls,
   unsavedChanges,
   uiOverrides,
@@ -442,6 +494,7 @@ export const App: React.FC<AppProps> = ({
   return (
     <ShadowIsolatedRoot
       mirrorDocumentStyles={mirrorDocumentStyles}
+      portalTarget={portalTarget}
       shadowStyleUrls={shadowStyleUrls}
     >
       {appShell}
