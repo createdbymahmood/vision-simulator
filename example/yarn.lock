@@ -3256,13 +3256,8 @@
   dependencies:
     "@use-gesture/core" "10.3.1"
 
-"@vega-tek-hub/media-mtx-player@0.0.2":
-  version "0.0.2"
-  resolved "https://npm.pkg.github.com/download/@vega-tek-hub/media-mtx-player/0.0.2/7b5159d91599cb898bb0c4661b060ab83ac94cc8#7b5159d91599cb898bb0c4661b060ab83ac94cc8"
-  integrity sha512-E63VFXBGm6MswQkBi/i8SQBnr2Sfl2NKLpqdVobvPi8M4rRRczR//pft9m+31c3uaKMdxvvj6J0m5G9mxiSZ+Q==
-
 "@vega-tek-hub/vision-simulator-v2@file:..":
-  version "1.6.1"
+  version "0.25.0"
   dependencies:
     "@floating-ui/core" "1.7.3"
     "@floating-ui/react" "0.27.16"
@@ -3302,7 +3297,6 @@
     "@tanstack/react-virtual" "3.13.13"
     "@turf/turf" "7.3.1"
     "@untitledui/icons" "0.0.21"
-    "@vega-tek-hub/media-mtx-player" "0.0.2"
     "@xyflow/react" "12.10.0"
     axios "1.13.4"
     class-variance-authority "0.7.1"
