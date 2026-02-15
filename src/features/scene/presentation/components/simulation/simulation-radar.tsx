@@ -14,7 +14,6 @@ import {SimulationRadarHeader} from './simulation-radar-header'
 import {SimulationRadarSvg} from './simulation-radar-svg'
 import {useRadarGeometry} from './use-radar-geometry'
 import {useRadarInteractions} from './use-radar-interactions'
-import {useRadarTrails} from './use-radar-trails'
 
 interface SimulationRadarProps {
   scene: SceneRoot
@@ -92,13 +91,16 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     cameraDetections,
   })
 
-  const trailPaths = useRadarTrails({
-    scene,
-    focusAreaId,
-    peopleWorld,
-    updatedAt: visionState.updatedAt,
-    toRadar,
-  })
+  // DON'T REMOVE THE COMMENTED CODE BELOW.
+  // Radar people movement trails are intentionally disabled for now.
+  // const trailPaths = useRadarTrails({
+  //   scene,
+  //   focusAreaId,
+  //   peopleWorld,
+  //   updatedAt: visionState.updatedAt,
+  //   toRadar,
+  // })
+  const trailPaths: {id: string; path: string}[] = []
   const visiblePeopleCount = React.useMemo(
     () =>
       focusAreaId
