@@ -12,6 +12,7 @@ interface SimulationTopBarProps {
   showBackButton?: boolean
   previewViewMode: PreviewViewMode
   allowPreviewViewSwitch?: boolean
+  leftControls?: React.ReactNode
   isRecording: boolean
   recordingLabel: string
   onStartRecording: () => void
@@ -25,6 +26,7 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
   showBackButton = true,
   previewViewMode,
   allowPreviewViewSwitch = true,
+  leftControls,
   isRecording,
   recordingLabel,
   onStartRecording,
@@ -46,8 +48,11 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
             <ArrowLeft className='size-5' />
           </Button>
         ) : null}
-        {allowPreviewViewSwitch ? (
+        {leftControls ? (
+          leftControls
+        ) : allowPreviewViewSwitch ? (
           <ToggleGroup
+            className='bg-background'
             type='single'
             value={previewViewMode}
             variant='outline'
@@ -57,10 +62,18 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
               }
             }}
           >
-            <ToggleGroupItem aria-label='3D view' value='3d'>
+            <ToggleGroupItem
+              aria-label='3D view'
+              className='cursor-pointer'
+              value='3d'
+            >
               3D
             </ToggleGroupItem>
-            <ToggleGroupItem aria-label='2D top-down view' value='2d'>
+            <ToggleGroupItem
+              aria-label='2D top-down view'
+              className='cursor-pointer'
+              value='2d'
+            >
               2D
             </ToggleGroupItem>
           </ToggleGroup>

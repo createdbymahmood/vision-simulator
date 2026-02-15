@@ -4,7 +4,7 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
 import {toast} from 'sonner'
 
-import type {PreviewViewMode} from '@/features/scene/domain/types'
+import type {AreaEntity, PreviewViewMode} from '@/features/scene/domain/types'
 
 import {
   Select,
@@ -49,6 +49,126 @@ const EMPTY_PEOPLE_WORLD: Record<
   string,
   {x: number; y: number; z: number; height: number}
 > = {}
+
+interface ShowSimulationSidePanelsInput {
+  showAuxiliaryPanels: boolean
+  hasCameraFeedTiles: boolean
+  previewViewMode: PreviewViewMode
+  hasCamerasInActiveArea: boolean
+}
+
+const scheduleMapResize = (mapRef: MapRef | null) => {
+  const map = mapRef?.getMap?.()
+  if (!map) {
+    return undefined
+  }
+
+  let frameId = 0
+  let trailingFrameId = 0
+
+  frameId = window.requestAnimationFrame(() => {
+    map.resize()
+    trailingFrameId = window.requestAnimationFrame(() => {
+      map.resize()
+    })
+  })
+
+  return () => {
+    if (frameId) {
+      window.cancelAnimationFrame(frameId)
+    }
+    if (trailingFrameId) {
+      window.cancelAnimationFrame(trailingFrameId)
+    }
+  }
+}
+
+const showSimulationSidePanelsForMode = ({
+  showAuxiliaryPanels,
+  hasCameraFeedTiles,
+  previewViewMode,
+  hasCamerasInActiveArea,
+}: ShowSimulationSidePanelsInput) => {
+  if (!showAuxiliaryPanels || !hasCameraFeedTiles) {
+    return false
+  }
+  if (previewViewMode !== '2d') {
+    return true
+  }
+  return hasCamerasInActiveArea
+}
+
+interface PreviewViewportControlsProps {
+  allowPreviewViewSwitch: boolean
+  previewViewMode: PreviewViewMode
+  activeAreaId?: string
+  areas: AreaEntity[]
+  onPreviewViewModeChange: (mode: PreviewViewMode) => void
+  onActiveAreaChange: (areaId: string) => void
+}
+
+const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
+  allowPreviewViewSwitch,
+  previewViewMode,
+  activeAreaId,
+  areas,
+  onPreviewViewModeChange,
+  onActiveAreaChange,
+}) => {
+  if (!allowPreviewViewSwitch && areas.length === 0) {
+    return null
+  }
+
+  return (
+    <div className='flex items-center gap-2'>
+      {allowPreviewViewSwitch ? (
+        <ToggleGroup
+          className='bg-background'
+          type='single'
+          value={previewViewMode}
+          variant='outline'
+          onValueChange={(value) => {
+            if (value === '3d' || value === '2d') {
+              onPreviewViewModeChange(value)
+            }
+          }}
+        >
+          <ToggleGroupItem
+            aria-label='3D view'
+            className='cursor-pointer'
+            value='3d'
+          >
+            3D
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            aria-label='2D top-down view'
+            className='cursor-pointer'
+            value='2d'
+          >
+            2D
+          </ToggleGroupItem>
+        </ToggleGroup>
+      ) : null}
+      {areas.length > 0 ? (
+        <Select value={activeAreaId} onValueChange={onActiveAreaChange}>
+          <SelectTrigger
+            className='bg-background min-w-40'
+            disabled={areas.length <= 1}
+          >
+            <SelectValue placeholder='Select area' />
+          </SelectTrigger>
+          <SelectContent>
+            {areas.map((area) => (
+              <SelectItem key={area.id} value={area.id}>
+                {area.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
+    </div>
+  )
+}
 
 // eslint-disable-next-line max-lines-per-function
 export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
@@ -116,8 +236,14 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     [activePreviewAreaId, scene.cameras],
   )
   const feedTargets = useCameraFeedTargets({cameras: visibleCameras})
+  const hasCamerasInActiveArea = visibleCameras.length > 0
   const hasCameraFeedTiles = feedTargets.length > 0
-  const showSimulationSidePanels = showAuxiliaryPanels && hasCameraFeedTiles
+  const showSimulationSidePanels = showSimulationSidePanelsForMode({
+    showAuxiliaryPanels,
+    hasCameraFeedTiles,
+    previewViewMode,
+    hasCamerasInActiveArea,
+  })
   const simulatedPreviewPeople = React.useMemo(() => {
     if (previewViewMode !== '2d') {
       return scene.people
@@ -188,6 +314,18 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
       setPreviewViewMode(mode)
     },
   )
+  const previewViewportControls = (
+    <PreviewViewportControls
+      activeAreaId={activePreviewAreaId}
+      areas={scene.areas}
+      allowPreviewViewSwitch={allowPreviewViewSwitch}
+      onActiveAreaChange={handleActiveAreaChange}
+      onPreviewViewModeChange={handlePreviewViewModeChange}
+      previewViewMode={previewViewMode}
+    />
+  )
+  const showPreviewViewportControls =
+    allowPreviewViewSwitch || scene.areas.length > 0
 
   React.useEffect(() => {
     if (previewViewMode === '2d') {
@@ -210,6 +348,12 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
 
     captureRef.current = simulationCaptureRef.current
   }, [previewMapRef, previewViewMode])
+  React.useEffect(() => {
+    if (previewViewMode !== '2d') {
+      return
+    }
+    return scheduleMapResize(previewMapRef)
+  }, [previewMapRef, previewViewMode, showSimulationSidePanels])
 
   React.useEffect(
     () => () => {
@@ -231,6 +375,9 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
         <SimulationTopBar
           allowPreviewViewSwitch={allowPreviewViewSwitch}
           isRecording={isRecording}
+          leftControls={
+            showPreviewViewportControls ? previewViewportControls : null
+          }
           onBackToEditor={handleBackAction}
           onPreviewViewModeChange={handlePreviewViewModeChange}
           onSnapshot={handleSnapshot}
@@ -248,25 +395,11 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
           isLowFps={isLowFps}
           isRecording={isRecording}
           overlayControls={
-            !showTopBar && allowPreviewViewSwitch ? (
-              <div className='pointer-events-auto absolute bottom-4 right-4'>
-                <ToggleGroup
-                  type='single'
-                  value={previewViewMode}
-                  variant='outline'
-                  onValueChange={(value) => {
-                    if (value === '3d' || value === '2d') {
-                      handlePreviewViewModeChange(value)
-                    }
-                  }}
-                >
-                  <ToggleGroupItem aria-label='3D view' value='3d'>
-                    3D
-                  </ToggleGroupItem>
-                  <ToggleGroupItem aria-label='2D top-down view' value='2d'>
-                    2D
-                  </ToggleGroupItem>
-                </ToggleGroup>
+            !showTopBar && showPreviewViewportControls ? (
+              <div className='pointer-events-none absolute left-4 top-4 z-20'>
+                <div className='pointer-events-auto'>
+                  {previewViewportControls}
+                </div>
               </div>
             ) : null
           }
@@ -298,27 +431,6 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
                 peopleOverride={simulatedPreviewPeople}
                 shapeMode='rectangle'
               />
-            </div>
-          ) : null}
-          {scene.areas.length > 1 ? (
-            <div className='pointer-events-none absolute left-4 top-4 z-20'>
-              <div className='pointer-events-auto'>
-                <Select
-                  value={activePreviewAreaId}
-                  onValueChange={handleActiveAreaChange}
-                >
-                  <SelectTrigger className='bg-background'>
-                    <SelectValue placeholder='Select area' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {scene.areas.map((area) => (
-                      <SelectItem key={area.id} value={area.id}>
-                        {area.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           ) : null}
         </SimulationViewport>
