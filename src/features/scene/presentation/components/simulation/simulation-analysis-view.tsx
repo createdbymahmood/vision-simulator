@@ -46,6 +46,7 @@ interface SimulationAnalysisViewProps {
   showAuxiliaryPanels?: boolean
   allowBackToEditor?: boolean
   allowPreviewViewSwitch?: boolean
+  hideAreaSelection?: boolean
   onBackToEditor: () => void
 }
 
@@ -104,6 +105,7 @@ const showSimulationSidePanelsForMode = ({
 
 interface PreviewViewportControlsProps {
   allowPreviewViewSwitch: boolean
+  hideAreaSelection: boolean
   previewViewMode: PreviewViewMode
   activeAreaId?: string
   areas: AreaEntity[]
@@ -130,13 +132,16 @@ const getFramedSceneForPreview = (
 
 const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
   allowPreviewViewSwitch,
+  hideAreaSelection,
   previewViewMode,
   activeAreaId,
   areas,
   onPreviewViewModeChange,
   onActiveAreaChange,
 }) => {
-  if (!allowPreviewViewSwitch && areas.length === 0) {
+  const showAreaSelection = !hideAreaSelection && areas.length > 0
+
+  if (!allowPreviewViewSwitch && !showAreaSelection) {
     return null
   }
 
@@ -170,7 +175,7 @@ const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
           </ToggleGroupItem>
         </ToggleGroup>
       ) : null}
-      {areas.length > 0 ? (
+      {showAreaSelection ? (
         <Select value={activeAreaId} onValueChange={onActiveAreaChange}>
           <SelectTrigger
             className='bg-background min-w-40'
@@ -197,6 +202,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   showAuxiliaryPanels = true,
   allowBackToEditor = true,
   allowPreviewViewSwitch = true,
+  hideAreaSelection = false,
   onBackToEditor,
 }) => {
   const scene = useSceneStore((state) => state.scene)
@@ -347,13 +353,14 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
       activeAreaId={activePreviewAreaId}
       areas={scene.areas}
       allowPreviewViewSwitch={allowPreviewViewSwitch}
+      hideAreaSelection={hideAreaSelection}
       onActiveAreaChange={handleActiveAreaChange}
       onPreviewViewModeChange={handlePreviewViewModeChange}
       previewViewMode={previewViewMode}
     />
   )
   const showPreviewViewportControls =
-    allowPreviewViewSwitch || scene.areas.length > 0
+    allowPreviewViewSwitch || (!hideAreaSelection && scene.areas.length > 0)
 
   React.useEffect(() => {
     if (previewViewMode === '2d') {
