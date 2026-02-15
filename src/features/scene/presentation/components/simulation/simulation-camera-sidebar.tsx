@@ -17,15 +17,32 @@ import {
 interface SimulationCameraSidebarProps {
   scene: SceneRoot
   feedTargets: CameraFeedTarget[]
+  focusAreaId?: string
 }
 
 export const SimulationCameraSidebar: React.FC<
   SimulationCameraSidebarProps
-> = ({scene, feedTargets}) => {
+> = ({scene, feedTargets, focusAreaId}) => {
   const visionState = useUiStore((state) => state.visionState)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
 
-  const originPoint = React.useMemo(() => computeSceneOrigin(scene), [scene])
+  const framedScene = React.useMemo(() => {
+    if (!focusAreaId) {
+      return scene
+    }
+    return {
+      ...scene,
+      areas: scene.areas.filter((area) => area.id === focusAreaId),
+      walls: scene.walls.filter((wall) => wall.areaId === focusAreaId),
+      shapes: scene.shapes.filter((shape) => shape.areaId === focusAreaId),
+      cameras: scene.cameras.filter((camera) => camera.areaId === focusAreaId),
+      people: scene.people.filter((person) => person.areaId === focusAreaId),
+    }
+  }, [focusAreaId, scene])
+  const originPoint = React.useMemo(
+    () => computeSceneOrigin(framedScene),
+    [framedScene],
+  )
   const transformer = React.useMemo(
     () => createCoordinateTransformer(originPoint),
     [originPoint],

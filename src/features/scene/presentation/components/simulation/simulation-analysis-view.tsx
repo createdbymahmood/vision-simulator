@@ -471,7 +471,11 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
               focusAreaId={activePreviewAreaId}
               onSelectEntity={handleSelectEntity}
             />
-            <SimulationCameraSidebar feedTargets={feedTargets} scene={scene} />
+            <SimulationCameraSidebar
+              feedTargets={feedTargets}
+              scene={scene}
+              focusAreaId={activePreviewAreaId}
+            />
           </div>
         ) : null}
       </div>
