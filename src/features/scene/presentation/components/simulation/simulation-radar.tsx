@@ -6,6 +6,9 @@ import type {SceneRoot} from '@/features/scene/domain/types'
 import {Card, CardContent, CardFooter} from '@/components/ui/card'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
+import type {RadarDisplayMode} from './simulation-radar-header'
+
+import {SimulationRealRadar} from './real-radar/simulation-real-radar'
 import {
   computeSceneOrigin,
   createCoordinateTransformer,
@@ -51,15 +54,19 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   const radarSettings = useUiStore((state) => state.radarSettings)
   const setRadarSettings = useUiStore((state) => state.setRadarSettings)
   const visionState = useUiStore((state) => state.visionState)
+  const [radarMode, setRadarMode] =
+    React.useState<RadarDisplayMode>('simulated')
+  const isSimulatedMode = radarMode === 'simulated'
 
   const selectedPersonId = React.useMemo(
     () => selectedEntityIds.find((id) => id.startsWith('person-')),
     [selectedEntityIds],
   )
 
+  const sourceScene = React.useMemo(() => scene, [scene])
   const framedScene = React.useMemo(
-    () => getFramedSceneForRadar(scene, focusAreaId),
-    [focusAreaId, scene],
+    () => getFramedSceneForRadar(sourceScene, focusAreaId),
+    [focusAreaId, sourceScene],
   )
   const originPoint = React.useMemo(
     () => computeSceneOrigin(framedScene),
@@ -82,7 +89,8 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     toRadar,
     wedges,
   } = useRadarGeometry({
-    scene,
+    enabled: isSimulatedMode,
+    scene: sourceScene,
     focusAreaId,
     radarSettings,
     size,
@@ -102,45 +110,36 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   // })
   const trailPaths: {id: string; path: string}[] = []
   const visiblePeopleCount = React.useMemo(
-    () =>
-      focusAreaId
-        ? scene.people.filter((person) => person.areaId === focusAreaId).length
-        : scene.people.length,
-    [focusAreaId, scene.people],
+    () => framedScene.people.length,
+    [framedScene.people],
   )
   const visibleCameraCount = React.useMemo(
-    () =>
-      focusAreaId
-        ? scene.cameras.filter((camera) => camera.areaId === focusAreaId).length
-        : scene.cameras.length,
-    [focusAreaId, scene.cameras],
+    () => framedScene.cameras.length,
+    [framedScene.cameras],
   )
   const visibleDetectionCount = React.useMemo(() => {
-    if (!focusAreaId) {
+    if (radarMode === 'simulated' && !focusAreaId) {
       return visionState.detectionsCount
     }
+
     const visiblePeopleIds = new Set(
-      scene.people
-        .filter((person) => person.areaId === focusAreaId)
-        .map((person) => person.id),
+      framedScene.people.map((person) => person.id),
     )
-    return scene.cameras
-      .filter((camera) => camera.areaId === focusAreaId)
-      .reduce((total, camera) => {
-        const visible = visionState.visibleByCameraId[camera.id] ?? []
-        const count = visible.filter((personId) =>
-          visiblePeopleIds.has(personId),
-        ).length
-        return total + count
-      }, 0)
+    return framedScene.cameras.reduce((total, camera) => {
+      const visible = visionState.visibleByCameraId[camera.id] ?? []
+      const count = visible.filter((personId) =>
+        visiblePeopleIds.has(personId),
+      ).length
+      return total + count
+    }, 0)
   }, [
     focusAreaId,
-    scene.cameras,
-    scene.people,
+    framedScene.cameras,
+    framedScene.people,
+    radarMode,
     visionState.detectionsCount,
     visionState.visibleByCameraId,
   ])
-
   const [pingKey, setPingKey] = React.useState(0)
   const [pingPersonId, setPingPersonId] = React.useState<string | null>(null)
   const [hoveredCameraId, setHoveredCameraId] = React.useState<string | null>(
@@ -149,7 +148,7 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
 
   React.useEffect(() => {
     setRadarSettings({pan: {x: 0, y: 0}})
-  }, [focusAreaId, setRadarSettings])
+  }, [focusAreaId, radarMode, setRadarSettings])
 
   React.useEffect(() => {
     if (selectedPersonId) {
@@ -162,11 +161,16 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     setHoveredCameraId(cameraId ?? null)
   })
   const {interactionRef, handlePanStart} = useRadarInteractions({
+    enabled: isSimulatedMode,
     radarSettings,
     setRadarSettings,
   })
 
   const pingPoint = React.useMemo(() => {
+    if (!isSimulatedMode) {
+      return null
+    }
+
     if (!pingPersonId) {
       return null
     }
@@ -175,42 +179,51 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
       return null
     }
     return toRadar({x: world.x, z: world.z})
-  }, [peopleWorld, pingPersonId, toRadar])
+  }, [isSimulatedMode, peopleWorld, pingPersonId, toRadar])
 
   return (
     <div className='pointer-events-auto w-full'>
       <div className='size-full'>
         <Card className='w-full rounded-none border-none'>
-          <SimulationRadarHeader />
+          <SimulationRadarHeader mode={radarMode} onModeChange={setRadarMode} />
           <CardContent className='p-0 overflow-hidden'>
             <div
               className='relative overflow-hidden overscroll-contain'
-              ref={interactionRef}
-              onPointerDown={handlePanStart}
+              ref={isSimulatedMode ? interactionRef : undefined}
+              onPointerDown={isSimulatedMode ? handlePanStart : undefined}
             >
-              <SimulationRadarSvg
-                size={size}
-                areaPaths={areaPaths}
-                cameraMarkers={cameraMarkers}
-                gridLines={gridLines}
-                pingKey={pingKey}
-                trailPaths={trailPaths}
-                wedges={wedges}
-                connections={connections}
-                hoveredCameraId={hoveredCameraId ?? undefined}
-                onHoverCamera={handleCameraHover}
-                onSelectCamera={(cameraId) => {
-                  onSelectEntity(cameraId)
-                }}
-                onSelectPerson={(personId) => {
-                  onSelectEntity(personId)
-                  setPingPersonId(personId)
-                  setPingKey((prev) => prev + 1)
-                }}
-                peopleMarkers={peopleMarkers}
-                pingPoint={pingPoint}
-                selectedPersonId={selectedPersonId}
-              />
+              {radarMode === 'real' ? (
+                <SimulationRealRadar
+                  size={size}
+                  scene={scene}
+                  focusAreaId={focusAreaId}
+                  onSelectEntity={onSelectEntity}
+                />
+              ) : (
+                <SimulationRadarSvg
+                  size={size}
+                  areaPaths={areaPaths}
+                  cameraMarkers={cameraMarkers}
+                  gridLines={gridLines}
+                  pingKey={pingKey}
+                  trailPaths={trailPaths}
+                  wedges={wedges}
+                  connections={connections}
+                  hoveredCameraId={hoveredCameraId ?? undefined}
+                  onHoverCamera={handleCameraHover}
+                  onSelectCamera={(cameraId) => {
+                    onSelectEntity(cameraId)
+                  }}
+                  onSelectPerson={(personId) => {
+                    onSelectEntity(personId)
+                    setPingPersonId(personId)
+                    setPingKey((prev) => prev + 1)
+                  }}
+                  peopleMarkers={peopleMarkers}
+                  pingPoint={pingPoint}
+                  selectedPersonId={selectedPersonId}
+                />
+              )}
             </div>
           </CardContent>
           <CardFooter>

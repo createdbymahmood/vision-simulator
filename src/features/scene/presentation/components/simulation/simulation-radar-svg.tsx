@@ -9,6 +9,7 @@ export interface RadarPoint {
 }
 
 export interface RadarGridLine {
+  id: string
   start: RadarPoint
   end: RadarPoint
 }
@@ -35,6 +36,7 @@ export interface RadarTrailPath {
 
 export interface RadarConnectionLine {
   camera: CameraEntity
+  personId: string
   cameraPoint: RadarPoint
   personPoint: RadarPoint
 }
@@ -105,7 +107,7 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
     </defs>
     {gridLines.map((line) => (
       <line
-        key={`grid-${line.start.x}-${line.start.y}-${line.end.x}-${line.end.y}`}
+        key={line.id}
         x1={line.start.x}
         x2={line.end.x}
         y1={line.start.y}
@@ -156,7 +158,7 @@ export const SimulationRadarSvg: React.FC<SimulationRadarSvgProps> = ({
     {connections.map((line) => (
       <motion.line
         animate={{strokeDashoffset: [0, -8]}}
-        key={`line-${line.camera.id}-${line.personPoint.x}-${line.personPoint.y}`}
+        key={`line-${line.camera.id}-${line.personId}`}
         x1={line.cameraPoint.x}
         x2={line.personPoint.x}
         y1={line.cameraPoint.y}

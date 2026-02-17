@@ -1,11 +1,15 @@
-import type {AxiosError, AxiosRequestConfig} from 'axios'
+import type {AxiosError, AxiosInstance, AxiosRequestConfig} from 'axios'
 
 import axios from 'axios'
 import {v4 as uuidv4} from 'uuid'
 
 const ApiServiceCallerInstance = axios.create({})
+const IngestionServiceCallerInstance = axios.create({})
 
-const instances = [ApiServiceCallerInstance]
+const instances: AxiosInstance[] = [
+  ApiServiceCallerInstance,
+  IngestionServiceCallerInstance,
+]
 
 export const applyAxiosApiBaseUrl = (apiBaseUrl: string) => {
   instances.forEach((instance) => {
@@ -26,7 +30,7 @@ export const clearAxiosAuthorizationHeader = () => {
 }
 
 export const applyDeviceIdHeader = (deviceId: string) => {
-  ;[ApiServiceCallerInstance].forEach((instance) => {
+  instances.forEach((instance) => {
     instance.defaults.headers['X-Client-ID'] = deviceId
   })
 }
@@ -65,6 +69,25 @@ export const apiServiceInstance = <T>(
 ): Promise<T> => {
   const source = axios.CancelToken.source()
   const promise = ApiServiceCallerInstance({
+    ...config,
+    ...options,
+    cancelToken: source.token,
+  }).then(({data}) => data)
+
+  // @ts-ignore ignore cm
+  promise.cancel = () => {
+    source.cancel('Query was cancelled')
+  }
+
+  return promise
+}
+
+export const ingestionApiServiceInstance = <T>(
+  config: AxiosRequestConfig,
+  options?: AxiosRequestConfig,
+): Promise<T> => {
+  const source = axios.CancelToken.source()
+  const promise = IngestionServiceCallerInstance({
     ...config,
     ...options,
     cancelToken: source.token,
