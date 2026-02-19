@@ -22,6 +22,70 @@ const WALL_CORNER_KEY_PRECISION = 1000
 const WALL_COLLINEAR_DOT_THRESHOLD = 0.995
 const MIN_WALL_CAP_RADIUS = 0.01
 const MIN_CAMERA_NEAR_DISTANCE = 0.1
+const CAMERA_FRUSTUM_SURFACE_INDICES: number[] = [
+  0,
+  1,
+  2,
+  0,
+  2,
+  3, // near
+  4,
+  7,
+  6,
+  4,
+  6,
+  5, // far
+  0,
+  4,
+  5,
+  0,
+  5,
+  1, // top
+  1,
+  5,
+  6,
+  1,
+  6,
+  2, // right
+  2,
+  6,
+  7,
+  2,
+  7,
+  3, // bottom
+  3,
+  7,
+  4,
+  3,
+  4,
+  0, // left
+]
+const CAMERA_FRUSTUM_LINE_INDICES: number[] = [
+  0,
+  1,
+  1,
+  2,
+  2,
+  3,
+  3,
+  0, // near edges
+  4,
+  5,
+  5,
+  6,
+  6,
+  7,
+  7,
+  4, // far edges
+  0,
+  4,
+  1,
+  5,
+  2,
+  6,
+  3,
+  7, // side edges
+]
 
 const degToRad = (deg: number) => (deg * Math.PI) / 180
 type WallWorldEntity = Extract<WorldEntity, {type: 'wall'}>
@@ -372,23 +436,21 @@ export const PersonMesh: React.FC<{
   )
 }
 
-// eslint-disable-next-line max-statements
 const buildFrustumGeometry = (
   camera: CameraEntity,
-  opticHeight: number,
   maxFrustumDepth?: number,
 ) => {
   const yaw = 0 // yaw comes from parent group rotation
   const tilt = degToRad(camera.ptz?.tilt ?? 0)
-  const {horizontal} = getCameraFovAngles(camera)
+  const {horizontal, vertical} = getCameraFovAngles(camera)
   const near = MIN_CAMERA_NEAR_DISTANCE
   const unclampedFar = Math.max(camera.depth, near + 0.1)
   const far = Math.max(
     near + 0.1,
     Math.min(maxFrustumDepth ?? unclampedFar, unclampedFar),
   )
-  const halfFov = horizontal / 2
-  const radialSegments = 32
+  const halfHorizontal = horizontal / 2
+  const halfVertical = vertical / 2
 
   const rotation = new THREE.Euler(tilt, yaw, 0, 'YXZ')
   const forward = new THREE.Vector3(0, 0, -1).applyEuler(rotation).normalize()
@@ -398,79 +460,218 @@ const buildFrustumGeometry = (
   const origin = new THREE.Vector3(0, 0, 0)
   const nearCenter = origin.clone().add(forward.clone().multiplyScalar(near))
   const farCenter = origin.clone().add(forward.clone().multiplyScalar(far))
-  const nearRadius = Math.tan(halfFov) * near
-  const farRadius = Math.tan(halfFov) * far
+  const nearHalfWidth = Math.tan(halfHorizontal) * near
+  const nearHalfHeight = Math.tan(halfVertical) * near
+  const farHalfWidth = Math.tan(halfHorizontal) * far
+  const farHalfHeight = Math.tan(halfVertical) * far
 
-  const nearVertices: THREE.Vector3[] = []
-  const farVertices: THREE.Vector3[] = []
-  for (let i = 0; i < radialSegments; i += 1) {
-    const angle = (i / radialSegments) * Math.PI * 2
-    const cos = Math.cos(angle)
-    const sin = Math.sin(angle)
-    nearVertices.push(
-      nearCenter
-        .clone()
-        .add(right.clone().multiplyScalar(cos * nearRadius))
-        .add(up.clone().multiplyScalar(sin * nearRadius)),
-    )
-    farVertices.push(
-      farCenter
-        .clone()
-        .add(right.clone().multiplyScalar(cos * farRadius))
-        .add(up.clone().multiplyScalar(sin * farRadius)),
-    )
-  }
+  const nearTopLeft = nearCenter
+    .clone()
+    .add(up.clone().multiplyScalar(nearHalfHeight))
+    .add(right.clone().multiplyScalar(-nearHalfWidth))
+  const nearTopRight = nearCenter
+    .clone()
+    .add(up.clone().multiplyScalar(nearHalfHeight))
+    .add(right.clone().multiplyScalar(nearHalfWidth))
+  const nearBottomRight = nearCenter
+    .clone()
+    .add(up.clone().multiplyScalar(-nearHalfHeight))
+    .add(right.clone().multiplyScalar(nearHalfWidth))
+  const nearBottomLeft = nearCenter
+    .clone()
+    .add(up.clone().multiplyScalar(-nearHalfHeight))
+    .add(right.clone().multiplyScalar(-nearHalfWidth))
+
+  const farTopLeft = farCenter
+    .clone()
+    .add(up.clone().multiplyScalar(farHalfHeight))
+    .add(right.clone().multiplyScalar(-farHalfWidth))
+  const farTopRight = farCenter
+    .clone()
+    .add(up.clone().multiplyScalar(farHalfHeight))
+    .add(right.clone().multiplyScalar(farHalfWidth))
+  const farBottomRight = farCenter
+    .clone()
+    .add(up.clone().multiplyScalar(-farHalfHeight))
+    .add(right.clone().multiplyScalar(farHalfWidth))
+  const farBottomLeft = farCenter
+    .clone()
+    .add(up.clone().multiplyScalar(-farHalfHeight))
+    .add(right.clone().multiplyScalar(-farHalfWidth))
 
   const vertices = [
-    ...nearVertices,
-    ...farVertices,
-    nearCenter.clone(),
-    farCenter.clone(),
+    nearTopLeft,
+    nearTopRight,
+    nearBottomRight,
+    nearBottomLeft,
+    farTopLeft,
+    farTopRight,
+    farBottomRight,
+    farBottomLeft,
   ]
   const positions = new Float32Array(
     vertices.flatMap((vertex) => [vertex.x, vertex.y, vertex.z]),
   )
-
-  const indices: number[] = []
-  for (let i = 0; i < radialSegments; i += 1) {
-    const next = (i + 1) % radialSegments
-    const nearA = i
-    const nearB = next
-    const farA = i + radialSegments
-    const farB = next + radialSegments
-    indices.push(nearA, farA, farB, nearA, farB, nearB)
-  }
-
-  const nearCenterIndex = radialSegments * 2
-  const farCenterIndex = radialSegments * 2 + 1
-  for (let i = 0; i < radialSegments; i += 1) {
-    const next = (i + 1) % radialSegments
-    indices.push(nearCenterIndex, next, i)
-    indices.push(farCenterIndex, i + radialSegments, next + radialSegments)
-  }
-
-  const lineIndices: number[] = []
-  for (let i = 0; i < radialSegments; i += 1) {
-    const next = (i + 1) % radialSegments
-    lineIndices.push(i, next)
-    lineIndices.push(i + radialSegments, next + radialSegments)
-    lineIndices.push(i, i + radialSegments)
-  }
 
   const surfaceGeometry = new THREE.BufferGeometry()
   surfaceGeometry.setAttribute(
     'position',
     new THREE.BufferAttribute(positions, 3),
   )
-  surfaceGeometry.setIndex(indices)
+  surfaceGeometry.setIndex(CAMERA_FRUSTUM_SURFACE_INDICES)
   surfaceGeometry.computeVertexNormals()
 
   const lineGeometry = new THREE.BufferGeometry()
   lineGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  lineGeometry.setIndex(lineIndices)
+  lineGeometry.setIndex(CAMERA_FRUSTUM_LINE_INDICES)
 
   return {surfaceGeometry, lineGeometry}
 }
+
+interface CameraBodyModelProps {
+  standHeight: number
+  mountPlateHeight: number
+  cameraBodyLength: number
+  cameraBodyCenterY: number
+  cameraBodyCenterZ: number
+  lensHoodLength: number
+  lensHoodCenterZ: number
+  lensBezelLength: number
+  lensBezelCenterZ: number
+  opticForwardOffset: number
+  color: string
+  dimmed: boolean
+  selected: boolean
+}
+
+const CameraBodyModel: React.FC<CameraBodyModelProps> = ({
+  standHeight,
+  mountPlateHeight,
+  cameraBodyLength,
+  cameraBodyCenterY,
+  cameraBodyCenterZ,
+  lensHoodLength,
+  lensHoodCenterZ,
+  lensBezelLength,
+  lensBezelCenterZ,
+  opticForwardOffset,
+  color,
+  dimmed,
+  selected,
+}) => (
+  <>
+    <mesh
+      castShadow
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, standHeight / 2, 0]}
+      receiveShadow
+    >
+      <cylinderGeometry args={[0.08, 0.08, standHeight, 16]} />
+      <meshStandardMaterial metalness={0.18} color='#94A3B8' roughness={0.72} />
+    </mesh>
+
+    <mesh
+      castShadow
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, standHeight + mountPlateHeight / 2, 0]}
+      receiveShadow
+    >
+      <cylinderGeometry args={[0.2, 0.2, mountPlateHeight, 24]} />
+      <meshStandardMaterial metalness={0.28} color='#E2E8F0' roughness={0.45} />
+    </mesh>
+
+    <mesh
+      castShadow
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, standHeight - 0.02, -0.16]}
+      receiveShadow
+    >
+      <boxGeometry args={[0.1, 0.08, 0.3]} />
+      <meshStandardMaterial metalness={0.2} color='#CBD5E1' roughness={0.58} />
+    </mesh>
+
+    <mesh
+      castShadow
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, standHeight - 0.03, -0.27]}
+      receiveShadow
+    >
+      <sphereGeometry args={[0.085, 24, 16]} />
+      <meshStandardMaterial metalness={0.35} color='#64748B' roughness={0.35} />
+    </mesh>
+
+    <mesh
+      castShadow
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, cameraBodyCenterY, cameraBodyCenterZ]}
+      receiveShadow
+      rotation={[Math.PI / 2, 0, 0]}
+    >
+      <cylinderGeometry args={[0.12, 0.135, cameraBodyLength, 24]} />
+      <meshStandardMaterial
+        metalness={0.25}
+        transparent={dimmed}
+        color='#F1F5F9'
+        opacity={dimmed ? 0.58 : 1}
+        roughness={0.42}
+      />
+    </mesh>
+
+    <mesh
+      castShadow
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, cameraBodyCenterY, cameraBodyCenterZ + 0.05]}
+      receiveShadow
+      rotation={[Math.PI / 2, 0, 0]}
+    >
+      <cylinderGeometry args={[0.138, 0.138, 0.06, 24]} />
+      <meshStandardMaterial
+        emissive={color}
+        emissiveIntensity={selected ? 0.55 : 0.25}
+        metalness={0.4}
+        transparent={dimmed}
+        color={color}
+        opacity={dimmed ? 0.55 : 1}
+        roughness={0.42}
+      />
+    </mesh>
+
+    <mesh
+      castShadow
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, cameraBodyCenterY, lensHoodCenterZ]}
+      receiveShadow
+      rotation={[Math.PI / 2, 0, 0]}
+    >
+      <cylinderGeometry args={[0.17, 0.14, lensHoodLength, 24]} />
+      <meshStandardMaterial metalness={0.35} color='#334155' roughness={0.3} />
+    </mesh>
+
+    <mesh
+      castShadow
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, cameraBodyCenterY, lensBezelCenterZ]}
+      rotation={[Math.PI / 2, 0, 0]}
+    >
+      <cylinderGeometry args={[0.082, 0.086, lensBezelLength, 24]} />
+      <meshStandardMaterial metalness={0.38} color='#0F172A' roughness={0.25} />
+    </mesh>
+
+    <mesh
+      onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
+      position={[0, cameraBodyCenterY, opticForwardOffset]}
+    >
+      <sphereGeometry args={[0.055, 24, 16]} />
+      <meshStandardMaterial
+        emissive={selected ? color : '#0B1120'}
+        emissiveIntensity={selected ? 0.35 : 0.08}
+        metalness={0.05}
+        color='#020617'
+        roughness={0.15}
+      />
+    </mesh>
+  </>
+)
 
 export const CameraMesh: React.FC<{
   data: Extract<WorldEntity, {type: 'camera'}>
@@ -488,11 +689,34 @@ export const CameraMesh: React.FC<{
   showFrustum = true,
 }) => {
   const {entity, position, dimmed} = data
-  const bodyHeight = 0.6
-  const standHeight = Math.max(entity.height - bodyHeight, 0.4)
+  const standHeight = Math.max(entity.height - 0.36, 0.45)
+  const mountPlateHeight = 0.06
+  const cameraBodyLength = 0.62
+  const cameraBodyCenterY = standHeight - 0.03
+  const cameraBodyCenterZ = -0.44
+  const lensHoodLength = 0.16
+  const lensHoodCenterZ =
+    cameraBodyCenterZ - cameraBodyLength / 2 - lensHoodLength / 2 + 0.03
+  const lensBezelLength = 0.06
+  const lensBezelCenterZ =
+    lensHoodCenterZ - lensHoodLength / 2 - lensBezelLength / 2 + 0.015
+  const opticHeight = cameraBodyCenterY
+  const opticForwardOffset = lensBezelCenterZ - lensBezelLength / 2 - 0.02
   const color = entity.color
-  const opticHeight = standHeight + bodyHeight * 0.5
   const yaw = -degToRad(entity.ptz.pan)
+  const focusDistance = Math.max(entity.depth, entity.height * 2, 12)
+  const opticFocusPoint = React.useMemo(
+    () =>
+      position
+        .clone()
+        .add(
+          new THREE.Vector3(0, opticHeight, opticForwardOffset).applyAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            yaw,
+          ),
+        ),
+    [opticForwardOffset, opticHeight, position, yaw],
+  )
   const groundPlane = React.useMemo(
     () => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0),
     [],
@@ -501,71 +725,36 @@ export const CameraMesh: React.FC<{
     if (!showFrustum) {
       return null
     }
-    return buildFrustumGeometry(entity, opticHeight, maxFrustumDepth)
-  }, [entity, maxFrustumDepth, opticHeight, showFrustum])
+    return buildFrustumGeometry(entity, maxFrustumDepth)
+  }, [entity, maxFrustumDepth, showFrustum])
 
   return (
-    <group position={position} rotation={[0, yaw, 0]}>
-      <mesh
-        castShadow
-        onClick={(event) => {
-          event.stopPropagation()
-          onSelect(entity.id)
-          if (event.detail === 2) {
-            onFocus(
-              position.clone().setY(opticHeight),
-              Math.max(entity.height * 2, 10),
-            )
-          }
-        }}
-        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
-        position={[0, standHeight / 2, 0]}
-        receiveShadow
-      >
-        <cylinderGeometry args={[0.12, 0.12, standHeight, 12]} />
-        <meshStandardMaterial metalness={0.2} color='#94A3B8' roughness={0.8} />
-      </mesh>
-
-      <mesh
-        castShadow
-        onClick={(event) => {
-          event.stopPropagation()
-          onSelect(entity.id)
-          if (event.detail === 2) {
-            onFocus(
-              position.clone().setY(opticHeight),
-              Math.max(entity.depth, 12),
-            )
-          }
-        }}
-        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
-        position={[0, standHeight + bodyHeight / 2, 0]}
-        receiveShadow
-      >
-        <boxGeometry args={[0.45, bodyHeight, 0.35]} />
-        <meshStandardMaterial
-          emissive={color}
-          emissiveIntensity={0.25}
-          metalness={0.15}
-          transparent={dimmed}
-          color={color}
-          opacity={dimmed ? 0.65 : 1}
-          roughness={0.6}
-        />
-      </mesh>
-
-      <mesh
-        castShadow
-        onClick={(event) => {
-          event.stopPropagation()
-          onSelect(entity.id)
-        }}
-        onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
-        position={[0, standHeight + bodyHeight * 0.8, 0.28]}
-      >
-        <coneGeometry args={[0.14, 0.25, 16]} />
-        <meshStandardMaterial metalness={0.2} color='#334155' roughness={0.5} />
-      </mesh>
+    <group
+      onClick={(event) => {
+        event.stopPropagation()
+        onSelect(entity.id)
+        if (event.detail === 2) {
+          onFocus(opticFocusPoint.clone(), focusDistance)
+        }
+      }}
+      position={position}
+      rotation={[0, yaw, 0]}
+    >
+      <CameraBodyModel
+        dimmed={dimmed}
+        lensBezelCenterZ={lensBezelCenterZ}
+        lensBezelLength={lensBezelLength}
+        selected={selected}
+        standHeight={standHeight}
+        cameraBodyCenterY={cameraBodyCenterY}
+        cameraBodyCenterZ={cameraBodyCenterZ}
+        cameraBodyLength={cameraBodyLength}
+        color={color}
+        lensHoodCenterZ={lensHoodCenterZ}
+        lensHoodLength={lensHoodLength}
+        mountPlateHeight={mountPlateHeight}
+        opticForwardOffset={opticForwardOffset}
+      />
 
       {frustum ? (
         <>
@@ -573,7 +762,7 @@ export const CameraMesh: React.FC<{
             renderOrder={200}
             geometry={frustum.surfaceGeometry}
             onUpdate={(mesh) => mesh.layers.set(DEBUG_LAYER)}
-            position={[0, opticHeight, 0]}
+            position={[0, opticHeight, opticForwardOffset]}
           >
             <meshBasicMaterial
               transparent
@@ -589,7 +778,7 @@ export const CameraMesh: React.FC<{
             renderOrder={201}
             geometry={frustum.lineGeometry}
             onUpdate={(line) => line.layers.set(DEBUG_LAYER)}
-            position={[0, opticHeight, 0]}
+            position={[0, opticHeight, opticForwardOffset]}
           >
             <lineBasicMaterial
               transparent
