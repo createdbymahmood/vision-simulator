@@ -32,7 +32,7 @@
   --radius: 0.625rem;
 }
 
-:root {
+.vision-simulator-root {
   --radius: 0.65rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -66,9 +66,39 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Ensure Tailwind runtime aliases resolve inside the scoped root. */
+  --vs-radius: var(--radius);
+  --vs-color-background: var(--background);
+  --vs-color-foreground: var(--foreground);
+  --vs-color-card: var(--card);
+  --vs-color-card-foreground: var(--card-foreground);
+  --vs-color-popover: var(--popover);
+  --vs-color-popover-foreground: var(--popover-foreground);
+  --vs-color-primary: var(--primary);
+  --vs-color-primary-foreground: var(--primary-foreground);
+  --vs-color-secondary: var(--secondary);
+  --vs-color-secondary-foreground: var(--secondary-foreground);
+  --vs-color-muted: var(--muted);
+  --vs-color-muted-foreground: var(--muted-foreground);
+  --vs-color-accent: var(--accent);
+  --vs-color-accent-foreground: var(--accent-foreground);
+  --vs-color-destructive: var(--destructive);
+  --vs-color-border: var(--border);
+  --vs-color-input: var(--input);
+  --vs-color-ring: var(--ring);
+  --vs-color-sidebar: var(--sidebar);
+  --vs-color-sidebar-foreground: var(--sidebar-foreground);
+  --vs-color-sidebar-primary: var(--sidebar-primary);
+  --vs-color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --vs-color-sidebar-accent: var(--sidebar-accent);
+  --vs-color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --vs-color-sidebar-border: var(--sidebar-border);
+  --vs-color-sidebar-ring: var(--sidebar-ring);
 }
 
-.dark {
+.dark .vision-simulator-root,
+.vision-simulator-root.dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -100,18 +130,48 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  --vs-radius: var(--radius);
+  --vs-color-background: var(--background);
+  --vs-color-foreground: var(--foreground);
+  --vs-color-card: var(--card);
+  --vs-color-card-foreground: var(--card-foreground);
+  --vs-color-popover: var(--popover);
+  --vs-color-popover-foreground: var(--popover-foreground);
+  --vs-color-primary: var(--primary);
+  --vs-color-primary-foreground: var(--primary-foreground);
+  --vs-color-secondary: var(--secondary);
+  --vs-color-secondary-foreground: var(--secondary-foreground);
+  --vs-color-muted: var(--muted);
+  --vs-color-muted-foreground: var(--muted-foreground);
+  --vs-color-accent: var(--accent);
+  --vs-color-accent-foreground: var(--accent-foreground);
+  --vs-color-destructive: var(--destructive);
+  --vs-color-border: var(--border);
+  --vs-color-input: var(--input);
+  --vs-color-ring: var(--ring);
+  --vs-color-sidebar: var(--sidebar);
+  --vs-color-sidebar-foreground: var(--sidebar-foreground);
+  --vs-color-sidebar-primary: var(--sidebar-primary);
+  --vs-color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --vs-color-sidebar-accent: var(--sidebar-accent);
+  --vs-color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --vs-color-sidebar-border: var(--sidebar-border);
+  --vs-color-sidebar-ring: var(--sidebar-ring);
 }
 
 @layer base {
-  * {
+  .vision-simulator-root,
+  .vision-simulator-root * {
     @apply vs:border-border vs:outline-ring/50;
   }
-  body {
+  .vision-simulator-root {
     @apply vs:bg-background vs:text-foreground vs:font-sans vs:antialiased vs:overflow-hidden;
     font-family: Geist, sans-serif;
   }
 
-  ::selection {
+  .vision-simulator-root::selection,
+  .vision-simulator-root ::selection {
     @apply vs:bg-muted-foreground/10 vs:text-muted-foreground;
   }
 }
