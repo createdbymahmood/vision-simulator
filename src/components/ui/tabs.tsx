@@ -42,7 +42,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot='tabs-trigger'
       className={cn(
-        "vs:data-[state=active]:bg-background vs:dark:data-[state=active]:text-foreground vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:focus-visible:outline-ring vs:dark:data-[state=active]:border-input vs:dark:data-[state=active]:bg-input/30 vs:text-foreground vs:dark:text-muted-foreground vs:inline-flex vs:h-[calc(100%-1px)] vs:flex-1 vs:items-center vs:justify-center vs:gap-1.5 vs:rounded-md vs:border vs:border-transparent vs:px-2 vs:py-1 vs:text-sm vs:font-medium vs:whitespace-nowrap vs:transition-[color,box-shadow] vs:focus-visible:ring-[3px] vs:focus-visible:outline-1 vs:disabled:pointer-events-none vs:disabled:opacity-50 vs:data-[state=active]:shadow-sm vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:data-[state=active]:bg-background vs:dark:data-[state=active]:text-foreground vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:focus-visible:outline-ring vs:dark:data-[state=active]:border-input vs:dark:data-[state=active]:bg-input/30 vs:text-foreground vs:dark:text-muted-foreground vs:inline-flex vs:h-[calc(100%-1px)] vs:flex-1 vs:items-center vs:justify-center vs:gap-1.5 vs:rounded-md vs:border vs:border-transparent vs:px-2 vs:py-1 vs:text-sm vs:font-medium vs:whitespace-nowrap vs:transition-[color,box-shadow] vs:focus-visible:ring-[3px] vs:focus-visible:outline-1 vs:disabled:pointer-events-none vs:disabled:opacity-50 vs:data-[state=active]:shadow-sm vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}

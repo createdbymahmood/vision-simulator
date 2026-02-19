@@ -25,6 +25,8 @@ const NON_CLASS_TOKENS = new Set([
 const IGNORED_DIRS = new Set(['.git', 'dist', 'node_modules'])
 const DEFAULT_PREFIX = 'tw'
 const DEFAULT_KNOWN_PREFIXES = ['tw', 'vs']
+const CLASS_ATTRIBUTE_SELECTOR_PATTERN =
+  /\[class\s*(\*=|~=|\|=|\^=|\$=|=)\s*(["'])([^"'\]]+)\2\]/g
 
 const readCssClassNames = (rootDir) => {
   const cssClasses = new Set()
@@ -138,15 +140,19 @@ const isCvaCall = (node) => getCalleeName(node) === 'cva'
 
 const normalizeToken = (token) => token.replace(/^!/, '').replace(/^-/, '')
 
-const transformToken = (
-  token,
+const transformUtilityReference = (
+  reference,
   {prefix, knownPrefixes, ignoredClassNames, projectCssClassNames},
 ) => {
-  if (!token || NON_CLASS_TOKENS.has(token) || token.includes('${')) {
-    return token
+  if (
+    !reference ||
+    NON_CLASS_TOKENS.has(reference) ||
+    reference.includes('${')
+  ) {
+    return reference
   }
 
-  const {decorators, body} = splitTokenDecorators(token)
+  const {decorators, body} = splitTokenDecorators(reference)
   const firstSeparatorIndex = body.indexOf(':')
   if (firstSeparatorIndex > 0) {
     const leadingSegment = body.slice(0, firstSeparatorIndex)
@@ -156,7 +162,7 @@ const transformToken = (
       if (decorators.length > 0) {
         return `${prefix}:${decorators}${remainder}`
       }
-      return token
+      return reference
     }
 
     if (knownPrefixes.has(leadingSegment)) {
@@ -165,12 +171,15 @@ const transformToken = (
   }
 
   if (body.startsWith(`${prefix}:`)) {
-    return token
+    if (decorators.length > 0) {
+      return `${prefix}:${decorators}${body.slice(prefix.length + 1)}`
+    }
+    return reference
   }
 
-  const normalized = normalizeToken(token)
+  const normalized = normalizeToken(reference)
   if (!normalized || !/[0-9a-z]/i.test(normalized)) {
-    return token
+    return reference
   }
 
   // Keep project-defined CSS classes and known non-tailwind utility classes.
@@ -178,10 +187,45 @@ const transformToken = (
     !normalized.includes(':') &&
     (projectCssClassNames.has(normalized) || ignoredClassNames.has(normalized))
   ) {
+    return reference
+  }
+
+  return `${prefix}:${decorators}${body}`
+}
+
+const transformClassSelectorValue = (value, options) =>
+  value
+    .split(/(\s+)/)
+    .map((part) => {
+      if (!part || /^\s+$/.test(part)) {
+        return part
+      }
+      return transformUtilityReference(part, options)
+    })
+    .join('')
+
+const transformClassAttributeSelectors = (token, options) =>
+  token.replace(
+    CLASS_ATTRIBUTE_SELECTOR_PATTERN,
+    (match, operator, quote, value) => {
+      const transformedValue = transformClassSelectorValue(value, options)
+      if (transformedValue === value) {
+        return match
+      }
+      return `[class${operator}${quote}${transformedValue}${quote}]`
+    },
+  )
+
+const transformToken = (token, options) => {
+  if (!token || NON_CLASS_TOKENS.has(token) || token.includes('${')) {
     return token
   }
 
-  return `${prefix}:${token}`
+  const tokenWithSelectorFixes = transformClassAttributeSelectors(
+    token,
+    options,
+  )
+  return transformUtilityReference(tokenWithSelectorFixes, options)
 }
 
 const getTokenFixes = (value, options) => {

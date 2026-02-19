@@ -7,7 +7,7 @@ import * as React from 'react'
 import {cn} from '@/lib/utils'
 
 const toggleVariants = cva(
-  "vs:inline-flex vs:items-center vs:justify-center vs:gap-2 vs:rounded-md vs:text-sm vs:font-medium vs:hover:bg-muted vs:hover:text-muted-foreground vs:disabled:pointer-events-none vs:disabled:opacity-50 vs:data-[state=on]:bg-accent vs:data-[state=on]:text-accent-foreground vs:[&_svg]:pointer-events-none vs:[&_svg:not([class*='size-'])]:size-4 vs:[&_svg]:shrink-0 vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:focus-visible:ring-[3px] vs:outline-none vs:transition-[color,box-shadow] vs:aria-invalid:ring-destructive/20 vs:dark:aria-invalid:ring-destructive/40 vs:aria-invalid:border-destructive vs:whitespace-nowrap",
+  "vs:inline-flex vs:items-center vs:justify-center vs:gap-2 vs:rounded-md vs:text-sm vs:font-medium vs:hover:bg-muted vs:hover:text-muted-foreground vs:disabled:pointer-events-none vs:disabled:opacity-50 vs:data-[state=on]:bg-accent vs:data-[state=on]:text-accent-foreground vs:[&_svg]:pointer-events-none vs:[&_svg:not([class*='vs:size-'])]:size-4 vs:[&_svg]:shrink-0 vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:focus-visible:ring-[3px] vs:outline-none vs:transition-[color,box-shadow] vs:aria-invalid:ring-destructive/20 vs:dark:aria-invalid:ring-destructive/40 vs:aria-invalid:border-destructive vs:whitespace-nowrap",
   {
     variants: {
       variant: {

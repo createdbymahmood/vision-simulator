@@ -129,7 +129,7 @@ function NavigationMenuLink({
     <NavigationMenuPrimitive.Link
       data-slot='navigation-menu-link'
       className={cn(
-        "vs:data-[active=true]:focus:bg-accent vs:data-[active=true]:hover:bg-accent vs:data-[active=true]:bg-accent/50 vs:data-[active=true]:text-accent-foreground vs:hover:bg-accent vs:hover:text-accent-foreground vs:focus:bg-accent vs:focus:text-accent-foreground vs:focus-visible:ring-ring/50 vs:[&_svg:not([class*='text-'])]:text-muted-foreground vs:flex vs:flex-col vs:gap-1 vs:rounded-sm vs:p-2 vs:text-sm vs:transition-all vs:outline-none vs:focus-visible:ring-[3px] vs:focus-visible:outline-1 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:data-[active=true]:focus:bg-accent vs:data-[active=true]:hover:bg-accent vs:data-[active=true]:bg-accent/50 vs:data-[active=true]:text-accent-foreground vs:hover:bg-accent vs:hover:text-accent-foreground vs:focus:bg-accent vs:focus:text-accent-foreground vs:focus-visible:ring-ring/50 vs:[&_svg:not([class*='vs:text-'])]:text-muted-foreground vs:flex vs:flex-col vs:gap-1 vs:rounded-sm vs:p-2 vs:text-sm vs:transition-all vs:outline-none vs:focus-visible:ring-[3px] vs:focus-visible:outline-1 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}

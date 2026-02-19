@@ -37,7 +37,7 @@ function SelectTrigger({
       data-size={size}
       data-slot='select-trigger'
       className={cn(
-        "vs:border-input vs:data-[placeholder]:text-muted-foreground vs:[&_svg:not([class*='text-'])]:text-muted-foreground vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:aria-invalid:ring-destructive/20 vs:dark:aria-invalid:ring-destructive/40 vs:aria-invalid:border-destructive vs:dark:bg-input/30 vs:dark:hover:bg-input/50 vs:flex vs:w-fit vs:items-center vs:justify-between vs:gap-2 vs:rounded-md vs:border vs:bg-transparent vs:px-3 vs:py-2 vs:text-sm vs:whitespace-nowrap vs:shadow-xs vs:transition-[color,box-shadow] vs:outline-none vs:focus-visible:ring-[3px] vs:disabled:cursor-not-allowed vs:disabled:opacity-50 vs:data-[size=default]:h-9 vs:data-[size=sm]:h-8 vs:*:data-[slot=select-value]:line-clamp-1 vs:*:data-[slot=select-value]:flex vs:*:data-[slot=select-value]:items-center vs:*:data-[slot=select-value]:gap-2 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:border-input vs:data-[placeholder]:text-muted-foreground vs:[&_svg:not([class*='vs:text-'])]:text-muted-foreground vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:aria-invalid:ring-destructive/20 vs:dark:aria-invalid:ring-destructive/40 vs:aria-invalid:border-destructive vs:dark:bg-input/30 vs:dark:hover:bg-input/50 vs:flex vs:w-fit vs:items-center vs:justify-between vs:gap-2 vs:rounded-md vs:border vs:bg-transparent vs:px-3 vs:py-2 vs:text-sm vs:whitespace-nowrap vs:shadow-xs vs:transition-[color,box-shadow] vs:outline-none vs:focus-visible:ring-[3px] vs:disabled:cursor-not-allowed vs:disabled:opacity-50 vs:data-[size=default]:h-9 vs:data-[size=sm]:h-8 vs:*:data-[slot=select-value]:line-clamp-1 vs:*:data-[slot=select-value]:flex vs:*:data-[slot=select-value]:items-center vs:*:data-[slot=select-value]:gap-2 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}
@@ -116,7 +116,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot='select-item'
       className={cn(
-        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:[&_svg:not([class*='text-'])]:text-muted-foreground vs:relative vs:flex vs:w-full vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:py-1.5 vs:pr-8 vs:pl-2 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4 vs:*:[span]:last:flex vs:*:[span]:last:items-center vs:*:[span]:last:gap-2",
+        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:[&_svg:not([class*='vs:text-'])]:text-muted-foreground vs:relative vs:flex vs:w-full vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:py-1.5 vs:pr-8 vs:pl-2 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4 vs:*:[span]:last:flex vs:*:[span]:last:items-center vs:*:[span]:last:gap-2",
         className,
       )}
       {...props}

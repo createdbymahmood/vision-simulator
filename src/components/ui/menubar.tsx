@@ -114,7 +114,7 @@ function MenubarItem({
       data-variant={variant}
       data-slot='menubar-item'
       className={cn(
-        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:data-[variant=destructive]:text-destructive vs:data-[variant=destructive]:focus:bg-destructive/10 vs:dark:data-[variant=destructive]:focus:bg-destructive/20 vs:data-[variant=destructive]:focus:text-destructive vs:data-[variant=destructive]:*:[svg]:!text-destructive vs:[&_svg:not([class*='text-'])]:text-muted-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:px-2 vs:py-1.5 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:data-[inset]:pl-8 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:data-[variant=destructive]:text-destructive vs:data-[variant=destructive]:focus:bg-destructive/10 vs:dark:data-[variant=destructive]:focus:bg-destructive/20 vs:data-[variant=destructive]:focus:text-destructive vs:data-[variant=destructive]:*:[svg]:!text-destructive vs:[&_svg:not([class*='vs:text-'])]:text-muted-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:px-2 vs:py-1.5 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:data-[inset]:pl-8 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}
@@ -133,7 +133,7 @@ function MenubarCheckboxItem({
       checked={checked}
       data-slot='menubar-checkbox-item'
       className={cn(
-        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-xs vs:py-1.5 vs:pr-2 vs:pl-8 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-xs vs:py-1.5 vs:pr-2 vs:pl-8 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}
@@ -157,7 +157,7 @@ function MenubarRadioItem({
     <MenubarPrimitive.RadioItem
       data-slot='menubar-radio-item'
       className={cn(
-        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-xs vs:py-1.5 vs:pr-2 vs:pl-8 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-xs vs:py-1.5 vs:pr-2 vs:pl-8 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}

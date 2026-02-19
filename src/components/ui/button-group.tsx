@@ -7,7 +7,7 @@ import {Separator} from '@/components/ui/separator'
 import {cn} from '@/lib/utils'
 
 const buttonGroupVariants = cva(
-  "vs:flex vs:w-fit vs:items-stretch vs:[&>*]:focus-visible:z-10 vs:[&>*]:focus-visible:relative vs:[&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit vs:[&>input]:flex-1 vs:has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md vs:has-[>[data-slot=button-group]]:gap-2",
+  "vs:flex vs:w-fit vs:items-stretch vs:[&>*]:focus-visible:z-10 vs:[&>*]:focus-visible:relative vs:[&>[data-slot=select-trigger]:not([class*='vs:w-'])]:w-fit vs:[&>input]:flex-1 vs:has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md vs:has-[>[data-slot=button-group]]:gap-2",
   {
     variants: {
       orientation: {
@@ -51,7 +51,7 @@ function ButtonGroupText({
   return (
     <Comp
       className={cn(
-        "vs:bg-muted vs:flex vs:items-center vs:gap-2 vs:rounded-md vs:border vs:px-4 vs:text-sm vs:font-medium vs:shadow-xs vs:[&_svg]:pointer-events-none vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:bg-muted vs:flex vs:items-center vs:gap-2 vs:rounded-md vs:border vs:px-4 vs:text-sm vs:font-medium vs:shadow-xs vs:[&_svg]:pointer-events-none vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}

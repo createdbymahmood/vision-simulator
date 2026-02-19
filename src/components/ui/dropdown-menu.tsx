@@ -83,7 +83,7 @@ function DropdownMenuItem({
       data-variant={variant}
       data-slot='dropdown-menu-item'
       className={cn(
-        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:data-[variant=destructive]:text-destructive vs:data-[variant=destructive]:focus:bg-destructive/10 vs:dark:data-[variant=destructive]:focus:bg-destructive/20 vs:data-[variant=destructive]:focus:text-destructive vs:data-[variant=destructive]:*:[svg]:!text-destructive vs:[&_svg:not([class*='text-'])]:text-muted-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:px-2 vs:py-1.5 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:data-[inset]:pl-8 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:data-[variant=destructive]:text-destructive vs:data-[variant=destructive]:focus:bg-destructive/10 vs:dark:data-[variant=destructive]:focus:bg-destructive/20 vs:data-[variant=destructive]:focus:text-destructive vs:data-[variant=destructive]:*:[svg]:!text-destructive vs:[&_svg:not([class*='vs:text-'])]:text-muted-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:px-2 vs:py-1.5 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:data-[inset]:pl-8 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}
@@ -102,7 +102,7 @@ function DropdownMenuCheckboxItem({
       checked={checked}
       data-slot='dropdown-menu-checkbox-item'
       className={cn(
-        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:py-1.5 vs:pr-2 vs:pl-8 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:py-1.5 vs:pr-2 vs:pl-8 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}
@@ -137,7 +137,7 @@ function DropdownMenuRadioItem({
     <DropdownMenuPrimitive.RadioItem
       data-slot='dropdown-menu-radio-item'
       className={cn(
-        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:py-1.5 vs:pr-2 vs:pl-8 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:relative vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:py-1.5 vs:pr-2 vs:pl-8 vs:text-sm vs:outline-hidden vs:select-none vs:data-[disabled]:pointer-events-none vs:data-[disabled]:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}
@@ -220,7 +220,7 @@ function DropdownMenuSubTrigger({
       data-inset={inset}
       data-slot='dropdown-menu-sub-trigger'
       className={cn(
-        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:data-[state=open]:bg-accent vs:data-[state=open]:text-accent-foreground vs:[&_svg:not([class*='text-'])]:text-muted-foreground vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:px-2 vs:py-1.5 vs:text-sm vs:outline-hidden vs:select-none vs:data-[inset]:pl-8 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
+        "vs:focus:bg-accent vs:focus:text-accent-foreground vs:data-[state=open]:bg-accent vs:data-[state=open]:text-accent-foreground vs:[&_svg:not([class*='vs:text-'])]:text-muted-foreground vs:flex vs:cursor-default vs:items-center vs:gap-2 vs:rounded-sm vs:px-2 vs:py-1.5 vs:text-sm vs:outline-hidden vs:select-none vs:data-[inset]:pl-8 vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='vs:size-'])]:size-4",
         className,
       )}
       {...props}
