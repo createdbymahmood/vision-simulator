@@ -13,18 +13,18 @@ export const MapViewCursorOverlay: React.FC<MapViewCursorOverlayProps> = ({
 }) => {
   return (
     <div
-      className='pointer-events-none absolute inset-0 z-20'
+      className='vs:pointer-events-none vs:absolute vs:inset-0 vs:z-20'
       style={{cursor: 'none'}}
     >
       <div
-        className='absolute'
+        className='vs:absolute'
         style={{left: cursorPoint.x, top: cursorPoint.y}}
       >
-        <div className='relative -translate-x-1/2 -translate-y-1/2'>
-          <div className='absolute left-1/2 top-1/2 h-6 w-px -translate-x-1/2 -translate-y-1/2 bg-emerald-500/80 shadow' />
-          <div className='absolute left-1/2 top-1/2 h-px w-6 -translate-x-1/2 -translate-y-1/2 bg-emerald-500/80 shadow' />
+        <div className='vs:relative vs:-translate-x-1/2 vs:-translate-y-1/2'>
+          <div className='vs:absolute vs:left-1/2 vs:top-1/2 vs:h-6 vs:w-px vs:-translate-x-1/2 vs:-translate-y-1/2 vs:bg-emerald-500/80 vs:shadow' />
+          <div className='vs:absolute vs:left-1/2 vs:top-1/2 vs:h-px vs:w-6 vs:-translate-x-1/2 vs:-translate-y-1/2 vs:bg-emerald-500/80 vs:shadow' />
           <div
-            className='size-3 rounded-full shadow-md cursor-dot'
+            className='vs:size-3 vs:rounded-full vs:shadow-md cursor-dot'
             style={{
               backgroundColor: color,
               opacity: 0.8,

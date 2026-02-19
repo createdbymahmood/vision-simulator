@@ -1,6 +1,7 @@
+import type {ArrayValues} from 'type-fest'
+
 import {isAxiosError} from 'axios'
 import {get} from 'lodash-es'
-import type {ArrayValues} from 'type-fest'
 import {z} from 'zod'
 
 const ROUTER_CODE = ['PARSE_PARAMS', 'VALIDATE_SEARCH'] as const

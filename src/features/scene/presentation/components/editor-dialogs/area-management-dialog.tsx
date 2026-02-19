@@ -50,7 +50,7 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className='w-full sm:max-w-md' side='right'>
+      <SheetContent className='vs:w-full vs:sm:max-w-md' side='right'>
         <SheetHeader>
           <SheetTitle>Area Management</SheetTitle>
           <SheetDescription>
@@ -59,33 +59,35 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
           </SheetDescription>
         </SheetHeader>
 
-        <div className='flex items-center justify-between rounded-lg border px-3 py-2'>
-          <span className='text-sm text-muted-foreground'>Total areas</span>
+        <div className='vs:flex vs:items-center vs:justify-between vs:rounded-lg vs:border vs:px-3 vs:py-2'>
+          <span className='vs:text-sm vs:text-muted-foreground'>
+            Total areas
+          </span>
           <Badge variant='secondary'>{areaCount}</Badge>
         </div>
 
-        <div className='space-y-3'>
-          <Label className='text-xs uppercase text-muted-foreground'>
+        <div className='vs:space-y-3'>
+          <Label className='vs:text-xs vs:uppercase vs:text-muted-foreground'>
             Areas
           </Label>
           {areas.length === 0 ? (
-            <p className='text-sm text-muted-foreground'>
+            <p className='vs:text-sm vs:text-muted-foreground'>
               No areas yet. Use the draw tool to add your first area.
             </p>
           ) : (
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               {areas.map((area) => (
                 <div
-                  className='flex items-center gap-3 rounded-lg border px-3 py-2'
+                  className='vs:flex vs:items-center vs:gap-3 vs:rounded-lg vs:border vs:px-3 vs:py-2'
                   key={area.id}
                 >
                   <div
                     aria-hidden
-                    className='h-3 w-3 rounded-full shadow-sm'
+                    className='vs:h-3 vs:w-3 vs:rounded-full vs:shadow-sm'
                     style={{backgroundColor: area.color}}
                   />
                   <Input
-                    className='h-9'
+                    className='vs:h-9'
                     defaultValue={area.name}
                     onBlur={(event) => {
                       const nextName = event.target.value
@@ -96,7 +98,7 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
                       recordAction({type: 'update', entity: 'area'}, updated)
                     }}
                   />
-                  <div className='flex items-center gap-2'>
+                  <div className='vs:flex vs:items-center vs:gap-2'>
                     <Badge variant='outline'>{area.pointCount} pts</Badge>
                     <Button
                       size='sm'
@@ -112,7 +114,7 @@ export const AreaManagementDialog: React.FC<AreaManagementDialogProps> = ({
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button size='icon' variant='ghost'>
-                          <Trash01 className='size-4' />
+                          <Trash01 className='vs:size-4' />
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

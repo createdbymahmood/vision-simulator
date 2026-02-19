@@ -57,14 +57,14 @@ export const SimulationCameraSidebar: React.FC<
   const peopleWorld = visionState.peopleWorld
 
   return (
-    <div className='flex flex-col gap-4 size-full'>
-      <Card className='rounded-none border-none p-0 shadow-none gap-0'>
-        <CardHeader className='py-2'>
+    <div className='vs:flex vs:flex-col vs:gap-4 vs:size-full'>
+      <Card className='vs:rounded-none vs:border-none vs:p-0 vs:shadow-none vs:gap-0'>
+        <CardHeader className='vs:py-2'>
           <CardTitle>Camera Feeds</CardTitle>
         </CardHeader>
 
-        <CardContent className='px-0'>
-          <div className='grid gap-2'>
+        <CardContent className='vs:px-0'>
+          <div className='vs:grid vs:gap-2'>
             {feedTargets.map((target) => {
               const camera = scene.cameras.find((item) => item.id === target.id)
               if (!camera) {

@@ -1035,7 +1035,7 @@ export const MapView: React.FC<MapViewProps> = ({
         : undefined
   const mapStyleProps = mapStyle ? {mapStyle} : {}
   return (
-    <div className='relative h-full w-full'>
+    <div className='vs:relative vs:h-full vs:w-full'>
       <Mapbox
         preserveDrawingBuffer
         dragPan={activeTool === 'hand'}

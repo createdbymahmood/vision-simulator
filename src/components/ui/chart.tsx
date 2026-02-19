@@ -57,7 +57,7 @@ function ChartContainer({
         data-chart={chartId}
         data-slot='chart'
         className={cn(
-          "[&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border flex aspect-video justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          "vs:[&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground vs:[&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 vs:[&_.recharts-curve.recharts-tooltip-cursor]:stroke-border vs:[&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border vs:[&_.recharts-radial-bar-background-sector]:fill-muted vs:[&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted vs:[&_.recharts-reference-line_[stroke='#ccc']]:stroke-border vs:flex vs:aspect-video vs:justify-center vs:text-xs vs:[&_.recharts-dot[stroke='#fff']]:stroke-transparent vs:[&_.recharts-layer]:outline-hidden vs:[&_.recharts-sector]:outline-hidden vs:[&_.recharts-sector[stroke='#fff']]:stroke-transparent vs:[&_.recharts-surface]:outline-hidden",
           className,
         )}
         {...props}
@@ -145,7 +145,7 @@ function ChartTooltipContent({
 
     if (labelFormatter) {
       return (
-        <div className={cn('font-medium', labelClassName)}>
+        <div className={cn('vs:font-medium', labelClassName)}>
           {labelFormatter(value, payload)}
         </div>
       )
@@ -155,7 +155,7 @@ function ChartTooltipContent({
       return null
     }
 
-    return <div className={cn('font-medium', labelClassName)}>{value}</div>
+    return <div className={cn('vs:font-medium', labelClassName)}>{value}</div>
   }, [
     label,
     labelFormatter,
@@ -175,12 +175,12 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        'border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl',
+        'vs:border-border/50 vs:bg-background vs:grid vs:min-w-[8rem] vs:items-start vs:gap-1.5 vs:rounded-lg vs:border vs:px-2.5 vs:py-1.5 vs:text-xs vs:shadow-xl',
         className,
       )}
     >
       {!nestLabel ? tooltipLabel : null}
-      <div className='grid gap-1.5'>
+      <div className='vs:grid vs:gap-1.5'>
         {payload
           .filter((item) => item.type !== 'none')
           .map((item, index) => {
@@ -192,8 +192,8 @@ function ChartTooltipContent({
               <div
                 key={item.dataKey}
                 className={cn(
-                  '[&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5',
-                  indicator === 'dot' && 'items-center',
+                  'vs:[&>svg]:text-muted-foreground vs:flex vs:w-full vs:flex-wrap vs:items-stretch vs:gap-2 vs:[&>svg]:h-2.5 vs:[&>svg]:w-2.5',
+                  indicator === 'dot' && 'vs:items-center',
                 )}
               >
                 {formatter && item?.value !== undefined && item.name ? (
@@ -206,7 +206,7 @@ function ChartTooltipContent({
                       !hideIndicator && (
                         <div
                           className={cn(
-                            'shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)',
+                            'vs:shrink-0 vs:rounded-[2px] vs:border-(--color-border) vs:bg-(--color-bg)',
                             {
                               'h-2.5 w-2.5': indicator === 'dot',
                               'w-1': indicator === 'line',
@@ -226,18 +226,18 @@ function ChartTooltipContent({
                     )}
                     <div
                       className={cn(
-                        'flex flex-1 justify-between leading-none',
-                        nestLabel ? 'items-end' : 'items-center',
+                        'vs:flex vs:flex-1 vs:justify-between vs:leading-none',
+                        nestLabel ? 'vs:items-end' : 'vs:items-center',
                       )}
                     >
-                      <div className='grid gap-1.5'>
+                      <div className='vs:grid vs:gap-1.5'>
                         {nestLabel ? tooltipLabel : null}
-                        <span className='text-muted-foreground'>
+                        <span className='vs:text-muted-foreground'>
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
                       {item.value && (
-                        <span className='text-foreground font-mono font-medium tabular-nums'>
+                        <span className='vs:text-foreground vs:font-mono vs:font-medium vs:tabular-nums'>
                           {item.value.toLocaleString()}
                         </span>
                       )}
@@ -274,8 +274,8 @@ function ChartLegendContent({
   return (
     <div
       className={cn(
-        'flex items-center justify-center gap-4',
-        verticalAlign === 'top' ? 'pb-3' : 'pt-3',
+        'vs:flex vs:items-center vs:justify-center vs:gap-4',
+        verticalAlign === 'top' ? 'vs:pb-3' : 'vs:pt-3',
         className,
       )}
     >
@@ -289,14 +289,14 @@ function ChartLegendContent({
             <div
               key={item.value}
               className={cn(
-                '[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3',
+                'vs:[&>svg]:text-muted-foreground vs:flex vs:items-center vs:gap-1.5 vs:[&>svg]:h-3 vs:[&>svg]:w-3',
               )}
             >
               {itemConfig?.icon && !hideIcon ? (
                 <itemConfig.icon />
               ) : (
                 <div
-                  className='h-2 w-2 shrink-0 rounded-[2px]'
+                  className='vs:h-2 vs:w-2 vs:shrink-0 vs:rounded-[2px]'
                   style={{
                     backgroundColor: item.color,
                   }}

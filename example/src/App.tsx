@@ -1,9 +1,9 @@
 import {
-  Outlet,
-  RouterProvider,
   createRootRoute,
   createRoute,
   createRouter,
+  Outlet,
+  RouterProvider,
 } from '@tanstack/react-router'
 import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
 import simulatorStylesUrl from '@vega-tek-hub/vision-simulator-v2/styles.css?url'
@@ -70,16 +70,16 @@ const SimulatorPage: React.FC = () => {
   return (
     <div style={{height: '100vh', width: '100vw'}}>
       <VisionSimulator
-        mode='preview'
         apiBaseUrl={apiBaseUrl}
         accessToken={accessToken}
         isolationMode='shadow'
         mapboxToken={mapboxToken}
+        mode='preview'
         shadowStyleUrls={[simulatorStylesUrl]}
+        visionSimulatorId={visionSimulatorId}
         unsavedChanges={{
           enabled: true,
         }}
-        visionSimulatorId={visionSimulatorId}
       />
     </div>
   )

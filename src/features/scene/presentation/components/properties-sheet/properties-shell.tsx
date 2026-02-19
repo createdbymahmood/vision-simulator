@@ -51,7 +51,7 @@ export const PropertiesDeleteAction: React.FC<PropertiesDeleteActionProps> = ({
         title={buttonLabel}
         variant='destructive'
       >
-        <Trash01 className='size-4' />
+        <Trash01 className='vs:size-4' />
       </Button>
     </AlertDialogTrigger>
     <AlertDialogContent>
@@ -94,37 +94,37 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
 
   return (
     <div
-      className='fixed left-16 top-16 z-40 w-[360px] max-w-[calc(100vw-8rem)]'
+      className='vs:fixed vs:left-16 vs:top-16 vs:z-40 vs:w-[360px] vs:max-w-[calc(100vw-8rem)]'
       onWheelCapture={(event) => event.stopPropagation()}
     >
-      <div className='bg-background supports-[backdrop-filter]:bg-background/95 flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-xl border shadow-lg backdrop-blur'>
-        <div className='border-b px-4 py-3'>
-          <div className='flex items-center justify-between gap-3'>
-            <div className='flex min-w-0 items-center gap-3'>
+      <div className='vs:bg-background vs:supports-[backdrop-filter]:bg-background/95 vs:flex vs:max-h-[calc(100vh-8rem)] vs:flex-col vs:overflow-hidden vs:rounded-xl vs:border vs:shadow-lg vs:backdrop-blur'>
+        <div className='vs:border-b vs:px-4 vs:py-3'>
+          <div className='vs:flex vs:items-center vs:justify-between vs:gap-3'>
+            <div className='vs:flex vs:min-w-0 vs:items-center vs:gap-3'>
               {icon ? (
-                <div className='flex size-10 items-center justify-center rounded-md bg-muted text-muted-foreground'>
+                <div className='vs:flex vs:size-10 vs:items-center vs:justify-center vs:rounded-md vs:bg-muted vs:text-muted-foreground'>
                   {icon}
                 </div>
               ) : null}
-              <div className='flex min-w-0 flex-col gap-1 leading-tight text-left'>
-                <p className='flex items-center gap-2 text-base font-semibold'>
-                  <span className='truncate'>{entityName ?? title}</span>
+              <div className='vs:flex vs:min-w-0 vs:flex-col vs:gap-1 vs:leading-tight vs:text-left'>
+                <p className='vs:flex vs:items-center vs:gap-2 vs:text-base vs:font-semibold'>
+                  <span className='vs:truncate'>{entityName ?? title}</span>
                   {accentColor ? (
                     <span
                       aria-hidden
-                      className='size-2.5 rounded-full'
+                      className='vs:size-2.5 vs:rounded-full'
                       style={{backgroundColor: accentColor}}
                     />
                   ) : null}
                 </p>
-                <p className='text-xs text-muted-foreground'>
+                <p className='vs:text-xs vs:text-muted-foreground'>
                   {title}
                   {entityId ? ` • ${entityId}` : ''}
                 </p>
               </div>
             </div>
 
-            <div className='flex items-center gap-1'>
+            <div className='vs:flex vs:items-center vs:gap-1'>
               {actions}
               <Button
                 size='icon-sm'
@@ -136,9 +136,9 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
                 }
               >
                 {collapsed ? (
-                  <ChevronDown className='size-4' />
+                  <ChevronDown className='vs:size-4' />
                 ) : (
-                  <ChevronUp className='size-4' />
+                  <ChevronUp className='vs:size-4' />
                 )}
               </Button>
               <Button
@@ -148,14 +148,17 @@ export const PropertiesShell: React.FC<PropertiesShellProps> = ({
                 variant='ghost'
                 onClick={() => onOpenChange(false)}
               >
-                <X className='size-4' />
+                <X className='vs:size-4' />
               </Button>
             </div>
           </div>
         </div>
 
-        <Collapsible className='min-h-0 flex flex-1 flex-col' open={!collapsed}>
-          <CollapsibleContent className='min-h-0 flex-1 overflow-y-auto p-4'>
+        <Collapsible
+          className='vs:min-h-0 vs:flex vs:flex-1 vs:flex-col'
+          open={!collapsed}
+        >
+          <CollapsibleContent className='vs:min-h-0 vs:flex-1 vs:overflow-y-auto vs:p-4'>
             {children}
           </CollapsibleContent>
         </Collapsible>
@@ -175,11 +178,13 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({
   children,
   className,
 }) => (
-  <div className={cn('space-y-3', className)}>
-    <div className='flex items-center justify-between'>
-      <p className='text-xs font-medium text-muted-foreground'>{title}</p>
+  <div className={cn('vs:space-y-3', className)}>
+    <div className='vs:flex vs:items-center vs:justify-between'>
+      <p className='vs:text-xs vs:font-medium vs:text-muted-foreground'>
+        {title}
+      </p>
     </div>
     <Separator />
-    <div className='space-y-4'>{children}</div>
+    <div className='vs:space-y-4'>{children}</div>
   </div>
 )

@@ -42,9 +42,7 @@ export interface SceneState {
   deleteArea: (areaId: string) => SceneRoot
   addWall: (wall: Omit<WallEntity, 'id'>) => SceneRoot
   addShape: (shape: Omit<ShapeEntity, 'id'>) => SceneRoot
-  addCamera: (
-    camera: Omit<CameraEntity, 'id' | 'ptz' | 'type'>,
-  ) => SceneRoot
+  addCamera: (camera: Omit<CameraEntity, 'id' | 'ptz' | 'type'>) => SceneRoot
   updateCamera: (
     id: string,
     updater: (camera: CameraEntity) => void,
@@ -580,7 +578,9 @@ const normalizeCameraEntity = (camera: CameraEntity): CameraEntity => {
     sourceDeviceName: resolveNormalizedSourceDeviceName(camera),
     sourceDeviceKind: resolveNormalizedSourceDeviceKind(camera),
     sourceDeviceFeatures:
-      camera.sourceDeviceFeatures ?? normalizationInput.sourceDeviceFeatures ?? [],
+      camera.sourceDeviceFeatures ??
+      normalizationInput.sourceDeviceFeatures ??
+      [],
     ptz: resolveNormalizedPtz(camera, normalizationInput),
     fovHorizontal: optics.fovHorizontal,
     fovVertical: optics.fovVertical,

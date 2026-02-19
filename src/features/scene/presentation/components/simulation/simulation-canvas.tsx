@@ -19,7 +19,7 @@ const SimulationCanvasComponent: React.FC<SimulationCanvasProps> = ({
 }) => (
   <Canvas
     camera={{fov: 50, position: [40, 30, 40], near: 0.5, far: 1200}}
-    className={className ?? 'h-full w-full'}
+    className={className ?? 'vs:h-full vs:w-full'}
     dpr={[1, 1.5]}
     gl={{antialias: true, alpha: true, logarithmicDepthBuffer: true}}
     onCreated={({gl}) => {

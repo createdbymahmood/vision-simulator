@@ -36,8 +36,8 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
   onPreviewViewModeChange,
 }) => {
   return (
-    <div className='flex h-14 items-center bg-background/80 backdrop-blur px-4 border-b gap-2'>
-      <div className='flex items-center gap-4'>
+    <div className='vs:flex vs:h-14 vs:items-center vs:bg-background/80 vs:backdrop-blur vs:px-4 vs:border-b vs:gap-2'>
+      <div className='vs:flex vs:items-center vs:gap-4'>
         {showBackButton ? (
           <Button
             size='icon'
@@ -45,14 +45,14 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
             variant='ghost'
             onClick={onBackToEditor}
           >
-            <ArrowLeft className='size-5' />
+            <ArrowLeft className='vs:size-5' />
           </Button>
         ) : null}
         {leftControls ? (
           leftControls
         ) : allowPreviewViewSwitch ? (
           <ToggleGroup
-            className='bg-background'
+            className='vs:bg-background'
             type='single'
             value={previewViewMode}
             variant='outline'
@@ -64,14 +64,14 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
           >
             <ToggleGroupItem
               aria-label='3D view'
-              className='cursor-pointer'
+              className='vs:cursor-pointer'
               value='3d'
             >
               3D
             </ToggleGroupItem>
             <ToggleGroupItem
               aria-label='2D top-down view'
-              className='cursor-pointer'
+              className='vs:cursor-pointer'
               value='2d'
             >
               2D
@@ -100,10 +100,10 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
         </div> */}
       </div>
 
-      <div className='flex items-center gap-2 ml-auto'>
+      <div className='vs:flex vs:items-center vs:gap-2 vs:ml-auto'>
         {isRecording ? (
-          <div className='flex items-center gap-2 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600 tabular-nums'>
-            <span className='recording-dot size-2 rounded-full bg-red-500' />
+          <div className='vs:flex vs:items-center vs:gap-2 vs:rounded-full vs:bg-red-50 vs:px-3 vs:py-1 vs:text-xs vs:font-semibold vs:text-red-600 vs:tabular-nums'>
+            <span className='recording-dot vs:size-2 vs:rounded-full vs:bg-red-500' />
             {recordingLabel}
           </div>
         ) : null}
@@ -113,11 +113,11 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
           variant={isRecording ? 'destructive' : 'outline'}
           onClick={isRecording ? onStopRecording : onStartRecording}
         >
-          <VideoRecorder className='size-5' />
+          <VideoRecorder className='vs:size-5' />
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </Button>
         <Button variant='outline' onClick={onSnapshot}>
-          <Camera className='size-5' />
+          <Camera className='vs:size-5' />
           Export Snapshot
         </Button>
       </div>

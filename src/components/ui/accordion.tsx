@@ -16,7 +16,7 @@ function AccordionItem({
 }: React.ComponentProps<typeof AccordionPrimitive.Item>) {
   return (
     <AccordionPrimitive.Item
-      className={cn('border-b last:border-b-0', className)}
+      className={cn('vs:border-b vs:last:border-b-0', className)}
       data-slot='accordion-item'
       {...props}
     />
@@ -29,17 +29,17 @@ function AccordionTrigger({
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
   return (
-    <AccordionPrimitive.Header className='flex'>
+    <AccordionPrimitive.Header className='vs:flex'>
       <AccordionPrimitive.Trigger
         data-slot='accordion-trigger'
         className={cn(
-          'focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180',
+          'vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:flex vs:flex-1 vs:items-start vs:justify-between vs:gap-4 vs:rounded-md vs:py-4 vs:text-left vs:text-sm vs:font-medium vs:transition-all vs:outline-none vs:hover:underline vs:focus-visible:ring-[3px] vs:disabled:pointer-events-none vs:disabled:opacity-50 vs:[&[data-state=open]>svg]:rotate-180',
           className,
         )}
         {...props}
       >
         {children}
-        <ChevronDownIcon className='text-muted-foreground pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200' />
+        <ChevronDownIcon className='vs:text-muted-foreground vs:pointer-events-none vs:size-4 vs:shrink-0 vs:translate-y-0.5 vs:transition-transform vs:duration-200' />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )
@@ -52,11 +52,11 @@ function AccordionContent({
 }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
   return (
     <AccordionPrimitive.Content
-      className='data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm'
+      className='vs:data-[state=closed]:animate-accordion-up vs:data-[state=open]:animate-accordion-down vs:overflow-hidden vs:text-sm'
       data-slot='accordion-content'
       {...props}
     >
-      <div className={cn('pt-0 pb-4', className)}>{children}</div>
+      <div className={cn('vs:pt-0 vs:pb-4', className)}>{children}</div>
     </AccordionPrimitive.Content>
   )
 }

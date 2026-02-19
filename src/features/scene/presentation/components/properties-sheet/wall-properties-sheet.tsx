@@ -24,9 +24,9 @@ interface MetricProps {
 }
 
 const Metric: React.FC<MetricProps> = ({label, value}) => (
-  <div className='space-y-1 rounded-md border p-3'>
-    <p className='text-xs text-muted-foreground'>{label}</p>
-    <p className='text-sm font-semibold'>{value}</p>
+  <div className='vs:space-y-1 vs:rounded-md vs:border vs:p-3'>
+    <p className='vs:text-xs vs:text-muted-foreground'>{label}</p>
+    <p className='vs:text-sm vs:font-semibold'>{value}</p>
   </div>
 )
 
@@ -171,16 +171,16 @@ export const WallPropertiesSheet: React.FC = () => {
       open={isOpen}
     >
       {selectedWall ? (
-        <div className='space-y-6'>
+        <div className='vs:space-y-6'>
           <PropertiesSection title='Metrics'>
-            <div className='grid grid-cols-2 gap-3'>
+            <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
               <Metric label='Segments' value={segmentCount.toString()} />
               <Metric label='Total Length' value={formatMeters(totalLength)} />
             </div>
           </PropertiesSection>
 
           <PropertiesSection title='Appearance & Dimensions'>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label htmlFor='wall-color'>Color</Label>
               <Input
                 id='wall-color'
@@ -190,8 +190,8 @@ export const WallPropertiesSheet: React.FC = () => {
               />
             </div>
 
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-2'>
+            <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
+              <div className='vs:space-y-2'>
                 <Label>Thickness ({selectedWall.thickness.toFixed(2)} m)</Label>
                 <Slider
                   max={2}
@@ -201,8 +201,8 @@ export const WallPropertiesSheet: React.FC = () => {
                   onValueChange={handleThicknessChange}
                 />
               </div>
-              <div className='space-y-2'>
-                <Label className='sr-only'>Thickness input</Label>
+              <div className='vs:space-y-2'>
+                <Label className='vs:sr-only'>Thickness input</Label>
                 <Input
                   min={0.05}
                   step={0.01}
@@ -217,8 +217,8 @@ export const WallPropertiesSheet: React.FC = () => {
               </div>
             </div>
 
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-2'>
+            <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
+              <div className='vs:space-y-2'>
                 <Label>Height ({selectedWall.height.toFixed(2)} m)</Label>
                 <Slider
                   max={10}
@@ -228,8 +228,8 @@ export const WallPropertiesSheet: React.FC = () => {
                   onValueChange={handleHeightChange}
                 />
               </div>
-              <div className='space-y-2'>
-                <Label className='sr-only'>Height input</Label>
+              <div className='vs:space-y-2'>
+                <Label className='vs:sr-only'>Height input</Label>
                 <Input
                   min={0.5}
                   step={0.1}
@@ -246,7 +246,7 @@ export const WallPropertiesSheet: React.FC = () => {
           </PropertiesSection>
         </div>
       ) : (
-        <p className='text-sm text-muted-foreground'>
+        <p className='vs:text-sm vs:text-muted-foreground'>
           Select a wall to edit its properties.
         </p>
       )}

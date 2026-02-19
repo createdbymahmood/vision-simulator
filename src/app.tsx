@@ -85,7 +85,8 @@ interface ResolveShadowStyleUrlsParams {
   documentStyleLinks: string[]
 }
 
-const APP_SURFACE_CLASSNAME = 'block size-full min-h-0 min-w-0 overflow-hidden'
+const APP_SURFACE_CLASSNAME =
+  'vs:block vs:size-full vs:min-h-0 vs:min-w-0 vs:overflow-hidden'
 
 const isVisionSimulatorStyleSource = (value: string | null | undefined) => {
   if (!value) {

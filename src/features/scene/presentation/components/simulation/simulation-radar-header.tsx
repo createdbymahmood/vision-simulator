@@ -15,11 +15,11 @@ export const SimulationRadarHeader: React.FC<SimulationRadarHeaderProps> = ({
   onModeChange,
 }) => (
   <CardHeader>
-    <div className='flex items-center justify-between gap-4'>
+    <div className='vs:flex vs:items-center vs:justify-between vs:gap-4'>
       <CardTitle>RADAR</CardTitle>
-      <div className='flex items-center gap-2'>
+      <div className='vs:flex vs:items-center vs:gap-2'>
         <label
-          className='text-xs font-medium text-muted-foreground'
+          className='vs:text-xs vs:font-medium vs:text-muted-foreground'
           htmlFor='real-radar-mode'
         >
           Real

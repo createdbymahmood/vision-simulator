@@ -182,13 +182,13 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   }, [isSimulatedMode, peopleWorld, pingPersonId, toRadar])
 
   return (
-    <div className='pointer-events-auto w-full'>
-      <div className='size-full'>
-        <Card className='w-full rounded-none border-none'>
+    <div className='vs:pointer-events-auto vs:w-full'>
+      <div className='vs:size-full'>
+        <Card className='vs:w-full vs:rounded-none vs:border-none'>
           <SimulationRadarHeader mode={radarMode} onModeChange={setRadarMode} />
-          <CardContent className='p-0 overflow-hidden'>
+          <CardContent className='vs:p-0 vs:overflow-hidden'>
             <div
-              className='relative overflow-hidden overscroll-contain'
+              className='vs:relative vs:overflow-hidden vs:overscroll-contain'
               ref={isSimulatedMode ? interactionRef : undefined}
               onPointerDown={isSimulatedMode ? handlePanStart : undefined}
             >
@@ -227,7 +227,7 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
             </div>
           </CardContent>
           <CardFooter>
-            <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
+            <div className='vs:flex vs:w-full vs:items-center vs:justify-between vs:text-xs vs:text-muted-foreground'>
               <span>People: {visiblePeopleCount}</span>
               <span>Cameras: {visibleCameraCount}</span>
               <span>Detections: {visibleDetectionCount}</span>

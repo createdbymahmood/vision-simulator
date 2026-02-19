@@ -25,18 +25,18 @@ export const SimulationViewport: React.FC<SimulationViewportProps> = ({
   return (
     <div
       className={cn(
-        'relative z-1 min-h-0 min-w-0 flex-1 overflow-hidden',
-        isRecording ? 'ring-2 ring-red-500/60' : '',
+        'vs:relative vs:z-1 vs:min-h-0 vs:min-w-0 vs:flex-1 vs:overflow-hidden',
+        isRecording ? 'vs:ring-2 vs:ring-red-500/60' : '',
       )}
     >
-      <div className='absolute inset-0'>{children}</div>
+      <div className='vs:absolute vs:inset-0'>{children}</div>
 
       {isRecording ? (
-        <div className='absolute right-4 top-4 z-20 flex items-center gap-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white'>
-          <span className='recording-dot size-2 rounded-full bg-red-500' />
+        <div className='vs:absolute vs:right-4 vs:top-4 vs:z-20 vs:flex vs:items-center vs:gap-3 vs:rounded-full vs:bg-black/70 vs:px-3 vs:py-1 vs:text-xs vs:font-semibold vs:text-white'>
+          <span className='recording-dot vs:size-2 vs:rounded-full vs:bg-red-500' />
           <span>{recordingLabel}</span>
           {isLowFps ? (
-            <Badge className='h-5 px-2' variant='destructive'>
+            <Badge className='vs:h-5 vs:px-2' variant='destructive'>
               {fps ? `FPS ${fps}` : 'FPS low'}
             </Badge>
           ) : null}
@@ -44,15 +44,15 @@ export const SimulationViewport: React.FC<SimulationViewportProps> = ({
       ) : null}
 
       {overlayControls ? (
-        <div className='pointer-events-none absolute inset-0 z-20'>
+        <div className='vs:pointer-events-none vs:absolute vs:inset-0 vs:z-20'>
           {overlayControls}
         </div>
       ) : null}
 
       <div
         className={cn(
-          'pointer-events-none absolute inset-0 bg-white transition-opacity duration-100',
-          showFlash ? 'opacity-80' : 'opacity-0',
+          'vs:pointer-events-none vs:absolute vs:inset-0 vs:bg-white vs:transition-opacity vs:duration-100',
+          showFlash ? 'vs:opacity-80' : 'vs:opacity-0',
         )}
       />
     </div>

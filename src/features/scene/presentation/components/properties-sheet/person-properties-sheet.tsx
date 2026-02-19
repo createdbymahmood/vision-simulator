@@ -146,9 +146,9 @@ export const PersonPropertiesSheet: React.FC = () => {
       open={isOpen}
     >
       {selectedPerson ? (
-        <div className='space-y-6'>
+        <div className='vs:space-y-6'>
           <PropertiesSection title='Identity'>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label htmlFor='person-name'>Name</Label>
               <Input
                 id='person-name'
@@ -159,7 +159,7 @@ export const PersonPropertiesSheet: React.FC = () => {
           </PropertiesSection>
 
           <PropertiesSection title='Physical'>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Height ({selectedPerson.height.toFixed(2)} m)</Label>
               <Slider
                 max={1.9}
@@ -169,7 +169,7 @@ export const PersonPropertiesSheet: React.FC = () => {
                 onValueChange={handleHeightChange}
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Speed ({selectedPerson.speed.toFixed(2)} m/s)</Label>
               <Slider
                 max={5}
@@ -182,7 +182,7 @@ export const PersonPropertiesSheet: React.FC = () => {
           </PropertiesSection>
         </div>
       ) : (
-        <p className='text-sm text-muted-foreground'>
+        <p className='vs:text-sm vs:text-muted-foreground'>
           Select a person to edit their properties.
         </p>
       )}

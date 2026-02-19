@@ -45,7 +45,7 @@ declare module '@tanstack/react-router' {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <div className='h-screen w-screen'>
+    <div className='vs:h-screen vs:w-screen'>
       <RouterProvider router={router} />
     </div>
   </StrictMode>,

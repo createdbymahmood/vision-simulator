@@ -38,11 +38,11 @@ export const MapViewTooltip: React.FC<MapViewTooltipProps> = ({tooltip}) => {
 
   return (
     <div
-      className='pointer-events-none z-50 transition-opacity duration-200'
+      className='vs:pointer-events-none vs:z-50 vs:transition-opacity vs:duration-200'
       ref={refs.setFloating}
       style={floatingStyles}
     >
-      <div className='rounded-full bg-black/60 px-3 py-2 text-xs text-white shadow-lg backdrop-blur tabular-nums'>
+      <div className='vs:rounded-full vs:bg-black/60 vs:px-3 vs:py-2 vs:text-xs vs:text-white vs:shadow-lg vs:backdrop-blur vs:tabular-nums'>
         {tooltip.text}
       </div>
     </div>

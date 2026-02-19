@@ -368,12 +368,12 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   return (
     <div
       className={cn(
-        'flex w-full min-h-0 min-w-0 flex-col',
+        'vs:flex vs:w-full vs:min-h-0 vs:min-w-0 vs:flex-col',
         // DON't REMOVE THESE COMMENTS
         // viewMode === 'preview'
         //   ? 'h-svh min-h-0 overflow-hidden'
         //   : 'min-h-screen',
-        'size-full',
+        'vs:size-full',
       )}
     >
       {viewMode === 'editor' ? (
@@ -402,8 +402,10 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
       <main
         className={cn(
-          'flex min-h-0 min-w-0 flex-1 flex-col size-full',
-          viewMode === 'editor' ? 'gap-4 pt-14' : 'gap-0 overflow-hidden',
+          'vs:flex vs:min-h-0 vs:min-w-0 vs:flex-1 vs:flex-col vs:size-full',
+          viewMode === 'editor'
+            ? 'vs:gap-4 vs:pt-14'
+            : 'vs:gap-0 vs:overflow-hidden',
         )}
       >
         {viewMode === 'editor' ? (

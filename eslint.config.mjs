@@ -2,14 +2,14 @@ import {defineConfig} from '@fullstacksjs/eslint-config'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import unusedImports from 'eslint-plugin-unused-imports'
 
+import {tailwindPrefixPlugin} from './eslint/tailwind-prefix-plugin.mjs'
+
 export default defineConfig({
-  ignores: [
-    'src/routes/**',
-    'src/data-provider/api/**',
-  ],
+  ignores: ['src/routes/**', 'src/data-provider/api/**'],
   plugins: {
     'unused-imports': unusedImports,
     'react-refresh': reactRefresh,
+    'tailwind-prefix': tailwindPrefixPlugin,
   },
   rules: {
     'no-unused-vars': 'off', // or "@typescript-eslint/no-unused-vars": "off",
@@ -23,5 +23,6 @@ export default defineConfig({
         argsIgnorePattern: '^_',
       },
     ],
+    'tailwind-prefix/prefix-classes': 'warn',
   },
 })

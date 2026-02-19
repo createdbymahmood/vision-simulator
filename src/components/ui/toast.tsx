@@ -41,22 +41,23 @@ export function ToastProvider({children}: {children: React.ReactNode}) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className='fixed right-6 top-6 z-50 flex w-80 flex-col gap-3'>
+      <div className='vs:fixed vs:right-6 vs:top-6 vs:z-50 vs:flex vs:w-80 vs:flex-col vs:gap-3'>
         {toasts.map((toast) => (
           <div
             key={toast.id}
             className={cn(
-              'rounded-xl border border-border bg-card/90 p-3 shadow-2xl backdrop-blur',
+              'vs:rounded-xl vs:border vs:border-border vs:bg-card/90 vs:p-3 vs:shadow-2xl vs:backdrop-blur',
               toast.variant === 'destructive' &&
-                'border-destructive/70 bg-destructive/10 text-destructive',
-              toast.variant === 'success' && 'border-primary/50 bg-primary/10',
+                'vs:border-destructive/70 vs:bg-destructive/10 vs:text-destructive',
+              toast.variant === 'success' &&
+                'vs:border-primary/50 vs:bg-primary/10',
             )}
           >
             {toast.title ? (
-              <p className='text-sm font-semibold'>{toast.title}</p>
+              <p className='vs:text-sm vs:font-semibold'>{toast.title}</p>
             ) : null}
             {toast.description ? (
-              <p className='text-sm text-muted-foreground'>
+              <p className='vs:text-sm vs:text-muted-foreground'>
                 {toast.description}
               </p>
             ) : null}

@@ -1116,7 +1116,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
 
   return (
     <>
-      <div className='flex min-h-0 flex-1 flex-col gap-2 p-3'>
+      <div className='vs:flex vs:min-h-0 vs:flex-1 vs:flex-col vs:gap-2 vs:p-3'>
         <div
           className='real-radar-map-frame'
           style={{height: `${mapHeight}px`}}
@@ -1143,7 +1143,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
           </div>
         </div>
 
-        <div aria-hidden='true' className='hidden'>
+        <div aria-hidden='true' className='vs:hidden'>
           <SimulationRealRadarActivities activities={radarUpdateItems} />
         </div>
       </div>
@@ -1156,15 +1156,15 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
         }}
         open={Boolean(selectedCamera)}
       >
-        <DialogContent className='max-h-[85dvh] overflow-hidden p-0 sm:max-w-[900px]'>
-          <DialogHeader className='px-4 pt-4'>
+        <DialogContent className='vs:max-h-[85dvh] vs:overflow-hidden vs:p-0 vs:sm:max-w-[900px]'>
+          <DialogHeader className='vs:px-4 vs:pt-4'>
             <DialogTitle>
               {selectedCamera?.sourceDeviceName ??
                 selectedCamera?.name ??
                 'Camera stream'}
             </DialogTitle>
           </DialogHeader>
-          <div className='h-[540px]'>
+          <div className='vs:h-[540px]'>
             {selectedCamera ? (
               <RealDeviceFeedPlayer
                 camera={selectedCamera}

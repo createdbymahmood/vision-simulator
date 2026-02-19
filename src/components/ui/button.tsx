@@ -7,27 +7,29 @@ import * as React from 'react'
 import {cn} from '@/lib/utils'
 
 const buttonVariants = cva(
-  "cursor-pointer inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "vs:cursor-pointer vs:inline-flex vs:items-center vs:justify-center vs:gap-2 vs:whitespace-nowrap vs:rounded-md vs:text-sm vs:font-medium vs:transition-all vs:disabled:pointer-events-none vs:disabled:opacity-50 vs:[&_svg]:pointer-events-none vs:[&_svg:not([class*='size-'])]:size-4 vs:shrink-0 vs:[&_svg]:shrink-0 vs:outline-none vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:focus-visible:ring-[3px] vs:aria-invalid:ring-destructive/20 vs:dark:aria-invalid:ring-destructive/40 vs:aria-invalid:border-destructive",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default:
+          'vs:bg-primary vs:text-primary-foreground vs:hover:bg-primary/90',
         destructive:
-          'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+          'vs:bg-destructive vs:text-white vs:hover:bg-destructive/90 vs:focus-visible:ring-destructive/20 vs:dark:focus-visible:ring-destructive/40 vs:dark:bg-destructive/60',
         outline:
-          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
+          'vs:border vs:bg-background vs:shadow-xs vs:hover:bg-accent vs:hover:text-accent-foreground vs:dark:bg-input/30 vs:dark:border-input vs:dark:hover:bg-input/50',
         secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          'vs:bg-secondary vs:text-secondary-foreground vs:hover:bg-secondary/80',
         ghost:
-          'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
-        link: 'text-primary underline-offset-4',
+          'vs:hover:bg-accent vs:hover:text-accent-foreground vs:dark:hover:bg-accent/50',
+        link: 'vs:text-primary vs:underline-offset-4',
       },
       size: {
-        default: 'h-10 px-4 py-2 has-[>svg]:px-3 font-semibold rounded-lg',
-        sm: 'h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5',
-        lg: 'h-11 rounded-md px-6 has-[>svg]:px-4',
-        icon: 'size-10 flex items-center justify-center',
-        'icon-sm': 'size-8',
+        default:
+          'vs:h-10 vs:px-4 vs:py-2 vs:has-[>svg]:px-3 vs:font-semibold vs:rounded-lg',
+        sm: 'vs:h-8 vs:rounded-md vs:gap-1.5 vs:px-3 vs:has-[>svg]:px-2.5',
+        lg: 'vs:h-11 vs:rounded-md vs:px-6 vs:has-[>svg]:px-4',
+        icon: 'vs:size-10 vs:flex vs:items-center vs:justify-center',
+        'icon-sm': 'vs:size-8',
       },
     },
     defaultVariants: {
@@ -57,27 +59,27 @@ function Button({
     <Comp
       data-size={size}
       aria-busy={loading || undefined}
-      className={cn(
-        buttonVariants({variant, size, className}),
-        loading && 'relative',
-      )}
       data-variant={variant}
       disabled={disabled || loading}
       data-slot='button'
+      className={cn(
+        buttonVariants({variant, size, className}),
+        loading && 'vs:relative',
+      )}
       {...props}
     >
       {loading ? (
         <span
           aria-hidden='true'
-          className='absolute inset-0 flex items-center justify-center'
+          className='vs:absolute vs:inset-0 vs:flex vs:items-center vs:justify-center'
         >
-          <span className='inline-flex size-4 animate-spin rounded-full border-2 border-current border-t-transparent shrink-0' />
+          <span className='vs:inline-flex vs:size-4 vs:animate-spin vs:rounded-full vs:border-2 vs:border-current vs:border-t-transparent vs:shrink-0' />
         </span>
       ) : null}
       <span
         className={cn(
-          'inline-flex items-center gap-2 shrink-0',
-          loading && 'invisible',
+          'vs:inline-flex vs:items-center vs:gap-2 vs:shrink-0',
+          loading && 'vs:invisible',
         )}
       >
         {children}

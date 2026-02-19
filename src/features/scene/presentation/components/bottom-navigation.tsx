@@ -45,13 +45,13 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   const dependentDisabled = !isEditMode || !hasAreas
 
   return (
-    <div className='pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center'>
-      <div className='pointer-events-auto flex w-full max-w-fit items-center justify-between rounded-lg shadow-lg gap-2 bg-background p-2 border'>
+    <div className='vs:pointer-events-none vs:fixed vs:inset-x-0 vs:bottom-4 vs:z-30 vs:flex vs:justify-center'>
+      <div className='vs:pointer-events-auto vs:flex vs:w-full vs:max-w-fit vs:items-center vs:justify-between vs:rounded-lg vs:shadow-lg vs:gap-2 vs:bg-background vs:p-2 vs:border'>
         <ToolButton
           active={activeTool === 'select'}
           disabled={!isEditMode}
           label='Selector'
-          icon={<MousePointer2 className='size-5' />}
+          icon={<MousePointer2 className='vs:size-5' />}
           onClick={() => onSelectTool('select')}
         />
 
@@ -59,7 +59,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           active={activeTool === 'hand'}
           disabled={!isEditMode}
           label='Hand Mode'
-          icon={<Hand className='size-5' />}
+          icon={<Hand className='vs:size-5' />}
           onClick={() => onSelectTool('hand')}
         />
 
@@ -74,7 +74,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           active={activeTool === 'draw-wall'}
           disabled={dependentDisabled}
           label='Draw Wall'
-          icon={<BrickWall className='size-5' />}
+          icon={<BrickWall className='vs:size-5' />}
           onClick={() => onSelectTool('draw-wall')}
           tooltip={dependentDisabled ? disabledToolTooltip : undefined}
         />

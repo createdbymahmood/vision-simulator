@@ -54,12 +54,14 @@ export const useSceneDirtyState = ({
     })
   }, [currentSceneSignature])
 
-  const createSaveSnapshot = useCallbackRef((sceneToSave: SceneRoot): SaveSnapshot => {
-    return {
-      sceneSignature: createSceneSignature(sceneToSave),
-      revision: revisionState.currentRevision,
-    }
-  })
+  const createSaveSnapshot = useCallbackRef(
+    (sceneToSave: SceneRoot): SaveSnapshot => {
+      return {
+        sceneSignature: createSceneSignature(sceneToSave),
+        revision: revisionState.currentRevision,
+      }
+    },
+  )
 
   const markSaved = useCallbackRef((snapshot: SaveSnapshot) => {
     setRevisionState((state) => {
@@ -73,7 +75,8 @@ export const useSceneDirtyState = ({
 
   const isDirty =
     enabled &&
-    revisionState.currentSceneSignature !== revisionState.lastSavedSceneSignature
+    revisionState.currentSceneSignature !==
+      revisionState.lastSavedSceneSignature
 
   return {
     isDirty,

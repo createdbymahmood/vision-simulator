@@ -14,9 +14,12 @@ function Pagination({className, ...props}: React.ComponentProps<'nav'>) {
   return (
     <nav
       aria-label='pagination'
-      className={cn('mx-auto flex w-full justify-center', className)}
       data-slot='pagination'
       role='navigation'
+      className={cn(
+        'vs:mx-auto vs:flex vs:w-full vs:justify-center',
+        className,
+      )}
       {...props}
     />
   )
@@ -25,7 +28,7 @@ function Pagination({className, ...props}: React.ComponentProps<'nav'>) {
 function PaginationContent({className, ...props}: React.ComponentProps<'ul'>) {
   return (
     <ul
-      className={cn('flex flex-row items-center gap-1', className)}
+      className={cn('vs:flex vs:flex-row vs:items-center vs:gap-1', className)}
       data-slot='pagination-content'
       {...props}
     />
@@ -62,7 +65,7 @@ function PaginationLink({
       )}
       {...props}
     >
-      {children ?? <span className='sr-only'>Page</span>}
+      {children ?? <span className='vs:sr-only'>Page</span>}
     </a>
   )
 }
@@ -75,11 +78,11 @@ function PaginationPrevious({
     <PaginationLink
       size='default'
       aria-label='Go to previous page'
-      className={cn('gap-1 px-2.5 sm:pl-2.5', className)}
+      className={cn('vs:gap-1 vs:px-2.5 vs:sm:pl-2.5', className)}
       {...props}
     >
       <ChevronLeftIcon />
-      <span className='hidden sm:block'>Previous</span>
+      <span className='vs:hidden vs:sm:block'>Previous</span>
     </PaginationLink>
   )
 }
@@ -92,10 +95,10 @@ function PaginationNext({
     <PaginationLink
       size='default'
       aria-label='Go to next page'
-      className={cn('gap-1 px-2.5 sm:pr-2.5', className)}
+      className={cn('vs:gap-1 vs:px-2.5 vs:sm:pr-2.5', className)}
       {...props}
     >
-      <span className='hidden sm:block'>Next</span>
+      <span className='vs:hidden vs:sm:block'>Next</span>
       <ChevronRightIcon />
     </PaginationLink>
   )
@@ -108,12 +111,15 @@ function PaginationEllipsis({
   return (
     <span
       aria-hidden
-      className={cn('flex size-9 items-center justify-center', className)}
       data-slot='pagination-ellipsis'
+      className={cn(
+        'vs:flex vs:size-9 vs:items-center vs:justify-center',
+        className,
+      )}
       {...props}
     >
-      <MoreHorizontalIcon className='size-4' />
-      <span className='sr-only'>More pages</span>
+      <MoreHorizontalIcon className='vs:size-4' />
+      <span className='vs:sr-only'>More pages</span>
     </span>
   )
 }

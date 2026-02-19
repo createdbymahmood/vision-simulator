@@ -37,43 +37,43 @@ export const DevicesDialog: React.FC<DevicesDialogProps> = ({
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className='w-[360px] sm:w-[400px]' side='right'>
+      <SheetContent className='vs:w-[360px] vs:sm:w-[400px]' side='right'>
         <SheetHeader>
           <SheetTitle>Devices in use</SheetTitle>
           <SheetDescription>
             Quick glance at cameras placed in the scene.
           </SheetDescription>
         </SheetHeader>
-        <div className='mt-4 space-y-4'>
-          <div className='flex items-center justify-between rounded-lg border px-3 py-2'>
-            <div className='flex items-center gap-2 text-sm text-muted-foreground'>
+        <div className='vs:mt-4 vs:space-y-4'>
+          <div className='vs:flex vs:items-center vs:justify-between vs:rounded-lg vs:border vs:px-3 vs:py-2'>
+            <div className='vs:flex vs:items-center vs:gap-2 vs:text-sm vs:text-muted-foreground'>
               <span>Cameras</span>
             </div>
             <Badge variant='secondary'>{deviceCount}</Badge>
           </div>
 
-          <div className='space-y-2'>
+          <div className='vs:space-y-2'>
             {cameras.length === 0 ? (
-              <p className='text-sm text-muted-foreground'>
+              <p className='vs:text-sm vs:text-muted-foreground'>
                 No cameras placed yet.
               </p>
             ) : (
               cameras.map((camera) => (
                 <button
-                  className='flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left transition hover:bg-muted/60'
+                  className='vs:flex vs:w-full vs:items-center vs:justify-between vs:rounded-lg vs:border vs:px-3 vs:py-2 vs:text-left vs:transition vs:hover:bg-muted/60'
                   key={camera.id}
                   type='button'
                   onClick={() => handleSelectCamera(camera.id)}
                 >
-                  <div className='flex items-center gap-3'>
-                    <Avatar className='h-8 w-8 border'>
+                  <div className='vs:flex vs:items-center vs:gap-3'>
+                    <Avatar className='vs:h-8 vs:w-8 vs:border'>
                       <AvatarFallback style={{backgroundColor: camera.color}} />
                     </Avatar>
-                    <div className='flex flex-col'>
-                      <span className='font-medium'>
+                    <div className='vs:flex vs:flex-col'>
+                      <span className='vs:font-medium'>
                         {camera.sourceDeviceName || camera.name}
                       </span>
-                      <span className='text-xs text-muted-foreground'>
+                      <span className='vs:text-xs vs:text-muted-foreground'>
                         HFOV {camera.fovHorizontal.toFixed(0)}° • VFOV{' '}
                         {camera.fovVertical.toFixed(0)}° • Depth {camera.depth}{' '}
                         m

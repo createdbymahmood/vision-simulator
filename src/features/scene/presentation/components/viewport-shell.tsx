@@ -25,10 +25,10 @@ export const ViewportShell: React.FC<ViewportShellProps> = ({
 }) => {
   return (
     <div
-      className='relative w-full overflow-hidden backdrop-blur-lg h-full flex-1'
+      className='vs:relative vs:w-full vs:overflow-hidden vs:backdrop-blur-lg vs:h-full vs:flex-1'
       onMouseDown={onBlankClick}
     >
-      <div className='absolute inset-0'>
+      <div className='vs:absolute vs:inset-0'>
         <MapView
           activeTool={activeTool}
           onMapReady={onMapReady}

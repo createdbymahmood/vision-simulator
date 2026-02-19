@@ -11,7 +11,7 @@ function Tabs({
 }: React.ComponentProps<typeof TabsPrimitive.Root>) {
   return (
     <TabsPrimitive.Root
-      className={cn('flex flex-col gap-2', className)}
+      className={cn('vs:flex vs:flex-col vs:gap-2', className)}
       data-slot='tabs'
       {...props}
     />
@@ -26,7 +26,7 @@ function TabsList({
     <TabsPrimitive.List
       data-slot='tabs-list'
       className={cn(
-        'bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]',
+        'vs:bg-muted vs:text-muted-foreground vs:inline-flex vs:h-9 vs:w-fit vs:items-center vs:justify-center vs:rounded-lg vs:p-[3px]',
         className,
       )}
       {...props}
@@ -42,7 +42,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot='tabs-trigger'
       className={cn(
-        "data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "vs:data-[state=active]:bg-background vs:dark:data-[state=active]:text-foreground vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:focus-visible:outline-ring vs:dark:data-[state=active]:border-input vs:dark:data-[state=active]:bg-input/30 vs:text-foreground vs:dark:text-muted-foreground vs:inline-flex vs:h-[calc(100%-1px)] vs:flex-1 vs:items-center vs:justify-center vs:gap-1.5 vs:rounded-md vs:border vs:border-transparent vs:px-2 vs:py-1 vs:text-sm vs:font-medium vs:whitespace-nowrap vs:transition-[color,box-shadow] vs:focus-visible:ring-[3px] vs:focus-visible:outline-1 vs:disabled:pointer-events-none vs:disabled:opacity-50 vs:data-[state=active]:shadow-sm vs:[&_svg]:pointer-events-none vs:[&_svg]:shrink-0 vs:[&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
@@ -56,7 +56,7 @@ function TabsContent({
 }: React.ComponentProps<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content
-      className={cn('flex-1 outline-none', className)}
+      className={cn('vs:flex-1 vs:outline-none', className)}
       data-slot='tabs-content'
       {...props}
     />

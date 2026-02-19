@@ -1,6 +1,5 @@
-@import 'tailwindcss';
+@import 'tailwindcss' prefix(vs);
 @import 'tw-animate-css';
-@import 'tailwindcss';
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
@@ -107,15 +106,15 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply vs:border-border vs:outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased overflow-hidden;
+    @apply vs:bg-background vs:text-foreground vs:font-sans vs:antialiased vs:overflow-hidden;
     font-family: Geist, sans-serif;
   }
 
   ::selection {
-    @apply bg-muted-foreground/10 text-muted-foreground;
+    @apply vs:bg-muted-foreground/10 vs:text-muted-foreground;
   }
 }
 
@@ -171,16 +170,13 @@
 
   @variant sm {
     padding-inline: 2rem;
-    max-width: var(--breakpoint-sm);
   }
 
   @variant lg {
     padding-inline: 2rem;
-    max-width: var(--breakpoint-lg);
   }
 
   @variant xl {
     padding-inline: 2rem;
-    max-width: var(--breakpoint-xl);
   }
 }

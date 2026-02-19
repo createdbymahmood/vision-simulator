@@ -155,41 +155,43 @@ const RealDeviceFeedControls: React.FC<RealDeviceFeedControlsProps> = ({
   onTogglePlayback,
 }) => (
   <div
-    className={`absolute inset-0 z-20 flex items-end ${showControls ? '' : 'pointer-events-none opacity-0'}`}
+    className={`vs:absolute vs:inset-0 vs:z-20 vs:flex vs:items-end ${showControls ? '' : 'vs:pointer-events-none vs:opacity-0'}`}
   >
-    <div className='w-full bg-gradient-to-t from-black/70 via-black/40 to-transparent px-3 py-2'>
-      <div className='flex items-center gap-2 text-white'>
-        <span className='line-clamp-1 text-xs font-medium'>{title}</span>
+    <div className='vs:w-full vs:bg-gradient-to-t vs:from-black/70 vs:via-black/40 vs:to-transparent vs:px-3 vs:py-2'>
+      <div className='vs:flex vs:items-center vs:gap-2 vs:text-white'>
+        <span className='vs:line-clamp-1 vs:text-xs vs:font-medium'>
+          {title}
+        </span>
       </div>
-      <div className='flex items-center gap-2'>
+      <div className='vs:flex vs:items-center vs:gap-2'>
         {onTogglePlayback ? (
           <Button
             size='icon-sm'
-            className='text-white hover:bg-white/15 hover:text-white'
+            className='vs:text-white vs:hover:bg-white/15 vs:hover:text-white'
             disabled={!canControlPlayback || isBusy}
             variant='ghost'
             onClick={() => onTogglePlayback()}
           >
             {isPlaying ? (
-              <Square className='size-4' />
+              <Square className='vs:size-4' />
             ) : (
-              <Play className='size-4' />
+              <Play className='vs:size-4' />
             )}
           </Button>
         ) : null}
-        <span className='text-xs text-white/90'>{statusLabel}</span>
+        <span className='vs:text-xs vs:text-white/90'>{statusLabel}</span>
 
         {allowFullscreen ? (
           <Button
             size='icon-sm'
-            className='ml-auto text-white hover:bg-white/15 hover:text-white'
+            className='vs:ml-auto vs:text-white vs:hover:bg-white/15 vs:hover:text-white'
             variant='ghost'
             onClick={onToggleFullscreen}
           >
             {isFullscreen ? (
-              <Minimize2 className='size-4' />
+              <Minimize2 className='vs:size-4' />
             ) : (
-              <Expand className='size-4' />
+              <Expand className='vs:size-4' />
             )}
           </Button>
         ) : null}
@@ -238,18 +240,20 @@ export const RealDeviceFeedPlayer: React.FC<RealDeviceFeedPlayerProps> = ({
   return (
     <div className={wrapperClassName}>
       <div
-        className={isFullscreen ? 'min-h-0 w-full flex-1' : 'size-full'}
         ref={setContainerElement}
+        className={
+          isFullscreen ? 'vs:min-h-0 vs:w-full vs:flex-1' : 'vs:size-full'
+        }
       />
 
       {hasConfigError ? (
-        <div className='pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/70 px-3 text-center text-xs text-white/85'>
+        <div className='vs:pointer-events-none vs:absolute vs:inset-0 vs:z-10 vs:flex vs:items-center vs:justify-center vs:bg-black/70 vs:px-3 vs:text-center vs:text-xs vs:text-white/85'>
           Media stream URL is not configured.
         </div>
       ) : null}
 
       {hasStreamError ? (
-        <div className='pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/40 px-3 text-center text-xs text-white/85'>
+        <div className='vs:pointer-events-none vs:absolute vs:inset-0 vs:z-10 vs:flex vs:items-center vs:justify-center vs:bg-black/40 vs:px-3 vs:text-center vs:text-xs vs:text-white/85'>
           Unable to load live stream.
         </div>
       ) : null}

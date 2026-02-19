@@ -7,18 +7,18 @@ import * as React from 'react'
 import {cn} from '@/lib/utils'
 
 const badgeVariants = cva(
-  'inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden',
+  'vs:inline-flex vs:items-center vs:justify-center vs:rounded-full vs:border vs:px-2 vs:py-0.5 vs:text-xs vs:font-medium vs:w-fit vs:whitespace-nowrap vs:shrink-0 vs:[&>svg]:size-3 vs:gap-1 vs:[&>svg]:pointer-events-none vs:focus-visible:border-ring vs:focus-visible:ring-ring/50 vs:focus-visible:ring-[3px] vs:aria-invalid:ring-destructive/20 vs:dark:aria-invalid:ring-destructive/40 vs:aria-invalid:border-destructive vs:transition-[color,box-shadow] vs:overflow-hidden',
   {
     variants: {
       variant: {
         default:
-          'border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90',
+          'vs:border-transparent vs:bg-primary vs:text-primary-foreground vs:[a&]:hover:bg-primary/90',
         secondary:
-          'border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90',
+          'vs:border-transparent vs:bg-secondary vs:text-secondary-foreground vs:[a&]:hover:bg-secondary/90',
         destructive:
-          'border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+          'vs:border-transparent vs:bg-destructive vs:text-white vs:[a&]:hover:bg-destructive/90 vs:focus-visible:ring-destructive/20 vs:dark:focus-visible:ring-destructive/40 vs:dark:bg-destructive/60',
         outline:
-          'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
+          'vs:text-foreground vs:[a&]:hover:bg-accent vs:[a&]:hover:text-accent-foreground',
       },
     },
     defaultVariants: {

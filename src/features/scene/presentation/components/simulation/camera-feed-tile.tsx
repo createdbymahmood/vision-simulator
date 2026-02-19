@@ -75,39 +75,39 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   const detectionCount = peopleIds.length
 
   return (
-    <div className='w-full max-w-full min-w-0 border-b'>
-      <Card className='border-none rounded-none shadow-none py-4'>
-        <CardContent className='px-0'>
-          <div className='relative w-full aspect-video overflow-hidden bg-muted text-left'>
+    <div className='vs:w-full vs:max-w-full vs:min-w-0 vs:border-b'>
+      <Card className='vs:border-none vs:rounded-none vs:shadow-none vs:py-4'>
+        <CardContent className='vs:px-0'>
+          <div className='vs:relative vs:w-full vs:aspect-video vs:overflow-hidden vs:bg-muted vs:text-left'>
             {isRealDeviceFeed ? (
               <RealDeviceFeedPlayer camera={camera} autoPlay />
             ) : (
               <>
                 <div
-                  className='absolute inset-0'
+                  className='vs:absolute vs:inset-0'
                   ref={feedTarget.containerRef}
                 />
                 <canvas
-                  className='absolute inset-0 h-full w-full'
+                  className='vs:absolute vs:inset-0 vs:h-full vs:w-full'
                   ref={feedTarget.canvasRef}
                 />
                 {ENABLE_FEED_OPTICS ? (
                   <div
-                    className='absolute inset-0 pointer-events-none'
+                    className='vs:absolute vs:inset-0 vs:pointer-events-none'
                     style={{
                       background:
                         'radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(15,23,42,0.35) 100%)',
                     }}
                   />
                 ) : null}
-                <div className='pointer-events-none absolute inset-0'>
+                <div className='vs:pointer-events-none vs:absolute vs:inset-0'>
                   {boxes.map((box) => (
                     <div
                       key={box.id}
-                      className={`absolute border-2 ${
+                      className={`vs:absolute vs:border-2 ${
                         selectedPersonIds.includes(box.id)
-                          ? 'border-purple-500'
-                          : 'border-yellow-300'
+                          ? 'vs:border-purple-500'
+                          : 'vs:border-yellow-300'
                       }`}
                       style={{
                         left: `${box.left * 100}%`,
@@ -117,10 +117,10 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
                       }}
                     >
                       <span
-                        className={`absolute -top-5 left-0 text-[10px] px-1 rounded ${
+                        className={`vs:absolute vs:-top-5 vs:left-0 vs:text-[10px] vs:px-1 vs:rounded ${
                           selectedPersonIds.includes(box.id)
-                            ? 'bg-purple-500/90 text-white'
-                            : 'bg-yellow-300/90 text-black'
+                            ? 'vs:bg-purple-500/90 vs:text-white'
+                            : 'vs:bg-yellow-300/90 vs:text-black'
                         }`}
                       >
                         {box.id}
@@ -134,9 +134,9 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
         </CardContent>
 
         <CardFooter>
-          <div className='flex w-full items-center justify-between text-xs text-muted-foreground'>
+          <div className='vs:flex vs:w-full vs:items-center vs:justify-between vs:text-xs vs:text-muted-foreground'>
             <span>{camera.name}</span>
-            <div className='flex items-center gap-2'>
+            <div className='vs:flex vs:items-center vs:gap-2'>
               <Badge variant='secondary'>
                 {isRealDeviceFeed ? 'LIVE' : (feedConfig?.label ?? '---')}
               </Badge>

@@ -26,8 +26,8 @@ export const RightRail: React.FC<RightRailProps> = ({
   onDevicesInUse,
 }) => {
   return (
-    <div className='fixed right-4 top-24 z-30 w-12'>
-      <div className='flex flex-col items-center gap-2'>
+    <div className='vs:fixed vs:right-4 vs:top-24 vs:z-30 vs:w-12'>
+      <div className='vs:flex vs:flex-col vs:items-center vs:gap-2'>
         {isMapMode ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -39,7 +39,7 @@ export const RightRail: React.FC<RightRailProps> = ({
                 variant='outline'
                 onClick={onSearchLocation}
               >
-                <Search className='size-5' />
+                <Search className='vs:size-5' />
               </Button>
             </TooltipTrigger>
             <TooltipContent side='left'>Search location (⌘K)</TooltipContent>
@@ -56,7 +56,7 @@ export const RightRail: React.FC<RightRailProps> = ({
               variant='outline'
               onClick={onAreaManagement}
             >
-              <Layers className='size-5' />
+              <Layers className='vs:size-5' />
               {/*  <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
                 {areaCount}
               </Badge> */}
@@ -76,7 +76,7 @@ export const RightRail: React.FC<RightRailProps> = ({
                 variant='outline'
                 onClick={onMapViewMode}
               >
-                <Map className='size-5' />
+                <Map className='vs:size-5' />
               </Button>
             </TooltipTrigger>
             <TooltipContent side='left'>Map style</TooltipContent>
@@ -93,7 +93,7 @@ export const RightRail: React.FC<RightRailProps> = ({
               variant='outline'
               onClick={onDevicesInUse}
             >
-              <Video className='size-5' />
+              <Video className='vs:size-5' />
               {/*  <Badge className='absolute -right-2 -top-2 min-w-6 justify-center'>
                 {deviceCount}
               </Badge> */}

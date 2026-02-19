@@ -33,7 +33,7 @@ function Slider({
       value={value}
       data-slot='slider'
       className={cn(
-        'relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50 data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=vertical]:w-auto data-[orientation=vertical]:flex-col',
+        'vs:relative vs:flex vs:w-full vs:touch-none vs:items-center vs:select-none vs:data-[disabled]:opacity-50 vs:data-[orientation=vertical]:h-full vs:data-[orientation=vertical]:min-h-44 vs:data-[orientation=vertical]:w-auto vs:data-[orientation=vertical]:flex-col',
         className,
       )}
       {...props}
@@ -41,19 +41,19 @@ function Slider({
       <SliderPrimitive.Track
         data-slot='slider-track'
         className={cn(
-          'bg-muted relative grow overflow-hidden rounded-full data-[orientation=horizontal]:h-1.5 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1.5',
+          'vs:bg-muted vs:relative vs:grow vs:overflow-hidden vs:rounded-full vs:data-[orientation=horizontal]:h-1.5 vs:data-[orientation=horizontal]:w-full vs:data-[orientation=vertical]:h-full vs:data-[orientation=vertical]:w-1.5',
         )}
       >
         <SliderPrimitive.Range
           data-slot='slider-range'
           className={cn(
-            'bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full',
+            'vs:bg-primary vs:absolute vs:data-[orientation=horizontal]:h-full vs:data-[orientation=vertical]:w-full',
           )}
         />
       </SliderPrimitive.Track>
       {Array.from({length: _values.length}, (_, index) => (
         <SliderPrimitive.Thumb
-          className='border-primary ring-ring/50 block size-4 shrink-0 rounded-full border bg-white shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50'
+          className='vs:border-primary vs:ring-ring/50 vs:block vs:size-4 vs:shrink-0 vs:rounded-full vs:border vs:bg-white vs:shadow-sm vs:transition-[color,box-shadow] vs:hover:ring-4 vs:focus-visible:ring-4 vs:focus-visible:outline-hidden vs:disabled:pointer-events-none vs:disabled:opacity-50'
           key={index}
           data-slot='slider-thumb'
         />

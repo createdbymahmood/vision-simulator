@@ -146,10 +146,10 @@ const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
   }
 
   return (
-    <div className='flex items-center gap-2'>
+    <div className='vs:flex vs:items-center vs:gap-2'>
       {allowPreviewViewSwitch ? (
         <ToggleGroup
-          className='bg-background'
+          className='vs:bg-background'
           type='single'
           value={previewViewMode}
           variant='outline'
@@ -161,14 +161,14 @@ const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
         >
           <ToggleGroupItem
             aria-label='3D view'
-            className='cursor-pointer'
+            className='vs:cursor-pointer'
             value='3d'
           >
             3D
           </ToggleGroupItem>
           <ToggleGroupItem
             aria-label='2D top-down view'
-            className='cursor-pointer'
+            className='vs:cursor-pointer'
             value='2d'
           >
             2D
@@ -178,7 +178,7 @@ const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
       {showAreaSelection ? (
         <Select value={activeAreaId} onValueChange={onActiveAreaChange}>
           <SelectTrigger
-            className='bg-background min-w-40'
+            className='vs:bg-background vs:min-w-40'
             disabled={areas.length <= 1}
           >
             <SelectValue placeholder='Select area' />
@@ -405,7 +405,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   }, [scene.activeAreaId, scene.areas, setActiveArea])
 
   return (
-    <div className='flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden overscroll-none'>
+    <div className='vs:flex vs:h-full vs:min-h-0 vs:min-w-0 vs:flex-1 vs:flex-col vs:overflow-hidden vs:overscroll-none'>
       {showTopBar ? (
         <SimulationTopBar
           allowPreviewViewSwitch={allowPreviewViewSwitch}
@@ -424,15 +424,15 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
         />
       ) : null}
 
-      <div className='flex flex-1 min-h-0 min-w-0 overflow-hidden'>
+      <div className='vs:flex vs:flex-1 vs:min-h-0 vs:min-w-0 vs:overflow-hidden'>
         <SimulationViewport
           fps={fps}
           isLowFps={isLowFps}
           isRecording={isRecording}
           overlayControls={
             !showTopBar && showPreviewViewportControls ? (
-              <div className='pointer-events-none absolute left-4 top-4 z-20'>
-                <div className='pointer-events-auto'>
+              <div className='vs:pointer-events-none vs:absolute vs:left-4 vs:top-4 vs:z-20'>
+                <div className='vs:pointer-events-auto'>
                   {previewViewportControls}
                 </div>
               </div>
@@ -452,14 +452,14 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
             previewViewMode={previewViewMode}
             showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
             className={cn(
-              'h-full w-full',
+              'vs:h-full vs:w-full',
               previewViewMode === '2d'
-                ? 'pointer-events-none opacity-0'
-                : 'opacity-100',
+                ? 'vs:pointer-events-none vs:opacity-0'
+                : 'vs:opacity-100',
             )}
           />
           {previewViewMode === '2d' ? (
-            <div className='absolute inset-0 z-10'>
+            <div className='vs:absolute vs:inset-0 vs:z-10'>
               <MapView
                 activeTool='hand'
                 onMapReady={handlePreviewMapReady}
@@ -470,7 +470,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
           ) : null}
         </SimulationViewport>
         {showSimulationSidePanels ? (
-          <div className='flex h-full min-h-0 w-[360px] max-w-[360px] shrink-0 flex-col gap-4 overflow-x-hidden overflow-y-auto overscroll-contain border-l'>
+          <div className='vs:flex vs:h-full vs:min-h-0 vs:w-[360px] vs:max-w-[360px] vs:shrink-0 vs:flex-col vs:gap-4 vs:overflow-x-hidden vs:overflow-y-auto vs:overscroll-contain vs:border-l'>
             <SimulationRadar
               size={radarPanelSize}
               scene={scene}

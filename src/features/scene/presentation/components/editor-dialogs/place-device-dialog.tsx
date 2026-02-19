@@ -66,21 +66,21 @@ const PlaceDeviceDialogList: React.FC<PlaceDeviceDialogListProps> = ({
         onOpenChange(false)
       }}
     >
-      <div className='flex w-full items-center justify-between gap-3'>
-        <div className='flex items-center gap-3'>
+      <div className='vs:flex vs:w-full vs:items-center vs:justify-between vs:gap-3'>
+        <div className='vs:flex vs:items-center vs:gap-3'>
           <span
             aria-hidden
-            className='block size-2.5 rounded-full'
+            className='vs:block vs:size-2.5 vs:rounded-full'
             style={{backgroundColor: nextColor}}
           />
-          <div className='flex flex-col'>
-            <span className='font-medium'>{device.name}</span>
-            <span className='max-w-[420px] overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground'>
+          <div className='vs:flex vs:flex-col'>
+            <span className='vs:font-medium'>{device.name}</span>
+            <span className='vs:max-w-[420px] vs:overflow-hidden vs:text-ellipsis vs:whitespace-nowrap vs:text-xs vs:text-muted-foreground'>
               {device.description}
             </span>
           </div>
         </div>
-        <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+        <div className='vs:flex vs:items-center vs:gap-2 vs:text-xs vs:text-muted-foreground'>
           <Badge variant='outline'>
             HFOV {device.fovHorizontal.toFixed(0)}°
           </Badge>
@@ -95,11 +95,11 @@ const PlaceDeviceDialogList: React.FC<PlaceDeviceDialogListProps> = ({
     <CommandList>
       <CommandEmpty>No devices available</CommandEmpty>
       {realDevices.length > 0 ? (
-        <CommandGroup className='pb-2' heading='Real Devices'>
+        <CommandGroup className='vs:pb-2' heading='Real Devices'>
           {realDevices.map(renderDevice)}
         </CommandGroup>
       ) : null}
-      <CommandGroup className='pb-2' heading='Virtual Devices'>
+      <CommandGroup className='vs:pb-2' heading='Virtual Devices'>
         {virtualDevices.map(renderDevice)}
       </CommandGroup>
     </CommandList>
@@ -114,7 +114,7 @@ export const PlaceDeviceDialog: React.FC<PlaceDeviceDialogProps> = ({
 }) => {
   return (
     <CommandDialog
-      className='sm:max-w-[580px]'
+      className='vs:sm:max-w-[580px]'
       onOpenChange={onOpenChange}
       open={open}
     >

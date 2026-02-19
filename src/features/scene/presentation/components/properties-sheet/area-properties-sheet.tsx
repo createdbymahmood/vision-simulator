@@ -28,9 +28,9 @@ interface MetricProps {
 }
 
 const Metric: React.FC<MetricProps> = ({label, value}) => (
-  <div className='space-y-1 rounded-md border p-3'>
-    <p className='text-xs text-muted-foreground'>{label}</p>
-    <p className='text-sm font-semibold'>{value}</p>
+  <div className='vs:space-y-1 vs:rounded-md vs:border vs:p-3'>
+    <p className='vs:text-xs vs:text-muted-foreground'>{label}</p>
+    <p className='vs:text-sm vs:font-semibold'>{value}</p>
   </div>
 )
 
@@ -193,8 +193,8 @@ export const AreaPropertiesSheet: React.FC = () => {
       open={isOpen}
     >
       {selectedArea ? (
-        <div className='space-y-6'>
-          <div className='space-y-2'>
+        <div className='vs:space-y-6'>
+          <div className='vs:space-y-2'>
             <Label htmlFor='area-name'>Name</Label>
             <Input
               id='area-name'
@@ -202,20 +202,22 @@ export const AreaPropertiesSheet: React.FC = () => {
               onChange={(event) => handleNameChange(event.target.value)}
             />
           </div>
-          <div className='grid grid-cols-2 gap-3'>
-            <div className='space-y-1'>
-              <p className='text-xs text-muted-foreground'>Point Count</p>
-              <p className='text-sm font-medium'>{selectedArea.pointCount}</p>
+          <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
+            <div className='vs:space-y-1'>
+              <p className='vs:text-xs vs:text-muted-foreground'>Point Count</p>
+              <p className='vs:text-sm vs:font-medium'>
+                {selectedArea.pointCount}
+              </p>
             </div>
           </div>
-          <div className='grid grid-cols-2 gap-3'>
+          <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
             <Metric label='Perimeter' value={formatMeters(perimeter)} />
             <Metric label='Area' value={formatArea(areaValue)} />
           </div>
 
           <PropertiesSection title='Fill & Border'>
-            <div className='grid grid-cols-2 gap-3'>
-              <div className='space-y-2'>
+            <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
+              <div className='vs:space-y-2'>
                 <Label htmlFor='area-fill'>Fill Color</Label>
                 <Input
                   id='area-fill'
@@ -224,7 +226,7 @@ export const AreaPropertiesSheet: React.FC = () => {
                   onChange={(event) => handleFillChange(event.target.value)}
                 />
               </div>
-              <div className='space-y-2'>
+              <div className='vs:space-y-2'>
                 <Label htmlFor='area-border'>Border Color</Label>
                 <Input
                   id='area-border'
@@ -236,7 +238,7 @@ export const AreaPropertiesSheet: React.FC = () => {
                 />
               </div>
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>
                 Fill Opacity ({selectedArea.style.fillOpacity.toFixed(2)})
               </Label>
@@ -248,7 +250,7 @@ export const AreaPropertiesSheet: React.FC = () => {
                 onValueChange={handleFillOpacityChange}
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>
                 Border Width ({selectedArea.style.borderWidth.toFixed(1)} m)
               </Label>
@@ -263,7 +265,7 @@ export const AreaPropertiesSheet: React.FC = () => {
           </PropertiesSection>
         </div>
       ) : (
-        <p className='text-sm text-muted-foreground'>
+        <p className='vs:text-sm vs:text-muted-foreground'>
           Select an area to edit its properties.
         </p>
       )}

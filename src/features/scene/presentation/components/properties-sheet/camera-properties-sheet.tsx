@@ -37,39 +37,39 @@ interface PtzDpadProps {
 }
 
 const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
-  <div className='grid grid-cols-3 gap-2 rounded-md border p-3 '>
+  <div className='vs:grid vs:grid-cols-3 vs:gap-2 vs:rounded-md vs:border vs:p-3 '>
     <div />
-    <div className='flex items-center justify-center'>
+    <div className='vs:flex vs:items-center vs:justify-center'>
       <Button size='icon' variant='secondary' onClick={() => onTilt(5)}>
-        <ArrowUp className='size-4' />
+        <ArrowUp className='vs:size-4' />
       </Button>
     </div>
     <div />
 
-    <div className='flex items-center justify-center'>
+    <div className='vs:flex vs:items-center vs:justify-center'>
       <Button size='icon' variant='secondary' onClick={() => onPan(-5)}>
-        <ArrowLeft className='size-4' />
+        <ArrowLeft className='vs:size-4' />
       </Button>
     </div>
 
-    <div className='flex items-center justify-center '>
+    <div className='vs:flex vs:items-center vs:justify-center '>
       <span
-        className='block size-4 rounded-full'
+        className='vs:block vs:size-4 vs:rounded-full'
         style={{backgroundColor: color}}
       />
     </div>
 
-    <div className='flex items-center justify-center'>
+    <div className='vs:flex vs:items-center vs:justify-center'>
       <Button size='icon' variant='secondary' onClick={() => onPan(5)}>
-        <ArrowRight className='size-4' />
+        <ArrowRight className='vs:size-4' />
       </Button>
     </div>
 
     <div />
 
-    <div className='flex items-center justify-center'>
+    <div className='vs:flex vs:items-center vs:justify-center'>
       <Button size='icon' variant='secondary' onClick={() => onTilt(-5)}>
-        <ArrowDown className='size-4' />
+        <ArrowDown className='vs:size-4' />
       </Button>
     </div>
     <div />
@@ -447,9 +447,9 @@ export const CameraPropertiesSheet: React.FC = () => {
       open={isOpen}
     >
       {selectedCamera ? (
-        <div className='space-y-6'>
+        <div className='vs:space-y-6'>
           <PropertiesSection title='General'>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label htmlFor='camera-name'>Name</Label>
               <Input
                 id='camera-name'
@@ -461,7 +461,7 @@ export const CameraPropertiesSheet: React.FC = () => {
                 }}
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label htmlFor='camera-source-device'>Source Device</Label>
               <Input
                 readOnly
@@ -472,7 +472,7 @@ export const CameraPropertiesSheet: React.FC = () => {
                 }
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label htmlFor='camera-color'>Color</Label>
               <Input
                 id='camera-color'
@@ -484,7 +484,7 @@ export const CameraPropertiesSheet: React.FC = () => {
           </PropertiesSection>
 
           <PropertiesSection title='Position'>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Height ({selectedCamera.height.toFixed(2)} m)</Label>
               <Slider
                 max={20}
@@ -498,7 +498,7 @@ export const CameraPropertiesSheet: React.FC = () => {
           </PropertiesSection>
 
           <PropertiesSection title='Optics'>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>
                 Horizontal FOV ({selectedCamera.fovHorizontal.toFixed(0)}°)
               </Label>
@@ -511,7 +511,7 @@ export const CameraPropertiesSheet: React.FC = () => {
                 onValueCommit={handleHorizontalFovChange}
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>
                 Vertical FOV ({selectedCamera.fovVertical.toFixed(0)}°)
               </Label>
@@ -524,7 +524,7 @@ export const CameraPropertiesSheet: React.FC = () => {
                 onValueCommit={handleVerticalFovChange}
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Depth ({formatMeters(selectedCamera.depth)})</Label>
               <Slider
                 max={200}
@@ -535,9 +535,9 @@ export const CameraPropertiesSheet: React.FC = () => {
                 onValueCommit={handleDepthChange}
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Resolution</Label>
-              <div className='flex items-center gap-2'>
+              <div className='vs:flex vs:items-center vs:gap-2'>
                 <Input
                   aria-label='Resolution width'
                   min={1}
@@ -547,7 +547,9 @@ export const CameraPropertiesSheet: React.FC = () => {
                     handleResolutionChange('width', event.target.value)
                   }
                 />
-                <div className='px-2 text-sm text-muted-foreground'>×</div>
+                <div className='vs:px-2 vs:text-sm vs:text-muted-foreground'>
+                  ×
+                </div>
                 <Input
                   aria-label='Resolution height'
                   min={1}
@@ -569,7 +571,7 @@ export const CameraPropertiesSheet: React.FC = () => {
                 applyPtz({tilt: selectedCamera.ptz.tilt + delta})
               }
             />
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Pan ({panDegrees.toFixed(0)}°)</Label>
               <Slider
                 max={360}
@@ -584,7 +586,7 @@ export const CameraPropertiesSheet: React.FC = () => {
                 }
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Tilt ({selectedCamera.ptz.tilt.toFixed(0)}°)</Label>
               <Slider
                 max={selectedCamera.ptz.limits.tiltMax}
@@ -595,7 +597,7 @@ export const CameraPropertiesSheet: React.FC = () => {
                 onValueCommit={(values) => applyPtz({tilt: values[0] ?? 0})}
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Zoom ({selectedCamera.ptz.zoom.toFixed(1)}x)</Label>
               <Slider
                 max={selectedCamera.ptz.limits.zoomMax}
@@ -609,7 +611,7 @@ export const CameraPropertiesSheet: React.FC = () => {
           </PropertiesSection>
         </div>
       ) : (
-        <p className='text-sm text-muted-foreground'>
+        <p className='vs:text-sm vs:text-muted-foreground'>
           Select a camera to edit its properties.
         </p>
       )}

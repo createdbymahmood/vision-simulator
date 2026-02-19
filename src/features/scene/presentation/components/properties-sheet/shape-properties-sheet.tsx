@@ -34,9 +34,9 @@ interface MetricProps {
 }
 
 const Metric: React.FC<MetricProps> = ({label, value}) => (
-  <div className='space-y-1 rounded-md border p-3'>
-    <p className='text-xs text-muted-foreground'>{label}</p>
-    <p className='text-sm font-semibold'>{value}</p>
+  <div className='vs:space-y-1 vs:rounded-md vs:border vs:p-3'>
+    <p className='vs:text-xs vs:text-muted-foreground'>{label}</p>
+    <p className='vs:text-sm vs:font-semibold'>{value}</p>
   </div>
 )
 
@@ -254,14 +254,14 @@ export const ShapePropertiesSheet: React.FC = () => {
       open={isOpen}
     >
       {selectedShape ? (
-        <div className='space-y-6'>
-          <p className='text-xs text-muted-foreground'>
+        <div className='vs:space-y-6'>
+          <p className='vs:text-xs vs:text-muted-foreground'>
             Position and rotation adjustments are disabled here to prevent
             shapes from exceeding area bounds.
           </p>
 
           <PropertiesSection title='Appearance'>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label htmlFor='shape-color'>Color</Label>
               <Input
                 id='shape-color'
@@ -270,7 +270,7 @@ export const ShapePropertiesSheet: React.FC = () => {
                 onChange={(event) => handleColorChange(event.target.value)}
               />
             </div>
-            <div className='space-y-2'>
+            <div className='vs:space-y-2'>
               <Label>Height ({selectedShape.height.toFixed(2)} m)</Label>
               <Slider
                 max={10}
@@ -284,7 +284,7 @@ export const ShapePropertiesSheet: React.FC = () => {
 
           {selectedShape.shapeType === 'rectangle' ? (
             <PropertiesSection title='Rectangle'>
-              <div className='grid grid-cols-2 gap-3'>
+              <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
                 <Metric
                   label='Width'
                   value={formatMeters(rectDimensions.width)}
@@ -294,8 +294,8 @@ export const ShapePropertiesSheet: React.FC = () => {
                   value={formatMeters(rectDimensions.height)}
                 />
               </div>
-              <div className='grid grid-cols-2 gap-3'>
-                <div className='space-y-2'>
+              <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
+                <div className='vs:space-y-2'>
                   <Label>Width (m)</Label>
                   <Input
                     type='number'
@@ -309,7 +309,7 @@ export const ShapePropertiesSheet: React.FC = () => {
                     }}
                   />
                 </div>
-                <div className='space-y-2'>
+                <div className='vs:space-y-2'>
                   <Label>Height (m)</Label>
                   <Input
                     type='number'
@@ -329,14 +329,14 @@ export const ShapePropertiesSheet: React.FC = () => {
 
           {selectedShape.shapeType === 'circle' ? (
             <PropertiesSection title='Circle'>
-              <div className='grid grid-cols-2 gap-3'>
+              <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
                 <Metric label='Radius' value={formatMeters(circleRadius)} />
                 <Metric
                   label='Diameter'
                   value={formatMeters(circleRadius * 2)}
                 />
               </div>
-              <div className='space-y-2'>
+              <div className='vs:space-y-2'>
                 <Label>Radius (m)</Label>
                 <Input
                   type='number'
@@ -366,7 +366,7 @@ export const ShapePropertiesSheet: React.FC = () => {
 
           {selectedShape.shapeType === 'triangle' ? (
             <PropertiesSection title='Triangle'>
-              <div className='grid grid-cols-2 gap-3'>
+              <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
                 <Metric
                   label='Base'
                   value={formatMeters(triangleBaseHeight.base)}
@@ -381,7 +381,7 @@ export const ShapePropertiesSheet: React.FC = () => {
 
           {selectedShape.shapeType === 'line' ? (
             <PropertiesSection title='Line'>
-              <div className='grid grid-cols-2 gap-3'>
+              <div className='vs:grid vs:grid-cols-2 vs:gap-3'>
                 <Metric
                   label='Length'
                   value={formatMeters(lineMetrics.length)}
@@ -391,7 +391,7 @@ export const ShapePropertiesSheet: React.FC = () => {
                   value={`${lineMetrics.angle.toFixed(0)}°`}
                 />
               </div>
-              <div className='space-y-2'>
+              <div className='vs:space-y-2'>
                 <Label>Thickness ({lineMetrics.thickness.toFixed(2)} m)</Label>
                 <Slider
                   max={2}
@@ -405,7 +405,7 @@ export const ShapePropertiesSheet: React.FC = () => {
           ) : null}
         </div>
       ) : (
-        <p className='text-sm text-muted-foreground'>
+        <p className='vs:text-sm vs:text-muted-foreground'>
           Select a shape to edit its properties.
         </p>
       )}

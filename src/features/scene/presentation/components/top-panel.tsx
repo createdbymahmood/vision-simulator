@@ -74,7 +74,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
 }) => {
   const defaultBackButton = (
     <Button size='icon' aria-label='Back' variant='ghost' onClick={onBack}>
-      <ArrowLeft className='size-5' />
+      <ArrowLeft className='vs:size-5' />
     </Button>
   )
   const renderBackButton = uiOverrides?.slots?.backButton
@@ -89,17 +89,17 @@ export const TopPanel: React.FC<TopPanelProps> = ({
     : defaultBackButton
 
   return (
-    <div className='fixed left-0 right-0 top-0 z-40 h-14 border-b backdrop-blur'>
-      <div className='mx-auto flex h-full items-center justify-between px-4'>
-        <div className='flex items-center gap-3'>
+    <div className='vs:fixed vs:left-0 vs:right-0 vs:top-0 vs:z-40 vs:h-14 vs:border-b vs:backdrop-blur'>
+      <div className='vs:mx-auto vs:flex vs:h-full vs:items-center vs:justify-between vs:px-4'>
+        <div className='vs:flex vs:items-center vs:gap-3'>
           {backButton}
 
-          <span className='text-xl font-semibold'>{projectName}</span>
+          <span className='vs:text-xl vs:font-semibold'>{projectName}</span>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size='icon' aria-label='More options' variant='ghost'>
-                <MoreHorizontal className='size-5' />
+                <MoreHorizontal className='vs:size-5' />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='start'>
@@ -121,14 +121,14 @@ export const TopPanel: React.FC<TopPanelProps> = ({
           </DropdownMenu>
         </div>
 
-        <div className='flex items-center gap-3'>
-          <div className='flex items-center gap-2'>
+        <div className='vs:flex vs:items-center vs:gap-3'>
+          <div className='vs:flex vs:items-center vs:gap-2'>
             <Switch
               checked={isEditMode}
               id='edit-mode'
               onCheckedChange={onEditModeChange}
             />
-            <label className='text-sm font-medium' htmlFor='edit-mode'>
+            <label className='vs:text-sm vs:font-medium' htmlFor='edit-mode'>
               Edit mode
             </label>
           </div>
@@ -141,7 +141,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
                 disabled={!isEditMode}
                 variant='ghost'
               >
-                <Eraser className='size-5' />
+                <Eraser className='vs:size-5' />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -161,7 +161,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
             </AlertDialogContent>
           </AlertDialog>
 
-          <div className='flex items-center gap-2'>
+          <div className='vs:flex vs:items-center vs:gap-2'>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -171,7 +171,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
                   variant='ghost'
                   onClick={onUndo}
                 >
-                  <FlipBackward className='size-5' />
+                  <FlipBackward className='vs:size-5' />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -187,7 +187,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
                   variant='ghost'
                   onClick={onRedo}
                 >
-                  <FlipForward className='size-5' />
+                  <FlipForward className='vs:size-5' />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -202,13 +202,13 @@ export const TopPanel: React.FC<TopPanelProps> = ({
             loading={saveLoading}
             onClick={onSave}
           >
-            <Save className='size-5' />
+            <Save className='vs:size-5' />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size='icon' variant='outline'>
-                <Share01 className='size-5' />
+                <Share01 className='vs:size-5' />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
@@ -225,7 +225,7 @@ export const TopPanel: React.FC<TopPanelProps> = ({
           </DropdownMenu>
 
           <Button variant='outline' onClick={onTogglePreview}>
-            <Play className='size-5' />
+            <Play className='vs:size-5' />
             Live preview
           </Button>
         </div>

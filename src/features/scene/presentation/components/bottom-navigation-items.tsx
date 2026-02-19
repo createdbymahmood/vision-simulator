@@ -19,7 +19,7 @@ import {Tooltip, TooltipContent, TooltipTrigger} from '@/components/ui/tooltip'
 import type {ShapeDrawMode} from '../types'
 
 export const TOOL_ITEM_CLASS =
-  'h-10 w-10 flex items-center justify-center rounded-lg'
+  'vs:h-10 vs:w-10 vs:flex vs:items-center vs:justify-center vs:rounded-lg'
 
 interface ToolButtonProps {
   label: string
@@ -81,8 +81,8 @@ export const CreateAreaPopover: React.FC<CreateAreaPopoverProps> = ({
             onSelectTool()
           }}
         >
-          <div className='relative'>
-            <Hexagon className='size-5' />
+          <div className='vs:relative'>
+            <Hexagon className='vs:size-5' />
           </div>
         </Button>
       </TooltipTrigger>
@@ -135,19 +135,19 @@ export const ShapePopover: React.FC<ShapePopoverProps> = ({
               disabled={disabled}
               variant={activeTool === 'draw-shape' ? 'default' : 'ghost'}
             >
-              <Shapes className='size-5' />
+              <Shapes className='vs:size-5' />
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent>{tooltip ?? 'Draw Shape'}</TooltipContent>
       </Tooltip>
-      <PopoverContent align='center' className='w-56 p-3' side='top'>
-        <div className='grid grid-cols-2 gap-2'>
+      <PopoverContent align='center' className='vs:w-56 vs:p-3' side='top'>
+        <div className='vs:grid vs:grid-cols-2 vs:gap-2'>
           {SHAPE_OPTIONS.map((option) => {
             const Icon = option.icon
             return (
               <Button
-                className='flex h-auto flex-col items-center gap-1 py-3'
+                className='vs:flex vs:h-auto vs:flex-col vs:items-center vs:gap-1 vs:py-3'
                 key={option.mode}
                 title={`${option.label} (${option.shortcut})`}
                 variant={shapeMode === option.mode ? 'default' : 'ghost'}
@@ -157,8 +157,10 @@ export const ShapePopover: React.FC<ShapePopoverProps> = ({
                   onOpenChange(false)
                 }}
               >
-                <Icon className='h-6 w-6' />
-                <span className='text-xs font-medium'>{option.shortcut}</span>
+                <Icon className='vs:h-6 vs:w-6' />
+                <span className='vs:text-xs vs:font-medium'>
+                  {option.shortcut}
+                </span>
               </Button>
             )
           })}
@@ -191,7 +193,7 @@ export const PlacementButtons: React.FC<PlacementButtonsProps> = ({
         active={activeTool === 'place-camera'}
         disabled={disabled}
         label='Place Device'
-        icon={<Camera className='size-5' />}
+        icon={<Camera className='vs:size-5' />}
         onClick={() => {
           onSelectTool('place-camera')
           onOpenPlaceDevice()
@@ -202,7 +204,7 @@ export const PlacementButtons: React.FC<PlacementButtonsProps> = ({
         active={activeTool === 'place-person'}
         disabled={disabled}
         label='Place Person'
-        icon={<User className='size-5' />}
+        icon={<User className='vs:size-5' />}
         onClick={() => {
           onSelectTool('place-person')
           onPlacePerson()

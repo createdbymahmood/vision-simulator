@@ -13,9 +13,9 @@ function InputOTP({
 }) {
   return (
     <OTPInput
-      className={cn('disabled:cursor-not-allowed', className)}
+      className={cn('vs:disabled:cursor-not-allowed', className)}
       containerClassName={cn(
-        'flex items-center gap-2 has-disabled:opacity-50',
+        'vs:flex vs:items-center vs:gap-2 vs:has-disabled:opacity-50',
         containerClassName,
       )}
       data-slot='input-otp'
@@ -27,7 +27,7 @@ function InputOTP({
 function InputOTPGroup({className, ...props}: React.ComponentProps<'div'>) {
   return (
     <div
-      className={cn('flex items-center', className)}
+      className={cn('vs:flex vs:items-center', className)}
       data-slot='input-otp-group'
       {...props}
     />
@@ -49,15 +49,15 @@ function InputOTPSlot({
       data-active={isActive}
       data-slot='input-otp-slot'
       className={cn(
-        'data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:ring-destructive/20 dark:data-[active=true]:aria-invalid:ring-destructive/40 aria-invalid:border-destructive data-[active=true]:aria-invalid:border-destructive dark:bg-input/30 border-input relative flex h-9 w-9 items-center justify-center border-y border-r text-sm shadow-xs transition-all outline-none first:rounded-l-md first:border-l last:rounded-r-md data-[active=true]:z-10 data-[active=true]:ring-[3px]',
+        'vs:data-[active=true]:border-ring vs:data-[active=true]:ring-ring/50 vs:data-[active=true]:aria-invalid:ring-destructive/20 vs:dark:data-[active=true]:aria-invalid:ring-destructive/40 vs:aria-invalid:border-destructive vs:data-[active=true]:aria-invalid:border-destructive vs:dark:bg-input/30 vs:border-input vs:relative vs:flex vs:h-9 vs:w-9 vs:items-center vs:justify-center vs:border-y vs:border-r vs:text-sm vs:shadow-xs vs:transition-all vs:outline-none vs:first:rounded-l-md vs:first:border-l vs:last:rounded-r-md vs:data-[active=true]:z-10 vs:data-[active=true]:ring-[3px]',
         className,
       )}
       {...props}
     >
       {char}
       {hasFakeCaret && (
-        <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
-          <div className='animate-caret-blink bg-foreground h-4 w-px duration-1000' />
+        <div className='vs:pointer-events-none vs:absolute vs:inset-0 vs:flex vs:items-center vs:justify-center'>
+          <div className='vs:animate-caret-blink vs:bg-foreground vs:h-4 vs:w-px vs:duration-1000' />
         </div>
       )}
     </div>

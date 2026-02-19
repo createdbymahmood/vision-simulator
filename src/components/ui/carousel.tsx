@@ -129,7 +129,7 @@ function Carousel({
   return (
     <CarouselContext.Provider value={contextValue}>
       <div
-        className={cn('relative', className)}
+        className={cn('vs:relative', className)}
         aria-roledescription='carousel'
         data-slot='carousel'
         onKeyDownCapture={handleKeyDown}
@@ -147,14 +147,14 @@ function CarouselContent({className, ...props}: React.ComponentProps<'div'>) {
 
   return (
     <div
-      className='overflow-hidden'
+      className='vs:overflow-hidden'
       ref={carouselRef}
       data-slot='carousel-content'
     >
       <div
         className={cn(
-          'flex',
-          orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col',
+          'vs:flex',
+          orientation === 'horizontal' ? 'vs:-ml-4' : 'vs:-mt-4 vs:flex-col',
           className,
         )}
         {...props}
@@ -172,8 +172,8 @@ function CarouselItem({className, ...props}: React.ComponentProps<'div'>) {
       data-slot='carousel-item'
       role='group'
       className={cn(
-        'min-w-0 shrink-0 grow-0 basis-full',
-        orientation === 'horizontal' ? 'pl-4' : 'pt-4',
+        'vs:min-w-0 vs:shrink-0 vs:grow-0 vs:basis-full',
+        orientation === 'horizontal' ? 'vs:pl-4' : 'vs:pt-4',
         className,
       )}
       {...props}
@@ -197,16 +197,16 @@ function CarouselPrevious({
       data-slot='carousel-previous'
       onClick={scrollPrev}
       className={cn(
-        'absolute size-8 rounded-full',
+        'vs:absolute vs:size-8 vs:rounded-full',
         orientation === 'horizontal'
-          ? 'top-1/2 -left-12 -translate-y-1/2'
-          : '-top-12 left-1/2 -translate-x-1/2 rotate-90',
+          ? 'vs:top-1/2 vs:-left-12 vs:-translate-y-1/2'
+          : 'vs:-top-12 vs:left-1/2 vs:-translate-x-1/2 vs:rotate-90',
         className,
       )}
       {...props}
     >
       <ArrowLeft />
-      <span className='sr-only'>Previous slide</span>
+      <span className='vs:sr-only'>Previous slide</span>
     </Button>
   )
 }
@@ -227,16 +227,16 @@ function CarouselNext({
       data-slot='carousel-next'
       onClick={scrollNext}
       className={cn(
-        'absolute size-8 rounded-full',
+        'vs:absolute vs:size-8 vs:rounded-full',
         orientation === 'horizontal'
-          ? 'top-1/2 -right-12 -translate-y-1/2'
-          : '-bottom-12 left-1/2 -translate-x-1/2 rotate-90',
+          ? 'vs:top-1/2 vs:-right-12 vs:-translate-y-1/2'
+          : 'vs:-bottom-12 vs:left-1/2 vs:-translate-x-1/2 vs:rotate-90',
         className,
       )}
       {...props}
     >
       <ArrowRight />
-      <span className='sr-only'>Next slide</span>
+      <span className='vs:sr-only'>Next slide</span>
     </Button>
   )
 }

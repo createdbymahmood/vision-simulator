@@ -100,10 +100,12 @@ export const SearchLocationDialog: React.FC<SearchLocationDialogProps> = ({
                 value={result.placeName}
                 onSelect={() => handleSelectLocation(result)}
               >
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium'>{result.name}</span>
+                <div className='vs:flex vs:flex-col'>
+                  <span className='vs:text-sm vs:font-medium'>
+                    {result.name}
+                  </span>
                   {result.context ? (
-                    <span className='text-xs text-muted-foreground'>
+                    <span className='vs:text-xs vs:text-muted-foreground'>
                       {result.context}
                     </span>
                   ) : null}

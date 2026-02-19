@@ -47,7 +47,7 @@ function SheetOverlay({
     <SheetPrimitive.Overlay
       data-slot='sheet-overlay'
       className={cn(
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50',
+        'vs:data-[state=open]:animate-in vs:data-[state=closed]:animate-out vs:data-[state=closed]:fade-out-0 vs:data-[state=open]:fade-in-0 vs:fixed vs:inset-0 vs:z-50 vs:bg-black/50',
         className,
       )}
       {...props}
@@ -69,23 +69,23 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot='sheet-content'
         className={cn(
-          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 px-4',
+          'vs:bg-background vs:data-[state=open]:animate-in vs:data-[state=closed]:animate-out vs:fixed vs:z-50 vs:flex vs:flex-col vs:gap-4 vs:shadow-lg vs:transition vs:ease-in-out vs:data-[state=closed]:duration-300 vs:data-[state=open]:duration-500 vs:px-4',
           side === 'right' &&
-            'data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm',
+            'vs:data-[state=closed]:slide-out-to-right vs:data-[state=open]:slide-in-from-right vs:inset-y-0 vs:right-0 vs:h-full vs:w-3/4 vs:border-l vs:sm:max-w-sm',
           side === 'left' &&
-            'data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
+            'vs:data-[state=closed]:slide-out-to-left vs:data-[state=open]:slide-in-from-left vs:inset-y-0 vs:left-0 vs:h-full vs:w-3/4 vs:border-r vs:sm:max-w-sm',
           side === 'top' &&
-            'data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b',
+            'vs:data-[state=closed]:slide-out-to-top vs:data-[state=open]:slide-in-from-top vs:inset-x-0 vs:top-0 vs:h-auto vs:border-b',
           side === 'bottom' &&
-            'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t',
+            'vs:data-[state=closed]:slide-out-to-bottom vs:data-[state=open]:slide-in-from-bottom vs:inset-x-0 vs:bottom-0 vs:h-auto vs:border-t',
           className,
         )}
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className='ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none'>
-          <XIcon className='size-4' />
-          <span className='sr-only'>Close</span>
+        <SheetPrimitive.Close className='vs:ring-offset-background vs:focus:ring-ring vs:data-[state=open]:bg-secondary vs:absolute vs:top-4 vs:right-4 vs:rounded-xs vs:opacity-70 vs:transition-opacity vs:hover:opacity-100 vs:focus:ring-2 vs:focus:ring-offset-2 vs:focus:outline-hidden vs:disabled:pointer-events-none'>
+          <XIcon className='vs:size-4' />
+          <span className='vs:sr-only'>Close</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>
@@ -95,7 +95,7 @@ function SheetContent({
 function SheetHeader({className, ...props}: React.ComponentProps<'div'>) {
   return (
     <div
-      className={cn('flex flex-col gap-1.5 py-4', className)}
+      className={cn('vs:flex vs:flex-col vs:gap-1.5 vs:py-4', className)}
       data-slot='sheet-header'
       {...props}
     />
@@ -105,8 +105,11 @@ function SheetHeader({className, ...props}: React.ComponentProps<'div'>) {
 function SheetFooter({className, ...props}: React.ComponentProps<'div'>) {
   return (
     <div
-      className={cn('mt-auto flex flex-col gap-2 p-4', className)}
       data-slot='sheet-footer'
+      className={cn(
+        'vs:mt-auto vs:flex vs:flex-col vs:gap-2 vs:p-4',
+        className,
+      )}
       {...props}
     />
   )
@@ -118,7 +121,7 @@ function SheetTitle({
 }: React.ComponentProps<typeof SheetPrimitive.Title>) {
   return (
     <SheetPrimitive.Title
-      className={cn('text-foreground font-semibold', className)}
+      className={cn('vs:text-foreground vs:font-semibold', className)}
       data-slot='sheet-title'
       {...props}
     />
@@ -131,7 +134,7 @@ function SheetDescription({
 }: React.ComponentProps<typeof SheetPrimitive.Description>) {
   return (
     <SheetPrimitive.Description
-      className={cn('text-muted-foreground text-sm', className)}
+      className={cn('vs:text-muted-foreground vs:text-sm', className)}
       data-slot='sheet-description'
       {...props}
     />
