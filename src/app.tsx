@@ -35,7 +35,7 @@ const STATIC_VISION_QUERY_OPTIONS = {
 } as const
 
 const APP_SURFACE_CLASSNAME =
-  'vision-simulator-root vs:block vs:size-full vs:min-h-0 vs:min-w-0 vs:overflow-hidden'
+  'vs:block vs:size-full vs:min-h-0 vs:min-w-0 vs:overflow-hidden'
 
 export interface AppProps {
   children?: React.ReactNode
@@ -161,15 +161,10 @@ export const App: React.FC<AppProps> = ({
 }) => {
   configureDataProvider({apiBaseUrl, accessToken})
   const effectiveMode = resolveVisionSimulatorMode(mode)
-  const [portalContainer, setPortalContainer] =
-    React.useState<HTMLDivElement | null>(null)
-  const handleRootRef = React.useCallback((node: HTMLDivElement | null) => {
-    setPortalContainer(node)
-  }, [])
 
   return (
-    <div className={APP_SURFACE_CLASSNAME} ref={handleRootRef}>
-      <PortalContainerProvider container={portalContainer}>
+    <PortalContainerProvider container={null}>
+      <div className={APP_SURFACE_CLASSNAME}>
         <VisionSimulatorAppShell
           mediaMtxUrl={mediaMtxUrl}
           uiOverrides={uiOverrides}
@@ -179,7 +174,7 @@ export const App: React.FC<AppProps> = ({
           mode={effectiveMode}
           visionSimulatorId={visionSimulatorId}
         />
-      </PortalContainerProvider>
-    </div>
+      </div>
+    </PortalContainerProvider>
   )
 }
