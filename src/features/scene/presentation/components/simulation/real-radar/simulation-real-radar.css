@@ -5,7 +5,7 @@
   height: 320px;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid hsl(var(--border));
+  border: 1px solid var(--vs-border);
   background: hsl(222 47% 11%);
 }
 
@@ -18,7 +18,7 @@
 .real-radar-map-placeholder {
   display: grid;
   place-items: center;
-  color: hsl(var(--muted-foreground));
+  color: var(--vs-muted-foreground);
   text-align: center;
   padding: 1rem;
   font-size: 0.75rem;
@@ -37,7 +37,7 @@
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
   background: hsl(222 47% 11% / 0.85);
-  border: 1px solid hsl(var(--border) / 0.75);
+  border: 1px solid color-mix(in oklab, var(--vs-border) 75%, transparent);
   color: hsl(210 40% 98%);
   font-size: 0.65rem;
   letter-spacing: 0.02em;
