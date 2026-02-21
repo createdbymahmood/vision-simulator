@@ -93,6 +93,29 @@ const MAP_STYLE_URLS: Record<SceneMapStyle, string> = {
   osm: 'mapbox://styles/mapbox/outdoors-v12',
 }
 
+const SHIFT_HAND_ELIGIBLE_TOOLS = new Set<EditorTool>([
+  'draw-area',
+  'draw-shape',
+  'draw-wall',
+  'place-camera',
+  'place-person',
+  'select',
+])
+
+const isEditableKeyTarget = (eventTarget: EventTarget | null): boolean => {
+  if (!(eventTarget instanceof HTMLElement)) {
+    return false
+  }
+
+  const tagName = eventTarget.tagName
+  return (
+    eventTarget.isContentEditable ||
+    tagName === 'INPUT' ||
+    tagName === 'TEXTAREA' ||
+    tagName === 'SELECT'
+  )
+}
+
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const MapView: React.FC<MapViewProps> = ({
   activeTool,
@@ -112,6 +135,10 @@ export const MapView: React.FC<MapViewProps> = ({
   const [isNearStart, setIsNearStart] = React.useState(false)
   const [isDragging, setIsDragging] = React.useState(false)
   const [cursorOverride, setCursorOverride] = React.useState<string>()
+  const shiftOverrideActiveRef = React.useRef(false)
+  const toolBeforeShiftRef = React.useRef<EditorTool | null>(null)
+  const activeToolRef = React.useRef(activeTool)
+  const isEditModeRef = React.useRef(false)
   const initialAreas = useSceneStore((s) => s.scene.areas)
   const [drawingColor, setDrawingColor] = React.useState(() =>
     getNextAreaColor(initialAreas),
@@ -150,6 +177,14 @@ export const MapView: React.FC<MapViewProps> = ({
   const clearCameraPlacement = useUiStore((state) => state.clearCameraPlacement)
   const openPanel = useUiStore((state) => state.openPanel)
   const flyToActiveAreaTick = useUiStore((state) => state.flyToActiveAreaTick)
+
+  React.useEffect(() => {
+    activeToolRef.current = activeTool
+  }, [activeTool])
+
+  React.useEffect(() => {
+    isEditModeRef.current = isEditMode
+  }, [isEditMode])
 
   const getAreaAtPoint = React.useCallback(
     (point: GeoPoint) =>
@@ -670,6 +705,69 @@ export const MapView: React.FC<MapViewProps> = ({
     onShapeBackspace: resetShapeDrawing,
   })
 
+  React.useEffect(() => {
+    const restoreToolAfterShift = () => {
+      if (!shiftOverrideActiveRef.current) {
+        return
+      }
+
+      const toolBeforeShift = toolBeforeShiftRef.current
+      shiftOverrideActiveRef.current = false
+      toolBeforeShiftRef.current = null
+
+      if (!toolBeforeShift) {
+        return
+      }
+
+      if (activeToolRef.current !== 'hand') {
+        return
+      }
+
+      setActiveTool(toolBeforeShift)
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Shift' || event.repeat) {
+        return
+      }
+
+      if (isEditableKeyTarget(event.target)) {
+        return
+      }
+
+      if (shiftOverrideActiveRef.current || !isEditModeRef.current) {
+        return
+      }
+
+      const currentTool = activeToolRef.current
+      if (!SHIFT_HAND_ELIGIBLE_TOOLS.has(currentTool)) {
+        return
+      }
+
+      toolBeforeShiftRef.current = currentTool
+      shiftOverrideActiveRef.current = true
+      setActiveTool('hand')
+    }
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key !== 'Shift') {
+        return
+      }
+      restoreToolAfterShift()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', restoreToolAfterShift)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', restoreToolAfterShift)
+      restoreToolAfterShift()
+    }
+  }, [setActiveTool])
+
   const handleAreaClick = React.useCallback(
     (point: GeoPoint) => {
       const canClose = drawing.points.length >= 3
@@ -1044,6 +1142,7 @@ export const MapView: React.FC<MapViewProps> = ({
         ref={mapRef}
         style={{height: '100%', width: '100%'}}
         attributionControl={false}
+        boxZoom={false}
         cursor={cursor}
         doubleClickZoom={false}
         dragRotate={false}
