@@ -51,6 +51,7 @@ import {ShapePropertiesSheet} from './properties-sheet/shape-properties-sheet'
 import {WallPropertiesSheet} from './properties-sheet/wall-properties-sheet'
 import {RightRail} from './right-rail'
 import {SimulationAnalysisView} from './simulation/simulation-analysis-view'
+import {loadSimulationCanvasModule} from './simulation/simulation-canvas-loader'
 import {UnsavedChangesLeaveDialog} from './unsaved-changes-leave-dialog'
 import {ViewportShell} from './viewport-shell'
 
@@ -346,6 +347,16 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     setEditMode(true)
     setActiveTool('select')
   }, [closeTransientUi, setEditMode, setActiveTool, viewMode])
+
+  React.useEffect(() => {
+    const preloadTimerId = window.setTimeout(() => {
+      void loadSimulationCanvasModule()
+    }, 800)
+
+    return () => {
+      window.clearTimeout(preloadTimerId)
+    }
+  }, [])
 
   useEditorShortcuts({
     // NOTE: Shortcuts are intentionally disabled for now. Do not re-enable

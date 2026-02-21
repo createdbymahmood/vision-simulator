@@ -53,7 +53,16 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
 }) => {
   const radarSettings = useUiStore((state) => state.radarSettings)
   const setRadarSettings = useUiStore((state) => state.setRadarSettings)
-  const visionState = useUiStore((state) => state.visionState)
+  const peopleWorld = useUiStore((state) => state.visionState.peopleWorld)
+  const cameraDetections = useUiStore(
+    (state) => state.visionState.visibleByCameraId,
+  )
+  const detectionCount = useUiStore(
+    (state) => state.visionState.detectionsCount,
+  )
+  const deferredPeopleWorld = React.useDeferredValue(peopleWorld)
+  const deferredCameraDetections = React.useDeferredValue(cameraDetections)
+  const deferredDetectionCount = React.useDeferredValue(detectionCount)
   const [radarMode, setRadarMode] =
     React.useState<RadarDisplayMode>('simulated')
   const isSimulatedMode = radarMode === 'simulated'
@@ -63,10 +72,9 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     [selectedEntityIds],
   )
 
-  const sourceScene = React.useMemo(() => scene, [scene])
   const framedScene = React.useMemo(
-    () => getFramedSceneForRadar(sourceScene, focusAreaId),
-    [focusAreaId, sourceScene],
+    () => getFramedSceneForRadar(scene, focusAreaId),
+    [focusAreaId, scene],
   )
   const originPoint = React.useMemo(
     () => computeSceneOrigin(framedScene),
@@ -76,9 +84,6 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     () => createCoordinateTransformer(originPoint),
     [originPoint],
   )
-
-  const peopleWorld = visionState.peopleWorld
-  const cameraDetections = visionState.visibleByCameraId
 
   const {
     areaPaths,
@@ -90,13 +95,13 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     wedges,
   } = useRadarGeometry({
     enabled: isSimulatedMode,
-    scene: sourceScene,
+    scene,
     focusAreaId,
     radarSettings,
     size,
     transformer,
-    peopleWorld,
-    cameraDetections,
+    peopleWorld: deferredPeopleWorld,
+    cameraDetections: deferredCameraDetections,
   })
 
   // DON'T REMOVE THE COMMENTED CODE BELOW.
@@ -119,26 +124,26 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
   )
   const visibleDetectionCount = React.useMemo(() => {
     if (radarMode === 'simulated' && !focusAreaId) {
-      return visionState.detectionsCount
+      return deferredDetectionCount
     }
 
     const visiblePeopleIds = new Set(
       framedScene.people.map((person) => person.id),
     )
     return framedScene.cameras.reduce((total, camera) => {
-      const visible = visionState.visibleByCameraId[camera.id] ?? []
+      const visible = deferredCameraDetections[camera.id] ?? []
       const count = visible.filter((personId) =>
         visiblePeopleIds.has(personId),
       ).length
       return total + count
     }, 0)
   }, [
+    deferredCameraDetections,
+    deferredDetectionCount,
     focusAreaId,
     framedScene.cameras,
     framedScene.people,
     radarMode,
-    visionState.detectionsCount,
-    visionState.visibleByCameraId,
   ])
   const [pingKey, setPingKey] = React.useState(0)
   const [pingPersonId, setPingPersonId] = React.useState<string | null>(null)
@@ -174,12 +179,12 @@ export const SimulationRadar: React.FC<SimulationRadarProps> = ({
     if (!pingPersonId) {
       return null
     }
-    const world = peopleWorld[pingPersonId]
+    const world = deferredPeopleWorld[pingPersonId]
     if (!world) {
       return null
     }
     return toRadar({x: world.x, z: world.z})
-  }, [isSimulatedMode, peopleWorld, pingPersonId, toRadar])
+  }, [deferredPeopleWorld, isSimulatedMode, pingPersonId, toRadar])
 
   return (
     <div className='vs:pointer-events-auto vs:w-full'>

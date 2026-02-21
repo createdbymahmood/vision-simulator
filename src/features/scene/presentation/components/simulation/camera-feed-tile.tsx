@@ -12,7 +12,7 @@ import {computeFeedRenderConfig} from './camera-feed-helpers'
 import {computeFeedBoundingBoxes, useElementSize} from './camera-feed-utils'
 import {RealDeviceFeedPlayer} from './real-device-feed-player'
 
-interface CameraFeedTileProps {
+export interface CameraFeedTileProps {
   camera: CameraEntity
   feedTarget: CameraFeedTarget
   peopleIds: string[]
@@ -24,7 +24,7 @@ interface CameraFeedTileProps {
 
 const ENABLE_FEED_OPTICS = false
 
-export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
+const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
   camera,
   feedTarget,
   peopleIds,
@@ -34,6 +34,10 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
   feedCount,
 }) => {
   const isRealDeviceFeed = camera.sourceDeviceKind === 'real'
+  const selectedPersonIdSet = React.useMemo(
+    () => new Set(selectedPersonIds),
+    [selectedPersonIds],
+  )
   const size = useElementSize(feedTarget.containerRef)
   const boxes = React.useMemo(() => {
     if (isRealDeviceFeed) {
@@ -105,7 +109,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
                     <div
                       key={box.id}
                       className={`vs:absolute vs:border-2 ${
-                        selectedPersonIds.includes(box.id)
+                        selectedPersonIdSet.has(box.id)
                           ? 'vs:border-purple-500'
                           : 'vs:border-yellow-300'
                       }`}
@@ -118,7 +122,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
                     >
                       <span
                         className={`vs:absolute vs:-top-5 vs:left-0 vs:text-[10px] vs:px-1 vs:rounded ${
-                          selectedPersonIds.includes(box.id)
+                          selectedPersonIdSet.has(box.id)
                             ? 'vs:bg-purple-500/90 vs:text-white'
                             : 'vs:bg-yellow-300/90 vs:text-black'
                         }`}
@@ -150,3 +154,7 @@ export const CameraFeedTile: React.FC<CameraFeedTileProps> = ({
     </div>
   )
 }
+
+CameraFeedTileComponent.displayName = 'CameraFeedTile'
+
+export const CameraFeedTile = React.memo(CameraFeedTileComponent)

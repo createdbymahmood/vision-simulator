@@ -29,13 +29,11 @@ import {cn} from '@/lib/utils'
 
 import type {SimulationCaptureApi} from './simulation-capture'
 
-import {SimulationCameraSidebar} from './simulation-camera-sidebar'
-import {SimulationCanvas} from './simulation-canvas'
+import {loadSimulationCanvasModule} from './simulation-canvas-loader'
 import {
   computeSceneOrigin,
   createCoordinateTransformer,
 } from './simulation-helpers'
-import {SimulationRadar} from './simulation-radar'
 import {SimulationTopBar} from './simulation-top-bar'
 import {SimulationViewport} from './simulation-viewport'
 import {useCameraFeedTargets} from './use-camera-feed-targets'
@@ -55,12 +53,49 @@ const EMPTY_PEOPLE_WORLD: Record<
   {x: number; y: number; z: number; height: number}
 > = {}
 
+const LazySimulationCanvas = React.lazy(async () => {
+  const module = await loadSimulationCanvasModule()
+  return {default: module.SimulationCanvas}
+})
+
+const LazySimulationRadar = React.lazy(async () => {
+  const module = await import('./simulation-radar')
+  return {default: module.SimulationRadar}
+})
+
+const LazySimulationCameraSidebar = React.lazy(async () => {
+  const module = await import('./simulation-camera-sidebar')
+  return {default: module.SimulationCameraSidebar}
+})
+
+const SidePanelLoading: React.FC = () => (
+  <div className='vs:flex vs:flex-col vs:gap-4 vs:p-4 vs:text-sm'>
+    <div className='vs:h-44 vs:w-full vs:rounded-lg vs:bg-muted/60 vs:animate-pulse' />
+    <div className='vs:h-56 vs:w-full vs:rounded-lg vs:bg-muted/60 vs:animate-pulse' />
+  </div>
+)
+
 interface ShowSimulationSidePanelsInput {
   showAuxiliaryPanels: boolean
   hasCameraFeedTiles: boolean
   previewViewMode: PreviewViewMode
   hasCamerasInActiveArea: boolean
 }
+
+interface PreviewPendingOverlayProps {
+  label: string
+}
+
+const PreviewPendingOverlay: React.FC<PreviewPendingOverlayProps> = ({
+  label,
+}) => (
+  <div className='vs:pointer-events-none vs:absolute vs:inset-0 vs:z-30 vs:flex vs:items-center vs:justify-center vs:bg-background/70 vs:backdrop-blur-sm'>
+    <div className='vs:flex vs:items-center vs:gap-2 vs:rounded-md vs:border vs:bg-background vs:px-3 vs:py-2 vs:text-sm vs:font-medium vs:shadow-sm'>
+      <span className='vs:inline-flex vs:size-4 vs:animate-spin vs:rounded-full vs:border-2 vs:border-current vs:border-t-transparent vs:shrink-0' />
+      <span>{label}</span>
+    </div>
+  </div>
+)
 
 const scheduleMapResize = (mapRef: MapRef | null) => {
   const map = mapRef?.getMap?.()
@@ -196,7 +231,8 @@ const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
   )
 }
 
-// eslint-disable-next-line max-lines-per-function
+/* eslint-disable complexity */
+// eslint-disable-next-line max-lines-per-function, max-statements
 export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   showTopBar = true,
   showAuxiliaryPanels = true,
@@ -240,14 +276,19 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   const captureRef = React.useRef<SimulationCaptureApi | null>(null)
   const simulationCaptureRef = React.useRef<SimulationCaptureApi | null>(null)
   const [previewMapRef, setPreviewMapRef] = React.useState<MapRef | null>(null)
+  const [isSimulationCanvasReady, setSimulationCanvasReady] =
+    React.useState(false)
+  const [isPreviewMapReady, setPreviewMapReady] = React.useState(false)
   const handleCaptureReady = useCallbackRef((api: SimulationCaptureApi) => {
     simulationCaptureRef.current = api
+    setSimulationCanvasReady(true)
     if (previewViewMode === '3d') {
       captureRef.current = api
     }
   })
   const handlePreviewMapReady = useCallbackRef((nextMap: MapRef | null) => {
     setPreviewMapRef(nextMap)
+    setPreviewMapReady(Boolean(nextMap))
   })
 
   const {
@@ -361,6 +402,10 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   )
   const showPreviewViewportControls =
     allowPreviewViewSwitch || (!hideAreaSelection && scene.areas.length > 0)
+  const isPreviewSurfacePending =
+    previewViewMode === '3d' ? !isSimulationCanvasReady : !isPreviewMapReady
+  const previewSurfacePendingLabel =
+    previewViewMode === '3d' ? 'Preparing 3D preview' : 'Preparing 2D preview'
 
   React.useEffect(() => {
     if (previewViewMode === '2d') {
@@ -441,23 +486,27 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
           recordingLabel={`REC ${formattedTime}`}
           showFlash={flashActive}
         >
-          <SimulationCanvas
-            cameraFeedTargets={feedTargets}
-            scene={scene}
-            selectedEntityIds={selectedEntityIds}
-            editorMode={scene.editorMode}
-            focusAreaId={activePreviewAreaId}
-            onCaptureReady={handleCaptureReady}
-            onSelectEntity={handleSelectEntity}
-            previewViewMode={previewViewMode}
-            showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
-            className={cn(
-              'vs:h-full vs:w-full',
-              previewViewMode === '2d'
-                ? 'vs:pointer-events-none vs:opacity-0'
-                : 'vs:opacity-100',
-            )}
-          />
+          <React.Suspense
+            fallback={<PreviewPendingOverlay label='Loading 3D renderer' />}
+          >
+            <LazySimulationCanvas
+              cameraFeedTargets={feedTargets}
+              scene={scene}
+              selectedEntityIds={selectedEntityIds}
+              editorMode={scene.editorMode}
+              focusAreaId={activePreviewAreaId}
+              onCaptureReady={handleCaptureReady}
+              onSelectEntity={handleSelectEntity}
+              previewViewMode={previewViewMode}
+              showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
+              className={cn(
+                'vs:h-full vs:w-full',
+                previewViewMode === '2d'
+                  ? 'vs:pointer-events-none vs:opacity-0'
+                  : 'vs:opacity-100',
+              )}
+            />
+          </React.Suspense>
           {previewViewMode === '2d' ? (
             <div className='vs:absolute vs:inset-0 vs:z-10'>
               <MapView
@@ -468,24 +517,30 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
               />
             </div>
           ) : null}
+          {isPreviewSurfacePending ? (
+            <PreviewPendingOverlay label={previewSurfacePendingLabel} />
+          ) : null}
         </SimulationViewport>
         {showSimulationSidePanels ? (
           <div className='vs:flex vs:h-full vs:min-h-0 vs:w-[360px] vs:max-w-[360px] vs:shrink-0 vs:flex-col vs:gap-4 vs:overflow-x-hidden vs:overflow-y-auto vs:overscroll-contain vs:border-l'>
-            <SimulationRadar
-              size={radarPanelSize}
-              scene={scene}
-              selectedEntityIds={selectedEntityIds}
-              focusAreaId={activePreviewAreaId}
-              onSelectEntity={handleSelectEntity}
-            />
-            <SimulationCameraSidebar
-              feedTargets={feedTargets}
-              scene={scene}
-              focusAreaId={activePreviewAreaId}
-            />
+            <React.Suspense fallback={<SidePanelLoading />}>
+              <LazySimulationRadar
+                size={radarPanelSize}
+                scene={scene}
+                selectedEntityIds={selectedEntityIds}
+                focusAreaId={activePreviewAreaId}
+                onSelectEntity={handleSelectEntity}
+              />
+              <LazySimulationCameraSidebar
+                feedTargets={feedTargets}
+                scene={scene}
+                focusAreaId={activePreviewAreaId}
+              />
+            </React.Suspense>
           </div>
         ) : null}
       </div>
     </div>
   )
 }
+/* eslint-enable complexity */
