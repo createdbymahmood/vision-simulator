@@ -178,7 +178,7 @@ const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
       {showAreaSelection ? (
         <Select value={activeAreaId} onValueChange={onActiveAreaChange}>
           <SelectTrigger
-            className='vs:bg-background vs:min-w-40'
+            className='vs:bg-background! vs:min-w-40'
             disabled={areas.length <= 1}
           >
             <SelectValue placeholder='Select area' />
