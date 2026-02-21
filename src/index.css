@@ -1,4 +1,4 @@
-@import 'tailwindcss' prefix(vs) important;
+@import 'tailwindcss' prefix(vs);
 @import 'tw-animate-css';
 @custom-variant dark (&:where(.dark, .dark *));
 
