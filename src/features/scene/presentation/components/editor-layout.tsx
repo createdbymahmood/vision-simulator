@@ -421,7 +421,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           <SimulationAnalysisView
             allowBackToEditor={modePolicy.allowSimulationBackToEditor}
             allowPreviewViewSwitch={modePolicy.allowPreviewViewSwitch}
-            hideAreaSelection={mode === 'preview'}
+            hideAreaSelection={false}
             onBackToEditor={handleBackToEditor}
             showAuxiliaryPanels={modePolicy.showSimulationAuxiliaryPanels}
             showTopBar={modePolicy.showSimulationTopBar}
