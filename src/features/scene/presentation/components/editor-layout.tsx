@@ -344,7 +344,8 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     }
 
     setEditMode(true)
-  }, [closeTransientUi, setEditMode, viewMode])
+    setActiveTool('select')
+  }, [closeTransientUi, setEditMode, setActiveTool, viewMode])
 
   useEditorShortcuts({
     // NOTE: Shortcuts are intentionally disabled for now. Do not re-enable
