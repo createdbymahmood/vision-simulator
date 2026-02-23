@@ -27,6 +27,16 @@ interface DetectionRenderItem {
   position: THREE.Vector3
 }
 
+interface FlatTubeProps {
+  color: string
+  end: [number, number]
+  metalness?: number
+  radius?: number
+  roughness?: number
+  start: [number, number]
+  z?: number
+}
+
 const normalizeClassName = (value?: string) =>
   (value ?? 'unknown').toLowerCase()
 
@@ -49,6 +59,39 @@ const getStableYaw = (id: string) => {
     hash = (hash * 33 + id.charCodeAt(index)) % 360
   }
   return (Math.abs(hash) * Math.PI) / 180
+}
+
+const FlatTube: React.FC<FlatTubeProps> = ({
+  color,
+  end,
+  metalness = 0.08,
+  radius = 0.012,
+  roughness = 0.55,
+  start,
+  z = 0,
+}) => {
+  const dx = end[0] - start[0]
+  const dy = end[1] - start[1]
+  const length = Math.hypot(dx, dy)
+  const centerX = (start[0] + end[0]) / 2
+  const centerY = (start[1] + end[1]) / 2
+  const rotationZ = Math.atan2(dy, dx) - Math.PI / 2
+
+  return (
+    <mesh
+      castShadow
+      position={[centerX, centerY, z]}
+      receiveShadow
+      rotation={[0, 0, rotationZ]}
+    >
+      <cylinderGeometry args={[radius, radius, length, 12]} />
+      <meshStandardMaterial
+        metalness={metalness}
+        color={color}
+        roughness={roughness}
+      />
+    </mesh>
+  )
 }
 
 const HelmetModel: React.FC<DetectionModelProps> = ({color}) => (
@@ -212,77 +255,237 @@ const PersonModel: React.FC<DetectionModelProps> = ({color}) => (
 )
 
 const BicycleModel: React.FC<DetectionModelProps> = ({color}) => (
-  <group position={[0, 0.26, 0]}>
+  <group position={[0, 0.24, 0]}>
+    {[-0.42, 0.42].map((wheelX) => (
+      <group key={`bicycle-wheel-${wheelX}`} position={[wheelX, 0, 0]}>
+        <mesh castShadow receiveShadow>
+          <torusGeometry args={[0.21, 0.022, 14, 34]} />
+          <meshStandardMaterial color='#020617' roughness={0.86} />
+        </mesh>
+        <mesh castShadow receiveShadow>
+          <torusGeometry args={[0.175, 0.005, 10, 28]} />
+          <meshStandardMaterial color='#94a3b8' roughness={0.3} />
+        </mesh>
+        <mesh castShadow receiveShadow rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.08, 12]} />
+          <meshStandardMaterial metalness={0.35} color='#64748b' />
+        </mesh>
+      </group>
+    ))}
+
+    {[-0.42, 0.42].map((wheelX) => (
+      <React.Fragment key={`bicycle-spokes-${wheelX}`}>
+        <FlatTube
+          end={[wheelX, 0.15]}
+          radius={0.003}
+          start={[wheelX, -0.15]}
+          color='#94a3b8'
+          roughness={0.28}
+        />
+        <FlatTube
+          end={[wheelX + 0.11, 0.11]}
+          radius={0.003}
+          start={[wheelX - 0.11, -0.11]}
+          color='#94a3b8'
+          roughness={0.28}
+        />
+        <FlatTube
+          end={[wheelX + 0.11, -0.11]}
+          radius={0.003}
+          start={[wheelX - 0.11, 0.11]}
+          color='#94a3b8'
+          roughness={0.28}
+        />
+      </React.Fragment>
+    ))}
+
+    <FlatTube
+      end={[-0.05, 0.09]}
+      radius={0.015}
+      start={[-0.42, 0.02]}
+      color={color}
+    />
+    <FlatTube
+      end={[-0.19, 0.25]}
+      radius={0.013}
+      start={[-0.42, 0.02]}
+      color={color}
+    />
+    <FlatTube
+      end={[-0.05, 0.09]}
+      radius={0.013}
+      start={[-0.19, 0.25]}
+      color={color}
+    />
+    <FlatTube
+      end={[0.21, 0.24]}
+      radius={0.015}
+      start={[-0.05, 0.09]}
+      color={color}
+    />
+    <FlatTube
+      end={[0.21, 0.24]}
+      radius={0.013}
+      start={[-0.19, 0.25]}
+      color={color}
+    />
+    <FlatTube
+      end={[0.42, 0.02]}
+      radius={0.013}
+      start={[0.21, 0.24]}
+      color={color}
+    />
+    <FlatTube
+      end={[0.28, 0.35]}
+      radius={0.01}
+      start={[0.21, 0.24]}
+      color={color}
+    />
+    <FlatTube
+      end={[-0.19, 0.31]}
+      radius={0.01}
+      start={[-0.19, 0.25]}
+      color='#334155'
+    />
+
+    <mesh castShadow position={[0.31, 0.35, 0]} receiveShadow>
+      <boxGeometry args={[0.18, 0.02, 0.045]} />
+      <meshStandardMaterial color='#1e293b' roughness={0.72} />
+    </mesh>
+    <mesh castShadow position={[-0.19, 0.33, 0]} receiveShadow>
+      <boxGeometry args={[0.16, 0.028, 0.06]} />
+      <meshStandardMaterial color='#334155' roughness={0.7} />
+    </mesh>
+
     <mesh
       castShadow
-      position={[-0.36, 0, 0]}
+      position={[-0.05, 0.09, 0]}
       receiveShadow
       rotation={[Math.PI / 2, 0, 0]}
     >
-      <torusGeometry args={[0.23, 0.03, 12, 28]} />
-      <meshStandardMaterial color='#0f172a' roughness={0.8} />
+      <torusGeometry args={[0.05, 0.007, 8, 24]} />
+      <meshStandardMaterial metalness={0.35} color='#64748b' roughness={0.35} />
     </mesh>
-    <mesh
-      castShadow
-      position={[0.36, 0, 0]}
-      receiveShadow
-      rotation={[Math.PI / 2, 0, 0]}
-    >
-      <torusGeometry args={[0.23, 0.03, 12, 28]} />
-      <meshStandardMaterial color='#0f172a' roughness={0.8} />
+    <FlatTube
+      end={[0.02, 0.12]}
+      radius={0.008}
+      start={[-0.05, 0.09]}
+      color='#475569'
+    />
+    <FlatTube
+      end={[-0.12, 0.05]}
+      radius={0.008}
+      start={[-0.05, 0.09]}
+      color='#475569'
+    />
+    <mesh castShadow position={[0.045, 0.135, 0]} receiveShadow>
+      <boxGeometry args={[0.055, 0.015, 0.04]} />
+      <meshStandardMaterial color='#1e293b' roughness={0.74} />
     </mesh>
-    <mesh
-      castShadow
-      position={[0, 0.08, 0]}
-      receiveShadow
-      rotation={[0, 0, Math.PI / 8]}
-    >
-      <cylinderGeometry args={[0.02, 0.02, 0.75, 12]} />
-      <meshStandardMaterial color={color} />
-    </mesh>
-    <mesh
-      castShadow
-      position={[0.1, 0.2, 0]}
-      receiveShadow
-      rotation={[0, 0, -Math.PI / 4]}
-    >
-      <cylinderGeometry args={[0.02, 0.02, 0.45, 12]} />
-      <meshStandardMaterial color={color} />
-    </mesh>
-    <mesh castShadow position={[0.28, 0.24, 0]} receiveShadow>
-      <boxGeometry args={[0.22, 0.03, 0.06]} />
-      <meshStandardMaterial color='#334155' />
+    <mesh castShadow position={[-0.14, 0.04, 0]} receiveShadow>
+      <boxGeometry args={[0.055, 0.015, 0.04]} />
+      <meshStandardMaterial color='#1e293b' roughness={0.74} />
     </mesh>
   </group>
 )
 
 const MotorcycleModel: React.FC<DetectionModelProps> = ({color}) => (
-  <group position={[0, 0.28, 0]}>
+  <group position={[0, 0.24, 0]}>
+    {[-0.36, 0.38].map((wheelX) => (
+      <group key={`motor-wheel-${wheelX}`} position={[wheelX, 0, 0]}>
+        <mesh castShadow receiveShadow>
+          <torusGeometry args={[0.22, 0.04, 14, 32]} />
+          <meshStandardMaterial color='#020617' roughness={0.84} />
+        </mesh>
+        <mesh castShadow receiveShadow>
+          <torusGeometry args={[0.16, 0.02, 10, 26]} />
+          <meshStandardMaterial
+            metalness={0.32}
+            color='#94a3b8'
+            roughness={0.35}
+          />
+        </mesh>
+        <mesh castShadow receiveShadow rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.016, 0.016, 0.11, 12]} />
+          <meshStandardMaterial metalness={0.4} color='#64748b' />
+        </mesh>
+      </group>
+    ))}
+
+    <FlatTube
+      end={[-0.02, 0.11]}
+      radius={0.018}
+      start={[-0.36, 0.02]}
+      color='#374151'
+    />
+    <FlatTube
+      end={[0.18, 0.24]}
+      radius={0.018}
+      start={[-0.02, 0.11]}
+      color='#374151'
+    />
+    <FlatTube
+      end={[-0.13, 0.23]}
+      radius={0.017}
+      start={[-0.02, 0.11]}
+      color='#334155'
+    />
+    <FlatTube
+      end={[0.18, 0.24]}
+      radius={0.017}
+      start={[-0.13, 0.23]}
+      color='#334155'
+    />
+    <FlatTube
+      end={[0.38, 0.02]}
+      radius={0.014}
+      start={[0.18, 0.24]}
+      z={-0.02}
+      color='#475569'
+    />
+    <FlatTube
+      end={[0.38, 0.02]}
+      radius={0.014}
+      start={[0.18, 0.24]}
+      z={0.02}
+      color='#475569'
+    />
+    <FlatTube
+      end={[0.27, 0.34]}
+      radius={0.01}
+      start={[0.18, 0.24]}
+      color='#1f2937'
+    />
+
     <mesh
       castShadow
-      position={[-0.35, 0, 0]}
+      position={[0.05, 0.27, 0]}
       receiveShadow
-      rotation={[Math.PI / 2, 0, 0]}
+      rotation={[0, 0, Math.PI / 2]}
     >
-      <torusGeometry args={[0.24, 0.045, 12, 30]} />
-      <meshStandardMaterial color='#020617' roughness={0.75} />
+      <capsuleGeometry args={[0.07, 0.14, 8, 12]} />
+      <meshStandardMaterial metalness={0.28} color={color} roughness={0.42} />
+    </mesh>
+    <mesh castShadow position={[-0.14, 0.28, 0]} receiveShadow>
+      <boxGeometry args={[0.25, 0.06, 0.17]} />
+      <meshStandardMaterial color='#111827' roughness={0.6} />
+    </mesh>
+    <mesh castShadow position={[-0.03, 0.13, 0]} receiveShadow>
+      <boxGeometry args={[0.2, 0.13, 0.16]} />
+      <meshStandardMaterial metalness={0.22} color='#4b5563' roughness={0.52} />
     </mesh>
     <mesh
       castShadow
-      position={[0.35, 0, 0]}
+      position={[0.05, 0.04, -0.09]}
       receiveShadow
-      rotation={[Math.PI / 2, 0, 0]}
+      rotation={[0, 0, Math.PI / 2]}
     >
-      <torusGeometry args={[0.24, 0.045, 12, 30]} />
-      <meshStandardMaterial color='#020617' roughness={0.75} />
+      <cylinderGeometry args={[0.018, 0.018, 0.48, 14]} />
+      <meshStandardMaterial metalness={0.5} color='#9ca3af' roughness={0.25} />
     </mesh>
-    <mesh castShadow position={[0, 0.2, 0]} receiveShadow>
-      <boxGeometry args={[0.62, 0.2, 0.3]} />
-      <meshStandardMaterial metalness={0.2} color={color} roughness={0.45} />
-    </mesh>
-    <mesh castShadow position={[0.08, 0.33, 0]} receiveShadow>
-      <boxGeometry args={[0.28, 0.08, 0.22]} />
-      <meshStandardMaterial color='#111827' />
+    <mesh castShadow position={[0.31, 0.34, 0]} receiveShadow>
+      <boxGeometry args={[0.16, 0.02, 0.06]} />
+      <meshStandardMaterial color='#1f2937' roughness={0.72} />
     </mesh>
   </group>
 )
