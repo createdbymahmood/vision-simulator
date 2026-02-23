@@ -37,7 +37,6 @@ interface DeviceSubscriptionMessage {
   }
 }
 
-const DEFAULT_WS_URL = 'ws://ws-dev.sensolist.com/ws'
 const DEFAULT_START = '-5m' as const
 const DEFAULT_STOP = '-0m' as const
 const DEFAULT_EVERY = '1m' as const
@@ -84,14 +83,7 @@ const decodeJwtClaims = (accessToken?: string): DecodedUserJwt | null => {
   }
 }
 
-const getWsBaseUrl = () => {
-  const fromEnv = import.meta.env.VITE_API_WS_SERVICE_URL
-  if (typeof fromEnv === 'string' && fromEnv.trim().length > 0) {
-    return fromEnv.trim()
-  }
-
-  return DEFAULT_WS_URL
-}
+const getWsBaseUrl = () => import.meta.env.VITE_API_WS_SERVICE_URL
 
 const createRequestId = () => {
   if (
