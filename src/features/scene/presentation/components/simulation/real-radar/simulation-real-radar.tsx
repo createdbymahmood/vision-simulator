@@ -29,6 +29,13 @@ import type {
 
 import {RealDeviceFeedPlayer} from '../real-device-feed-player'
 import {SimulationRealRadarActivities} from '../simulation-real-radar-activities'
+import {
+  createCameraMarkerElement,
+  updateCameraMarkerDirection,
+  updateCameraMarkerInteractivity,
+} from './real-radar-camera-marker-utils'
+import {updateDetectionMarkerElement} from './real-radar-detection-marker-utils'
+import {buildCameraFovFeatures, cameraColorForId} from './real-radar-fov-utils'
 import {useRealRadarRuntime} from './use-real-radar-runtime'
 import './simulation-real-radar.css'
 
@@ -41,46 +48,6 @@ interface SimulationRealRadarProps {
 
 const fovSourceId = 'simulation-real-radar-fov'
 
-const detectionIcons: Record<string, string> = {
-  helmet: '🪖',
-  cigarette: '🚬',
-  hat: '🎩',
-  facemask: '😷',
-  firesmoke: '🔥',
-  gloves: '🧤',
-  vest: '🦺',
-  boots: '🥾',
-  goggles: '🥽',
-  person: '🧍',
-  bicycle: '🚲',
-  motorcycle: '🏍️',
-  car: '🚗',
-  bus: '🚌',
-  truck: '🚚',
-  backpack: '🎒',
-  cellphone: '📱',
-}
-
-const detectionColors: Record<string, string> = {
-  helmet: '#f97316',
-  cigarette: '#f43f5e',
-  hat: '#a855f7',
-  facemask: '#06b6d4',
-  firesmoke: '#ef4444',
-  gloves: '#22c55e',
-  vest: '#facc15',
-  boots: '#b45309',
-  goggles: '#0ea5e9',
-  person: '#38bdf8',
-  bicycle: '#3b82f6',
-  motorcycle: '#0f172a',
-  car: '#14b8a6',
-  bus: '#a855f7',
-  truck: '#6366f1',
-  backpack: '#ec4899',
-  cellphone: '#64748b',
-}
-
 const defaultIntrinsics: CameraIntrinsics = {
   fx: 1_200,
   fy: 1_200,
@@ -88,75 +55,6 @@ const defaultIntrinsics: CameraIntrinsics = {
   cy: 540,
   image_height: 1_080,
   image_width: 1_920,
-}
-
-const toFiniteNumber = (value: unknown, fallback: number) => {
-  const numeric = typeof value === 'number' ? value : Number(value)
-  return Number.isFinite(numeric) ? numeric : fallback
-}
-
-const degToRad = (degrees: number) => (degrees * Math.PI) / 180
-
-const resolveHalfFovRadians = ({
-  fallbackFovDeg,
-  fovDeg,
-  focalLength,
-  size,
-}: {
-  fovDeg?: number
-  focalLength: number
-  size: number
-  fallbackFovDeg: number
-}) => {
-  const resolvedFovDeg =
-    typeof fovDeg === 'number' && Number.isFinite(fovDeg) && fovDeg > 0
-      ? fovDeg
-      : fallbackFovDeg
-  const boundedFovDeg = Math.min(170, Math.max(2, resolvedFovDeg))
-  const halfByFovRad = degToRad(boundedFovDeg / 2)
-  const halfByFocalRad = Math.atan(size / (2 * focalLength))
-
-  return Math.min(
-    degToRad(85),
-    Math.max(degToRad(1), halfByFovRad || halfByFocalRad),
-  )
-}
-
-const resolveFocalLength = ({
-  fallbackFocal,
-  fovDeg,
-  providedFocal,
-  size,
-}: {
-  providedFocal?: number
-  size: number
-  fovDeg?: number
-  fallbackFocal: number
-}) => {
-  if (
-    typeof providedFocal === 'number' &&
-    Number.isFinite(providedFocal) &&
-    providedFocal > 0
-  ) {
-    return providedFocal
-  }
-
-  if (typeof fovDeg === 'number' && Number.isFinite(fovDeg) && fovDeg > 0) {
-    const boundedFov = Math.min(170, Math.max(2, fovDeg))
-    return size / (2 * Math.tan(degToRad(boundedFov / 2)))
-  }
-
-  return fallbackFocal
-}
-
-const cameraColorForId = (cameraId: string) => {
-  let hash = 0
-
-  for (let index = 0; index < cameraId.length; index += 1) {
-    hash = (hash * 31 + cameraId.charCodeAt(index)) % 360
-  }
-
-  return `hsl(${Math.abs(hash)} 85% 55%)`
 }
 
 const getScopedRealCameras = (scene: SceneRoot, focusAreaId?: string) =>
@@ -209,22 +107,6 @@ const getCameraByIncomingId = (cameras: CameraEntity[]) => {
 
     return acc
   }, {})
-}
-
-const offsetMeters = (
-  lat: number,
-  lon: number,
-  deltaXMeters: number,
-  deltaYMeters: number,
-) => {
-  const earthRadius = 6_378_137
-  const dLat = deltaYMeters / earthRadius
-  const dLon = deltaXMeters / (earthRadius * Math.cos(degToRad(lat)))
-
-  return {
-    lat: lat + (dLat * 180) / Math.PI,
-    lng: lon + (dLon * 180) / Math.PI,
-  }
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -321,17 +203,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
     })
   })
 
-  const updateCameraDirection = useCallbackRef(
-    (marker: mapboxgl.Marker, yawDeg: number) => {
-      const directionElement = marker
-        .getElement()
-        .querySelector('.real-radar-camera-direction') as HTMLDivElement | null
-
-      if (directionElement) {
-        directionElement.style.transform = `translate(-50%, -90%) rotate(${yawDeg}deg)`
-      }
-    },
-  )
+  const updateCameraDirection = useCallbackRef(updateCameraMarkerDirection)
 
   const openCameraVideo = useCallbackRef((cameraId: string) => {
     const camera = cameraByIncomingIdRef.current[cameraId]
@@ -344,55 +216,33 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
     setSelectedCamera(camera)
   })
 
-  const updateCameraMarkerInteractivity = useCallbackRef(
+  const syncCameraMarkerInteractivity = useCallbackRef(
     (element: HTMLDivElement, cameraId: string) => {
       const camera = cameraByIncomingIdRef.current[cameraId]
       const hasVideo = Boolean(camera)
 
-      element.classList.toggle('clickable', hasVideo)
-
-      if (!hasVideo) {
-        element.removeAttribute('role')
-        element.removeAttribute('aria-label')
-        element.onclick = null
-        return
-      }
-
-      element.setAttribute('role', 'button')
-      element.setAttribute(
-        'aria-label',
-        `Open ${camera.sourceDeviceName || camera.name} stream`,
-      )
-      element.onclick = (event) => {
-        event.stopPropagation()
-        openCameraVideo(cameraId)
-      }
+      updateCameraMarkerInteractivity({
+        element,
+        hasVideo,
+        label: `Open ${camera?.sourceDeviceName || camera?.name || 'camera'} stream`,
+        onOpen: () => {
+          openCameraVideo(cameraId)
+        },
+      })
     },
   )
 
-  const createCameraMarkerElement = useCallbackRef((cameraId: string) => {
-    const container = document.createElement('div')
-    container.className = 'real-radar-camera-marker'
-    container.style.setProperty('--camera-color', cameraColorForId(cameraId))
-
-    updateCameraMarkerInteractivity(container, cameraId)
-
-    const label = document.createElement('div')
-    label.className = 'real-radar-camera-label'
-    label.textContent =
-      cameraByIncomingIdRef.current[cameraId]?.sourceDeviceName ?? cameraId
-
-    const body = document.createElement('div')
-    body.className = 'real-radar-camera-body'
-
-    const direction = document.createElement('div')
-    direction.className = 'real-radar-camera-direction'
-
-    container.appendChild(label)
-    container.appendChild(body)
-    container.appendChild(direction)
-
-    return container
+  const buildCameraMarkerElement = useCallbackRef((cameraId: string) => {
+    const camera = cameraByIncomingIdRef.current[cameraId]
+    return createCameraMarkerElement({
+      cameraColor: cameraColorForId(cameraId),
+      cameraLabel: camera?.sourceDeviceName ?? cameraId,
+      interactivityLabel: `Open ${camera?.sourceDeviceName || camera?.name || 'camera'} stream`,
+      hasVideo: Boolean(camera),
+      onOpen: () => {
+        openCameraVideo(cameraId)
+      },
+    })
   })
 
   const updateCameraFovs = useCallbackRef(() => {
@@ -409,111 +259,10 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
       return
     }
 
-    const features = Array.from(cameraStatesRef.current.entries()).map(
-      ([cameraId, cameraState]) => {
-        const intrinsics = cameraState.intrinsics
-        const safeWidth = Math.max(
-          1,
-          toFiniteNumber(intrinsics.image_width, defaultIntrinsics.image_width),
-        )
-        const safeHeight = Math.max(
-          1,
-          toFiniteNumber(
-            intrinsics.image_height,
-            defaultIntrinsics.image_height,
-          ),
-        )
-        const safeFx = resolveFocalLength({
-          providedFocal: intrinsics.fx,
-          fovDeg: intrinsics.hfov_deg,
-          size: safeWidth,
-          fallbackFocal: 1_200,
-        })
-        const safeFy = resolveFocalLength({
-          providedFocal: intrinsics.fy,
-          fovDeg: intrinsics.vfov_deg,
-          size: safeHeight,
-          fallbackFocal: 1_200,
-        })
-        const safeCx = toFiniteNumber(intrinsics.cx, safeWidth / 2)
-        const safeCy = toFiniteNumber(intrinsics.cy, safeHeight / 2)
-        const halfHfovRad = resolveHalfFovRadians({
-          fovDeg: intrinsics.hfov_deg,
-          focalLength: safeFx,
-          size: safeWidth,
-          fallbackFovDeg: defaultIntrinsics.hfov_deg ?? 90,
-        })
-        const halfVfovRad = resolveHalfFovRadians({
-          fovDeg: intrinsics.vfov_deg,
-          focalLength: safeFy,
-          size: safeHeight,
-          fallbackFovDeg: defaultIntrinsics.vfov_deg ?? 60,
-        })
-        const yawOffsetRad = Math.atan((safeCx - safeWidth / 2) / safeFx)
-        const pitchOffsetRad = Math.atan((safeCy - safeHeight / 2) / safeFy)
-        const centerBearingRad = degToRad(cameraState.yaw_deg) + yawOffsetRad
-        const pitchCenterRad = degToRad(cameraState.pitch_deg) - pitchOffsetRad
-        const downwardCenterRad = Math.max(0.05, -pitchCenterRad)
-        const topAngle = Math.max(0.02, downwardCenterRad - halfVfovRad)
-        const bottomAngle = Math.max(0.02, downwardCenterRad + halfVfovRad)
-
-        const maxDistance = 500
-        const minDistance = 20
-        const clampDistance = (value: number) =>
-          Math.min(maxDistance, Math.max(minDistance, value))
-
-        const farDistance = clampDistance(
-          cameraState.camera_height_m / Math.tan(topAngle),
-        )
-        let nearDistance = clampDistance(
-          cameraState.camera_height_m / Math.tan(bottomAngle),
-        )
-
-        if (nearDistance >= farDistance) {
-          nearDistance = Math.max(minDistance, farDistance * 0.6)
-        }
-
-        const rangeLeft = centerBearingRad - halfHfovRad
-        const rangeRight = centerBearingRad + halfHfovRad
-
-        const toOffset = (bearingRad: number, distanceMeters: number) => {
-          const dx = Math.sin(bearingRad) * distanceMeters
-          const dy = Math.cos(bearingRad) * distanceMeters
-
-          return offsetMeters(
-            cameraState.camera_lat,
-            cameraState.camera_lon,
-            dx,
-            dy,
-          )
-        }
-
-        const nearLeft = toOffset(rangeLeft, nearDistance)
-        const nearRight = toOffset(rangeRight, nearDistance)
-        const farLeft = toOffset(rangeLeft, farDistance)
-        const farRight = toOffset(rangeRight, farDistance)
-
-        return {
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Polygon' as const,
-            coordinates: [
-              [
-                [nearLeft.lng, nearLeft.lat],
-                [farLeft.lng, farLeft.lat],
-                [farRight.lng, farRight.lat],
-                [nearRight.lng, nearRight.lat],
-                [nearLeft.lng, nearLeft.lat],
-              ],
-            ],
-          },
-          properties: {
-            id: cameraId,
-            color: cameraColorForId(cameraId),
-          },
-        }
-      },
-    )
+    const features = buildCameraFovFeatures({
+      cameraStates: Array.from(cameraStatesRef.current.entries()),
+      defaultIntrinsics,
+    })
 
     source.setData({
       type: 'FeatureCollection',
@@ -536,7 +285,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
           cameraState.camera_lat,
         ])
         updateCameraDirection(existingMarker, cameraState.yaw_deg)
-        updateCameraMarkerInteractivity(
+        syncCameraMarkerInteractivity(
           existingMarker.getElement() as HTMLDivElement,
           cameraId,
         )
@@ -554,7 +303,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
         return
       }
 
-      const markerElement = createCameraMarkerElement(cameraId)
+      const markerElement = buildCameraMarkerElement(cameraId)
       const marker = new mapboxgl.Marker({
         element: markerElement,
         anchor: 'bottom',
@@ -576,23 +325,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
 
   const updateDetectionElement = useCallbackRef(
     (element: HTMLDivElement, detectionState: DetectionState) => {
-      const icon = detectionIcons[detectionState.className] ?? '📍'
-      const color = detectionColors[detectionState.className] ?? '#f97316'
-
-      element.style.setProperty('--marker-color', color)
-      element.title = `${detectionState.className} (${Math.round((detectionState.confidence ?? 0) * 100)}%)`
-
-      let iconElement = element.querySelector(
-        '.real-radar-detection-icon',
-      ) as HTMLDivElement | null
-
-      if (!iconElement) {
-        iconElement = document.createElement('div')
-        iconElement.className = 'real-radar-detection-icon'
-        element.appendChild(iconElement)
-      }
-
-      iconElement.textContent = icon
+      updateDetectionMarkerElement({element, detectionState})
     },
   )
 
@@ -674,7 +407,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
     defaultCameraStateRef.current = defaultCameraState
 
     cameraMarkersRef.current.forEach((marker, cameraId) => {
-      updateCameraMarkerInteractivity(
+      syncCameraMarkerInteractivity(
         marker.getElement() as HTMLDivElement,
         cameraId,
       )
@@ -687,7 +420,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
           cameraByIncomingId[cameraId]?.sourceDeviceName ?? cameraId
       }
     })
-  }, [cameraByIncomingId, defaultCameraState, updateCameraMarkerInteractivity])
+  }, [cameraByIncomingId, defaultCameraState, syncCameraMarkerInteractivity])
 
   React.useEffect(() => {
     clearRuntime()
