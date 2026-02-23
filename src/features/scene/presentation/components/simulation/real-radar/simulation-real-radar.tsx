@@ -1,8 +1,5 @@
-/* eslint-disable complexity */
-
 import 'mapbox-gl/dist/mapbox-gl.css'
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
-import {orderBy} from 'lodash-es'
 import mapboxgl from 'mapbox-gl'
 import React from 'react'
 
@@ -28,13 +25,11 @@ import type {
   CameraIntrinsics,
   CameraState,
   DetectionState,
-  RadarMessage,
-  RadarUpdateByTracker,
 } from './real-radar-types'
 
 import {RealDeviceFeedPlayer} from '../real-device-feed-player'
 import {SimulationRealRadarActivities} from '../simulation-real-radar-activities'
-import {useRealRadarIngestion} from './use-real-radar-ingestion'
+import {useRealRadarRuntime} from './use-real-radar-runtime'
 import './simulation-real-radar.css'
 
 interface SimulationRealRadarProps {
@@ -44,8 +39,6 @@ interface SimulationRealRadarProps {
   onSelectEntity: (id?: string) => void
 }
 
-const detectionTtlMs = 1_500
-const radarUpdateTtlMs = 3_000
 const fovSourceId = 'simulation-real-radar-fov'
 
 const detectionIcons: Record<string, string> = {
@@ -97,22 +90,12 @@ const defaultIntrinsics: CameraIntrinsics = {
   image_width: 1_920,
 }
 
-const normalizeClassName = (value?: string) =>
-  (value ?? 'unknown').toLowerCase()
-
-const roundCoord = (value: number) => Number(value.toFixed(7))
-
 const toFiniteNumber = (value: unknown, fallback: number) => {
   const numeric = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(numeric) ? numeric : fallback
 }
 
 const degToRad = (degrees: number) => (degrees * Math.PI) / 180
-
-const resolvePositiveNumber = (value: unknown, fallback: number, min = 0) => {
-  const resolved = toFiniteNumber(value, fallback)
-  return resolved > min ? resolved : fallback
-}
 
 const resolveHalfFovRadians = ({
   fallbackFovDeg,
@@ -174,28 +157,6 @@ const cameraColorForId = (cameraId: string) => {
   }
 
   return `hsl(${Math.abs(hash)} 85% 55%)`
-}
-
-const getRadarTimestampValue = (value: number | string | undefined) => {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : undefined
-  }
-
-  if (typeof value === 'string') {
-    const parsed = Date.parse(value)
-    return Number.isFinite(parsed) ? parsed : undefined
-  }
-
-  return undefined
-}
-
-const formatRadarTimestamp = (value: number | string | undefined) => {
-  const timestampValue = getRadarTimestampValue(value)
-  if (typeof timestampValue !== 'number') {
-    return '—'
-  }
-
-  return new Date(timestampValue).toLocaleTimeString()
 }
 
 const getScopedRealCameras = (scene: SceneRoot, focusAreaId?: string) =>
@@ -266,7 +227,7 @@ const offsetMeters = (
   }
 }
 
-// eslint-disable-next-line max-lines-per-function, max-statements
+// eslint-disable-next-line max-lines-per-function
 export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
   scene,
   focusAreaId,
@@ -331,23 +292,8 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
   const detectionStatesRef = React.useRef(new Map<string, DetectionState>())
   const detectionMarkersRef = React.useRef(new Map<string, HTMLDivElement>())
 
-  const detectionExpiryTimersRef = React.useRef(new Map<string, number>())
-  const radarUpdateTimersRef = React.useRef(new Map<string, number>())
-
-  const [radarUpdatesByTracker, setRadarUpdatesByTracker] =
-    React.useState<RadarUpdateByTracker>({})
   const [selectedCamera, setSelectedCamera] =
     React.useState<CameraEntity | null>(null)
-
-  const radarUpdateItems = React.useMemo(
-    () =>
-      orderBy(
-        Object.values(radarUpdatesByTracker),
-        [(item) => item.timestampValue ?? 0, (item) => item.trackerId],
-        ['desc', 'asc'],
-      ),
-    [radarUpdatesByTracker],
-  )
 
   const mapHeight = React.useMemo(
     () => Math.max(260, Math.round(size.height * 1.8)),
@@ -623,7 +569,6 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
 
   const upsertCamera = useCallbackRef(
     (cameraId: string, cameraState: CameraState) => {
-      cameraStatesRef.current.set(cameraId, cameraState)
       ensureCameraMarker(cameraId, cameraState)
       updateCameraFovs()
     },
@@ -682,43 +627,13 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
     },
   )
 
-  const removeDetection = useCallbackRef((detectionId: string) => {
-    detectionStatesRef.current.delete(detectionId)
-
+  const removeDetectionMarker = useCallbackRef((detectionId: string) => {
     const marker = detectionMarkersRef.current.get(detectionId)
     if (marker) {
       marker.remove()
       detectionMarkersRef.current.delete(detectionId)
     }
-
-    const timerId = detectionExpiryTimersRef.current.get(detectionId)
-    if (timerId) {
-      window.clearTimeout(timerId)
-      detectionExpiryTimersRef.current.delete(detectionId)
-    }
   })
-
-  const scheduleDetectionExpiry = useCallbackRef((detectionId: string) => {
-    const existingTimer = detectionExpiryTimersRef.current.get(detectionId)
-
-    if (existingTimer) {
-      window.clearTimeout(existingTimer)
-    }
-
-    const timerId = window.setTimeout(() => {
-      removeDetection(detectionId)
-    }, detectionTtlMs)
-
-    detectionExpiryTimersRef.current.set(detectionId, timerId)
-  })
-
-  const upsertDetection = useCallbackRef(
-    (detectionId: string, detectionState: DetectionState) => {
-      detectionStatesRef.current.set(detectionId, detectionState)
-      ensureDetectionMarker(detectionId, detectionState)
-      scheduleDetectionExpiry(detectionId)
-    },
-  )
 
   const focusOnCamera = useCallbackRef((cameraState: CameraState) => {
     const map = mapRef.current
@@ -734,198 +649,24 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
     })
   })
 
-  const handleRadarMessage = useCallbackRef(
-    (message: RadarMessage, fallbackCameraId?: string) => {
-      if (!message.detection || message.detection.trackerId == null) {
-        return
-      }
-
-      const normalizedFallbackCameraId = fallbackCameraId?.trim()
-      const cameraId =
-        typeof message.camera?.id === 'string' &&
-        message.camera.id.trim().length > 0
-          ? message.camera.id.trim()
-          : normalizedFallbackCameraId && normalizedFallbackCameraId.length > 0
-            ? normalizedFallbackCameraId
-            : null
-
-      if (!cameraId) {
-        return
-      }
-
-      const sourceCamera = message.source_camera ?? {}
-      const incomingCamera = message.camera ?? {}
-      const baseCameraState =
-        cameraStatesRef.current.get(cameraId) ?? defaultCameraStateRef.current
-
-      const cameraState: CameraState = {
-        camera_lat: roundCoord(
-          toFiniteNumber(
-            sourceCamera.camera_lat ?? incomingCamera.lat,
-            baseCameraState.camera_lat,
-          ),
-        ),
-        camera_lon: roundCoord(
-          toFiniteNumber(
-            sourceCamera.camera_lon ?? incomingCamera.lon,
-            baseCameraState.camera_lon,
-          ),
-        ),
-        camera_height_m: resolvePositiveNumber(
-          sourceCamera.camera_height_m ?? incomingCamera.height_m,
-          baseCameraState.camera_height_m,
-        ),
-        yaw_deg: toFiniteNumber(
-          sourceCamera.yaw_deg ?? incomingCamera.yaw_deg,
-          baseCameraState.yaw_deg,
-        ),
-        pitch_deg: toFiniteNumber(
-          sourceCamera.pitch_deg ?? incomingCamera.pitch_deg,
-          baseCameraState.pitch_deg,
-        ),
-        roll_deg: toFiniteNumber(
-          sourceCamera.roll_deg ?? incomingCamera.roll_deg,
-          baseCameraState.roll_deg,
-        ),
-        intrinsics: {
-          ...defaultIntrinsics,
-          ...baseCameraState.intrinsics,
-          ...(sourceCamera.intrinsics ?? {}),
-        },
-      }
-
+  const {clearRuntime, radarUpdateItems} = useRealRadarRuntime({
+    cameraStatesRef,
+    detectionStatesRef,
+    defaultCameraStateRef,
+    defaultIntrinsics,
+    deviceIds: scopedDeviceIds,
+    onCameraUpsert: (cameraId, cameraState) => {
       upsertCamera(cameraId, cameraState)
 
       if (!hasAutoFocusedRef.current && mapLoadedRef.current) {
         focusOnCamera(cameraState)
         hasAutoFocusedRef.current = true
       }
-
-      const className = normalizeClassName(message.detection.class)
-      const trackerId = String(message.detection.trackerId)
-      const detectionKey = `${cameraId}-${trackerId}`
-
-      const detectionState: DetectionState = {
-        id: detectionKey,
-        trackerId,
-        cameraId,
-        lat: toFiniteNumber(message.geo?.object_lat, cameraState.camera_lat),
-        lon: toFiniteNumber(message.geo?.object_lon, cameraState.camera_lon),
-        className,
-        confidence: message.detection.confidence,
-        ts: message.ts,
-      }
-
-      upsertDetection(detectionKey, detectionState)
     },
-  )
-
-  const scheduleRadarUpdateExpiry = useCallbackRef((trackerId: string) => {
-    const existingTimer = radarUpdateTimersRef.current.get(trackerId)
-
-    if (existingTimer) {
-      window.clearTimeout(existingTimer)
-    }
-
-    const timerId = window.setTimeout(() => {
-      setRadarUpdatesByTracker((previous) => {
-        if (!previous[trackerId]) {
-          return previous
-        }
-
-        const {[trackerId]: removedTracker, ...next} = previous
-        void removedTracker
-        return next
-      })
-
-      radarUpdateTimersRef.current.delete(trackerId)
-    }, radarUpdateTtlMs)
-
-    radarUpdateTimersRef.current.set(trackerId, timerId)
-  })
-
-  const handleRadarMessages = useCallbackRef((messages: RadarMessage[]) => {
-    const nextUpdatesByTracker: RadarUpdateByTracker = {}
-
-    messages.forEach((message) => {
-      if (!message.detection || message.detection.trackerId == null) {
-        return
-      }
-
-      const cameraId =
-        typeof message.camera?.id === 'string' && message.camera.id
-          ? message.camera.id
-          : null
-
-      if (!cameraId) {
-        return
-      }
-
-      const trackerId = String(message.detection.trackerId)
-      const className = normalizeClassName(message.detection.class)
-      const sourceCamera = message.source_camera ?? {}
-      const incomingCamera = message.camera ?? {}
-      const defaultState = defaultCameraStateRef.current
-      const fallbackLat = toFiniteNumber(
-        sourceCamera.camera_lat ?? incomingCamera.lat,
-        defaultState.camera_lat,
-      )
-      const fallbackLon = toFiniteNumber(
-        sourceCamera.camera_lon ?? incomingCamera.lon,
-        defaultState.camera_lon,
-      )
-      const timestampSource = message.ts ?? message.timestamp
-
-      nextUpdatesByTracker[trackerId] = {
-        id: trackerId,
-        trackerId,
-        cameraId,
-        className,
-        confidence: message.detection.confidence,
-        lat: toFiniteNumber(message.geo?.object_lat, fallbackLat),
-        lon: toFiniteNumber(message.geo?.object_lon, fallbackLon),
-        distance: message.geo?.distance_m,
-        timestampLabel: formatRadarTimestamp(timestampSource),
-        timestampValue: getRadarTimestampValue(timestampSource),
-      }
-
-      handleRadarMessage(message, cameraId)
-    })
-
-    if (!Object.keys(nextUpdatesByTracker).length) {
-      return
-    }
-
-    Object.keys(nextUpdatesByTracker).forEach((trackerId) => {
-      scheduleRadarUpdateExpiry(trackerId)
-    })
-
-    setRadarUpdatesByTracker((previous) => {
-      const next = {...previous}
-
-      Object.entries(nextUpdatesByTracker).forEach(([trackerId, update]) => {
-        const existing = previous[trackerId]
-
-        if (!existing) {
-          next[trackerId] = update
-          return
-        }
-
-        const existingValue = existing.timestampValue ?? 0
-        const updateValue = update.timestampValue ?? 0
-
-        if (updateValue >= existingValue) {
-          next[trackerId] = update
-        }
-      })
-
-      return next
-    })
-  })
-
-  useRealRadarIngestion({
-    deviceIds: scopedDeviceIds,
-    onMessages: handleRadarMessages,
+    onDetectionUpsert: (detectionId, detectionState) => {
+      ensureDetectionMarker(detectionId, detectionState)
+    },
+    onDetectionRemove: removeDetectionMarker,
   })
 
   React.useEffect(() => {
@@ -949,33 +690,22 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
   }, [cameraByIncomingId, defaultCameraState, updateCameraMarkerInteractivity])
 
   React.useEffect(() => {
-    cameraStatesRef.current.clear()
+    clearRuntime()
+
     cameraMarkersRef.current.forEach((marker) => {
       marker.remove()
     })
     cameraMarkersRef.current.clear()
 
-    detectionStatesRef.current.clear()
     detectionMarkersRef.current.forEach((marker) => {
       marker.remove()
     })
     detectionMarkersRef.current.clear()
 
-    detectionExpiryTimersRef.current.forEach((timerId) => {
-      window.clearTimeout(timerId)
-    })
-    detectionExpiryTimersRef.current.clear()
-
-    radarUpdateTimersRef.current.forEach((timerId) => {
-      window.clearTimeout(timerId)
-    })
-    radarUpdateTimersRef.current.clear()
-
-    setRadarUpdatesByTracker({})
     hasAutoFocusedRef.current = false
 
     updateCameraFovs()
-  }, [scopedDeviceIdsKey, updateCameraFovs])
+  }, [clearRuntime, scopedDeviceIdsKey, updateCameraFovs])
 
   React.useEffect(() => {
     if (!mapboxToken || !mapContainerRef.current || mapRef.current) {
@@ -1046,28 +776,14 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
       updateCameraFovs()
     })
 
-    const detectionExpiryTimers = detectionExpiryTimersRef.current
-    const radarUpdateTimers = radarUpdateTimersRef.current
     const cameraMarkers = cameraMarkersRef.current
     const detectionMarkers = detectionMarkersRef.current
-    const cameraStates = cameraStatesRef.current
-    const detectionStates = detectionStatesRef.current
 
     return () => {
       map.off('move', handleMove)
       map.off('zoom', handleMove)
       map.off('pitch', handleMove)
       map.off('rotate', handleMove)
-
-      detectionExpiryTimers.forEach((timerId) => {
-        window.clearTimeout(timerId)
-      })
-      detectionExpiryTimers.clear()
-
-      radarUpdateTimers.forEach((timerId) => {
-        window.clearTimeout(timerId)
-      })
-      radarUpdateTimers.clear()
 
       cameraMarkers.forEach((marker) => {
         marker.remove()
@@ -1078,9 +794,6 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
         marker.remove()
       })
       detectionMarkers.clear()
-
-      cameraStates.clear()
-      detectionStates.clear()
 
       mapLoadedRef.current = false
       map.remove()
@@ -1103,16 +816,6 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
       duration: 600,
     })
   }, [mapCenter, scene.editorMode])
-
-  React.useEffect(
-    () => () => {
-      radarUpdateTimersRef.current.forEach((timerId) => {
-        window.clearTimeout(timerId)
-      })
-      radarUpdateTimersRef.current.clear()
-    },
-    [],
-  )
 
   return (
     <>
