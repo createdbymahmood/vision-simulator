@@ -1,4 +1,4 @@
-import type mapboxgl from 'mapbox-gl'
+import type {Marker} from 'mapbox-gl'
 
 interface UpdateCameraMarkerInteractivityInput {
   element: HTMLDivElement
@@ -30,10 +30,7 @@ export const updateCameraMarkerInteractivity = ({
   }
 }
 
-export const updateCameraMarkerDirection = (
-  marker: mapboxgl.Marker,
-  yawDeg: number,
-) => {
+export const updateCameraMarkerDirection = (marker: Marker, yawDeg: number) => {
   const directionElement = marker
     .getElement()
     .querySelector('.real-radar-camera-direction') as HTMLDivElement | null

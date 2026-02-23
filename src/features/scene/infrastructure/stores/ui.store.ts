@@ -39,6 +39,58 @@ export interface VisionState {
   updatedAt: number
 }
 
+export interface LiveRadarCameraIntrinsicsState {
+  cx?: number
+  cy?: number
+  fx?: number
+  fy?: number
+  hfov_deg?: number
+  image_height: number
+  image_width: number
+  vfov_deg?: number
+}
+
+export interface LiveRadarCameraState {
+  camera_lat: number
+  camera_lon: number
+  camera_height_m: number
+  yaw_deg: number
+  pitch_deg: number
+  roll_deg: number
+  intrinsics: LiveRadarCameraIntrinsicsState
+}
+
+export interface LiveRadarDetectionState {
+  id: string
+  trackerId: string
+  cameraId: string
+  lat: number
+  lon: number
+  className: string
+  confidence?: number
+  ts?: number
+}
+
+export interface LiveRadarTrackerUpdateState {
+  id: string
+  trackerId: string
+  cameraId: string
+  className: string
+  confidence?: number
+  lat?: number
+  lon?: number
+  distance?: number
+  timestampLabel: string
+  timestampValue?: number
+}
+
+export interface LiveRadarState {
+  cameraStatesById: Record<string, LiveRadarCameraState>
+  detectionsById: Record<string, LiveRadarDetectionState>
+  updatesByTracker: Record<string, LiveRadarTrackerUpdateState>
+  updatedAt: number
+}
+
 export interface UiState {
   viewMode: ViewMode
   previewViewMode: PreviewViewMode
@@ -56,6 +108,7 @@ export interface UiState {
   flyToActiveAreaTick: number
   radarSettings: RadarSettings
   visionState: VisionState
+  liveRadarState: LiveRadarState
 
   setViewMode: (mode: ViewMode) => ViewMode
   toggleViewMode: () => ViewMode
@@ -87,6 +140,19 @@ export interface UiState {
   triggerFlyToActiveArea: () => number
   setRadarSettings: (settings: Partial<RadarSettings>) => RadarSettings
   setVisionState: (state: VisionState) => VisionState
+  setLiveRadarCameraState: (
+    cameraId: string,
+    cameraState: LiveRadarCameraState,
+  ) => LiveRadarState
+  setLiveRadarDetectionState: (
+    detectionId: string,
+    detectionState: LiveRadarDetectionState,
+  ) => LiveRadarState
+  removeLiveRadarDetectionState: (detectionId: string) => LiveRadarState
+  setLiveRadarUpdatesByTracker: (
+    updatesByTracker: Record<string, LiveRadarTrackerUpdateState>,
+  ) => LiveRadarState
+  clearLiveRadarState: () => LiveRadarState
   resetUi: () => UiState
 }
 
@@ -248,6 +314,84 @@ const setVisionState = (set: SetState, get: GetState, state: VisionState) => {
   return get().visionState
 }
 
+const setLiveRadarCameraState = (
+  set: SetState,
+  get: GetState,
+  cameraId: string,
+  cameraState: LiveRadarCameraState,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    state.liveRadarState.cameraStatesById[cameraId] = cameraState
+    state.liveRadarState.updatedAt = Date.now()
+  })
+
+  set(nextValue)
+  return get().liveRadarState
+}
+
+const setLiveRadarDetectionState = (
+  set: SetState,
+  get: GetState,
+  detectionId: string,
+  detectionState: LiveRadarDetectionState,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    state.liveRadarState.detectionsById[detectionId] = detectionState
+    state.liveRadarState.updatedAt = Date.now()
+  })
+
+  set(nextValue)
+  return get().liveRadarState
+}
+
+const removeLiveRadarDetectionState = (
+  set: SetState,
+  get: GetState,
+  detectionId: string,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    if (!state.liveRadarState.detectionsById[detectionId]) {
+      return
+    }
+    const {[detectionId]: removed, ...next} =
+      state.liveRadarState.detectionsById
+    void removed
+    state.liveRadarState.detectionsById = next
+    state.liveRadarState.updatedAt = Date.now()
+  })
+
+  set(nextValue)
+  return get().liveRadarState
+}
+
+const setLiveRadarUpdatesByTracker = (
+  set: SetState,
+  get: GetState,
+  updatesByTracker: Record<string, LiveRadarTrackerUpdateState>,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    state.liveRadarState.updatesByTracker = updatesByTracker
+    state.liveRadarState.updatedAt = Date.now()
+  })
+
+  set(nextValue)
+  return get().liveRadarState
+}
+
+const clearLiveRadarState = (set: SetState, get: GetState) => {
+  const nextValue = produce<UiState>((state) => {
+    state.liveRadarState = {
+      cameraStatesById: {},
+      detectionsById: {},
+      updatesByTracker: {},
+      updatedAt: 0,
+    }
+  })
+
+  set(nextValue)
+  return get().liveRadarState
+}
+
 const resetUi = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.viewMode = 'editor'
@@ -266,6 +410,12 @@ const resetUi = (set: SetState, get: GetState) => {
       peopleWorld: {},
       visibleByCameraId: {},
       detectionsCount: 0,
+      updatedAt: 0,
+    }
+    state.liveRadarState = {
+      cameraStatesById: {},
+      detectionsById: {},
+      updatesByTracker: {},
       updatedAt: 0,
     }
   })
@@ -299,6 +449,12 @@ const defaultUiState = {
     detectionsCount: 0,
     updatedAt: 0,
   },
+  liveRadarState: {
+    cameraStatesById: {},
+    detectionsById: {},
+    updatesByTracker: {},
+    updatedAt: 0,
+  },
 }
 
 const mergeUiState = (initialValues: Partial<UiState>) => ({
@@ -315,6 +471,22 @@ const mergeUiState = (initialValues: Partial<UiState>) => ({
   visionState: {
     ...defaultUiState.visionState,
     ...initialValues.visionState,
+  },
+  liveRadarState: {
+    ...defaultUiState.liveRadarState,
+    ...initialValues.liveRadarState,
+    cameraStatesById: {
+      ...defaultUiState.liveRadarState.cameraStatesById,
+      ...initialValues.liveRadarState?.cameraStatesById,
+    },
+    detectionsById: {
+      ...defaultUiState.liveRadarState.detectionsById,
+      ...initialValues.liveRadarState?.detectionsById,
+    },
+    updatesByTracker: {
+      ...defaultUiState.liveRadarState.updatesByTracker,
+      ...initialValues.liveRadarState?.updatesByTracker,
+    },
   },
 })
 
@@ -362,6 +534,15 @@ const createUiStore: (
   triggerFlyToActiveArea: () => triggerFlyToActiveArea(set, get),
   setRadarSettings: (settings) => setRadarSettings(set, get, settings),
   setVisionState: (state) => setVisionState(set, get, state),
+  setLiveRadarCameraState: (cameraId, cameraState) =>
+    setLiveRadarCameraState(set, get, cameraId, cameraState),
+  setLiveRadarDetectionState: (detectionId, detectionState) =>
+    setLiveRadarDetectionState(set, get, detectionId, detectionState),
+  removeLiveRadarDetectionState: (detectionId) =>
+    removeLiveRadarDetectionState(set, get, detectionId),
+  setLiveRadarUpdatesByTracker: (updatesByTracker) =>
+    setLiveRadarUpdatesByTracker(set, get, updatesByTracker),
+  clearLiveRadarState: () => clearLiveRadarState(set, get),
   resetUi: () => resetUi(set, get),
 })
 

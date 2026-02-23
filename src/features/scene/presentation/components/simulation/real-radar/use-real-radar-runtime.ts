@@ -4,6 +4,8 @@ import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {orderBy} from 'lodash-es'
 import React from 'react'
 
+import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+
 import type {
   CameraIntrinsics,
   CameraState,
@@ -82,6 +84,20 @@ export const useRealRadarRuntime = ({
   const [radarUpdatesByTracker, setRadarUpdatesByTracker] =
     React.useState<RadarUpdateByTracker>({})
 
+  const setLiveRadarCameraState = useUiStore(
+    (state) => state.setLiveRadarCameraState,
+  )
+  const setLiveRadarDetectionState = useUiStore(
+    (state) => state.setLiveRadarDetectionState,
+  )
+  const removeLiveRadarDetectionState = useUiStore(
+    (state) => state.removeLiveRadarDetectionState,
+  )
+  const setLiveRadarUpdatesByTracker = useUiStore(
+    (state) => state.setLiveRadarUpdatesByTracker,
+  )
+  const clearLiveRadarState = useUiStore((state) => state.clearLiveRadarState)
+
   const onCameraUpsertRef = useCallbackRef(onCameraUpsert)
   const onDetectionUpsertRef = useCallbackRef(onDetectionUpsert)
   const onDetectionRemoveRef = useCallbackRef(onDetectionRemove)
@@ -99,6 +115,7 @@ export const useRealRadarRuntime = ({
     }
 
     onDetectionRemoveRef(detectionId)
+    removeLiveRadarDetectionState(detectionId)
   })
 
   const scheduleDetectionExpiry = useCallbackRef((detectionId: string) => {
@@ -118,6 +135,7 @@ export const useRealRadarRuntime = ({
     (cameraId: string, cameraState: CameraState) => {
       cameraStatesRef.current.set(cameraId, cameraState)
       onCameraUpsertRef(cameraId, cameraState)
+      setLiveRadarCameraState(cameraId, cameraState)
     },
   )
 
@@ -125,6 +143,7 @@ export const useRealRadarRuntime = ({
     (detectionId: string, detectionState: DetectionState) => {
       detectionStatesRef.current.set(detectionId, detectionState)
       onDetectionUpsertRef(detectionId, detectionState)
+      setLiveRadarDetectionState(detectionId, detectionState)
       scheduleDetectionExpiry(detectionId)
     },
   )
@@ -219,11 +238,13 @@ export const useRealRadarRuntime = ({
     const timerId = window.setTimeout(() => {
       setRadarUpdatesByTracker((previous) => {
         if (!previous[trackerId]) {
+          setLiveRadarUpdatesByTracker(previous)
           return previous
         }
 
         const {[trackerId]: removedTracker, ...next} = previous
         void removedTracker
+        setLiveRadarUpdatesByTracker(next)
         return next
       })
 
@@ -308,6 +329,7 @@ export const useRealRadarRuntime = ({
         }
       })
 
+      setLiveRadarUpdatesByTracker(next)
       return next
     })
   })
@@ -331,6 +353,7 @@ export const useRealRadarRuntime = ({
     radarUpdateTimersRef.current.clear()
 
     setRadarUpdatesByTracker({})
+    clearLiveRadarState()
   })
 
   useRealRadarIngestion({
