@@ -1,6 +1,6 @@
 import type {DetectionState} from './real-radar-types'
 
-const detectionIcons: Record<string, string> = {
+export const detectionIcons: Record<string, string> = {
   helmet: '🪖',
   cigarette: '🚬',
   hat: '🎩',
@@ -20,7 +20,7 @@ const detectionIcons: Record<string, string> = {
   cellphone: '📱',
 }
 
-const detectionColors: Record<string, string> = {
+export const detectionColors: Record<string, string> = {
   helmet: '#f97316',
   cigarette: '#f43f5e',
   hat: '#a855f7',

@@ -27,6 +27,7 @@ import {
 } from './camera-vision'
 import {EntitiesMesh} from './entity-meshes'
 import {GroundPlane} from './ground-plane'
+import {LiveRadarDetectionsMesh} from './live-radar-detections-mesh'
 import {PersonTrail} from './person-trail'
 import {
   computeSceneOrigin,
@@ -163,7 +164,7 @@ const FocusController: React.FC<{
 export const SimulationScene: React.FC<SimulationSceneProps> = ({
   scene,
   editorMode: _editorMode,
-  previewViewMode: _previewViewMode,
+  previewViewMode,
   showMapTexture,
   focusAreaId,
   onSelectEntity,
@@ -546,6 +547,13 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
         onSelectEntity={onSelectEntity}
         showCameraFrustums={false}
       />
+      {previewViewMode === '3d' ? (
+        <LiveRadarDetectionsMesh
+          scene={scene}
+          focusAreaId={focusAreaId}
+          transformer={transformer}
+        />
+      ) : null}
       <PersonTrail
         positions={visibleSimulatedPeoplePositions}
         selectedPersonId={selectedPersonId}
