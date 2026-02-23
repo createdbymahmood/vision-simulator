@@ -43,6 +43,9 @@ const DEFAULT_EVERY = '1m' as const
 const DEFAULT_FN = 'raw-data' as const
 const DEFAULT_ENCODE = 'raw' as const
 const DEFAULT_TIMEZONE = 'UTC' as const
+const deviceSubscriptionOwnersByKey = new Map<string, number>()
+const deviceSubscriptionRequestIdByKey = new Map<string, string>()
+const deviceSubscriptionDeviceIdByKey = new Map<string, string>()
 
 const decodeJwtClaims = (accessToken?: string): DecodedUserJwt | null => {
   if (!accessToken) {
@@ -147,6 +150,10 @@ const buildSubscriptionMessage = (
 const getUniqueDeviceIds = (deviceIds: string[]) =>
   Array.from(new Set(deviceIds.filter(Boolean)))
 
+const getDeviceSubscriptionKey = (claims: DecodedUserJwt, deviceId: string) =>
+  `${claims.workspaceId}:${claims.id}:${deviceId}`
+
+// eslint-disable-next-line max-lines-per-function
 export const useRealRadarIngestion = ({
   deviceIds,
   onMessages,
@@ -156,7 +163,7 @@ export const useRealRadarIngestion = ({
     () => decodeJwtClaims(accessToken),
     [accessToken],
   )
-  const activeDeviceRequestIdsRef = React.useRef(new Map<string, string>())
+  const ownedSubscriptionKeysRef = React.useRef(new Set<string>())
   const onMessagesRef = useCallbackRef(onMessages)
 
   const wsUrl = React.useMemo(() => getWsBaseUrl(), [])
@@ -219,52 +226,100 @@ export const useRealRadarIngestion = ({
     },
   )
 
-  React.useEffect(() => {
-    if (!claims || socket.readyState !== ReadyState.OPEN) {
-      return
-    }
+  const releaseSubscriptionOwnership = useCallbackRef(
+    (subscriptionKey: string, canSendSubscription: boolean) => {
+      const ownerCount = deviceSubscriptionOwnersByKey.get(subscriptionKey) ?? 0
+      if (ownerCount <= 1) {
+        const requestId = deviceSubscriptionRequestIdByKey.get(subscriptionKey)
+        const deviceId = deviceSubscriptionDeviceIdByKey.get(subscriptionKey)
 
-    const currentSubscriptions = activeDeviceRequestIdsRef.current
-    const nextDeviceIds = new Set(normalizedDeviceIds)
+        if (canSendSubscription && requestId && deviceId) {
+          sendSubscription('unsubscribeDevices', deviceId, requestId)
+        }
 
-    currentSubscriptions.forEach((requestId, currentDeviceId) => {
-      if (nextDeviceIds.has(currentDeviceId)) {
+        deviceSubscriptionOwnersByKey.delete(subscriptionKey)
+        deviceSubscriptionRequestIdByKey.delete(subscriptionKey)
+        deviceSubscriptionDeviceIdByKey.delete(subscriptionKey)
         return
       }
 
-      sendSubscription('unsubscribeDevices', currentDeviceId, requestId)
-      currentSubscriptions.delete(currentDeviceId)
-    })
+      deviceSubscriptionOwnersByKey.set(subscriptionKey, ownerCount - 1)
+    },
+  )
 
-    normalizedDeviceIds.forEach((deviceId) => {
-      if (currentSubscriptions.has(deviceId)) {
+  const acquireSubscriptionOwnership = useCallbackRef(
+    (subscriptionKey: string, deviceId: string) => {
+      const ownerCount = deviceSubscriptionOwnersByKey.get(subscriptionKey) ?? 0
+      if (ownerCount > 0) {
+        deviceSubscriptionOwnersByKey.set(subscriptionKey, ownerCount + 1)
         return
       }
 
       const requestId = createRequestId()
       sendSubscription('subscribeDevices', deviceId, requestId)
-      currentSubscriptions.set(deviceId, requestId)
+      deviceSubscriptionOwnersByKey.set(subscriptionKey, 1)
+      deviceSubscriptionRequestIdByKey.set(subscriptionKey, requestId)
+      deviceSubscriptionDeviceIdByKey.set(subscriptionKey, deviceId)
+    },
+  )
+
+  const releaseOwnedSubscriptions = useCallbackRef(
+    (canSendSubscription: boolean) => {
+      ownedSubscriptionKeysRef.current.forEach((subscriptionKey) => {
+        releaseSubscriptionOwnership(subscriptionKey, canSendSubscription)
+      })
+      ownedSubscriptionKeysRef.current.clear()
+    },
+  )
+
+  React.useEffect(() => {
+    if (!claims || socket.readyState !== ReadyState.OPEN) {
+      releaseOwnedSubscriptions(false)
+      return
+    }
+
+    const nextSubscriptionKeyByDeviceId = new Map<string, string>()
+    normalizedDeviceIds.forEach((deviceId) => {
+      nextSubscriptionKeyByDeviceId.set(
+        deviceId,
+        getDeviceSubscriptionKey(claims, deviceId),
+      )
+    })
+    const nextSubscriptionKeys = new Set(nextSubscriptionKeyByDeviceId.values())
+
+    ownedSubscriptionKeysRef.current.forEach((subscriptionKey) => {
+      if (nextSubscriptionKeys.has(subscriptionKey)) {
+        return
+      }
+
+      releaseSubscriptionOwnership(subscriptionKey, true)
+      ownedSubscriptionKeysRef.current.delete(subscriptionKey)
+    })
+
+    nextSubscriptionKeyByDeviceId.forEach((subscriptionKey, deviceId) => {
+      if (ownedSubscriptionKeysRef.current.has(subscriptionKey)) {
+        return
+      }
+
+      acquireSubscriptionOwnership(subscriptionKey, deviceId)
+      ownedSubscriptionKeysRef.current.add(subscriptionKey)
     })
   }, [
+    acquireSubscriptionOwnership,
     claims,
     normalizedDeviceIdsKey,
     normalizedDeviceIds,
-    sendSubscription,
+    releaseOwnedSubscriptions,
+    releaseSubscriptionOwnership,
     socket.readyState,
   ])
 
   React.useEffect(
     () => () => {
-      if (!claims || socket.readyState !== ReadyState.OPEN) {
-        return
-      }
-
-      activeDeviceRequestIdsRef.current.forEach((requestId, deviceId) => {
-        sendSubscription('unsubscribeDevices', deviceId, requestId)
-      })
-
-      activeDeviceRequestIdsRef.current.clear()
+      releaseOwnedSubscriptions(
+        Boolean(claims) && socket.readyState === ReadyState.OPEN,
+      )
     },
-    [claims, sendSubscription, socket.readyState],
+    [claims, releaseOwnedSubscriptions, socket.readyState],
   )
 }

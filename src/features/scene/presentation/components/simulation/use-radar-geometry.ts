@@ -17,7 +17,6 @@ import type {
 } from './simulation-radar-svg'
 
 import {closeRing, projectPoint} from '../map-view/map-view-helpers'
-import {getCameraOpticHeight} from './camera-collision-utils'
 import {buildObstacleSegmentsByArea} from './camera-vision'
 import {buildFovGroundRing} from './simulation-radar-helpers'
 
@@ -260,13 +259,11 @@ export const useRadarGeometry = ({
     }
 
     return visibleCameras.map((camera) => {
-      const opticHeight = getCameraOpticHeight(camera)
       const area = areaById.get(camera.areaId)
       const obstacles = obstaclesByArea.get(camera.areaId) ?? []
       const ring = buildFovGroundRing({
         camera,
         origin: [camera.x, camera.y],
-        opticHeight,
         area,
         obstacles,
       })

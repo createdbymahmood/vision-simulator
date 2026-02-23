@@ -29,6 +29,7 @@ import {EntitiesMesh} from './entity-meshes'
 import {GroundPlane} from './ground-plane'
 import {LiveRadarDetectionsMesh} from './live-radar-detections-mesh'
 import {PersonTrail} from './person-trail'
+import {RealRadarSubscriptionBridge} from './real-radar/real-radar-subscription-bridge'
 import {
   computeSceneOrigin,
   createCoordinateTransformer,
@@ -528,6 +529,9 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
 
   return (
     <>
+      {previewViewMode === '3d' ? (
+        <RealRadarSubscriptionBridge scene={scene} focusAreaId={focusAreaId} />
+      ) : null}
       <color args={['#E0F2FE']} attach='background' />
       <fog args={['#E0F2FE', 150, 1200]} attach='fog' />
       <Lights />
