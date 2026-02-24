@@ -10,7 +10,7 @@ import {createRoot} from 'react-dom/client'
 
 import {App} from '@/app'
 import '@/host.css'
-import '@/index.css'
+import '@/styles.css'
 
 const AppRouteContent: React.FC = () => (
   <App

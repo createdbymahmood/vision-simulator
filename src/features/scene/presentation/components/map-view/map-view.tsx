@@ -1,5 +1,3 @@
-import 'mapbox-gl/dist/mapbox-gl.css'
-
 import type {FeatureCollection, Geometry, LineString, Polygon} from 'geojson'
 /* @ts-expect-error - MapLayerMouseEvent is not exported by react-map-gl/mapbox */
 import type {MapLayerMouseEvent, MapRef} from 'react-map-gl/mapbox'

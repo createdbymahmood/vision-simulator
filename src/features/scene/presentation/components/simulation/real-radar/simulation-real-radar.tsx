@@ -1,4 +1,3 @@
-import 'mapbox-gl/dist/mapbox-gl.css'
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import mapboxgl from 'mapbox-gl'
 import React from 'react'
@@ -37,7 +36,6 @@ import {
 import {updateDetectionMarkerElement} from './real-radar-detection-marker-utils'
 import {buildCameraFovFeatures, cameraColorForId} from './real-radar-fov-utils'
 import {useRealRadarRuntime} from './use-real-radar-runtime'
-import './simulation-real-radar.css'
 
 interface SimulationRealRadarProps {
   scene: SceneRoot

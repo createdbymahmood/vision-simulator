@@ -1,0 +1,3 @@
+@import './index.css';
+@import 'mapbox-gl/dist/mapbox-gl.css';
+@import './features/scene/presentation/components/simulation/real-radar/simulation-real-radar.css';

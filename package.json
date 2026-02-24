@@ -33,7 +33,7 @@
     "release:patch": "node scripts/create-release-tag.mjs patch",
     "release:minor": "node scripts/create-release-tag.mjs minor",
     "release:major": "node scripts/create-release-tag.mjs major",
-    "build:styles": "tailwindcss -i src/index.css -o dist/styles.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/normalize-dist-css.mjs dist/styles.css && node scripts/copy-file.mjs src/host.css dist/host.css",
+    "build:styles": "tailwindcss -i src/styles.css -o dist/styles.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/normalize-dist-css.mjs dist/styles.css && node scripts/copy-file.mjs src/host.css dist/host.css",
     "download-swagger-file": "node scripts/download-swagger-file.mjs",
     "orval": "yarn download-swagger-file && orval --config src/data-provider/orval.config.ts"
   },
