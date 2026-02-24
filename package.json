@@ -1,6 +1,6 @@
 {
   "name": "@vega-tek-hub/vision-simulator-v2",
-  "version": "1.7.13",
+  "version": "1.7.14",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
