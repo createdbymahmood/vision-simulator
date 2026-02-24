@@ -1,0 +1,16 @@
+@reference './index.css';
+
+@layer base {
+  * {
+    @apply vs:border-border vs:outline-ring/50;
+  }
+
+  body {
+    @apply vs:bg-background vs:text-foreground vs:font-sans vs:antialiased vs:overflow-hidden;
+    font-family: Geist, sans-serif;
+  }
+
+  ::selection {
+    @apply vs:bg-muted-foreground/10 vs:text-muted-foreground;
+  }
+}
