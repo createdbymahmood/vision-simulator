@@ -15,6 +15,7 @@ import '@/index.css'
 const AppRouteContent: React.FC = () => (
   <App
     apiBaseUrl={import.meta.env.VITE_API_BASE_URL}
+    apiWsServiceUrl={import.meta.env.VITE_API_WS_SERVICE_URL}
     mediaMtxUrl={import.meta.env.VITE_MEDIA_MTX_URL}
     accessToken={import.meta.env.VITE_ACCESS_TOKEN}
     mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}

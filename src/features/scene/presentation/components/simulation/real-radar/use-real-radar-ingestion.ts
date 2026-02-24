@@ -86,8 +86,6 @@ const decodeJwtClaims = (accessToken?: string): DecodedUserJwt | null => {
   }
 }
 
-const getWsBaseUrl = () => import.meta.env.VITE_API_WS_SERVICE_URL
-
 const createRequestId = () => {
   if (
     typeof crypto !== 'undefined' &&
@@ -159,6 +157,7 @@ export const useRealRadarIngestion = ({
   onMessages,
 }: UseRealRadarIngestionInput) => {
   const accessToken = useUiStore((state) => state.accessToken)
+  const apiWsServiceUrl = useUiStore((state) => state.apiWsServiceUrl)
   const claims = React.useMemo(
     () => decodeJwtClaims(accessToken),
     [accessToken],
@@ -166,7 +165,7 @@ export const useRealRadarIngestion = ({
   const ownedSubscriptionKeysRef = React.useRef(new Set<string>())
   const onMessagesRef = useCallbackRef(onMessages)
 
-  const wsUrl = React.useMemo(() => getWsBaseUrl(), [])
+  const wsUrl = apiWsServiceUrl ?? null
   const normalizedDeviceIds = React.useMemo(
     () => getUniqueDeviceIds(deviceIds),
     [deviceIds],
@@ -184,7 +183,7 @@ export const useRealRadarIngestion = ({
   })
 
   const socket = useWebSocket<unknown>(wsUrl, {
-    shouldReconnect: () => Boolean(accessToken),
+    shouldReconnect: () => Boolean(accessToken && wsUrl),
     retryOnError: true,
     share: true,
     reconnectInterval: 2_000,

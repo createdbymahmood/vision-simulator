@@ -42,6 +42,7 @@ export interface AppProps {
   visionSimulatorId: string
   accessToken: string
   apiBaseUrl: string
+  apiWsServiceUrl: string
   mediaMtxUrl?: string
   mapboxToken?: string
   mode?: VisionSimulatorMode
@@ -52,6 +53,7 @@ export interface AppProps {
 interface VisionSimulatorProvidersProps {
   visionSimulatorId: string
   accessToken: string
+  apiWsServiceUrl: string
   mediaMtxUrl?: string
   mapboxToken?: string
   mode: VisionSimulatorMode
@@ -78,6 +80,7 @@ const configureDataProvider = ({
 const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
   visionSimulatorId,
   accessToken,
+  apiWsServiceUrl,
   mediaMtxUrl,
   mapboxToken,
   mode,
@@ -104,6 +107,7 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
         <UiStoreProvider
           initialState={{
             accessToken,
+            apiWsServiceUrl,
             mediaMtxUrl,
             mapboxToken,
             viewMode: modePolicy.initialViewMode,
@@ -127,6 +131,7 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
 
 const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
   accessToken,
+  apiWsServiceUrl,
   mediaMtxUrl,
   mapboxToken,
   mode,
@@ -137,6 +142,7 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
   <Suspense fallback={<Pending />}>
     <QueryClientProvider client={queryClient}>
       <VisionSimulatorProviders
+        apiWsServiceUrl={apiWsServiceUrl}
         mediaMtxUrl={mediaMtxUrl}
         uiOverrides={uiOverrides}
         unsavedChanges={unsavedChanges}
@@ -151,6 +157,7 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
 
 export const App: React.FC<AppProps> = ({
   apiBaseUrl,
+  apiWsServiceUrl,
   mediaMtxUrl,
   mapboxToken,
   mode,
@@ -166,6 +173,7 @@ export const App: React.FC<AppProps> = ({
     <PortalContainerProvider container={null}>
       <div className={APP_SURFACE_CLASSNAME}>
         <VisionSimulatorAppShell
+          apiWsServiceUrl={apiWsServiceUrl}
           mediaMtxUrl={mediaMtxUrl}
           uiOverrides={uiOverrides}
           unsavedChanges={unsavedChanges}

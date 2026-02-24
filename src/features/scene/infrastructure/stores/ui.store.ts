@@ -99,6 +99,7 @@ export interface UiState {
   openPanels: Record<string, boolean>
   openPopovers: Record<string, boolean>
   accessToken?: string
+  apiWsServiceUrl?: string
   mediaMtxUrl?: string
   mapboxToken?: string
   cameraPlacement: {
@@ -432,6 +433,7 @@ const defaultUiState = {
   openPanels: {} as Record<string, boolean>,
   openPopovers: {} as Record<string, boolean>,
   accessToken: undefined as string | undefined,
+  apiWsServiceUrl: undefined as string | undefined,
   mediaMtxUrl: undefined as string | undefined,
   mapboxToken: undefined as string | undefined,
   cameraPlacement: {
