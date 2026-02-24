@@ -18,6 +18,7 @@ import {useRealRadarIngestion} from './use-real-radar-ingestion'
 
 const detectionTtlMs = 1_500
 const radarUpdateTtlMs = 3_000
+let liveRadarRuntimeInstanceCount = 0
 
 const normalizeClassName = (value?: string) =>
   (value ?? 'unknown').toLowerCase()
@@ -32,6 +33,64 @@ const toFiniteNumber = (value: unknown, fallback: number) => {
 const resolvePositiveNumber = (value: unknown, fallback: number, min = 0) => {
   const resolved = toFiniteNumber(value, fallback)
   return resolved > min ? resolved : fallback
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+
+const normalizeCameraId = (value: unknown) => {
+  if (typeof value === 'string') {
+    const normalized = value.trim()
+    return normalized.length > 0 ? normalized : null
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value)
+  }
+
+  return null
+}
+
+const resolveIncomingCameraId = (
+  message: RadarMessage,
+  fallbackCameraId?: string,
+) => {
+  const cameraRecord = isRecord(message.camera) ? message.camera : undefined
+  const sourceCameraRecord = isRecord(message.source_camera)
+    ? message.source_camera
+    : undefined
+  const rootRecord = isRecord(message) ? message : undefined
+
+  const candidates: unknown[] = [
+    cameraRecord?.id,
+    cameraRecord?.camera_id,
+    cameraRecord?.cameraId,
+    cameraRecord?.index,
+    cameraRecord?.camera_index,
+    cameraRecord?.cameraIndex,
+    sourceCameraRecord?.id,
+    sourceCameraRecord?.camera_id,
+    sourceCameraRecord?.cameraId,
+    sourceCameraRecord?.index,
+    sourceCameraRecord?.camera_index,
+    sourceCameraRecord?.cameraIndex,
+    rootRecord?.camera_id,
+    rootRecord?.cameraId,
+    rootRecord?.source_camera_id,
+    rootRecord?.camera_index,
+    rootRecord?.cameraIndex,
+    rootRecord?.source_camera_index,
+    fallbackCameraId,
+  ]
+
+  for (const candidate of candidates) {
+    const cameraId = normalizeCameraId(candidate)
+    if (cameraId) {
+      return cameraId
+    }
+  }
+
+  return null
 }
 
 const getRadarTimestampValue = (value: number | string | undefined) => {
@@ -154,15 +213,7 @@ export const useRealRadarRuntime = ({
         return
       }
 
-      const normalizedFallbackCameraId = fallbackCameraId?.trim()
-      const cameraId =
-        typeof message.camera?.id === 'string' &&
-        message.camera.id.trim().length > 0
-          ? message.camera.id.trim()
-          : normalizedFallbackCameraId && normalizedFallbackCameraId.length > 0
-            ? normalizedFallbackCameraId
-            : null
-
+      const cameraId = resolveIncomingCameraId(message, fallbackCameraId)
       if (!cameraId) {
         return
       }
@@ -262,11 +313,7 @@ export const useRealRadarRuntime = ({
         return
       }
 
-      const cameraId =
-        typeof message.camera?.id === 'string' && message.camera.id
-          ? message.camera.id
-          : null
-
+      const cameraId = resolveIncomingCameraId(message)
       if (!cameraId) {
         return
       }
@@ -353,13 +400,26 @@ export const useRealRadarRuntime = ({
     radarUpdateTimersRef.current.clear()
 
     setRadarUpdatesByTracker({})
-    clearLiveRadarState()
+    if (liveRadarRuntimeInstanceCount <= 1) {
+      clearLiveRadarState()
+    }
   })
 
   useRealRadarIngestion({
     deviceIds,
     onMessages: handleRadarMessages,
   })
+
+  React.useEffect(() => {
+    liveRadarRuntimeInstanceCount += 1
+
+    return () => {
+      liveRadarRuntimeInstanceCount = Math.max(
+        0,
+        liveRadarRuntimeInstanceCount - 1,
+      )
+    }
+  }, [])
 
   React.useEffect(
     () => () => {

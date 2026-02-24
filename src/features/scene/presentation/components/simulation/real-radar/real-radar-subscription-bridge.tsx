@@ -68,7 +68,7 @@ const RealRadarSubscriptionRuntime: React.FC<
     [deviceIds],
   )
   const normalizedDeviceIdsKey = React.useMemo(
-    () => normalizedDeviceIds.join('|'),
+    () => [...normalizedDeviceIds].sort().join('|'),
     [normalizedDeviceIds],
   )
 

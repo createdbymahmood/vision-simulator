@@ -135,7 +135,7 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
     [scopedRealCameras],
   )
   const scopedDeviceIdsKey = React.useMemo(
-    () => scopedDeviceIds.join('|'),
+    () => [...scopedDeviceIds].sort().join('|'),
     [scopedDeviceIds],
   )
 

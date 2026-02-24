@@ -1,13 +1,15 @@
-import type * as THREE from 'three'
-
 import React from 'react'
+import * as THREE from 'three'
 
 import type {CameraEntity, SceneRoot} from '@/features/scene/domain/types'
 
 import type {CoordinateTransformer} from './simulation-helpers'
 
 import {detectionColors} from './real-radar/real-radar-detection-marker-utils'
-import {useLiveRadarDetections} from './real-radar/use-live-radar-state'
+import {
+  useLiveRadarCameraStates,
+  useLiveRadarDetections,
+} from './real-radar/use-live-radar-state'
 
 interface LiveRadarDetectionsMeshProps {
   scene: SceneRoot
@@ -27,6 +29,18 @@ interface DetectionRenderItem {
   position: THREE.Vector3
 }
 
+interface CameraPositionState {
+  camera_lat: number
+  camera_lon: number
+}
+
+interface WorldBounds {
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+}
+
 interface FlatTubeProps {
   color: string
   end: [number, number]
@@ -42,16 +56,123 @@ const normalizeClassName = (value?: string) =>
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 
-const getCameraByIncomingId = (cameras: CameraEntity[]) =>
-  cameras.reduce<Record<string, CameraEntity>>((acc, camera) => {
-    if (camera.id) {
-      acc[camera.id] = camera
+const normalizeIdentifier = (value?: string) =>
+  (value ?? '').toLowerCase().replace(/[^0-9a-z]/g, '')
+
+const getRealCameras = (cameras: CameraEntity[]) =>
+  cameras.filter((camera) => camera.sourceDeviceKind === 'real')
+
+interface CameraLookup {
+  exactById: Record<string, CameraEntity>
+  normalizedById: Record<string, CameraEntity>
+}
+
+const addCameraLookupValue = (
+  lookup: CameraLookup,
+  camera: CameraEntity,
+  value?: string,
+) => {
+  if (!value) {
+    return
+  }
+
+  lookup.exactById[value] = camera
+
+  const normalized = normalizeIdentifier(value)
+  if (normalized) {
+    lookup.normalizedById[normalized] = camera
+  }
+}
+
+const buildCameraLookup = (cameras: CameraEntity[]): CameraLookup => {
+  const lookup: CameraLookup = {
+    exactById: {},
+    normalizedById: {},
+  }
+
+  cameras.forEach((camera) => {
+    addCameraLookupValue(lookup, camera, camera.id)
+    addCameraLookupValue(lookup, camera, camera.sourceDeviceId)
+    addCameraLookupValue(lookup, camera, camera.sourceDeviceName)
+    addCameraLookupValue(lookup, camera, camera.name)
+  })
+
+  return lookup
+}
+
+const getScopedGeoPoints = (scene: SceneRoot, focusAreaId?: string) => {
+  const isVisibleArea = (areaId?: string) =>
+    !focusAreaId || areaId === focusAreaId
+  const points: [number, number][] = []
+
+  scene.areas.forEach((area) => {
+    if (isVisibleArea(area.id)) {
+      points.push(...area.geometry.coordinates)
     }
-    if (camera.sourceDeviceId) {
-      acc[camera.sourceDeviceId] = camera
+  })
+  scene.shapes.forEach((shape) => {
+    if (isVisibleArea(shape.areaId)) {
+      points.push(...shape.geometry)
     }
-    return acc
-  }, {})
+  })
+  scene.walls.forEach((wall) => {
+    if (isVisibleArea(wall.areaId)) {
+      points.push(...wall.points)
+    }
+  })
+  scene.cameras.forEach((camera) => {
+    if (isVisibleArea(camera.areaId)) {
+      points.push([camera.x, camera.y])
+    }
+  })
+  scene.people.forEach((person) => {
+    if (isVisibleArea(person.areaId)) {
+      points.push([person.x, person.y])
+    }
+  })
+
+  return points
+}
+
+const buildWorldBounds = (
+  scene: SceneRoot,
+  transformer: CoordinateTransformer,
+  focusAreaId?: string,
+) => {
+  const points = getScopedGeoPoints(scene, focusAreaId)
+  if (!points.length) {
+    return null
+  }
+
+  let minX = Number.POSITIVE_INFINITY
+  let maxX = Number.NEGATIVE_INFINITY
+  let minZ = Number.POSITIVE_INFINITY
+  let maxZ = Number.NEGATIVE_INFINITY
+
+  points.forEach((point) => {
+    const worldPoint = transformer.toVector3(point, 0)
+    minX = Math.min(minX, worldPoint.x)
+    maxX = Math.max(maxX, worldPoint.x)
+    minZ = Math.min(minZ, worldPoint.z)
+    maxZ = Math.max(maxZ, worldPoint.z)
+  })
+
+  if (
+    !Number.isFinite(minX) ||
+    !Number.isFinite(maxX) ||
+    !Number.isFinite(minZ) ||
+    !Number.isFinite(maxZ)
+  ) {
+    return null
+  }
+
+  return {
+    minX,
+    maxX,
+    minZ,
+    maxZ,
+  } satisfies WorldBounds
+}
 
 const getStableYaw = (id: string) => {
   let hash = 0
@@ -59,6 +180,195 @@ const getStableYaw = (id: string) => {
     hash = (hash * 33 + id.charCodeAt(index)) % 360
   }
   return (Math.abs(hash) * Math.PI) / 180
+}
+
+const getCameraStateByExactKey = ({
+  cameraStatesById,
+  key,
+}: {
+  cameraStatesById: Record<string, CameraPositionState>
+  key?: string
+}) => {
+  if (!key) {
+    return undefined
+  }
+
+  return cameraStatesById[key]
+}
+
+const getCameraStateByNormalizedKey = ({
+  cameraStateByNormalizedId,
+  key,
+}: {
+  cameraStateByNormalizedId: Record<string, CameraPositionState>
+  key?: string
+}) => {
+  if (!key) {
+    return undefined
+  }
+
+  const normalizedKey = normalizeIdentifier(key)
+  if (!normalizedKey) {
+    return undefined
+  }
+
+  return cameraStateByNormalizedId[normalizedKey]
+}
+
+const getDetectionCameraState = ({
+  cameraStatesById,
+  cameraStateByNormalizedId,
+  detectionCameraId,
+  sourceCamera,
+}: {
+  cameraStatesById: Record<string, CameraPositionState>
+  cameraStateByNormalizedId: Record<string, CameraPositionState>
+  detectionCameraId: string
+  sourceCamera?: CameraEntity
+}) => {
+  const exactKeys = [
+    detectionCameraId,
+    sourceCamera?.sourceDeviceId,
+    sourceCamera?.id,
+  ]
+  for (const key of exactKeys) {
+    const cameraState = getCameraStateByExactKey({cameraStatesById, key})
+    if (cameraState) {
+      return cameraState
+    }
+  }
+
+  const normalizedKeys = [
+    detectionCameraId,
+    sourceCamera?.sourceDeviceId,
+    sourceCamera?.id,
+    sourceCamera?.sourceDeviceName,
+  ]
+  for (const key of normalizedKeys) {
+    const cameraState = getCameraStateByNormalizedKey({
+      cameraStateByNormalizedId,
+      key,
+    })
+    if (cameraState) {
+      return cameraState
+    }
+  }
+
+  return undefined
+}
+
+const resolveSceneCamera = ({
+  cameraLookup,
+  detectionCameraId,
+  sourceCameraState,
+  transformer,
+  worldPositionByCameraId,
+}: {
+  cameraLookup: CameraLookup
+  detectionCameraId: string
+  sourceCameraState?: CameraPositionState
+  transformer: CoordinateTransformer
+  worldPositionByCameraId: Map<string, THREE.Vector3>
+}) => {
+  const direct = cameraLookup.exactById[detectionCameraId]
+  if (direct) {
+    return direct
+  }
+
+  const normalizedDetectionCameraId = normalizeIdentifier(detectionCameraId)
+  if (!normalizedDetectionCameraId && !sourceCameraState) {
+    return undefined
+  }
+
+  const byNormalized = normalizedDetectionCameraId
+    ? cameraLookup.normalizedById[normalizedDetectionCameraId]
+    : undefined
+  if (byNormalized) {
+    return byNormalized
+  }
+
+  if (
+    !sourceCameraState ||
+    !Number.isFinite(sourceCameraState.camera_lat) ||
+    !Number.isFinite(sourceCameraState.camera_lon)
+  ) {
+    return undefined
+  }
+
+  const liveCameraWorldPosition = transformer.toVector3(
+    [sourceCameraState.camera_lon, sourceCameraState.camera_lat],
+    0,
+  )
+  let nearestCamera: CameraEntity | undefined
+  let nearestDistanceSq = Number.POSITIVE_INFINITY
+
+  worldPositionByCameraId.forEach((cameraWorldPosition, cameraId) => {
+    const distanceSq = cameraWorldPosition.distanceToSquared(
+      liveCameraWorldPosition,
+    )
+    if (distanceSq < nearestDistanceSq) {
+      nearestDistanceSq = distanceSq
+      nearestCamera = cameraLookup.exactById[cameraId]
+    }
+  })
+
+  return nearestCamera
+}
+
+const isPointInsideBounds = (
+  point: THREE.Vector3,
+  bounds: WorldBounds | null,
+) => {
+  if (!bounds) {
+    return true
+  }
+
+  return (
+    point.x >= bounds.minX &&
+    point.x <= bounds.maxX &&
+    point.z >= bounds.minZ &&
+    point.z <= bounds.maxZ
+  )
+}
+
+const resolveDetectionPosition = ({
+  detectionLat,
+  detectionLon,
+  sourceCamera,
+  sourceCameraState,
+  transformer,
+}: {
+  detectionLat: number
+  detectionLon: number
+  sourceCamera?: CameraEntity
+  sourceCameraState?: CameraPositionState
+  transformer: CoordinateTransformer
+}) => {
+  const fallbackPosition = transformer.toVector3(
+    [detectionLon, detectionLat],
+    0,
+  )
+
+  if (
+    !sourceCamera ||
+    !sourceCameraState ||
+    !Number.isFinite(sourceCameraState.camera_lat) ||
+    !Number.isFinite(sourceCameraState.camera_lon)
+  ) {
+    return fallbackPosition
+  }
+
+  const liveCameraPosition = transformer.toVector3(
+    [sourceCameraState.camera_lon, sourceCameraState.camera_lat],
+    0,
+  )
+  const sceneCameraPosition = transformer.toVector3(
+    [sourceCamera.x, sourceCamera.y],
+    0,
+  )
+  const offsetFromLiveCamera = fallbackPosition.clone().sub(liveCameraPosition)
+
+  return sceneCameraPosition.add(offsetFromLiveCamera)
 }
 
 const FlatTube: React.FC<FlatTubeProps> = ({
@@ -647,6 +957,13 @@ const detectionShapeMap: Record<string, React.FC<DetectionModelProps>> = {
   cellphone: CellphoneModel,
 }
 
+const LIVE_DETECTION_BASE_SCALE = 4.2
+const LIVE_DETECTION_CONFIDENCE_SCALE = 1.8
+const LIVE_DETECTION_CLASS_SCALE: Partial<Record<string, number>> = {
+  car: 1,
+  person: 0.75,
+}
+
 const DetectionShape: React.FC<{className: string; color: string}> = ({
   className,
   color,
@@ -655,14 +972,84 @@ const DetectionShape: React.FC<{className: string; color: string}> = ({
   return <Shape color={color} />
 }
 
+const GroundAlignedDetectionShape: React.FC<{
+  className: string
+  color: string
+}> = ({className, color}) => {
+  const contentRef = React.useRef<THREE.Group | null>(null)
+  const [groundOffset, setGroundOffset] = React.useState(0)
+
+  React.useLayoutEffect(() => {
+    const group = contentRef.current
+    if (!group) {
+      return
+    }
+
+    group.updateMatrixWorld(true)
+    const box = new THREE.Box3().setFromObject(group)
+    if (!Number.isFinite(box.min.y)) {
+      return
+    }
+
+    const nextOffset = -box.min.y
+    setGroundOffset((previous) =>
+      Math.abs(previous - nextOffset) > 1e-4 ? nextOffset : previous,
+    )
+  }, [className, color])
+
+  return (
+    <group position={[0, groundOffset, 0]}>
+      <group ref={contentRef}>
+        <DetectionShape className={className} color={color} />
+      </group>
+    </group>
+  )
+}
+
 export const LiveRadarDetectionsMesh: React.FC<
   LiveRadarDetectionsMeshProps
 > = ({scene, focusAreaId, transformer}) => {
   const detectionsById = useLiveRadarDetections()
+  const cameraStatesById = useLiveRadarCameraStates()
 
-  const cameraByIncomingId = React.useMemo(
-    () => getCameraByIncomingId(scene.cameras),
+  const realCameras = React.useMemo(
+    () => getRealCameras(scene.cameras),
     [scene.cameras],
+  )
+
+  const cameraLookup = React.useMemo(
+    () => buildCameraLookup(realCameras),
+    [realCameras],
+  )
+
+  const worldPositionByCameraId = React.useMemo(
+    () =>
+      new Map(
+        realCameras.map((camera) => [
+          camera.id,
+          transformer.toVector3([camera.x, camera.y], 0),
+        ]),
+      ),
+    [realCameras, transformer],
+  )
+
+  const cameraStateByNormalizedId = React.useMemo(
+    () =>
+      Object.entries(cameraStatesById).reduce<
+        Record<string, CameraPositionState>
+      >((acc, [cameraId, cameraState]) => {
+        const normalizedId = normalizeIdentifier(cameraId)
+        if (normalizedId) {
+          acc[normalizedId] = cameraState
+        }
+        return acc
+      }, {}),
+    [cameraStatesById],
+  )
+
+  const worldBounds = React.useMemo(
+    () => buildWorldBounds(scene, transformer, focusAreaId),
+    [focusAreaId, scene, transformer],
   )
 
   const renderItems = React.useMemo(() => {
@@ -671,20 +1058,45 @@ export const LiveRadarDetectionsMesh: React.FC<
         return []
       }
 
-      const sourceCamera = cameraByIncomingId[detection.cameraId]
-      if (focusAreaId) {
-        if (!sourceCamera) {
-          return []
-        }
-        if (sourceCamera.areaId !== focusAreaId) {
-          return []
-        }
+      const sourceCameraState = getDetectionCameraState({
+        cameraStatesById,
+        cameraStateByNormalizedId,
+        detectionCameraId: detection.cameraId,
+      })
+      const sourceCamera = resolveSceneCamera({
+        cameraLookup,
+        detectionCameraId: detection.cameraId,
+        sourceCameraState,
+        transformer,
+        worldPositionByCameraId,
+      })
+      if (
+        focusAreaId &&
+        sourceCamera?.areaId &&
+        sourceCamera.areaId !== focusAreaId
+      ) {
+        return []
       }
 
       const className = normalizeClassName(detection.className)
       const color = detectionColors[className] ?? '#f97316'
       const confidence = clamp01(detection.confidence ?? 0.6)
-      const position = transformer.toVector3([detection.lon, detection.lat], 0)
+      const resolvedCameraState = getDetectionCameraState({
+        cameraStatesById,
+        cameraStateByNormalizedId,
+        detectionCameraId: detection.cameraId,
+        sourceCamera,
+      })
+      const position = resolveDetectionPosition({
+        detectionLat: detection.lat,
+        detectionLon: detection.lon,
+        sourceCamera,
+        sourceCameraState: resolvedCameraState,
+        transformer,
+      })
+      if (!isPointInsideBounds(position, worldBounds)) {
+        return []
+      }
 
       return [
         {
@@ -696,22 +1108,38 @@ export const LiveRadarDetectionsMesh: React.FC<
         } satisfies DetectionRenderItem,
       ]
     })
-  }, [cameraByIncomingId, detectionsById, focusAreaId, transformer])
+  }, [
+    cameraLookup,
+    cameraStateByNormalizedId,
+    cameraStatesById,
+    detectionsById,
+    focusAreaId,
+    worldBounds,
+    transformer,
+    worldPositionByCameraId,
+  ])
 
   return (
     <group>
       {renderItems.map((item) => {
-        const confidenceScale = 0.85 + item.confidence * 0.35
+        const confidenceScale =
+          LIVE_DETECTION_BASE_SCALE +
+          item.confidence * LIVE_DETECTION_CONFIDENCE_SCALE
+        const classScale = LIVE_DETECTION_CLASS_SCALE[item.className] ?? 1
+        const finalScale = confidenceScale * classScale
         const yaw = getStableYaw(item.id)
 
         return (
           <group
             key={item.id}
-            scale={[confidenceScale, confidenceScale, confidenceScale]}
+            scale={[finalScale, finalScale, finalScale]}
             position={[item.position.x, item.position.y, item.position.z]}
             rotation={[0, yaw, 0]}
           >
-            <DetectionShape className={item.className} color={item.color} />
+            <GroundAlignedDetectionShape
+              className={item.className}
+              color={item.color}
+            />
             <mesh
               position={[0, 0.002, 0]}
               receiveShadow
