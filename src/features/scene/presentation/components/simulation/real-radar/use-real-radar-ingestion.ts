@@ -1,12 +1,42 @@
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import React from 'react'
-import useWebSocket, {ReadyState} from 'react-use-websocket'
+import * as ReactUseWebSocket from 'react-use-websocket'
 
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
 
 import type {RadarMessage} from './real-radar-types'
 
 import {extractRadarMessages} from './real-radar-parsers'
+
+type UseWebSocketHook = typeof import('react-use-websocket').default
+
+const resolveUseWebSocketHook = (): UseWebSocketHook => {
+  const moduleValue = ReactUseWebSocket as unknown as {
+    default?: unknown
+  }
+
+  const candidateValues = [
+    moduleValue.default,
+    moduleValue.default && typeof moduleValue.default === 'object'
+      ? (moduleValue.default as {default?: unknown}).default
+      : undefined,
+  ]
+
+  const hook = candidateValues.find((candidate) => {
+    return typeof candidate === 'function'
+  })
+
+  if (typeof hook === 'function') {
+    return hook as UseWebSocketHook
+  }
+
+  throw new TypeError(
+    'react-use-websocket default export could not be resolved as a function',
+  )
+}
+
+const useWebSocket = resolveUseWebSocketHook()
+const {ReadyState} = ReactUseWebSocket
 
 interface DecodedUserJwt {
   id: string
