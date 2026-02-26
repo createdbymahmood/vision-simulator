@@ -13,16 +13,10 @@ interface CaptureSceneSnapshotParams {
   scene: SceneRoot
 }
 
-interface CaptureSize {
-  height: number
-  width: number
-}
-
-const CAPTURE_PADDING = 80
+const CAPTURE_PADDING = 36
 const MAP_WAIT_TIMEOUT_MS = 2500
-const CAPTURE_BASE_SCALE = 0.6
-const CAPTURE_MAX_LONGEST_SIDE = 512
-const CAPTURE_MIN_LONGEST_SIDE = 320
+const CAPTURE_OUTPUT_WIDTH = 512
+const CAPTURE_OUTPUT_HEIGHT = 288
 const JPEG_QUALITY = 0.68
 const SNAPSHOT_HIDDEN_LAYER_IDS = new Set([
   'rotation-connector',
@@ -126,41 +120,13 @@ const resolveCaptureArea = (scene: SceneRoot): AreaEntity | null => {
   return scene.areas[0] ?? null
 }
 
-const resolveCaptureSize = (map: MapboxMap): CaptureSize => {
-  const mapContainer = map.getContainer()
-  const viewportWidth = Math.max(
-    1,
-    mapContainer.clientWidth || map.getCanvas().width || 1,
-  )
-  const viewportHeight = Math.max(
-    1,
-    mapContainer.clientHeight || map.getCanvas().height || 1,
-  )
-  const longestSide = Math.max(viewportWidth, viewportHeight)
-
-  const targetLongestSide = Math.max(
-    CAPTURE_MIN_LONGEST_SIDE,
-    Math.min(
-      CAPTURE_MAX_LONGEST_SIDE,
-      Math.round(longestSide * CAPTURE_BASE_SCALE),
-    ),
-  )
-
-  const scale = targetLongestSide / longestSide
-
-  return {
-    width: Math.max(1, Math.round(viewportWidth * scale)),
-    height: Math.max(1, Math.round(viewportHeight * scale)),
-  }
-}
-
-const createOffscreenContainer = ({height, width}: CaptureSize) => {
+const createOffscreenContainer = () => {
   const container = document.createElement('div')
   container.style.position = 'fixed'
   container.style.left = '-10000px'
   container.style.top = '0'
-  container.style.width = `${width}px`
-  container.style.height = `${height}px`
+  container.style.width = `${CAPTURE_OUTPUT_WIDTH}px`
+  container.style.height = `${CAPTURE_OUTPUT_HEIGHT}px`
   container.style.pointerEvents = 'none'
   container.style.opacity = '0'
   container.style.zIndex = '-1'
@@ -296,8 +262,7 @@ export const captureSceneSnapshot = async ({
     throw new Error('Snapshot unavailable: map is not ready')
   }
 
-  const captureSize = resolveCaptureSize(map)
-  const captureContainer = createOffscreenContainer(captureSize)
+  const captureContainer = createOffscreenContainer()
   let captureMap: MapboxMap | null = null
 
   try {
