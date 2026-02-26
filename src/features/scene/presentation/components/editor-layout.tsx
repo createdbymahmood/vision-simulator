@@ -21,6 +21,7 @@ import {
   downloadBlob,
   downloadDataUrl,
 } from '@/features/scene/presentation/utils/scene-export'
+import {captureSceneSnapshot} from '@/features/scene/presentation/utils/scene-snapshot-capture'
 import {cn} from '@/lib/utils'
 
 import type {
@@ -129,6 +130,13 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     [cameras.length],
   )
 
+  const captureSnapshot = useCallbackRef((sceneToSave: SceneRoot) =>
+    captureSceneSnapshot({
+      mapRef,
+      scene: sceneToSave,
+    }),
+  )
+
   const {
     leaveDialogConfig,
     leaveDialogState,
@@ -138,6 +146,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     saveLoading,
     saveScene,
   } = useEditorUnsavedChangesGuard({
+    captureSnapshot,
     scene,
     unsavedChanges,
     visionSimulatorId,

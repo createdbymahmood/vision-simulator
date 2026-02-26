@@ -6,11 +6,14 @@ import {toast} from 'sonner'
 import type {SceneRoot} from '@/features/scene/domain/types'
 import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
 
+import {uploadFile} from '@/data-provider/api/services/v2/file'
 import {updateVision} from '@/data-provider/api/services/v2/vision-simulator'
+import {createSnapshotFilename} from '@/features/scene/presentation/utils/scene-export'
 
 import {useSceneDirtyState} from './use-scene-dirty-state'
 
 interface UseEditorUnsavedChangesGuardParams {
+  captureSnapshot: (scene: SceneRoot) => Promise<Blob>
   scene: SceneRoot
   visionSimulatorId: string
   unsavedChanges?: UnsavedChangesOptions
@@ -61,6 +64,30 @@ interface UseManualAnchorNavigationBlockerParams {
 const DEFAULT_DIALOG_TITLE = 'Unsaved changes'
 const DEFAULT_DIALOG_DESCRIPTION =
   'You have unsaved changes. Do you want to save before leaving?'
+
+const createSnapshotUploadBlob = (snapshotBlob: Blob) => {
+  const defaultFilename = createSnapshotFilename()
+  const filename =
+    snapshotBlob.type === 'image/jpeg'
+      ? defaultFilename.replace(/\.png$/i, '.jpg')
+      : defaultFilename
+
+  if (typeof File === 'undefined') {
+    return snapshotBlob
+  }
+
+  return new File([snapshotBlob], filename, {
+    type: snapshotBlob.type || 'image/png',
+  })
+}
+
+const resolveSaveErrorMessage = (error: unknown) => {
+  if (error instanceof Error && /snapshot/i.test(error.message)) {
+    return error.message
+  }
+
+  return 'Failed to save scene'
+}
 
 const useOptionalRouteBlocker = (enabled: boolean, isDirty: boolean) => {
   try {
@@ -181,6 +208,7 @@ const useManualAnchorNavigationBlocker = ({
 }
 
 export const useEditorUnsavedChangesGuard = ({
+  captureSnapshot,
   scene,
   visionSimulatorId,
   unsavedChanges,
@@ -207,6 +235,10 @@ export const useEditorUnsavedChangesGuard = ({
     enabled: unsavedChangesEnabled,
     scene,
   })
+  const setSavingState = useCallbackRef((isSaving: boolean) => {
+    isSavingRef.current = isSaving
+    setSaveLoading(isSaving)
+  })
 
   const routeBlocker = useOptionalRouteBlocker(unsavedChangesEnabled, isDirty)
   const isRouteLeaveDialogOpen = routeBlocker?.status === 'blocked'
@@ -228,11 +260,20 @@ export const useEditorUnsavedChangesGuard = ({
     const sceneToSave = scene
     const saveSnapshot = createSaveSnapshot(sceneToSave)
 
-    isSavingRef.current = true
-    setSaveLoading(true)
+    setSavingState(true)
 
     try {
+      const snapshotBlob = await captureSnapshot(sceneToSave)
+      const snapshotUploadBlob = createSnapshotUploadBlob(snapshotBlob)
+      const uploadResponse = await uploadFile({file: snapshotUploadBlob})
+      const snapshotFileKey = uploadResponse?.fileKey
+
+      if (!snapshotFileKey) {
+        throw new Error('Failed to upload snapshot: missing file key')
+      }
+
       await updateVision(visionSimulatorId, {
+        snapshot: snapshotFileKey,
         vision: {
           data: sceneToSave,
         },
@@ -241,12 +282,11 @@ export const useEditorUnsavedChangesGuard = ({
       markSaved(saveSnapshot)
       toast.success('Scene saved')
       return true
-    } catch {
-      toast.error('Failed to save scene')
+    } catch (error) {
+      toast.error(resolveSaveErrorMessage(error))
       return false
     } finally {
-      isSavingRef.current = false
-      setSaveLoading(false)
+      setSavingState(false)
     }
   })
 

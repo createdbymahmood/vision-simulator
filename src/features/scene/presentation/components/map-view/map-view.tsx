@@ -10,7 +10,6 @@ import type {
   AreaEntity,
   GeoPoint,
   PersonEntity,
-  SceneMapStyle,
 } from '@/features/scene/domain/types'
 import type {EditorTool} from '@/features/scene/infrastructure/stores/ui.store'
 import type {
@@ -26,6 +25,7 @@ import {
 } from '@/features/scene/domain/constants/wall-style'
 import {useSceneStore} from '@/features/scene/infrastructure/stores/scene.store'
 import {useUiStore} from '@/features/scene/infrastructure/stores/ui.store'
+import {MAP_STYLE_URLS} from '@/features/scene/presentation/components/map-view/map-style-urls'
 import {MapViewAreaLayers} from '@/features/scene/presentation/components/map-view/map-view-area-layers'
 import {MapViewCameraLayers} from '@/features/scene/presentation/components/map-view/map-view-camera-layers'
 import {MapViewCameraPreviewLayer} from '@/features/scene/presentation/components/map-view/map-view-camera-preview-layer'
@@ -82,13 +82,6 @@ interface MapViewProps {
   shapeMode: ShapeDrawMode
   onMapReady?: (map: MapRef | null) => void
   peopleOverride?: PersonEntity[]
-}
-
-const MAP_STYLE_URLS: Record<SceneMapStyle, string> = {
-  street: 'mapbox://styles/mapbox/streets-v12',
-  satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
-  traffic: 'mapbox://styles/mapbox/traffic-day-v2',
-  osm: 'mapbox://styles/mapbox/outdoors-v12',
 }
 
 const SHIFT_HAND_ELIGIBLE_TOOLS = new Set<EditorTool>([
