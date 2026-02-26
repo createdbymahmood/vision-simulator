@@ -9,7 +9,7 @@ export default defineConfig({
         transformer: (specs) => assign(specs, {info: {title: 'api'}}),
       },
       filters: {
-        tags: [/^visionsimulator$/i, /^device$/i],
+        tags: [/^visionsimulator$/i, /^device$/i, /^file$/i],
       },
     },
     output: {

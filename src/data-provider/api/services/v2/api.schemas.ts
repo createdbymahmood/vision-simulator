@@ -1693,6 +1693,13 @@ export type GetDevicesWithoutConnectorsParams = {
 
 export type TriggerDeviceActuatorBody = {[key: string]: unknown}
 
+export type DownloadFileParams = {
+  /**
+   * JWT token for authentication
+   */
+  token: string
+}
+
 export type GetAllVisionsParams = {
   /**
    * Page number
