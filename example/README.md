@@ -10,19 +10,19 @@ This example consumes the local `@vega-tek-hub/vision-simulator-v2` package and 
 From repo root:
 
 ```bash
-yarn --cwd example install
+pnpm install
 ```
 
 Build the library after package changes:
 
 ```bash
-yarn build:lib
+pnpm build:lib
 ```
 
 Start the example app:
 
 ```bash
-yarn --cwd example dev
+pnpm --filter example dev
 ```
 
 ## How to Verify

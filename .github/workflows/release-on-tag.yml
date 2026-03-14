@@ -20,7 +20,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24.5.0"
-          cache: "yarn"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Configure npm for GitHub Packages (scoped)
         run: |
@@ -36,7 +37,7 @@ jobs:
         run: corepack enable
 
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Debug package identity
         run: |
@@ -57,7 +58,7 @@ jobs:
           fi
 
       - name: Build Library
-        run: yarn build:lib
+        run: pnpm build:lib
 
       - name: Publish To GitHub Packages
         env:

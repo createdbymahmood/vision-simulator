@@ -2,6 +2,7 @@
   "name": "@vega-tek-hub/vision-simulator-v2",
   "version": "1.8.1",
   "type": "module",
+  "packageManager": "pnpm@10.30.2",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,13 +30,13 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --fix",
     "preview": "vite preview",
-    "build:lib": "rimraf dist && tsup && yarn build:styles",
+    "build:lib": "rimraf dist && tsup && pnpm run build:styles",
     "release:patch": "node scripts/create-release-tag.mjs patch",
     "release:minor": "node scripts/create-release-tag.mjs minor",
     "release:major": "node scripts/create-release-tag.mjs major",
     "build:styles": "tailwindcss -i src/styles.css -o dist/styles.css --content \"./src/**/*.{ts,tsx}\" --minify && node scripts/normalize-dist-css.mjs dist/styles.css && node scripts/copy-file.mjs src/host.css dist/host.css",
     "download-swagger-file": "node scripts/download-swagger-file.mjs",
-    "orval": "yarn download-swagger-file && orval --config src/data-provider/orval.config.ts"
+    "orval": "pnpm run download-swagger-file && orval --config src/data-provider/orval.config.ts"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"

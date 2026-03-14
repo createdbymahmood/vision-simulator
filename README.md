@@ -10,11 +10,11 @@
 
 ## Release Workflow
 
-- Use `yarn release:patch`, `yarn release:minor`, or `yarn release:major`.
+- Use `pnpm release:patch`, `pnpm release:minor`, or `pnpm release:major`.
 - Each command requires a clean git working tree and a non-detached branch.
 - The command runs a push preflight check, then bumps `package.json` version, creates `chore(release): vX.Y.Z` commit and `vX.Y.Z` tag, then pushes both.
 - If pushing fails after tag creation, the script deletes the created tag (local and remote if needed) before exiting.
-- Pushing the tag triggers `.github/workflows/release-on-tag.yml`, which builds and publishes to GitHub Packages.
+- Pushing the tag triggers `.github/workflows/release-on-tag.yml`, which installs with `pnpm`, builds the library, and publishes to GitHub Packages.
 - CI rejects the release when the pushed tag does not match `package.json.version`.
 - CI uses `GITHUB_TOKEN` for package publishing.
 

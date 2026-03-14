@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@tanstack/react-router": "1.129.8",
-    "@vega-tek-hub/vision-simulator-v2": "file:..",
+    "@vega-tek-hub/vision-simulator-v2": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

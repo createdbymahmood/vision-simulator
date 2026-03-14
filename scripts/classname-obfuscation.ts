@@ -83,8 +83,8 @@ interface SourceTransformResult {
 
 let cachedContext: ClassNameObfuscationContext | null = null
 
-const getYarnCommand = () =>
-  process.platform === 'win32' ? 'yarn.cmd' : 'yarn'
+const getPnpmCommand = () =>
+  process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
 
 const resolveProjectRoot = (inputRoot: string) => path.resolve(inputRoot)
 
@@ -986,9 +986,9 @@ const createTailwindPrebuildCss = (projectRoot: string) => {
   )
   const outputCssPath = path.join(temporaryDirectoryPath, 'prebuild.css')
   const tailwindCommandResult = spawnSync(
-    getYarnCommand(),
+    getPnpmCommand(),
     [
-      '-s',
+      'exec',
       'tailwindcss',
       '-i',
       'src/index.css',

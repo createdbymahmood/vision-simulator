@@ -6,7 +6,6 @@ import {
   RouterProvider,
 } from '@tanstack/react-router'
 import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
-import simulatorStylesUrl from '@vega-tek-hub/vision-simulator-v2/styles.css?url'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import React from 'react'
 
@@ -64,6 +63,7 @@ const HomePage: React.FC = () => {
 const SimulatorPage: React.FC = () => {
   const accessToken = import.meta.env.VITE_ACCESS_TOKEN
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+  const apiWsServiceUrl = import.meta.env.VITE_API_WS_SERVICE_URL
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN
   const visionSimulatorId = import.meta.env.VITE_VISION_SIMULATOR_ID
 
@@ -71,11 +71,10 @@ const SimulatorPage: React.FC = () => {
     <div style={{height: '100vh', width: '100vw'}}>
       <VisionSimulator
         apiBaseUrl={apiBaseUrl}
+        apiWsServiceUrl={apiWsServiceUrl}
         accessToken={accessToken}
-        isolationMode='shadow'
         mapboxToken={mapboxToken}
         mode='preview'
-        shadowStyleUrls={[simulatorStylesUrl]}
         visionSimulatorId={visionSimulatorId}
         unsavedChanges={{
           enabled: true,
