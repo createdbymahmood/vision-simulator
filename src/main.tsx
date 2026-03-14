@@ -1,3 +1,7 @@
+import '@/host.css'
+import '@/styles.css'
+import '@/local-app-base.css'
+
 import {
   createRootRoute,
   createRoute,
@@ -9,9 +13,6 @@ import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 
 import {App} from '@/app'
-import '@/host.css'
-import '@/styles.css'
-import '@/local-app-base.css'
 
 const AppRouteContent: React.FC = () => (
   <App
