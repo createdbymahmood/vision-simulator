@@ -1,13 +1,19 @@
 # Getting Started End-to-End
 
-This workflow takes you from a blank scene to a recorded simulation. Start by creating an area. Click Create Area or press A, click to add vertices around your space, and double-click to close the polygon. Confirm the area appears with a colored border and the other tools become enabled.
+This workflow takes you from a blank scene to a recorded simulation. It includes the full end-to-end flow: create the environment, place devices and people, run the preview, and export outputs.
 
-Next, add obstacles. Use Draw Wall or press W to place wall segments and double-click to finish. Use Draw Shapes to add a rectangle or circle inside the area. Tooltips show dimensions as you draw.
+Start in the Editor View. In the top-left of the top bar, choose Map Mode if you want real-world tiles or Canvas Mode if you want a neutral grid. If you are in Map Mode, use the right sidebar top button Search Location to jump to a specific address or neighborhood, or use Cmd+K. The map flies to the selected result and becomes the base for your scene.
 
-Place cameras by pressing D to open the device picker, selecting a camera type, and clicking inside the area. Drag the FOV wedge to aim the camera, then fine-tune pan, tilt, and zoom in the properties panel. Place people by pressing P, clicking valid positions inside the area, and resolving any invalid placement messages.
+Create an area first. Click Create Area in the bottom tool strip, which is the second icon from the left, or press A. Click to add vertices around your space, then double-click or press Enter to close the polygon. Confirm the area appears with a colored border and the other tools become enabled. If you need multiple areas, open Area Management from the right sidebar second button and create additional areas, then click a row in the area list to make it active.
 
-Review properties by selecting any object and adjusting height, color, or optics where applicable. Use undo and redo if you want to revert or reapply changes.
+Add obstacles next. Use Draw Wall in the bottom tool strip, which is the third icon from the left, or press W to place wall segments. Double-click to finish. Use Draw Shapes, the fourth icon, to add rectangles, circles, triangles, or lines. While drawing, watch the measurement tooltips for lengths and dimensions, and use the Snap-to-Grid toggle in the bottom-right of the viewport if you want cleaner alignment.
 
-Run the simulation by clicking Live Preview. Use orbit controls to inspect the scene, check the radar panel for activity, and review camera feeds for detections. Double-click a camera or person to focus the view.
+Place cameras by clicking Place Device in the bottom tool strip, which is the fifth icon, or by pressing D. The Device Picker opens in the center of the screen. Select a camera type, then click inside the active area to place it. Drag the FOV wedge in the viewport to aim the camera, then fine-tune pan, tilt, zoom, and depth in the properties panel on the right. If you want to quickly review all cameras, open Devices in Use from the right sidebar fourth button and click a camera to focus it.
 
-Export outputs by starting a recording, capturing a snapshot, and optionally exporting the scene JSON from the editor.
+Place people by clicking Place Person, the sixth icon in the bottom tool strip, or by pressing P. Click valid positions inside the area. If you see a red preview, move to a valid spot away from walls, shapes, and other people. After placement, adjust person speed and behavior in the properties panel on the right.
+
+Review and refine. Switch to Selector Mode from the Mode popover on the far left of the bottom tool strip, then click objects to resize, rotate, or move them. Use Undo and Redo in the top bar center if you need to revert. If you want to change the map appearance, open Map Style from the right sidebar third button and choose a style.
+
+Run the simulation by clicking Live Preview in the top bar on the right. The view switches to Simulation Analysis. Use orbit controls to inspect the scene, check the radar overlay in the upper-left for detections, and review camera feeds in the right sidebar beneath the camera list. Click a camera in the camera list to focus it, and click PTZ to open the floating PTZ panel for live adjustments. Click a person in the 3D view or radar to show their trail.
+
+Export outputs from Preview or Editor. In Preview, use Start Recording and Snapshot in the top bar on the right. In the editor, open the Export dropdown in the top bar on the right to download Scene JSON or a Scene Image. If your deployment includes save-time snapshot upload, the Save action will capture a snapshot automatically when you save.

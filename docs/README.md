@@ -1,6 +1,6 @@
 # Vision Simulator Documentation
 
-This documentation is product-focused and designed for end users. It explains what the simulator does and how to use every feature in the UI. Use the sections below to navigate the product documentation.
+This documentation is product-focused and written for first-time users. Each page explains what a feature does, where it lives in the interface, and the exact clicks needed to use it. Read in order for a full tour or jump directly to the feature you need.
 
 ## Overview
 
@@ -8,7 +8,7 @@ Start with the product overview at [Product and Core Concepts](overview/product.
 
 ## Editor
 
-Editor documentation is organized by feature. Begin with [Editor Layout and Modes](editor/overview.md), then continue through areas, walls and shapes, selection and transform, cameras and FOV, people, properties panels, undo/redo, map style and search, and keyboard shortcuts in their respective pages.
+Editor documentation is organized by feature. Begin with [Editor Layout and Modes](editor/overview.md), then continue through areas, walls and shapes, selection and transform, cameras and FOV, people, properties panels, undo and redo, map style and search, and keyboard shortcuts in their respective pages.
 
 ## Simulation
 
@@ -16,7 +16,7 @@ Simulation documentation starts at [Simulation Analysis View](simulation/overvie
 
 ## Workflows
 
-End-to-end usage is covered in [Getting Started End-to-End](workflows/getting-started.md), with deeper operational guidance in [Advanced Operation](workflows/advanced.md).
+End-to-end usage is covered in [Getting Started End-to-End](workflows/getting-started.md).
 
 ## Export
 

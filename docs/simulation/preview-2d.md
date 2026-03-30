@@ -1,3 +1,5 @@
 # Preview 2D Top-Down Mode (Planned)
 
-Preview includes a planned 3D/2D switch that changes only the camera projection. The 2D mode is a top-down view that keeps the same simulation data, UI panels, radar, feeds, selection, recording, and snapshots. Rotation is disabled in 2D, while pan and zoom remain available. The switch appears in the Preview top bar and falls back to an in-viewport control if the top bar is hidden by a forced preview package mode.
+Preview includes a planned 3D and 2D switch that changes only the camera projection. The 2D mode is a top-down view that keeps the same simulation data, UI panels, radar, feeds, selection, recording, and snapshots. Rotation is disabled in 2D, while pan and zoom remain available.
+
+The switch appears in the Preview top bar near the right side, close to Start Recording and Snapshot. If the top bar is hidden by a preview-only package mode, the switch falls back to a compact control inside the viewport, typically in the upper-right corner so it remains reachable while you inspect the scene.
