@@ -1,0 +1,9 @@
+# Walls and Shapes
+
+Walls and shapes are structural obstacles for visibility, collisions, and movement, and they must be fully inside an area. The wall tool creates polyline walls with multiple segments, while the shape tool creates rectangles, circles, triangles, and lines.
+
+To draw a wall, go to the bottom navigation and click Draw Wall or press W. Click to place the first point, move your cursor to preview the segment, click to add more segments, and double-click to finish. The preview is a solid red line with the actual thickness (default 0.2m), vertices show at joints, and the tooltip shows length and angle, for example 12.8 m at 45 degrees. Angle snapping uses 45-degree steps when enabled, and grid snapping uses 0.5m increments when enabled. Walls must stay inside the active area. If you extend outside, the preview turns red, the cursor becomes not-allowed, and placement is blocked with a warning tooltip. Self-intersections are allowed but flagged with a warning icon, and some builds may also show an error sound or toast.
+
+To draw shapes, click Draw Shapes in the bottom navigation and choose a shape in the popover, or use shortcuts R for rectangle, C for circle, T for triangle, and L for line. Rectangles are drawn by click-drag, with Shift to constrain to a square and Alt to expand from center. Circles are drawn by clicking a center and dragging a radius. Triangles can be created by three clicks for a freeform triangle or by drag for an equilateral triangle. Lines are drawn by click-drag with a dashed preview line and have a configurable thickness (default 0.1m).
+
+All shapes must remain inside the active area. Invalid placement turns previews red and uses a not-allowed cursor, and resizing or dragging clamps to the area boundary. Measurement tooltips display real-time dimensions while drawing. Optional distance markers appear on long segments, and object-to-object distance guides appear while dragging near another object.
