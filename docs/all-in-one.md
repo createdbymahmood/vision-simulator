@@ -54,15 +54,15 @@ Cursor states are explicit and consistent. Area drawing uses a crosshair with a 
 
 Areas are mandatory spatial boundaries. You must create at least one area before placing walls, shapes, cameras, or people. When multiple areas exist, the most recently created or selected area becomes the active area for new placement.
 
-To create an area in Point Mode, go to the bottom navigation and click Create Area, which is the second icon from the left, or press A. Click to add vertices around your boundary. A dashed preview line extends from the last vertex to your cursor, and you close the polygon by double-clicking, pressing Enter, or clicking the first vertex. Press ESC to cancel or Backspace to remove the last vertex. The cursor appears as a crosshair with a 12px blue dot, the first click shows a pulsing 10px dot, and vertices render as 8px circles. The preview line uses an 8px dash and 4px gap and animates toward the cursor. When you are close to the first vertex, a tooltip indicates that you can close and shows the total perimeter.
+To create an area in Point Mode, go to the bottom navigation and click Create Area, which is the second icon from the left, or press **A**. Click to add vertices around your boundary. A dashed preview line extends from the last vertex to your cursor, and you close the polygon by double-clicking, pressing Enter, or clicking the first vertex. Press **ESC** to cancel or Backspace to remove the last vertex. The cursor appears as a crosshair with a 12px blue dot, the first click shows a pulsing 10px dot, and vertices render as 8px circles. The preview line uses an 8px dash and 4px gap and animates toward the cursor. When you are close to the first vertex, a tooltip indicates that you can close and shows the total perimeter.
 
-To create an area in Pen Mode, open the Create Area popover from the same bottom navigation tool, select Pen Mode, then click to place anchor points and drag from anchors to create Bezier control handles. Hold Shift to constrain handle angles in 45 degree steps and hold Alt for a sharp corner. The curve is sampled into a polyline for use throughout the app.
+To create an area in Pen Mode, open the Create Area popover from the same bottom navigation tool, select Pen Mode, then click to place anchor points and drag from anchors to create Bezier control handles. Hold **Shift** to constrain handle angles in 45 degree steps and hold **Alt** for a sharp corner. The curve is sampled into a polyline for use throughout the app.
 
 Area constraints are strict. A valid area must have at least three vertices and be a closed polygon, and all object placement is clipped to the active area. If you try to draw or place outside the area, the preview turns red and the cursor becomes not-allowed.
 
 The first-time experience includes a centered prompt that says Create an Area to Begin, a guided tutorial for vertex placement and closing, and a confetti burst with a success toast when the first area is created. Tool buttons for walls, shapes, cameras, and people become enabled after the first area exists.
 
-Area Management is available in the right sidebar. Click the Area Management button, which is the second button from the top, or use Cmd+Shift+A to open the slide-over panel. The panel lists areas with names, point counts, and color indicators. Click a row to make that area active and focus the viewport on it. Use the name field in the row to rename the area, and use the delete action in the row to remove it. If you delete the active area, the app selects the most recently created remaining area.
+Area Management is available in the right sidebar. Click the Area Management button, which is the second button from the top, or use **Cmd+Shift+A** to open the slide-over panel. The panel lists areas with names, point counts, and color indicators. Click a row to make that area active and focus the viewport on it. Use the name field in the row to rename the area, and use the delete action in the row to remove it. If you delete the active area, the app selects the most recently created remaining area.
 
 Overlapping areas show a faint crosshatch pattern. The active area is highlighted with a thicker border, and new objects are created inside it. Area names are formatted sequentially, such as Area 1, Area 2, and so on, and those names appear in the area list and in selection tooltips.
 
@@ -74,7 +74,7 @@ During drawing, measurement tooltips show the current segment length, and the fi
 
 Walls and shapes are structural obstacles for visibility, collisions, and movement, and they must be fully inside an area. The wall tool creates polyline walls with multiple segments, while the shape tool creates rectangles, circles, triangles, and lines.
 
-To draw a wall, go to the bottom navigation and click Draw Wall, which is the third icon from the left, or press W. Click to place the first point, move your cursor to preview the segment, click to add more segments, and double-click to finish. The preview is a solid red line that matches the actual thickness, which defaults to 0.2m. Vertices appear at joints, and the tooltip shows length and angle, for example 12.8 m at 45 degrees. Angle snapping uses 45 degree steps when enabled, and grid snapping uses 0.5m increments when enabled. The snap toggles are in the bottom-right corner of the viewport, with Snap-to-Grid above Measurement Overlay. Walls must stay inside the active area. If you extend outside, the preview turns red, the cursor becomes not-allowed, and placement is blocked with a warning tooltip. Self-intersections are allowed but flagged with a warning icon and tooltip.
+To draw a wall, go to the bottom navigation and click Draw Wall, which is the third icon from the left, or press **W**. Click to place the first point, move your cursor to preview the segment, click to add more segments, and double-click to finish. The preview is a solid red line that matches the actual thickness, which defaults to 0.2m. Vertices appear at joints, and the tooltip shows length and angle, for example 12.8 m at 45 degrees. Angle snapping uses 45 degree steps when enabled, and grid snapping uses 0.5m increments when enabled. The snap toggles are in the bottom-right corner of the viewport, with Snap-to-Grid above Measurement Overlay. Walls must stay inside the active area. If you extend outside, the preview turns red, the cursor becomes not-allowed, and placement is blocked with a warning tooltip. Self-intersections are allowed but flagged with a warning icon and tooltip.
 
 To draw shapes, click Draw Shapes in the bottom navigation and choose a shape in the popover, or use shortcuts R for rectangle, C for circle, T for triangle, and L for line. Rectangles are drawn by click-drag, with Shift to constrain to a square and Alt to expand from center. Circles are drawn by clicking a center and dragging a radius. Triangles can be created by three clicks for a freeform triangle or by drag for an equilateral triangle. Lines are drawn by click-drag with a dashed preview line and have a configurable thickness that defaults to 0.1m.
 
@@ -86,13 +86,13 @@ To edit a wall or shape, switch to Selector Mode from the Mode popover on the fa
 ![Wall or shape drawing with measurement tooltip visible.](assets/screenshots/editor-walls-shapes-drawing.webp)
 ### Selection and Transform
 
-Selection and transform tools let you move, resize, and rotate objects inside areas. Hand Mode enables map drag and disables selection, while Selector Mode enables selection and disables map drag. To change modes, open the Mode popover at the far left of the bottom navigation and choose Hand or Selector, or press H and V.
+Selection and transform tools let you move, resize, and rotate objects inside areas. Hand Mode enables map drag and disables selection, while Selector Mode enables selection and disables map drag. To change modes, open the Mode popover at the far left of the bottom navigation and choose Hand or Selector, or press **H** and V.
 
 To select an object, switch to Selector Mode and click the object in the viewport. Shift-click to multi-select and click blank space to deselect. Selection priority is People, then Cameras, then Walls, then Shapes, then Areas, so the topmost item is always chosen first. On hover, the cursor changes to a pointer, the object outline glows, and a tooltip shows the object type and ID after a short delay of about 500ms.
 
 Multi-select shows a selection count badge near the top-left of the viewport and enables bulk actions such as delete and duplicate. If your build includes a context menu, right-clicking a selection opens those actions. Delete can also be triggered with the Delete or Backspace key when the viewport has focus.
 
-When an object is selected, a bounding box and transform handles appear around it. Corner handles resize diagonally, edge handles resize horizontally or vertically, and holding Shift keeps proportions. The rotation handle allows free rotation and snaps to 15 degree increments by default, with a tooltip showing the current angle. Hold Shift while rotating to disable snapping in builds that support free rotation.
+When an object is selected, a bounding box and transform handles appear around it. Corner handles resize diagonally, edge handles resize horizontally or vertically, and holding Shift keeps proportions. The rotation handle allows free rotation and snaps to 15 degree increments by default, with a tooltip showing the current angle. Hold **Shift** while rotating to disable snapping in builds that support free rotation.
 
 When you drag a selected object, it must remain inside the active area. As you approach the boundary, previews turn red and the cursor becomes not-allowed. People cannot overlap walls, shapes, or other people at any time, and invalid drag positions snap back to the last valid position on release. Cursor feedback is consistent: hover uses a pointer, dragging uses a move cursor, resize uses directional resize cursors, rotation uses a rotate cursor, and invalid states use not-allowed with a red preview.
 
@@ -102,13 +102,13 @@ When you drag a selected object, it must remain inside the active area. As you a
 
 Cameras are placed inside areas and rendered with a unique color and a visible FOV wedge. They can be adjusted with drag handles and PTZ controls, and their color is reused across the editor, simulation, radar, and feeds so you can track a camera at a glance.
 
-To place a camera, go to the bottom navigation and click Place Device, which is the fifth icon from the left, or press D to open the Device Picker. The picker appears centered on the screen with a search input at the top and a list of camera types showing HFOV, VFOV, and depth. Select a camera type, then move the cursor into an area. The cursor shows a camera icon and a dashed range circle using a 12px dash and 6px gap with a subtle rotation. The next available camera color is previewed on the cursor. Click to place the camera; a drop-in animation plays and the camera properties panel opens automatically. If you click outside the area, the cursor becomes not-allowed and placement is blocked with an error toast.
+To place a camera, go to the bottom navigation and click Place Device, which is the fifth icon from the left, or press **D** to open the Device Picker. The picker appears centered on the screen with a search input at the top and a list of camera types showing HFOV, VFOV, and depth. Select a camera type, then move the cursor into an area. The cursor shows a camera icon and a dashed range circle using a 12px dash and 6px gap with a subtle rotation. The next available camera color is previewed on the cursor. Click to place the camera; a drop-in animation plays and the camera properties panel opens automatically. If you click outside the area, the cursor becomes not-allowed and placement is blocked with an error toast.
 
 Each camera is auto-assigned a unique color from a 20-color palette, and colors repeat only after all 20 are used, with a hue shift. The palette is #FF6B6B, #4ECDC4, #45B7D1, #FFA07A, #98D8C8, #F7DC6F, #BB8FCE, #85C1E2, #F8B739, #52B788, #E63946, #A8DADC, #F77F00, #06FFA5, #9D4EDD, #FF006E, #8338EC, #00B4D8, #90E0EF, #FFB703. You can override a camera color in the properties panel on the right, and the change updates all views immediately.
 
 In the editor, the camera icon is filled with the camera color, a direction arrow shows facing direction, and the FOV wedge uses low opacity with a colored border. Hover increases FOV opacity for clarity. You can drag the FOV wedge edge in the viewport to adjust direction and depth, and PTZ controls in the properties panel provide precise pan, tilt, and zoom adjustments. Measurement tooltips show camera range during placement and HFOV, VFOV, and depth while adjusting FOV.
 
-The Devices in Use panel is opened from the right sidebar. Click the Devices in Use button, which is the fourth button from the top, or use Cmd+Shift+D to view the list of cameras with color dots and specs. Clicking a camera in the list selects it and focuses it in the viewport. This same list is mirrored in the Preview right sidebar so you can open PTZ controls and focus cameras during simulation.
+The Devices in Use panel is opened from the right sidebar. Click the Devices in Use button, which is the fourth button from the top, or use **Cmd+Shift+D** to view the list of cameras with color dots and specs. Clicking a camera in the list selects it and focuses it in the viewport. This same list is mirrored in the Preview right sidebar so you can open PTZ controls and focus cameras during simulation.
 
 Planned 2D FOV occlusion in Map Mode clips the FOV wedge against walls and shapes that are taller than the camera height, ignores shorter obstacles, and clamps the wedge to the active area. Placement can be blocked if the wedge cannot project inside the area.
 
@@ -118,7 +118,7 @@ Planned 2D FOV occlusion in Map Mode clips the FOV wedge against walls and shape
 
 People are actors in the simulation. They are placed inside areas and cannot overlap obstacles or other people, so they always respect the space you design.
 
-To place a person, go to the bottom navigation and click Place Person, which is the sixth icon from the left, or press P, move the cursor inside an area, and click a valid position. The cursor shows a person icon with a collision radius preview. The default radius is 0.3m, which is a 0.6m diameter. A blue preview indicates valid placement, while a red preview and not-allowed cursor indicate invalid placement.
+To place a person, go to the bottom navigation and click Place Person, which is the sixth icon from the left, or press **P**, move the cursor inside an area, and click a valid position. The cursor shows a person icon with a collision radius preview. The default radius is 0.3m, which is a 0.6m diameter. A blue preview indicates valid placement, while a red preview and not-allowed cursor indicate invalid placement.
 
 Placement validation checks that the position is inside the active area, does not overlap walls or shapes, and does not overlap other people. If invalid, a tooltip explains the reason and clicking can trigger a short shake animation and an error toast.
 
@@ -138,7 +138,7 @@ Camera properties are grouped into General, Position, Optics, and PTZ. General i
 
 Person properties include name, height, speed, and behavior and trail settings that affect simulation. Changing these values updates the Preview view the next time you enter Simulation Analysis, and some builds update live if Preview is already open.
 
-PTZ controls provide a D-pad for pan and tilt, a pan slider from 0 to 360 degrees, a tilt slider from -45 to 90 degrees, and a zoom slider from 1x to 10x or device limits. When a camera is selected, arrow keys adjust pan and tilt and plus or minus adjust zoom. PTZ changes update the FOV wedge and camera orientation in real time.
+PTZ controls provide a D-pad for pan and tilt, a pan slider from 0 to 360 degrees, a tilt slider from -45 to 90 degrees, and a zoom slider from 1x to 10x or device limits. When a camera is selected, arrow keys adjust pan and tilt and **plus** or **minus** adjust zoom. PTZ changes update the FOV wedge and camera orientation in real time.
 
 <!-- Screenshot: Place docs/assets/screenshots/editor-properties-panel-ptz.webp and capture: Camera properties panel with PTZ controls visible. -->
 ![Camera properties panel with PTZ controls visible.](assets/screenshots/editor-properties-panel-ptz.webp)
@@ -146,7 +146,7 @@ PTZ controls provide a D-pad for pan and tilt, a pan slider from 0 to 360 degree
 
 Undo and redo record all meaningful scene edits and let you step backward or forward safely. Create, update, and delete operations are recorded for areas, walls, shapes, cameras, and people, along with scene-affecting style changes such as map style. Selection-only changes, view mode switches, and popover open states are not recorded.
 
-Use the Undo and Redo buttons in the top bar center, or press Cmd+Z or Ctrl+Z to undo and Cmd+Shift+Z or Ctrl+Shift+Z to redo. Continuous gestures create a single history entry on gesture end, so dragging or resizing does not flood the stack. Undo and redo are disabled in Preview mode and when Edit Mode is off. If an object no longer exists after undo or redo, the selection is cleared.
+Use the Undo and Redo buttons in the top bar center, or press **Cmd+Z** or **Ctrl+Z** to undo and **Cmd+Shift+Z** or **Ctrl+Shift+Z** to redo. Continuous gestures create a single history entry on gesture end, so dragging or resizing does not flood the stack. Undo and redo are disabled in Preview mode and when Edit Mode is off. If an object no longer exists after undo or redo, the selection is cleared.
 
 Clear Board sits next to Undo and Redo in the top bar center in builds that include it. Clearing the board removes all objects in the current scene and resets the undo stack after confirmation, so use Undo before clearing if you want to preserve history.
 
@@ -158,7 +158,7 @@ Map styles apply only in Map Mode. To switch to Map Mode, use the Map and Canvas
 
 Map visibility is controlled by the Map View toggle next to the Map and Canvas switch. Turning Map View off hides tiles and shows a neutral grid. Canvas Mode uses a grid background as its default. Plans describe two grid behaviors: a visual-only grid when map tiles are hidden and a Mapbox grid style that thins out as you zoom out. If your build uses the grid style variant, you will see fewer grid lines at lower zoom levels.
 
-Location Search is Map Mode only. Click Search Location in the right sidebar, which is the top button, or press Cmd+K or Ctrl+K. Type a location name, wait for results after a short debounce, and select a result to fly the map to that location. The dialog shows loading and empty states, results include name and context, and results are typically limited to a small set for speed. Press ESC to close the dialog.
+Location Search is Map Mode only. Click Search Location in the right sidebar, which is the top button, or press **Cmd+K** or **Ctrl+K**. Type a location name, wait for results after a short debounce, and select a result to fly the map to that location. The dialog shows loading and empty states, results include name and context, and results are typically limited to a small set for speed. Press **ESC** to close the dialog.
 
 Map tiles require a valid Mapbox token provided by your deployment. If Map Mode shows a blank background, switch to Canvas Mode to continue working and ask your administrator to confirm map tile access for your environment.
 
@@ -168,9 +168,9 @@ Map tiles require a valid Mapbox token provided by your deployment. If Map Mode 
 
 Shortcuts are available when the viewport is focused and the Editor is active. You can always access the same tools from the bottom navigation and right sidebar if you prefer clicking.
 
-Use V for Selector mode and H for Hand mode. Create Area is A, Draw Wall is W, Rectangle is R, Circle is C, Triangle is T, Line is L, Place Device is D, and Place Person is P. Search Location is Cmd+K or Ctrl+K and can also be opened from the top button in the right sidebar when Map Mode is active. Area Management is Cmd+Shift+A or Ctrl+Shift+A and opens the second button in the right sidebar. Devices in Use is Cmd+Shift+D or Ctrl+Shift+D and opens the fourth button in the right sidebar. Use ESC to cancel the current action or close a panel.
+Use **V** for Selector mode and **H** for Hand mode. Create Area is **A**, Draw Wall is **W**, Rectangle is **R**, Circle is **C**, Triangle is **T**, Line is **L**, Place Device is **D**, and Place Person is **P**. Search Location is **Cmd+K** or **Ctrl+K** and can also be opened from the top button in the right sidebar when Map Mode is active. Area Management is **Cmd+Shift+A** or **Ctrl+Shift+A** and opens the second button in the right sidebar. Devices in Use is **Cmd+Shift+D** or **Ctrl+Shift+D** and opens the fourth button in the right sidebar. Use **ESC** to cancel the current action or close a panel.
 
-Undo is Cmd+Z or Ctrl+Z and Redo is Cmd+Shift+Z or Ctrl+Shift+Z, and both are also available in the top bar center. When a camera is selected, arrow keys adjust pan and tilt, and plus or minus adjusts zoom. These PTZ controls are mirrored in the camera properties panel on the right.
+Undo is **Cmd+Z** or **Ctrl+Z** and Redo is **Cmd+Shift+Z** or **Ctrl+Shift+Z**, and both are also available in the top bar center. When a camera is selected, arrow keys adjust pan and tilt, and **plus** or **minus** adjusts zoom. These PTZ controls are mirrored in the camera properties panel on the right.
 
 <!-- Screenshot: Place docs/assets/screenshots/editor-bottom-toolbar.webp and capture: Bottom tool strip showing all tools. -->
 ![Bottom tool strip showing all tools.](assets/screenshots/editor-bottom-toolbar.webp)
@@ -268,72 +268,72 @@ In 3D preview, live detections render as meshes with a class mapping that suppor
 
 This workflow is a step-by-step build that mirrors how new users should learn the product. Follow each step in order, capture the screenshot after each step, and move to the next step only after the UI matches the description.
 
-Step 1: Open the Editor View and decide whether to use Map Mode or Canvas Mode. The Map and Canvas toggle is in the top-left of the top bar. If you choose Map Mode, open Search Location from the top button in the right sidebar or press Cmd+K, then search for a location and select a result so the map flies to that area.
+**Step 1:** Open the Editor View and decide whether to use Map Mode or Canvas Mode. The Map and Canvas toggle is in the top-left of the top bar. If you choose Map Mode, open Search Location from the top button in the right sidebar or press **Cmd+K**, then search for a location and select a result so the map flies to that area.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-01-editor-start.webp and capture: Editor View with Map or Canvas selected and the location set if Map Mode is used. -->
 ![Editor View with Map or Canvas selected and the location set if Map Mode is used.](assets/screenshots/workflow-step-01-editor-start.webp)
 
-Step 2: Create the first area. Click Create Area in the bottom tool strip, which is the second icon from the left, or press A. Click to place vertices around your space, then double-click or press Enter to close the polygon. The area border should appear and the other tools should become enabled.
+**Step 2:** Create the first area. Click Create Area in the bottom tool strip, which is the second icon from the left, or press **A**. Click to place vertices around your space, then double-click or press **Enter** to close the polygon. The area border should appear and the other tools should become enabled.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-02-area-drawn.webp and capture: Completed area with the active area highlighted. -->
 ![Completed area with the active area highlighted.](assets/screenshots/workflow-step-02-area-drawn.webp)
 
-Step 3: Draw a wall if your space has structural boundaries or occlusion. Click Draw Wall in the bottom tool strip, which is the third icon from the left, or press W. Click to place points and double-click to finish. If your project does not need walls, skip to Step 5 and leave this screenshot empty.
+**Step 3:** Draw a wall if your space has structural boundaries or occlusion. Click Draw Wall in the bottom tool strip, which is the third icon from the left, or press **W**. Click to place points and double-click to finish. If your project does not need walls, skip to Step 5 and leave this screenshot empty.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-03-wall-drawn.webp and capture: Wall drawn inside the area with a measurement tooltip visible if possible. -->
 ![Wall drawn inside the area with a measurement tooltip visible if possible.](assets/screenshots/workflow-step-03-wall-drawn.webp)
 
-Step 4: Select the wall and confirm its properties panel is visible. Open the Mode popover at the far left of the bottom tool strip and choose Selector Mode, or press V, then click the wall and verify the right-side properties panel shows wall length, thickness, height, and color controls.
+**Step 4:** Select the wall and confirm its properties panel is visible. Open the Mode popover at the far left of the bottom tool strip and choose Selector Mode, or press **V**, then click the wall and verify the right-side properties panel shows wall length, thickness, height, and color controls.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-04-wall-properties.webp and capture: Selected wall with the properties panel open. -->
 ![Selected wall with the properties panel open.](assets/screenshots/workflow-step-04-wall-properties.webp)
 
-Step 5: Draw a shape if your space has furniture or obstacles. Click Draw Shapes in the bottom tool strip, choose a shape, and draw it inside the area. If your project does not need shapes, skip to Step 6 and leave this screenshot empty.
+**Step 5:** Draw a shape if your space has furniture or obstacles. Click Draw Shapes in the bottom tool strip, choose a shape, and draw it inside the area. If your project does not need shapes, skip to Step 6 and leave this screenshot empty.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-05-shape-drawn.webp and capture: A shape drawn inside the area. -->
 ![A shape drawn inside the area.](assets/screenshots/workflow-step-05-shape-drawn.webp)
 
-Step 6: Place a camera. Click Place Device in the bottom tool strip, which is the fifth icon, or press D. Select a camera type in the Device Picker, then click inside the area to place it. Ensure the FOV wedge is visible in the viewport.
+**Step 6:** Place a camera. Click Place Device in the bottom tool strip, which is the fifth icon, or press **D**. Select a camera type in the Device Picker, then click inside the area to place it. Ensure the FOV wedge is visible in the viewport.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-06-camera-placed.webp and capture: Camera placed with the FOV wedge visible. -->
 ![Camera placed with the FOV wedge visible.](assets/screenshots/workflow-step-06-camera-placed.webp)
 
-Step 7: Open the camera properties panel. With the camera selected, verify the properties panel shows PTZ controls, optics settings, and color. Adjust pan or zoom slightly so the FOV wedge changes.
+**Step 7:** Open the camera properties panel. With the camera selected, verify the properties panel shows PTZ controls, optics settings, and color. Adjust pan or zoom slightly so the FOV wedge changes.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-07-camera-properties.webp and capture: Camera selected with the properties panel open and PTZ controls visible. -->
 ![Camera selected with the properties panel open and PTZ controls visible.](assets/screenshots/workflow-step-07-camera-properties.webp)
 
-Step 8: Place a person. Click Place Person in the bottom tool strip, which is the sixth icon, or press P. Click a valid spot inside the area and confirm the person appears.
+**Step 8:** Place a person. Click Place Person in the bottom tool strip, which is the sixth icon, or press **P**. Click a valid spot inside the area and confirm the person appears.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-08-person-placed.webp and capture: Person placed inside the area. -->
 ![Person placed inside the area.](assets/screenshots/workflow-step-08-person-placed.webp)
 
-Step 9: Open the person properties panel. Select the person and confirm the right-side panel shows name, height, speed, and behavior settings.
+**Step 9:** Open the person properties panel. Select the person and confirm the right-side panel shows name, height, speed, and behavior settings.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-09-person-properties.webp and capture: Person selected with the properties panel open. -->
 ![Person selected with the properties panel open.](assets/screenshots/workflow-step-09-person-properties.webp)
 
-Step 10: Demonstrate movement and transform. Open the Mode popover at the far left of the bottom tool strip and choose Selector Mode, or press V, then drag one object to a new position inside the active area and show its transform handles. This verifies map movement and constraint behavior.
+**Step 10:** Demonstrate movement and transform. Open the Mode popover at the far left of the bottom tool strip and choose Selector Mode, or press **V**, then drag one object to a new position inside the active area and show its transform handles. This verifies map movement and constraint behavior.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-10-selection-move.webp and capture: Selected object with transform handles and a moved position. -->
 ![Selected object with transform handles and a moved position.](assets/screenshots/workflow-step-10-selection-move.webp)
 
-Step 11: Enter Simulation Analysis by clicking Live Preview in the top bar on the right. Confirm the radar overlay appears in the upper-left and the camera list appears in the right sidebar.
+**Step 11:** Enter Simulation Analysis by clicking Live Preview in the top bar on the right. Confirm the radar overlay appears in the upper-left and the camera list appears in the right sidebar.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-11-preview-overview.webp and capture: Simulation Analysis with top bar, radar, and right sidebar visible. -->
 ![Simulation Analysis with top bar, radar, and right sidebar visible.](assets/screenshots/workflow-step-11-preview-overview.webp)
 
-Step 12: Start a recording if the feature is available. Click Start Recording in the top bar on the right and confirm the timer appears. If recording is not enabled in your deployment, skip this step and leave the screenshot empty.
+**Step 12:** Start a recording if the feature is available. Click Start Recording in the top bar on the right and confirm the timer appears. If recording is not enabled in your deployment, skip this step and leave the screenshot empty.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-12-recording.webp and capture: Recording active with the timer visible. -->
 ![Recording active with the timer visible.](assets/screenshots/workflow-step-12-recording.webp)
 
-Step 13: Capture a snapshot if the feature is available. Click Snapshot in the top bar on the right and confirm the flash or download occurs. If snapshots are not enabled, skip this step and leave the screenshot empty.
+**Step 13:** Capture a snapshot if the feature is available. Click Snapshot in the top bar on the right and confirm the flash or download occurs. If snapshots are not enabled, skip this step and leave the screenshot empty.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-13-snapshot.webp and capture: Snapshot action visible or confirmation state. -->
 ![Snapshot action visible or confirmation state.](assets/screenshots/workflow-step-13-snapshot.webp)
 
-Step 14: Return to the Editor and export Scene JSON if the export menu is available. Click Back to Editor in the Preview top bar on the left, then open the Export dropdown in the editor top bar on the right and choose Scene JSON. If export is not enabled, skip this step and leave the screenshot empty.
+**Step 14:** Return to the Editor and export Scene JSON if the export menu is available. Click Back to Editor in the Preview top bar on the left, then open the Export dropdown in the editor top bar on the right and choose Scene JSON. If export is not enabled, skip this step and leave the screenshot empty.
 
 <!-- Screenshot: Place docs/assets/screenshots/workflow-step-14-export-scene-json.webp and capture: Export dropdown open with Scene JSON visible. -->
 ![Export dropdown open with Scene JSON visible.](assets/screenshots/workflow-step-14-export-scene-json.webp)
