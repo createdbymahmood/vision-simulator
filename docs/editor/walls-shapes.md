@@ -9,3 +9,6 @@ To draw shapes, click Draw Shapes in the bottom navigation and choose a shape in
 All shapes must remain inside the active area. Invalid placement turns previews red and uses a not-allowed cursor, and resizing or dragging clamps to the area boundary. Measurement tooltips display real-time dimensions while drawing, such as width and height for rectangles and radius for circles. Optional distance markers appear on long segments, and object-to-object distance guides appear while dragging near another object.
 
 To edit a wall or shape, switch to Selector Mode from the Mode popover on the far left of the bottom navigation, then click the object in the viewport. A bounding box and handles appear, and you can drag, resize, or rotate within the active area. The properties panel slides in from the right and lets you set height, thickness, and color for walls and shapes, along with shape-specific dimensions such as width, height, or radius.
+
+<!-- Screenshot: Place docs/assets/screenshots/editor-walls-shapes-drawing.webp and capture: Wall or shape drawing with measurement tooltip visible. -->
+![Wall or shape drawing with measurement tooltip visible.](../assets/screenshots/editor-walls-shapes-drawing.webp)

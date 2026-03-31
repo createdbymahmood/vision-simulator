@@ -9,3 +9,6 @@ Multi-select shows a selection count badge near the top-left of the viewport and
 When an object is selected, a bounding box and transform handles appear around it. Corner handles resize diagonally, edge handles resize horizontally or vertically, and holding Shift keeps proportions. The rotation handle allows free rotation and snaps to 15 degree increments by default, with a tooltip showing the current angle. Hold Shift while rotating to disable snapping in builds that support free rotation.
 
 When you drag a selected object, it must remain inside the active area. As you approach the boundary, previews turn red and the cursor becomes not-allowed. People cannot overlap walls, shapes, or other people at any time, and invalid drag positions snap back to the last valid position on release. Cursor feedback is consistent: hover uses a pointer, dragging uses a move cursor, resize uses directional resize cursors, rotation uses a rotate cursor, and invalid states use not-allowed with a red preview.
+
+<!-- Screenshot: Place docs/assets/screenshots/editor-selection-transform.webp and capture: Selected object showing bounding box, resize handles, and rotation handle. -->
+![Selected object showing bounding box, resize handles, and rotation handle.](../assets/screenshots/editor-selection-transform.webp)

@@ -11,3 +11,6 @@ Feed tiles are displayed in a grid that you select from the feed header. The hea
 Realistic camera feeds are planned. The plan renders the actual 3D scene from the camera viewpoint with matching lighting and occlusion, and optionally applies subtle optics effects such as vignette or light noise.
 
 Real device streaming is planned. When a camera is marked as real, the tile renders a MediaMTX player instead of a simulated feed, uses a stream URL derived from mediaMtxUrl and sourceDeviceId, and exposes play, stop, and fullscreen controls. If stream configuration is missing, the tile shows a non-blocking error state.
+
+<!-- Screenshot: Place docs/assets/screenshots/simulation-feeds-grid.webp and capture: Camera feeds grid with detections visible. -->
+![Camera feeds grid with detections visible.](../assets/screenshots/simulation-feeds-grid.webp)

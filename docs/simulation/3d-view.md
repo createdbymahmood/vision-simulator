@@ -9,3 +9,6 @@ Each camera renders a frustum wireframe in its color and semi-transparent frustu
 PTZ controls in simulation appear in a floating panel that mirrors the editor controls. Open the panel by clicking the PTZ button in the camera list on the right sidebar or from a camera-focused action. The panel is draggable and minimizable, and adjustments update frustums and collision overlays in real time. The camera list in the right sidebar shows each camera's name and color dot, a FOV and depth summary, the current detection count, and buttons for PTZ and Focus.
 
 Orbit the view by dragging in empty space, pan with right mouse drag or trackpad, and zoom with the scroll wheel. Double-clicking a camera or person focuses the orbit target, and a smooth animation centers and zooms to the object.
+
+<!-- Screenshot: Place docs/assets/screenshots/simulation-3d-collision.webp and capture: 3D view with frustums and collision overlays visible. -->
+![3D view with frustums and collision overlays visible.](../assets/screenshots/simulation-3d-collision.webp)

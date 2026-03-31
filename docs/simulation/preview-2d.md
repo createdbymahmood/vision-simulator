@@ -3,3 +3,6 @@
 Preview includes a planned 3D and 2D switch that changes only the camera projection. The 2D mode is a top-down view that keeps the same simulation data, UI panels, radar, feeds, selection, recording, and snapshots. Rotation is disabled in 2D, while pan and zoom remain available.
 
 The switch appears in the Preview top bar near the right side, close to Start Recording and Snapshot. If the top bar is hidden by a preview-only package mode, the switch falls back to a compact control inside the viewport, typically in the upper-right corner so it remains reachable while you inspect the scene.
+
+<!-- Screenshot: Place docs/assets/screenshots/simulation-preview-2d-toggle.webp and capture: Preview with 3D or 2D toggle visible. -->
+![Preview with 3D or 2D toggle visible.](../assets/screenshots/simulation-preview-2d-toggle.webp)

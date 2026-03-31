@@ -20,4 +20,4 @@ End-to-end usage is covered in [Getting Started End-to-End](workflows/getting-st
 
 ## Export
 
-Recording, snapshots, and export behaviors are described in [Recording and Snapshot Export](export/recording.md) and [Save-Time Snapshot Upload](export/save-snapshot-upload.md).
+Recording, snapshots, and export behaviors are described in [Recording and Snapshot Export](export/recording.md).

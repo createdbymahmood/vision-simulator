@@ -17,3 +17,6 @@ A planned Design Mode top bar redesign defines a left section with a back button
 Unsaved changes are protected. If you attempt to close the tab, navigate away, or use a back button while edits are unsaved, you will see a dialog that offers Save and leave, Discard changes, or Stay. If you are using the simulator inside a host application, the host may provide its own leave dialog, but the same three choices are available.
 
 Cursor states are explicit and consistent. Area drawing uses a crosshair with a 12px blue dot, wall drawing uses a crosshair with an 8px red dot, shape drawing shows a crosshair with a ghost preview, camera placement uses a camera icon with a range circle, and person placement uses a person icon with a collision radius. Invalid placement uses a not-allowed cursor with red tint, selection hover uses a pointer, dragging uses a move cursor, resize handles use directional resize cursors, and rotation uses a dedicated rotate cursor.
+
+<!-- Screenshot: Place docs/assets/screenshots/editor-layout.webp and capture: Editor layout showing top bar, bottom tool strip, right sidebar, and viewport. -->
+![Editor layout showing top bar, bottom tool strip, right sidebar, and viewport.](../assets/screenshots/editor-layout.webp)

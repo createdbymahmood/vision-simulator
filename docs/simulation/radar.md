@@ -9,3 +9,6 @@ Radar visualization renders camera indicators in their assigned colors with simp
 Selecting a person triggers a ping animation with three expanding circles, a highlighted person marker, and an optional dashed connection line to cameras that can see the person. Interactions include clicking to select people and cameras, mouse-wheel zoom, background drag for panning, and a context menu for toggles like grid, trails, and FOV wedges. The radar can also be locked to prevent dragging, which is useful when you want a stable overlay while inspecting the 3D view.
 
 Real Radar Mode is planned. It adds a simulated and real mode toggle in the radar header. Simulated mode is the default, and real mode filters the radar to real-device cameras in the active area. A radar activities feed exists in code but is hidden from the UI in current plans.
+
+<!-- Screenshot: Place docs/assets/screenshots/simulation-radar.webp and capture: Radar panel with selected person and ping effect. -->
+![Radar panel with selected person and ping effect.](../assets/screenshots/simulation-radar.webp)

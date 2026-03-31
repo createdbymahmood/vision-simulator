@@ -11,3 +11,6 @@ In the editor, the camera icon is filled with the camera color, a direction arro
 The Devices in Use panel is opened from the right sidebar. Click the Devices in Use button, which is the fourth button from the top, or use Cmd+Shift+D to view the list of cameras with color dots and specs. Clicking a camera in the list selects it and focuses it in the viewport. This same list is mirrored in the Preview right sidebar so you can open PTZ controls and focus cameras during simulation.
 
 Planned 2D FOV occlusion in Map Mode clips the FOV wedge against walls and shapes that are taller than the camera height, ignores shorter obstacles, and clamps the wedge to the active area. Placement can be blocked if the wedge cannot project inside the area.
+
+<!-- Screenshot: Place docs/assets/screenshots/editor-camera-placement-properties.webp and capture: Camera placed with FOV wedge and camera properties panel open. -->
+![Camera placed with FOV wedge and camera properties panel open.](../assets/screenshots/editor-camera-placement-properties.webp)

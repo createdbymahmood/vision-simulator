@@ -9,3 +9,6 @@ Placement validation checks that the position is inside the active area, does no
 On placement, a fade-in and pulse animation plays, the properties panel opens automatically on the right, and you can immediately drag to adjust position. Collision rules remain active during dragging, so people cannot be dragged through obstacles.
 
 Person properties include name, height, speed, and behavior and trail settings used by the simulation. These fields are in the properties panel on the right when a person is selected. In Preview, clicking a person in the 3D view or in radar highlights the person and shows a trailing path, so you can verify movement patterns.
+
+<!-- Screenshot: Place docs/assets/screenshots/editor-person-placement.webp and capture: Person placement or selected person with properties panel open. -->
+![Person placement or selected person with properties panel open.](../assets/screenshots/editor-person-placement.webp)

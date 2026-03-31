@@ -9,3 +9,6 @@ Camera properties are grouped into General, Position, Optics, and PTZ. General i
 Person properties include name, height, speed, and behavior and trail settings that affect simulation. Changing these values updates the Preview view the next time you enter Simulation Analysis, and some builds update live if Preview is already open.
 
 PTZ controls provide a D-pad for pan and tilt, a pan slider from 0 to 360 degrees, a tilt slider from -45 to 90 degrees, and a zoom slider from 1x to 10x or device limits. When a camera is selected, arrow keys adjust pan and tilt and plus or minus adjust zoom. PTZ changes update the FOV wedge and camera orientation in real time.
+
+<!-- Screenshot: Place docs/assets/screenshots/editor-properties-panel-ptz.webp and capture: Camera properties panel with PTZ controls visible. -->
+![Camera properties panel with PTZ controls visible.](../assets/screenshots/editor-properties-panel-ptz.webp)

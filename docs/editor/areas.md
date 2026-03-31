@@ -15,3 +15,6 @@ Area Management is available in the right sidebar. Click the Area Management but
 Overlapping areas show a faint crosshatch pattern. The active area is highlighted with a thicker border, and new objects are created inside it. Area names are formatted sequentially, such as Area 1, Area 2, and so on, and those names appear in the area list and in selection tooltips.
 
 During drawing, measurement tooltips show the current segment length, and the final perimeter is shown when you close the polygon. In Canvas Mode, the grid provides scale reference with 1m by 1m minor squares, major grid lines every 10m, and coordinate labels at major grid lines.
+
+<!-- Screenshot: Place docs/assets/screenshots/editor-areas-management.webp and capture: Area drawing with Area Management panel open. -->
+![Area drawing with Area Management panel open.](../assets/screenshots/editor-areas-management.webp)

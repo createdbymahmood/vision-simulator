@@ -7,3 +7,6 @@ Map visibility is controlled by the Map View toggle next to the Map and Canvas s
 Location Search is Map Mode only. Click Search Location in the right sidebar, which is the top button, or press Cmd+K or Ctrl+K. Type a location name, wait for results after a short debounce, and select a result to fly the map to that location. The dialog shows loading and empty states, results include name and context, and results are typically limited to a small set for speed. Press ESC to close the dialog.
 
 Map tiles require a valid Mapbox token provided by your deployment. If Map Mode shows a blank background, switch to Canvas Mode to continue working and ask your administrator to confirm map tile access for your environment.
+
+<!-- Screenshot: Place docs/assets/screenshots/editor-map-style-dialog.webp and capture: Map Mode with Map Style dialog open. -->
+![Map Mode with Map Style dialog open.](../assets/screenshots/editor-map-style-dialog.webp)

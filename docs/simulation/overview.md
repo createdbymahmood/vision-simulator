@@ -9,3 +9,6 @@ The view header shows the title Simulation Analysis, a mode badge for Map or Can
 The right sidebar contains the camera list at the top and the camera feeds grid below it. Each camera row includes its color dot, name, and action buttons such as PTZ and Focus. The radar panel is always visible in simulation and appears as a floating overlay in the upper-left corner of the viewport. A floating PTZ panel appears when active and mirrors the PTZ controls from the editor properties panel.
 
 When multiple areas exist, the area dropdown selects the view scope. Selecting an area triggers a smooth fly-to animation that frames the area, while selecting All Areas keeps the full scene in view.
+
+<!-- Screenshot: Place docs/assets/screenshots/simulation-overview.webp and capture: Simulation Analysis with top bar, radar, and right sidebar visible. -->
+![Simulation Analysis with top bar, radar, and right sidebar visible.](../assets/screenshots/simulation-overview.webp)

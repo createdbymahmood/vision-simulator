@@ -21,3 +21,6 @@ The simulator can run as a standalone web app or be embedded inside another plat
 Releases are versioned and may be labeled by tag in the host platform. If your environment shows a version string, it represents the current release and helps support teams align behavior with documentation.
 
 The product explicitly does not include multiplayer collaboration, real computer-vision inference, or photorealistic rendering. It focuses on fast spatial iteration, predictable simulation behavior, and a consistent UI for camera planning.
+
+<!-- Screenshot: Place docs/assets/screenshots/overview-product-hero.webp and capture: Overview of the editor with an area, obstacles, camera, and person. -->
+![Overview of the editor with an area, obstacles, camera, and person.](../assets/screenshots/overview-product-hero.webp)

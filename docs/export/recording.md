@@ -7,3 +7,6 @@ During recording, the 3D view, camera focus changes, PTZ adjustments, area switc
 Snapshot captures are also initiated from Preview by clicking Snapshot in the top bar on the right. Clicking Snapshot renders the current frame at high resolution, downloads a PNG named snapshot_YYYY-MM-DD_HH-MM-SS.png, and shows a brief white flash. Plans include optional overlay inclusion, annotation mode, and resolution selection such as 1x, 2x, and 4x.
 
 Scene JSON export is available in the editor top bar on the right. Click the Export dropdown and choose Scene JSON to download the scene file named scene_YYYY-MM-DD_HH-MM-SS.json. Scene Image export is in the same menu and captures the current editor view as a PNG.
+
+<!-- Screenshot: Place docs/assets/screenshots/export-recording.webp and capture: Preview with recording active and timer visible. -->
+![Preview with recording active and timer visible.](../assets/screenshots/export-recording.webp)
