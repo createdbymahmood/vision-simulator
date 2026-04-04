@@ -20,4 +20,3 @@
 - 🗾 [18. Simulation preview 2D](Product/18.simulation-preview-2d.md)
 - 📶 [19. Simulation real radar live](Product/19.simulation-real-radar-live.md)
 - 🎥 [20. Export recording](Product/20.export-recording.md)
-- 🧰 [21. All in one](Product/21.all-in-one.md)
