@@ -16,7 +16,7 @@ Simulation documentation starts at [Simulation Analysis View](simulation/overvie
 
 ## Workflows
 
-End-to-end usage is covered in [Getting Started End-to-End](workflows/getting-started.md).
+End-to-end usage is covered in [Getting Started End-to-End](workflows/getting-started.md) and [Scenarios](../scenarios/retail-store-camera-coverage.md).
 
 ## Export
 
