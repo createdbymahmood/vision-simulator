@@ -1,4 +1,4 @@
-import type {GeoOrigin, Point2D} from '@/features/scene/domain/types'
+import type {GeoOrigin, Point2D} from '@/features/scene/types/types'
 
 const EARTH_RADIUS_METERS = 6371000
 

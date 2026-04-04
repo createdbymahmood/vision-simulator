@@ -1,5 +1,3 @@
-import type {ArrayValues} from 'type-fest'
-
 import {isAxiosError} from 'axios'
 import {get} from 'lodash-es'
 import {z} from 'zod'
@@ -27,6 +25,8 @@ const defaultErrorMessage = {
   title: 500,
   description: 'Something went wrong',
 }
+
+type ArrayValues<T extends readonly unknown[]> = T[number]
 
 export type RuoterCode = ArrayValues<typeof ROUTER_CODE>
 

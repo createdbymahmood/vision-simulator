@@ -1,10 +1,10 @@
 import {QueryClientProvider} from '@tanstack/react-query'
 import React, {Suspense} from 'react'
 
-import type {SceneStoreInitialState} from '@/features/scene/infrastructure/stores/scene.store'
-import type {UnsavedChangesOptions} from '@/features/scene/presentation/leave-guard/types'
-import type {VisionSimulatorMode} from '@/features/scene/presentation/modes/vision-simulator-mode'
-import type {EditorUiOverrides} from '@/features/scene/presentation/types/editor-ui-overrides'
+import type {SceneStoreInitialState} from '@/features/scene/state/scene.store'
+import type {UnsavedChangesOptions} from '@/features/scene/types/leave-guard/types'
+import type {VisionSimulatorMode} from '@/features/scene/services/vision-simulator-mode'
+import type {EditorUiOverrides} from '@/features/scene/types/editor-ui-overrides'
 
 import {Pending} from '@/components/shared/pending'
 import {Toaster} from '@/components/ui/sonner'
@@ -15,14 +15,14 @@ import {
   applyAxiosAuthorizationHeader,
 } from '@/data-provider/axios/axios'
 import {queryClient} from '@/data-provider/react-query'
-import {HistoryStoreProvider} from '@/features/scene/infrastructure/stores/history.store'
-import {SceneStoreProvider} from '@/features/scene/infrastructure/stores/scene.store'
-import {UiStoreProvider} from '@/features/scene/infrastructure/stores/ui.store'
-import {EditorLayout} from '@/features/scene/presentation/components/editor-layout'
+import {HistoryStoreProvider} from '@/features/scene/state/history.store'
+import {SceneStoreProvider} from '@/features/scene/state/scene.store'
+import {UiStoreProvider} from '@/features/scene/state/ui.store'
+import {EditorLayout} from '@/features/scene/components/editor-layout'
 import {
   getVisionSimulatorModePolicy,
   resolveVisionSimulatorMode,
-} from '@/features/scene/presentation/modes/vision-simulator-mode'
+} from '@/features/scene/services/vision-simulator-mode'
 import {get} from '@/lib/lodash-es'
 import {PortalContainerProvider} from '@/lib/portal-container'
 

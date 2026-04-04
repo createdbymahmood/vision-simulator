@@ -3,9 +3,9 @@ export type {AppProps} from './app'
 export type {
   DirtyStateChangePayload,
   UnsavedChangesOptions,
-} from './features/scene/presentation/leave-guard/types'
-export type {VisionSimulatorMode} from './features/scene/presentation/modes/vision-simulator-mode'
+} from './features/scene/types/leave-guard/types'
+export type {VisionSimulatorMode} from './features/scene/services/vision-simulator-mode'
 export type {
   EditorUiOverrides,
   TopPanelBackButtonSlotProps,
-} from './features/scene/presentation/types/editor-ui-overrides'
+} from './features/scene/types/editor-ui-overrides'

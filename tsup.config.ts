@@ -4,7 +4,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     'camera-fov.worker':
-      'src/features/scene/presentation/components/map-view/camera-fov.worker.js',
+      'src/features/scene/map/camera-fov.worker.js',
   },
   format: ['esm'],
   dts: true,
