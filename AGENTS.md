@@ -1,118 +1,129 @@
 ## Project Overview
-- Embeddable React library exporting `VisionSimulator` for scene editing + simulation
-- Map-based editor (Mapbox) for areas/walls/shapes/cameras/people
-- Preview/simulation (2D/3D + radar + camera feeds) with same scene state
-- Data via Orval API clients + TanStack Query; host provides tokens/IDs
+- React + TypeScript library exporting `VisionSimulator` (editor + simulation) for configuring camera coverage scenes.
+- Editor: Mapbox 2D tools; Simulation: Three.js + React Three Fiber for 3D preview, radar, and camera feeds.
+- Data loaded via Axios + TanStack Query from API (vision by ID); state via Zustand (scene/UI/history).
+- Built as a library (`tsup`) and a dev/demo app (`vite`), with host CSS exported.
 
 ## Mental Model (System Flow)
-- Host renders `VisionSimulator` → `src/app.tsx` sets axios base/auth + query client
-- Vision fetch (`useGetVisionByIDSuspense`) → scene stored in Zustand → editor/sim render
-- Editor actions → `scene.store` mutate → history snapshot + UI re-render; `scene.meta.updatedAt` bumps
-- View mode policy (`VisionSimulatorMode`) gates editor/preview behavior
-- Save/leave: snapshot + `updateVision` + `uploadFile` → dirty state cleared
+- Host renders `VisionSimulator` → `src/app.tsx` configures Axios + QueryClient and resolves mode.
+- `useGetVisionByIDSuspense` fetches vision → `createInitialSceneState` seeds `SceneStore` + `HistoryStore` + `UiStore`.
+- `EditorLayout` binds stores to Mapbox editor and Three.js simulation; UI actions call store methods → `scene.meta.updatedAt` and history update.
+- Map overlays use camera FOV web worker; simulation renders from same scene state (2D/3D preview).
+- Export/recording uses scene serializers + snapshot capture; changes to types or store ripple through map layers + simulation meshes + history.
 
 ## Architecture
-- Editor UI: `features/scene/components` + properties/dialogs
-- Map layer: `features/scene/map` (Mapbox GL, drawing/selection, FOV worker)
-- Simulation: `features/scene/simulation` (Three.js + radar + feeds)
-- State: `features/scene/state` (scene/ui/history stores)
-- Domain + utils: `features/scene/services` + `utils`
-- Data provider: `data-provider` (axios + query + Orval clients)
+- App shell: `src/app.tsx` (providers, data fetch, mode policy) + `src/index.ts` (library export).
+- Core domain: `src/features/scene/*` (components, map, simulation, state, services, utils, types).
+- Data layer: `src/data-provider/*` (Axios setup, React Query, Orval-generated API clients).
+- UI kit: `src/components/ui/*` (Radix/shadcn) + `src/components/shared/*` (Zustand context helpers).
+- Shared utilities: `src/shared/geo/*`, `src/lib/*`.
+- Secondary roots: `example/` (demo app), `docs/` (architecture/workflows), `scripts/` (build/release utilities), `dist/` (build output).
 
 ## Key Files & Responsibilities
-- `src/index.ts` → public exports
-- `src/app.tsx` → library runtime bootstrap
-- `src/main.tsx` → dev app entry
-- `src/features/scene/components/editor-layout.tsx` → editor orchestration
-- `src/features/scene/state/scene.store.ts` → scene mutations + selection
-- `src/features/scene/state/ui.store.ts` → tool/view/radar state
-- `src/features/scene/state/history.store.ts` → undo/redo stack
-- `src/features/scene/hooks/use-history-recorder.ts` → history recording helpers
-- `src/features/scene/map/map-view.tsx` → Mapbox view/overlays
-- `src/features/scene/simulation/simulation-viewport.tsx` → sim entry
-- `src/features/scene/utils/scene-serializer.ts` → JSON I/O
-- `src/features/scene/utils/scene-export.ts` → snapshot/export
-- `src/data-provider/axios/axios.ts` → axios config
-- `src/data-provider/react-query.ts` → QueryClient config
-- `src/data-provider/api/services/v2/*` → generated API clients
-- `src/features/scene/map/camera-fov.worker.ts` → FOV worker logic
-- `tsup.config.ts` → build + worker assets
+- src/app.tsx → app shell; configures Axios + Query; wires stores/providers and layout.
+- src/index.ts → public library exports (`VisionSimulator` + types).
+- src/main.tsx → local dev app entry (env-driven props).
+- example/src/main.tsx → example app entry; verifies leave-guard behavior.
+- src/features/scene/components/editor-layout.tsx → main UI orchestration; map + simulation + history + export.
+- src/features/scene/map/map-view.tsx → Mapbox editor surface and layers.
+- src/features/scene/simulation/simulation-scene.tsx → Three.js scene root.
+- src/features/scene/state/scene.store.ts → scene data + mutations + selection.
+- src/features/scene/state/ui.store.ts → tool/view/radar/live state + UI toggles.
+- src/features/scene/state/history.store.ts → undo/redo stacks + seed/apply.
+- src/features/scene/state/history-actions.ts → action → history description mapping.
+- src/features/scene/services/scene-factory.ts → default scene creation + timestamps.
+- src/features/scene/services/camera-factory.ts → camera entity defaults (optics, PTZ).
+- src/features/scene/utils/scene-serializer.ts → scene JSON parse/serialize.
+- src/features/scene/utils/scene-export.ts → filenames + download helpers.
+- src/features/scene/utils/scene-snapshot-capture.ts → Mapbox snapshot capture.
+- src/features/scene/map/camera-fov.worker.ts → FOV/occlusion computation.
+- src/features/scene/map/camera-fov.worker.js → worker bootstrap for bundling.
+- src/features/scene/map/use-camera-fov-worker.ts → worker hook wiring.
+- src/data-provider/axios/axios.ts → Axios instances + auth/base config.
+- src/data-provider/react-query.ts → QueryClient defaults + error toasts.
+- src/data-provider/api/services/v2/vision-simulator.ts → Orval client (vision fetch).
+- tsup.config.ts → library build entries (includes worker).
+- vite.config.ts → dev build config + Tailwind + TS path aliases.
+- src/styles.css → global app styles + Tailwind entry.
+- src/host.css → host integration styles (copied to dist).
 
 ## Core Abstractions & Data Models
-- `SceneRoot` = scene graph + meta + origin + settings
-- Entities: `AreaEntity`, `WallEntity`, `ShapeEntity`, `CameraEntity`, `PersonEntity`
-- UI state: view/tool/panels + radar/live feed state
-- History: snapshot stack with `applying` guard
-- Mode: `VisionSimulatorMode` (`editor` | `preview`) → policy flags
+- `SceneRoot` → top-level scene (areas, walls, shapes, cameras, people, meta, origin, seed).
+- `SceneEntity` → `AreaEntity | WallEntity | ShapeEntity | CameraEntity | PersonEntity`.
+- `EditorMode` (`map` | `canvas`), `ViewMode` (`editor` | `preview`), `PreviewViewMode` (`2d` | `3d`).
+- `VisionSimulatorMode` (`editor` | `preview`) + mode policy.
+- `CameraOptics`, `PtzState`, `CameraPlacementProfile` → camera behavior/placement.
+- `UiState` → active tool, view modes, panel state, radar/live detection data.
+- `HistoryEntry` → scene snapshot + description + timestamp.
 
 ## Important Functions / APIs
-- `applyAxiosApiBaseUrl`, `applyAxiosAuthorizationHeader` → configure API calls
-- `useGetVisionByIDSuspense` → initial scene fetch
-- `updateVision`, `uploadFile` → save scene + snapshot
-- `useSceneStore` actions → all scene edits
-- `useHistoryRecorder` → undo/redo recording
-- `serializeScene`, `parseScene` → JSON serialization
-- `captureSceneSnapshot` → image capture
+- `configureDataProvider` (via `applyAxiosApiBaseUrl`, `applyAxiosAuthorizationHeader`) → global API config.
+- `useGetVisionByIDSuspense` → loads vision data for initial scene.
+- `SceneStore` actions (`setScene`, `updateScene`, `add*`, `deleteEntities`) → single source of scene mutations.
+- `useHistoryRecorder` + `HistoryStore.record/undo/redo` → undo/redo tracking.
+- `createInitialScene` / `createCameraEntity` / `createAreaEntity` → default entity construction.
+- `serializeScene` / `parseScene` → import/export JSON.
+- `captureSceneSnapshot` → map-based image export.
+- `useCameraFovWorker` → map overlay FOV computation.
 
 ## Development Conventions
-- Path alias: `@/` → `src`
-- Tailwind class prefix: `vs:`
-- State updates via store actions + `immer`
-- Avoid editing Orval-generated files
+- Feature-based structure under `src/features/scene/*` with `components/`, `map/`, `simulation/`, `state/`, `services/`, `utils/`, `types/`.
+- Path aliases: `@/*` for `src/*`, `@lodash-es` for lodash tree-shaken imports.
+- Zustand stores use Immer; mutate via store actions (not direct object edits).
+- Orval-generated clients in `src/data-provider/api/*` are regenerated via `pnpm orval`.
+- Styles: Tailwind via `src/styles.css`; host app must import both `styles.css` and `host.css`.
 
 ## AI Agent Rules (DO / DON'T)
 DO:
-- Use store actions (`useSceneStore`/`useUiStore`/`useHistoryStore`) for state edits
-- Record history for meaningful scene changes
-- Keep mode policy behavior consistent with `VisionSimulatorMode`
-- Update worker wiring if worker files move
-
+- Use store actions + `useHistoryRecorder` when mutating scene data to keep history consistent.
+- Update types + factories + store + UI layers together when adding/modifying entity fields.
+- Keep worker changes aligned across `camera-fov.worker.ts`, `camera-fov.worker.js`, and `tsup.config.ts`.
+- Treat Orval clients as generated; regenerate instead of manual edits.
 DON'T:
-- Mutate store state directly in components or utils
-- Skip history recording for scene edits that users expect to undo
-- Remove disabled localStorage persistence blocks in `scene.store.ts`
-- Bypass axios base/auth setup in `src/app.tsx`
+- Bypass `configureDataProvider`; queries rely on global Axios defaults.
+- Mutate scene state directly or outside Zustand stores (breaks history/dirty tracking).
+- Move/rename worker entry without updating `tsup.config.ts` and worker hooks.
+- Expect localStorage persistence; it is intentionally disabled in `scene.store.ts`.
 
 ## Editing Strategy
-- Prefer smallest change: store action or util first, then UI
-- Reuse factories/constants for entity defaults/styles
-- For editor behavior: map hooks → store actions → history
-- For simulation: change sim module + any derived UI state
+- Start from the closest feature module in `src/features/scene/*`; make minimal local changes.
+- When changing scene data: update `types` → `services` (defaults) → `state` (store actions) → map/simulation rendering.
+- Reuse existing utilities/components; add new helpers under `services/` or `utils/` before introducing new dependencies.
 
 ## Common Tasks
-- Add feature → extend types → add store action → wire UI → history
-- Fix bug → trace from UI to store action to derived state
-- Extend system → new service/util → integrate in map/sim entry
+- Add feature: extend `types` + `scene.store.ts` actions, then wire UI in `components/` and rendering in `map/` or `simulation/`.
+- Fix bug: reproduce in dev or `example/`, trace state via `scene.store.ts`/`ui.store.ts`, then adjust the responsible module.
+- Extend system: update entity model, add factory defaults, update map layers + simulation meshes, and adjust history descriptors.
 
 ## Constraints & Gotchas
-- LocalStorage persistence intentionally disabled
-- History ignores updates while `history.store` is `applying`
-- `preview` mode locks view mode + hides editor controls
-- FOV worker requires alignment with hook + build config
+- `VisionSimulator` requires host props; it does not fall back to `import.meta.env` internally.
+- Preview mode locks view mode and hides some UI; changes to mode policy affect layout + behavior.
+- History only records via `useHistoryRecorder`; undo/redo uses cloned snapshots.
+- Camera FOV worker must remain in sync with build entries; missing worker breaks overlays.
+- Build output CSS is post-processed; host apps must import both CSS files for correct styling.
 
 ## Dependencies & Tools
-- React 19 + Vite; Radix UI + shadcn UI
-- Zustand + immer for state
-- TanStack Query + axios + Orval for data
-- mapbox-gl + react-map-gl + mapbox-gl-draw for map
-- three + @react-three/fiber for simulation
-- konva + react-konva for 2D canvas
+- React 19 + Vite for dev; tsup for library builds.
+- Mapbox GL + react-map-gl for editor; Three.js + @react-three/fiber/drei for simulation.
+- Zustand + Immer for state; TanStack Query for data; Axios for API calls.
+- Tailwind CSS (Vite + CLI) and Radix/shadcn UI components.
+- Orval for API client generation.
 
 ## Entry Points
-- Library export: `src/index.ts`
-- Runtime bootstrap: `src/app.tsx`
-- Dev app: `src/main.tsx`
-- Editor root: `features/scene/components/editor-layout.tsx`
-- Map root: `features/scene/map/map-view.tsx`
-- Sim root: `features/scene/simulation/simulation-viewport.tsx`
+- src/index.ts → library export entry (`VisionSimulator`).
+- src/app.tsx → app shell used by library export.
+- src/main.tsx → local dev app entry.
+- example/src/main.tsx → demo app entry.
+- tsup.config.ts → library build entry (includes worker).
 
 ## Quick Reference (Ultra-Compressed)
-- Need initial data → `useGetVisionByIDSuspense` in `src/app.tsx`
-- Edit scene → `scene.store.ts` actions
-- Undo/redo → `history.store.ts` + `use-history-recorder.ts`
-- Editor UI → `features/scene/components/*`
-- Map behavior → `features/scene/map/*`
-- Simulation behavior → `features/scene/simulation/*`
-- Mode logic → `vision-simulator-mode.ts`
-- API setup → `data-provider/axios/axios.ts`
-- Worker FOV → `camera-fov.worker.ts`
+- Need scene data → `useSceneStore` (`src/features/scene/state/scene.store.ts`).
+- Need UI/tool state → `useUiStore` (`src/features/scene/state/ui.store.ts`).
+- Need undo/redo → `useHistoryRecorder` + `history.store.ts`.
+- Modify mode behavior → `services/vision-simulator-mode.ts`.
+- Add entity defaults → `services/*-factory.ts` + `constants/*`.
+- Map overlay work → `features/scene/map/*` (worker in `camera-fov.worker.ts`).
+- Simulation changes → `features/scene/simulation/*` (`simulation-scene.tsx` root).
+- API change → `src/data-provider/orval.config.ts` + regenerate clients.
+- Export/snapshot → `utils/scene-export.ts` + `scene-snapshot-capture.ts`.
+- Style fixes → `src/styles.css` + `src/host.css`.
