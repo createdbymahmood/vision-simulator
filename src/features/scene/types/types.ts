@@ -6,6 +6,7 @@ export type Units = 'meters'
 
 export type ViewMode = 'editor' | 'preview'
 export type PreviewViewMode = '2d' | '3d'
+export type SimulationViewMode = 'scene' | 'cameraGrid'
 
 export type SceneMapStyle = 'osm' | 'satellite' | 'street' | 'traffic'
 

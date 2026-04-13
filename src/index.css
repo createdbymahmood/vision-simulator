@@ -163,3 +163,24 @@
     padding-inline: 2rem;
   }
 }
+
+.vs-real-device-feed-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.vs-real-device-feed-container > *,
+.vs-real-device-feed-container video,
+.vs-real-device-feed-container iframe,
+.vs-real-device-feed-container canvas {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: cover;
+}

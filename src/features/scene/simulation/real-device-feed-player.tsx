@@ -14,6 +14,7 @@ interface RealDeviceFeedPlayerProps {
   camera: CameraEntity
   allowFullscreen?: boolean
   autoPlay?: boolean
+  allowPlaybackControl?: boolean
   showControls?: boolean
 }
 
@@ -204,6 +205,7 @@ export const RealDeviceFeedPlayer: React.FC<RealDeviceFeedPlayerProps> = ({
   camera,
   allowFullscreen = true,
   autoPlay = false,
+  allowPlaybackControl = true,
   showControls = true,
 }) => {
   const accessToken = useUiStore((state) => state.accessToken)
@@ -230,8 +232,8 @@ export const RealDeviceFeedPlayer: React.FC<RealDeviceFeedPlayerProps> = ({
   const isBusy = playerState === 'connecting' || playerState === 'reconnecting'
   const isPlaying = playerState === 'playing'
   const wrapperClassName = isFullscreen
-    ? 'fixed inset-0 z-50 flex min-h-0 w-full flex-col bg-black'
-    : 'relative size-full min-w-0 max-w-full overflow-hidden bg-black'
+    ? 'vs-real-device-feed-player vs:fixed vs:inset-0 vs:z-50 vs:flex vs:min-h-0 vs:w-full vs:flex-col vs:bg-black'
+    : 'vs-real-device-feed-player vs:relative vs:size-full vs:min-h-0 vs:min-w-0 vs:max-w-full vs:overflow-hidden vs:bg-black'
   const hasConfigError = !streamUrl
   const hasStreamError = playerState === 'error'
 
@@ -242,8 +244,11 @@ export const RealDeviceFeedPlayer: React.FC<RealDeviceFeedPlayerProps> = ({
       <div
         ref={setContainerElement}
         className={
-          isFullscreen ? 'vs:min-h-0 vs:w-full vs:flex-1' : 'vs:size-full'
+          isFullscreen
+            ? 'vs-real-device-feed-container vs:relative vs:min-h-0 vs:w-full vs:flex-1'
+            : 'vs-real-device-feed-container vs:relative vs:size-full vs:min-h-0 vs:min-w-0'
         }
+        style={{width: '100%', height: '100%'}}
       />
 
       {hasConfigError ? (
@@ -267,7 +272,7 @@ export const RealDeviceFeedPlayer: React.FC<RealDeviceFeedPlayerProps> = ({
         allowFullscreen={allowFullscreen}
         canControlPlayback={canControlPlayback}
         onToggleFullscreen={() => setIsExpanded((previous) => !previous)}
-        onTogglePlayback={autoPlay ? undefined : togglePlayback}
+        onTogglePlayback={allowPlaybackControl ? togglePlayback : undefined}
         showControls={showControls}
       />
     </div>

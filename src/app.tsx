@@ -112,6 +112,7 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
             mapboxToken,
             viewMode: modePolicy.initialViewMode,
             previewViewMode: modePolicy.defaultPreviewViewMode,
+            simulationViewMode: modePolicy.defaultSimulationViewMode,
           }}
         >
           <TooltipProvider delayDuration={0}>

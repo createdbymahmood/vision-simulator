@@ -1,9 +1,12 @@
+import {Expand, Minimize2} from 'lucide-react'
 import React from 'react'
 
 import type {CameraEntity} from '@/features/scene/types/types'
 
 import {Badge} from '@/components/ui/badge'
+import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardFooter} from '@/components/ui/card'
+import {cn} from '@/lib/utils'
 
 import type {CameraFeedTarget} from './camera-feed-types'
 import type {createCoordinateTransformer} from './simulation-helpers'
@@ -20,9 +23,25 @@ export interface CameraFeedTileProps {
   peopleWorld: Record<string, {x: number; y: number; z: number; height: number}>
   transformer: ReturnType<typeof createCoordinateTransformer>
   feedCount: number
+  variant?: 'list' | 'grid'
 }
 
 const ENABLE_FEED_OPTICS = false
+
+const useBodyScrollLock = (enabled: boolean) => {
+  React.useEffect(() => {
+    if (!enabled || typeof document === 'undefined') {
+      return
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [enabled])
+}
 
 const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
   camera,
@@ -32,8 +51,12 @@ const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
   peopleWorld,
   transformer,
   feedCount,
+  variant = 'list',
 }) => {
   const isRealDeviceFeed = camera.sourceDeviceKind === 'real'
+  const [isExpanded, setIsExpanded] = React.useState(false)
+  const isFullscreen = !isRealDeviceFeed && isExpanded
+  const isGridVariant = variant === 'grid'
   const selectedPersonIdSet = React.useMemo(
     () => new Set(selectedPersonIds),
     [selectedPersonIds],
@@ -77,12 +100,56 @@ const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
   }, [feedCount, isRealDeviceFeed, size.height, size.width])
 
   const detectionCount = peopleIds.length
+  useBodyScrollLock(isFullscreen)
+
+  React.useEffect(() => {
+    if (!isFullscreen) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsExpanded(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isFullscreen])
+
+  const wrapperClassName = cn(
+    'vs:w-full vs:max-w-full vs:min-w-0',
+    isGridVariant ? 'vs:h-full vs:rounded-lg vs:border' : 'vs:border-b',
+    isFullscreen
+      ? 'vs:fixed vs:inset-0 vs:z-50 vs:bg-black vs:border-none vs:rounded-none'
+      : null,
+  )
+
+  const cardClassName = cn(
+    'vs:border-none vs:shadow-none',
+    isGridVariant
+      ? 'vs:flex vs:h-full vs:min-h-0 vs:flex-col vs:rounded-lg vs:p-3'
+      : 'vs:rounded-none vs:py-4',
+    isFullscreen ? 'vs:flex vs:h-full vs:flex-col vs:rounded-none vs:p-0' : null,
+  )
+
+  const feedContainerClassName = cn(
+    'vs:relative vs:w-full vs:min-h-0 vs:overflow-hidden vs:bg-muted vs:text-left',
+    isFullscreen || isGridVariant ? 'vs:h-full' : 'vs:aspect-video',
+  )
 
   return (
-    <div className='vs:w-full vs:max-w-full vs:min-w-0 vs:border-b'>
-      <Card className='vs:border-none vs:rounded-none vs:shadow-none vs:py-4'>
-        <CardContent className='vs:px-0'>
-          <div className='vs:relative vs:w-full vs:aspect-video vs:overflow-hidden vs:bg-muted vs:text-left'>
+    <div className={wrapperClassName}>
+      <Card className={cardClassName}>
+        <CardContent
+          className={cn(
+            'vs:px-0 vs:min-h-0',
+            isFullscreen || isGridVariant ? 'vs:flex-1' : null,
+          )}
+        >
+          <div className={feedContainerClassName}>
             {isRealDeviceFeed ? (
               <RealDeviceFeedPlayer camera={camera} autoPlay />
             ) : (
@@ -134,22 +201,43 @@ const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
                 </div>
               </>
             )}
+            {!isRealDeviceFeed ? (
+              <div className='vs:absolute vs:bottom-2 vs:right-2 vs:z-20'>
+                <Button
+                  size='icon-sm'
+                  variant='ghost'
+                  className='vs:bg-black/50 vs:text-white vs:hover:bg-black/70'
+                  aria-label={isFullscreen ? 'Exit full screen' : 'Full screen'}
+                  onClick={() => setIsExpanded((previous) => !previous)}
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className='vs:size-4' />
+                  ) : (
+                    <Expand className='vs:size-4' />
+                  )}
+                </Button>
+              </div>
+            ) : null}
           </div>
         </CardContent>
 
-        <CardFooter>
-          <div className='vs:flex vs:w-full vs:items-center vs:justify-between vs:text-xs vs:text-muted-foreground'>
-            <span>{camera.name}</span>
-            <div className='vs:flex vs:items-center vs:gap-2'>
-              <Badge variant='secondary'>
-                {isRealDeviceFeed ? 'LIVE' : (feedConfig?.label ?? '---')}
-              </Badge>
-              <Badge variant={detectionCount > 0 ? 'destructive' : 'secondary'}>
-                {detectionCount} detections
-              </Badge>
+        {!isFullscreen ? (
+          <CardFooter>
+            <div className='vs:flex vs:w-full vs:items-center vs:justify-between vs:text-xs vs:text-muted-foreground'>
+              <span>{camera.name}</span>
+              <div className='vs:flex vs:items-center vs:gap-2'>
+                <Badge variant='secondary'>
+                  {isRealDeviceFeed ? 'LIVE' : (feedConfig?.label ?? '---')}
+                </Badge>
+                <Badge
+                  variant={detectionCount > 0 ? 'destructive' : 'secondary'}
+                >
+                  {detectionCount} detections
+                </Badge>
+              </div>
             </div>
-          </div>
-        </CardFooter>
+          </CardFooter>
+        ) : null}
       </Card>
     </div>
   )

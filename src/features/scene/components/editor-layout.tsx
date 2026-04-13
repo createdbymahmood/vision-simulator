@@ -106,6 +106,9 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const viewMode = useUiStore((state) => state.viewMode)
   const setViewMode = useUiStore((state) => state.setViewMode)
   const setPreviewViewMode = useUiStore((state) => state.setPreviewViewMode)
+  const setSimulationViewMode = useUiStore(
+    (state) => state.setSimulationViewMode,
+  )
   const setCameraPlacement = useUiStore((state) => state.setCameraPlacement)
   const closeAllPanels = useUiStore((state) => state.closeAllPanels)
   const closeAllPopovers = useUiStore((state) => state.closeAllPopovers)
@@ -321,11 +324,14 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
     previousModeRef.current = mode
     setViewMode(modePolicy.initialViewMode)
     setPreviewViewMode(modePolicy.defaultPreviewViewMode)
+    setSimulationViewMode(modePolicy.defaultSimulationViewMode)
   }, [
     mode,
     modePolicy.defaultPreviewViewMode,
+    modePolicy.defaultSimulationViewMode,
     modePolicy.initialViewMode,
     setPreviewViewMode,
+    setSimulationViewMode,
     setViewMode,
   ])
 
@@ -442,6 +448,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           <SimulationAnalysisView
             allowBackToEditor={modePolicy.allowSimulationBackToEditor}
             allowPreviewViewSwitch={modePolicy.allowPreviewViewSwitch}
+            allowSimulationCameraGrid={modePolicy.allowSimulationCameraGrid}
             hideAreaSelection={false}
             onBackToEditor={handleBackToEditor}
             showAuxiliaryPanels={modePolicy.showSimulationAuxiliaryPanels}

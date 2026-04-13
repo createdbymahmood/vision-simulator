@@ -7,6 +7,7 @@ import {toast} from 'sonner'
 import type {
   AreaEntity,
   PreviewViewMode,
+  SimulationViewMode,
   SceneRoot,
 } from '@/features/scene/types/types'
 
@@ -44,6 +45,7 @@ interface SimulationAnalysisViewProps {
   showAuxiliaryPanels?: boolean
   allowBackToEditor?: boolean
   allowPreviewViewSwitch?: boolean
+  allowSimulationCameraGrid?: boolean
   hideAreaSelection?: boolean
   onBackToEditor: () => void
 }
@@ -68,6 +70,11 @@ const LazySimulationCameraSidebar = React.lazy(async () => {
   return {default: module.SimulationCameraSidebar}
 })
 
+const LazySimulationCameraGridView = React.lazy(async () => {
+  const module = await import('./simulation-camera-grid-view')
+  return {default: module.SimulationCameraGridView}
+})
+
 const SidePanelLoading: React.FC = () => (
   <div className='vs:flex vs:flex-col vs:gap-4 vs:p-4 vs:text-sm'>
     <div className='vs:h-44 vs:w-full vs:rounded-lg vs:bg-muted/60 vs:animate-pulse' />
@@ -79,6 +86,7 @@ interface ShowSimulationSidePanelsInput {
   showAuxiliaryPanels: boolean
   hasCameraFeedTiles: boolean
   previewViewMode: PreviewViewMode
+  simulationViewMode: SimulationViewMode
   hasCamerasInActiveArea: boolean
 }
 
@@ -127,8 +135,12 @@ const showSimulationSidePanelsForMode = ({
   showAuxiliaryPanels,
   hasCameraFeedTiles,
   previewViewMode,
+  simulationViewMode,
   hasCamerasInActiveArea,
 }: ShowSimulationSidePanelsInput) => {
+  if (simulationViewMode === 'cameraGrid') {
+    return false
+  }
   if (!showAuxiliaryPanels || !hasCameraFeedTiles) {
     return false
   }
@@ -138,13 +150,18 @@ const showSimulationSidePanelsForMode = ({
   return hasCamerasInActiveArea
 }
 
-interface PreviewViewportControlsProps {
+interface SimulationViewportControlsProps {
   allowPreviewViewSwitch: boolean
+  allowSimulationCameraGrid: boolean
   hideAreaSelection: boolean
   previewViewMode: PreviewViewMode
+  simulationViewMode: SimulationViewMode
+  gridSize: number
   activeAreaId?: string
   areas: AreaEntity[]
   onPreviewViewModeChange: (mode: PreviewViewMode) => void
+  onSimulationViewModeChange: (mode: SimulationViewMode) => void
+  onGridSizeChange: (gridSize: number) => void
   onActiveAreaChange: (areaId: string) => void
 }
 
@@ -165,23 +182,60 @@ const getFramedSceneForPreview = (
   }
 }
 
-const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
+const SimulationViewportControls: React.FC<SimulationViewportControlsProps> = ({
   allowPreviewViewSwitch,
+  allowSimulationCameraGrid,
   hideAreaSelection,
   previewViewMode,
+  simulationViewMode,
+  gridSize,
   activeAreaId,
   areas,
   onPreviewViewModeChange,
+  onSimulationViewModeChange,
+  onGridSizeChange,
   onActiveAreaChange,
 }) => {
   const showAreaSelection = !hideAreaSelection && areas.length > 0
 
-  if (!allowPreviewViewSwitch && !showAreaSelection) {
+  if (
+    !allowPreviewViewSwitch &&
+    !allowSimulationCameraGrid &&
+    !showAreaSelection
+  ) {
     return null
   }
 
   return (
-    <div className='vs:flex vs:items-center vs:gap-2'>
+    <div className='vs:flex vs:flex-wrap vs:items-center vs:gap-2'>
+      {allowSimulationCameraGrid ? (
+        <ToggleGroup
+          className='vs:bg-background'
+          type='single'
+          value={simulationViewMode}
+          variant='outline'
+          onValueChange={(value) => {
+            if (value === 'scene' || value === 'cameraGrid') {
+              onSimulationViewModeChange(value)
+            }
+          }}
+        >
+          <ToggleGroupItem
+            aria-label='Scene view'
+            className='vs:cursor-pointer'
+            value='scene'
+          >
+            Scene
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            aria-label='Camera grid view'
+            className='vs:cursor-pointer'
+            value='cameraGrid'
+          >
+            Grid
+          </ToggleGroupItem>
+        </ToggleGroup>
+      ) : null}
       {allowPreviewViewSwitch ? (
         <ToggleGroup
           className='vs:bg-background'
@@ -207,6 +261,42 @@ const PreviewViewportControls: React.FC<PreviewViewportControlsProps> = ({
             value='2d'
           >
             2D
+          </ToggleGroupItem>
+        </ToggleGroup>
+      ) : null}
+      {allowSimulationCameraGrid && simulationViewMode === 'cameraGrid' ? (
+        <ToggleGroup
+          className='vs:bg-background'
+          type='single'
+          value={`${gridSize}`}
+          variant='outline'
+          onValueChange={(value) => {
+            const next = Number.parseInt(value, 10)
+            if (next === 2 || next === 3 || next === 4) {
+              onGridSizeChange(next)
+            }
+          }}
+        >
+          <ToggleGroupItem
+            aria-label='2 by 2 grid'
+            className='vs:cursor-pointer'
+            value='2'
+          >
+            2x2
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            aria-label='3 by 3 grid'
+            className='vs:cursor-pointer'
+            value='3'
+          >
+            3x3
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            aria-label='4 by 4 grid'
+            className='vs:cursor-pointer'
+            value='4'
+          >
+            4x4
           </ToggleGroupItem>
         </ToggleGroup>
       ) : null}
@@ -238,6 +328,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   showAuxiliaryPanels = true,
   allowBackToEditor = true,
   allowPreviewViewSwitch = true,
+  allowSimulationCameraGrid = true,
   hideAreaSelection = false,
   onBackToEditor,
 }) => {
@@ -246,6 +337,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   const setSelection = useSceneStore((state) => state.setSelection)
   const selectedEntityIds = useSceneStore((state) => state.selectedEntityIds)
   const previewViewMode = useUiStore((state) => state.previewViewMode)
+  const simulationViewMode = useUiStore((state) => state.simulationViewMode)
   const previewPeopleWorld = useUiStore(
     React.useCallback(
       (state) =>
@@ -256,10 +348,15 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     ),
   )
   const setPreviewViewMode = useUiStore((state) => state.setPreviewViewMode)
+  const setSimulationViewMode = useUiStore(
+    (state) => state.setSimulationViewMode,
+  )
   const activePreviewAreaId = React.useMemo(
     () => scene.activeAreaId ?? scene.areas[0]?.id,
     [scene.activeAreaId, scene.areas],
   )
+  const [cameraGridSize, setCameraGridSize] = React.useState(2)
+  const isCameraGridView = simulationViewMode === 'cameraGrid'
   const framedScene = React.useMemo(
     () => getFramedSceneForPreview(scene, activePreviewAreaId),
     [activePreviewAreaId, scene],
@@ -317,6 +414,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     showAuxiliaryPanels,
     hasCameraFeedTiles,
     previewViewMode,
+    simulationViewMode,
     hasCamerasInActiveArea,
   })
   const simulatedPreviewPeople = React.useMemo(() => {
@@ -375,6 +473,10 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   })
 
   const handleBackAction = useCallbackRef(() => {
+    if (isCameraGridView) {
+      setSimulationViewMode('scene')
+      return
+    }
     if (!allowBackToEditor) {
       return
     }
@@ -389,23 +491,86 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
       setPreviewViewMode(mode)
     },
   )
+  const handleSimulationViewModeChange = useCallbackRef(
+    (mode: SimulationViewMode) => {
+      if (!allowSimulationCameraGrid && mode === 'cameraGrid') {
+        return
+      }
+      setSimulationViewMode(mode)
+    },
+  )
+  const handleCameraGridSizeChange = useCallbackRef((size: number) => {
+    setCameraGridSize(size)
+  })
   const previewViewportControls = (
-    <PreviewViewportControls
+    <SimulationViewportControls
       activeAreaId={activePreviewAreaId}
       areas={scene.areas}
       allowPreviewViewSwitch={allowPreviewViewSwitch}
+      allowSimulationCameraGrid={allowSimulationCameraGrid}
+      gridSize={cameraGridSize}
       hideAreaSelection={hideAreaSelection}
       onActiveAreaChange={handleActiveAreaChange}
+      onGridSizeChange={handleCameraGridSizeChange}
       onPreviewViewModeChange={handlePreviewViewModeChange}
+      onSimulationViewModeChange={handleSimulationViewModeChange}
       previewViewMode={previewViewMode}
+      simulationViewMode={simulationViewMode}
     />
   )
+  const gridViewportControls = allowSimulationCameraGrid ? (
+    <ToggleGroup
+      className='vs:bg-background'
+      type='single'
+      value={`${cameraGridSize}`}
+      variant='outline'
+      onValueChange={(value) => {
+        const next = Number.parseInt(value, 10)
+        if (next === 2 || next === 3 || next === 4) {
+          setCameraGridSize(next)
+        }
+      }}
+    >
+      <ToggleGroupItem
+        aria-label='2 by 2 grid'
+        className='vs:cursor-pointer'
+        value='2'
+      >
+        2x2
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        aria-label='3 by 3 grid'
+        className='vs:cursor-pointer'
+        value='3'
+      >
+        3x3
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        aria-label='4 by 4 grid'
+        className='vs:cursor-pointer'
+        value='4'
+      >
+        4x4
+      </ToggleGroupItem>
+    </ToggleGroup>
+  ) : null
+  const gridMaxHeight = showTopBar ? 'calc(100vh - 56px)' : '100vh'
   const showPreviewViewportControls =
-    allowPreviewViewSwitch || (!hideAreaSelection && scene.areas.length > 0)
-  const isPreviewSurfacePending =
-    previewViewMode === '3d' ? !isSimulationCanvasReady : !isPreviewMapReady
-  const previewSurfacePendingLabel =
-    previewViewMode === '3d' ? 'Preparing 3D preview' : 'Preparing 2D preview'
+    allowPreviewViewSwitch ||
+    allowSimulationCameraGrid ||
+    (!hideAreaSelection && scene.areas.length > 0)
+  const showViewportControls = showPreviewViewportControls && !isCameraGridView
+  const showGridViewportControls = isCameraGridView && allowSimulationCameraGrid
+  const isPreviewSurfacePending = isCameraGridView
+    ? !isSimulationCanvasReady
+    : previewViewMode === '3d'
+      ? !isSimulationCanvasReady
+      : !isPreviewMapReady
+  const previewSurfacePendingLabel = isCameraGridView
+    ? 'Preparing camera grid'
+    : previewViewMode === '3d'
+      ? 'Preparing 3D preview'
+      : 'Preparing 2D preview'
 
   React.useEffect(() => {
     if (previewViewMode === '2d') {
@@ -429,11 +594,21 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     captureRef.current = simulationCaptureRef.current
   }, [previewMapRef, previewViewMode])
   React.useEffect(() => {
-    if (previewViewMode !== '2d') {
+    if (previewViewMode !== '2d' || simulationViewMode !== 'scene') {
       return
     }
     return scheduleMapResize(previewMapRef)
-  }, [previewMapRef, previewViewMode, showSimulationSidePanels])
+  }, [previewMapRef, previewViewMode, showSimulationSidePanels, simulationViewMode])
+
+  React.useEffect(() => {
+    if (allowSimulationCameraGrid) {
+      return
+    }
+    if (simulationViewMode !== 'cameraGrid') {
+      return
+    }
+    setSimulationViewMode('scene')
+  }, [allowSimulationCameraGrid, setSimulationViewMode, simulationViewMode])
 
   React.useEffect(
     () => () => {
@@ -453,10 +628,14 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     <div className='vs:flex vs:h-full vs:min-h-0 vs:min-w-0 vs:flex-1 vs:flex-col vs:overflow-hidden vs:overscroll-none'>
       {showTopBar ? (
         <SimulationTopBar
-          allowPreviewViewSwitch={allowPreviewViewSwitch}
+          allowPreviewViewSwitch={allowPreviewViewSwitch && !isCameraGridView}
           isRecording={isRecording}
           leftControls={
-            showPreviewViewportControls ? previewViewportControls : null
+            showGridViewportControls
+              ? gridViewportControls
+              : showViewportControls
+                ? previewViewportControls
+                : null
           }
           onBackToEditor={handleBackAction}
           onPreviewViewModeChange={handlePreviewViewModeChange}
@@ -465,6 +644,8 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
           onStopRecording={stopRecording}
           previewViewMode={previewViewMode}
           recordingLabel={`REC ${formattedTime}`}
+          showRecordingControl={!isCameraGridView || isRecording}
+          showSnapshotControl={!isCameraGridView}
           showBackButton={allowBackToEditor}
         />
       ) : null}
@@ -475,10 +656,16 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
           isLowFps={isLowFps}
           isRecording={isRecording}
           overlayControls={
-            !showTopBar && showPreviewViewportControls ? (
+            !showTopBar && showViewportControls ? (
               <div className='vs:pointer-events-none vs:absolute vs:left-4 vs:top-4 vs:z-20'>
                 <div className='vs:pointer-events-auto'>
                   {previewViewportControls}
+                </div>
+              </div>
+            ) : !showTopBar && showGridViewportControls ? (
+              <div className='vs:pointer-events-none vs:absolute vs:left-4 vs:top-4 vs:z-20'>
+                <div className='vs:pointer-events-auto'>
+                  {gridViewportControls}
                 </div>
               </div>
             ) : null
@@ -501,13 +688,13 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
               showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
               className={cn(
                 'vs:h-full vs:w-full',
-                previewViewMode === '2d'
+                previewViewMode === '2d' || isCameraGridView
                   ? 'vs:pointer-events-none vs:opacity-0'
                   : 'vs:opacity-100',
               )}
             />
           </React.Suspense>
-          {previewViewMode === '2d' ? (
+          {previewViewMode === '2d' && !isCameraGridView ? (
             <div className='vs:absolute vs:inset-0 vs:z-10'>
               <MapView
                 activeTool='hand'
@@ -515,6 +702,21 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
                 peopleOverride={simulatedPreviewPeople}
                 shapeMode='rectangle'
               />
+            </div>
+          ) : null}
+          {isCameraGridView ? (
+            <div className='vs:absolute vs:inset-0 vs:z-10'>
+              <React.Suspense
+                fallback={<PreviewPendingOverlay label='Loading camera grid' />}
+              >
+                <LazySimulationCameraGridView
+                  focusAreaId={activePreviewAreaId}
+                  feedTargets={feedTargets}
+                  gridSize={cameraGridSize}
+                  maxHeight={gridMaxHeight}
+                  scene={scene}
+                />
+              </React.Suspense>
             </div>
           ) : null}
           {isPreviewSurfacePending ? (

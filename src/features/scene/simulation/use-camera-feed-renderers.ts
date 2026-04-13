@@ -26,7 +26,9 @@ type RendererMapRef = React.MutableRefObject<Map<string, FeedRendererState>>
 type SizeMapRef = React.MutableRefObject<
   Map<string, {width: number; height: number}>
 >
-type ObserverMapRef = React.MutableRefObject<Map<string, ResizeObserver>>
+type ObserverMapRef = React.MutableRefObject<
+  Map<string, {observer: ResizeObserver; element: Element}>
+>
 
 const disposeRendererForTarget = (rendererMap: RendererMapRef, id: string) => {
   const state = rendererMap.current.get(id)
@@ -42,9 +44,9 @@ const disconnectObserverForTarget = (
   sizeMap: SizeMapRef,
   id: string,
 ) => {
-  const observer = observerMap.current.get(id)
-  if (observer) {
-    observer.disconnect()
+  const entry = observerMap.current.get(id)
+  if (entry) {
+    entry.observer.disconnect()
     observerMap.current.delete(id)
   }
   sizeMap.current.delete(id)
@@ -66,8 +68,17 @@ const ensureContainerObserver = (
   sizeMap: SizeMapRef,
 ) => {
   const container = target.containerRef.current
-  if (!container || observerMap.current.has(target.id)) {
+  if (!container) {
     return
+  }
+
+  const existing = observerMap.current.get(target.id)
+  if (existing && existing.element === container) {
+    return
+  }
+  if (existing) {
+    existing.observer.disconnect()
+    observerMap.current.delete(target.id)
   }
 
   const observer = new ResizeObserver((entries) => {
@@ -79,7 +90,7 @@ const ensureContainerObserver = (
     sizeMap.current.set(target.id, {width, height})
   })
   observer.observe(container)
-  observerMap.current.set(target.id, observer)
+  observerMap.current.set(target.id, {observer, element: container})
   const rect = container.getBoundingClientRect()
   sizeMap.current.set(target.id, {
     width: rect.width,
@@ -94,7 +105,12 @@ const ensureFeedRendererState = (
 ) => {
   const existingState = rendererMap.current.get(targetId)
   if (existingState) {
-    return existingState
+    if (existingState.renderer.domElement !== canvas) {
+      existingState.renderer.dispose()
+      rendererMap.current.delete(targetId)
+    } else {
+      return existingState
+    }
   }
 
   const renderer = createFeedRenderer(canvas)
@@ -142,9 +158,9 @@ export const useCameraFeedRenderers = ({
       }
     })
 
-    observerMap.current.forEach((observer, id) => {
+    observerMap.current.forEach((entry, id) => {
       if (!activeIds.has(id)) {
-        observer.disconnect()
+        entry.observer.disconnect()
         observerMap.current.delete(id)
         sizeMap.current.delete(id)
       }
@@ -157,8 +173,8 @@ export const useCameraFeedRenderers = ({
         state.renderer.dispose()
       })
       rendererMap.current.clear()
-      observerMap.current.forEach((observer) => {
-        observer.disconnect()
+      observerMap.current.forEach((entry) => {
+        entry.observer.disconnect()
       })
       observerMap.current.clear()
       sizeMap.current.clear()

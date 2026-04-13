@@ -5,6 +5,7 @@ import {produce} from 'immer'
 import type {
   CameraPlacementProfile,
   PreviewViewMode,
+  SimulationViewMode,
   ViewMode,
 } from '@/features/scene/types/types'
 
@@ -94,6 +95,7 @@ export interface LiveRadarState {
 export interface UiState {
   viewMode: ViewMode
   previewViewMode: PreviewViewMode
+  simulationViewMode: SimulationViewMode
   activeTool: EditorTool
   isEditMode: boolean
   openPanels: Record<string, boolean>
@@ -115,6 +117,8 @@ export interface UiState {
   toggleViewMode: () => ViewMode
   setPreviewViewMode: (mode: PreviewViewMode) => PreviewViewMode
   togglePreviewViewMode: () => PreviewViewMode
+  setSimulationViewMode: (mode: SimulationViewMode) => SimulationViewMode
+  toggleSimulationViewMode: () => SimulationViewMode
   setActiveTool: (tool: EditorTool) => EditorTool
   setEditMode: (enabled: boolean) => boolean
   toggleEditMode: () => boolean
@@ -198,6 +202,29 @@ const togglePreviewViewMode = (set: SetState, get: GetState) => {
 
   set(nextValue)
   return get().previewViewMode
+}
+
+const setSimulationViewMode = (
+  set: SetState,
+  get: GetState,
+  mode: SimulationViewMode,
+) => {
+  const nextValue = produce<UiState>((state) => {
+    state.simulationViewMode = mode
+  })
+
+  set(nextValue)
+  return get().simulationViewMode
+}
+
+const toggleSimulationViewMode = (set: SetState, get: GetState) => {
+  const nextValue = produce<UiState>((state) => {
+    state.simulationViewMode =
+      state.simulationViewMode === 'scene' ? 'cameraGrid' : 'scene'
+  })
+
+  set(nextValue)
+  return get().simulationViewMode
 }
 
 const setActiveTool = (set: SetState, get: GetState, tool: EditorTool) => {
@@ -397,6 +424,7 @@ const resetUi = (set: SetState, get: GetState) => {
   const nextValue = produce<UiState>((state) => {
     state.viewMode = 'editor'
     state.previewViewMode = '3d'
+    state.simulationViewMode = 'scene'
     state.activeTool = 'select'
     state.isEditMode = true
     state.openPanels = {}
@@ -428,6 +456,7 @@ const resetUi = (set: SetState, get: GetState) => {
 const defaultUiState = {
   viewMode: 'editor' as ViewMode,
   previewViewMode: '3d' as PreviewViewMode,
+  simulationViewMode: 'scene' as SimulationViewMode,
   activeTool: 'select' as EditorTool,
   isEditMode: true,
   openPanels: {} as Record<string, boolean>,
@@ -509,6 +538,8 @@ const createUiStore: (
   toggleViewMode: () => toggleViewMode(set, get),
   setPreviewViewMode: (mode) => setPreviewViewMode(set, get, mode),
   togglePreviewViewMode: () => togglePreviewViewMode(set, get),
+  setSimulationViewMode: (mode) => setSimulationViewMode(set, get, mode),
+  toggleSimulationViewMode: () => toggleSimulationViewMode(set, get),
   setActiveTool: (tool) => setActiveTool(set, get, tool),
   setEditMode: (enabled) => setEditMode(set, get, enabled),
   toggleEditMode: () => toggleEditMode(set, get),

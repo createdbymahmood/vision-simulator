@@ -15,6 +15,8 @@ interface SimulationTopBarProps {
   leftControls?: React.ReactNode
   isRecording: boolean
   recordingLabel: string
+  showRecordingControl?: boolean
+  showSnapshotControl?: boolean
   onStartRecording: () => void
   onStopRecording: () => void
   onSnapshot: () => void
@@ -29,6 +31,8 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
   leftControls,
   isRecording,
   recordingLabel,
+  showRecordingControl = true,
+  showSnapshotControl = true,
   onStartRecording,
   onStopRecording,
   onSnapshot,
@@ -108,18 +112,22 @@ export const SimulationTopBar: React.FC<SimulationTopBarProps> = ({
           </div>
         ) : null}
 
-        <Button
-          className={cn(isRecording ? 'recording-button' : '')}
-          variant={isRecording ? 'destructive' : 'outline'}
-          onClick={isRecording ? onStopRecording : onStartRecording}
-        >
-          <VideoRecorder className='vs:size-5' />
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </Button>
-        <Button variant='outline' onClick={onSnapshot}>
-          <Camera className='vs:size-5' />
-          Export Snapshot
-        </Button>
+        {showRecordingControl ? (
+          <Button
+            className={cn(isRecording ? 'recording-button' : '')}
+            variant={isRecording ? 'destructive' : 'outline'}
+            onClick={isRecording ? onStopRecording : onStartRecording}
+          >
+            <VideoRecorder className='vs:size-5' />
+            {isRecording ? 'Stop Recording' : 'Start Recording'}
+          </Button>
+        ) : null}
+        {showSnapshotControl ? (
+          <Button variant='outline' onClick={onSnapshot}>
+            <Camera className='vs:size-5' />
+            Export Snapshot
+          </Button>
+        ) : null}
       </div>
     </div>
   )
