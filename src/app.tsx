@@ -1,10 +1,12 @@
+import type {QueryClient} from '@tanstack/react-query'
+
 import {QueryClientProvider} from '@tanstack/react-query'
 import React, {Suspense} from 'react'
 
-import type {SceneStoreInitialState} from '@/features/scene/state/scene.store'
-import type {UnsavedChangesOptions} from '@/features/scene/types/leave-guard/types'
 import type {VisionSimulatorMode} from '@/features/scene/services/vision-simulator-mode'
+import type {SceneStoreInitialState} from '@/features/scene/state/scene.store'
 import type {EditorUiOverrides} from '@/features/scene/types/editor-ui-overrides'
+import type {UnsavedChangesOptions} from '@/features/scene/types/leave-guard/types'
 
 import {Pending} from '@/components/shared/pending'
 import {Toaster} from '@/components/ui/sonner'
@@ -14,15 +16,14 @@ import {
   applyAxiosApiBaseUrl,
   applyAxiosAuthorizationHeader,
 } from '@/data-provider/axios/axios'
-import {queryClient} from '@/data-provider/react-query'
-import {HistoryStoreProvider} from '@/features/scene/state/history.store'
-import {SceneStoreProvider} from '@/features/scene/state/scene.store'
-import {UiStoreProvider} from '@/features/scene/state/ui.store'
 import {EditorLayout} from '@/features/scene/components/editor-layout'
 import {
   getVisionSimulatorModePolicy,
   resolveVisionSimulatorMode,
 } from '@/features/scene/services/vision-simulator-mode'
+import {HistoryStoreProvider} from '@/features/scene/state/history.store'
+import {SceneStoreProvider} from '@/features/scene/state/scene.store'
+import {UiStoreProvider} from '@/features/scene/state/ui.store'
 import {get} from '@/lib/lodash-es'
 import {PortalContainerProvider} from '@/lib/portal-container'
 
@@ -39,6 +40,7 @@ const APP_SURFACE_CLASSNAME =
 
 export interface AppProps {
   children?: React.ReactNode
+  queryClient: QueryClient
   visionSimulatorId: string
   accessToken: string
   apiBaseUrl: string
@@ -51,6 +53,7 @@ export interface AppProps {
 }
 
 interface VisionSimulatorProvidersProps {
+  queryClient: QueryClient
   visionSimulatorId: string
   accessToken: string
   apiWsServiceUrl: string
@@ -131,6 +134,7 @@ const VisionSimulatorProviders: React.FC<VisionSimulatorProvidersProps> = ({
 }
 
 const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
+  queryClient,
   accessToken,
   apiWsServiceUrl,
   mediaMtxUrl,
@@ -145,6 +149,7 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
       <VisionSimulatorProviders
         apiWsServiceUrl={apiWsServiceUrl}
         mediaMtxUrl={mediaMtxUrl}
+        queryClient={queryClient}
         uiOverrides={uiOverrides}
         unsavedChanges={unsavedChanges}
         accessToken={accessToken}
@@ -157,6 +162,7 @@ const VisionSimulatorAppShell: React.FC<VisionSimulatorProvidersProps> = ({
 )
 
 export const App: React.FC<AppProps> = ({
+  queryClient,
   apiBaseUrl,
   apiWsServiceUrl,
   mediaMtxUrl,
@@ -176,6 +182,7 @@ export const App: React.FC<AppProps> = ({
         <VisionSimulatorAppShell
           apiWsServiceUrl={apiWsServiceUrl}
           mediaMtxUrl={mediaMtxUrl}
+          queryClient={queryClient}
           uiOverrides={uiOverrides}
           unsavedChanges={unsavedChanges}
           accessToken={accessToken}

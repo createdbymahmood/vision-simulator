@@ -13,12 +13,14 @@ import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 
 import {App} from '@/app'
+import {queryClient} from '@/data-provider/react-query'
 
 const AppRouteContent: React.FC = () => (
   <App
     apiBaseUrl={import.meta.env.VITE_API_BASE_URL}
     apiWsServiceUrl={import.meta.env.VITE_API_WS_SERVICE_URL}
     mediaMtxUrl={import.meta.env.VITE_MEDIA_MTX_URL}
+    queryClient={queryClient}
     accessToken={import.meta.env.VITE_ACCESS_TOKEN}
     mapboxToken={import.meta.env.VITE_MAPBOX_TOKEN}
     visionSimulatorId={import.meta.env.VITE_VISION_SIMULATOR_ID}
