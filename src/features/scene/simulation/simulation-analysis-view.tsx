@@ -379,9 +379,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   const [isPreviewMapReady, setPreviewMapReady] = React.useState(false)
   const [sidebarWidth, setSidebarWidth] = React.useState(360)
   const layoutRef = React.useRef<HTMLDivElement | null>(null)
-  const sidebarRef = React.useRef<HTMLDivElement | null>(null)
   const layoutSize = useElementSize(layoutRef)
-  const sidebarSize = useElementSize(sidebarRef)
   const handleCaptureReady = useCallbackRef((api: SimulationCaptureApi) => {
     simulationCaptureRef.current = api
     setSimulationCanvasReady(true)
@@ -419,7 +417,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     [activePreviewAreaId, scene.cameras],
   )
   const sidebarColumnCount = React.useMemo(() => {
-    const width = sidebarSize.width
+    const width = sidebarWidth
     if (width >= 900) {
       return 3
     }
@@ -427,7 +425,7 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
       return 2
     }
     return 1
-  }, [sidebarSize.width])
+  }, [sidebarWidth])
   const maxFeedTargets = React.useMemo(() => {
     const desired = sidebarColumnCount * 4
     return Math.min(12, Math.max(6, desired))
@@ -803,7 +801,6 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
               onPointerDown={handleSidebarResizeStart}
             />
             <div
-              ref={sidebarRef}
               className='vs:flex vs:h-full vs:min-h-0 vs:min-w-[360px] vs:shrink-0 vs:flex-col vs:gap-4 vs:overflow-x-hidden vs:overflow-y-auto vs:overscroll-contain'
               style={{width: sidebarWidth}}
             >
