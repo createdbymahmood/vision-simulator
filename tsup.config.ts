@@ -12,5 +12,11 @@ export default defineConfig({
   clean: true,
   target: 'es2022',
   tsconfig: 'tsconfig.lib.json',
-  external: ['react', 'react-dom'],
+  external: [
+    'react',
+    'react-dom',
+    '@react-three/fiber',
+    '@react-three/drei',
+    'three',
+  ],
 })
