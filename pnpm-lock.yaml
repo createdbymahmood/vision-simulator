@@ -206,9 +206,9 @@ importers:
       tailwind-merge:
         specifier: 3.4.0
         version: 3.4.0
-      three:
-        specifier: 0.182.0
-        version: 0.182.0
+      three-stdlib:
+        specifier: 2.36.1
+        version: 2.36.1(three@0.182.0)
       uuid:
         specifier: 13.0.0
         version: 13.0.0
@@ -297,6 +297,9 @@ importers:
       tailwindcss:
         specifier: 4.1.18
         version: 4.1.18
+      three:
+        specifier: 0.182.0
+        version: 0.182.0
       tsup:
         specifier: 8.5.0
         version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
