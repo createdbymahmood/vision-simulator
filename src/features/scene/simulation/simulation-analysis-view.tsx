@@ -37,6 +37,7 @@ import {
 } from './simulation-helpers'
 import {SimulationTopBar} from './simulation-top-bar'
 import {SimulationViewport} from './simulation-viewport'
+import {useElementSize} from './camera-feed-utils'
 import {useCameraFeedTargets} from './use-camera-feed-targets'
 import {useSimulationRecording} from './use-simulation-recording'
 
@@ -376,6 +377,11 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   const [isSimulationCanvasReady, setSimulationCanvasReady] =
     React.useState(false)
   const [isPreviewMapReady, setPreviewMapReady] = React.useState(false)
+  const [sidebarWidth, setSidebarWidth] = React.useState(360)
+  const layoutRef = React.useRef<HTMLDivElement | null>(null)
+  const sidebarRef = React.useRef<HTMLDivElement | null>(null)
+  const layoutSize = useElementSize(layoutRef)
+  const sidebarSize = useElementSize(sidebarRef)
   const handleCaptureReady = useCallbackRef((api: SimulationCaptureApi) => {
     simulationCaptureRef.current = api
     setSimulationCanvasReady(true)
@@ -396,7 +402,12 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     startRecording,
     stopRecording,
   } = useSimulationRecording({captureRef})
-  const radarPanelSize = {width: 360, height: 180}
+  const radarPanelSize = React.useMemo(
+    () => ({width: Math.round(sidebarWidth), height: 180}),
+    [sidebarWidth],
+  )
+  const minSidebarWidth = 360
+  const maxSidebarWidth = Math.max(minSidebarWidth, layoutSize.width * 0.6)
 
   const visibleCameras = React.useMemo(
     () =>
@@ -407,7 +418,24 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
         : scene.cameras,
     [activePreviewAreaId, scene.cameras],
   )
-  const feedTargets = useCameraFeedTargets({cameras: visibleCameras})
+  const sidebarColumnCount = React.useMemo(() => {
+    const width = sidebarSize.width
+    if (width >= 900) {
+      return 3
+    }
+    if (width >= 560) {
+      return 2
+    }
+    return 1
+  }, [sidebarSize.width])
+  const maxFeedTargets = React.useMemo(() => {
+    const desired = sidebarColumnCount * 4
+    return Math.min(12, Math.max(6, desired))
+  }, [sidebarColumnCount])
+  const feedTargets = useCameraFeedTargets({
+    cameras: visibleCameras,
+    maxFeeds: maxFeedTargets,
+  })
   const hasCamerasInActiveArea = visibleCameras.length > 0
   const hasCameraFeedTiles = feedTargets.length > 0
   const showSimulationSidePanels = showSimulationSidePanelsForMode({
@@ -489,6 +517,39 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
         return
       }
       setPreviewViewMode(mode)
+    },
+  )
+  const handleSidebarResizeStart = useCallbackRef(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!layoutRef.current) {
+        return
+      }
+      event.preventDefault()
+      const layoutRect = layoutRef.current.getBoundingClientRect()
+      const minWidth = minSidebarWidth
+      const maxWidth = Math.max(minWidth, layoutRect.width * 0.6)
+      const previousUserSelect = document.body.style.userSelect
+      const previousCursor = document.body.style.cursor
+      document.body.style.userSelect = 'none'
+      document.body.style.cursor = 'col-resize'
+
+      const handlePointerMove = (moveEvent: PointerEvent) => {
+        const nextWidth = Math.min(
+          Math.max(layoutRect.right - moveEvent.clientX, minWidth),
+          maxWidth,
+        )
+        setSidebarWidth(nextWidth)
+      }
+
+      const handlePointerUp = () => {
+        document.body.style.userSelect = previousUserSelect
+        document.body.style.cursor = previousCursor
+        window.removeEventListener('pointermove', handlePointerMove)
+        window.removeEventListener('pointerup', handlePointerUp)
+      }
+
+      window.addEventListener('pointermove', handlePointerMove)
+      window.addEventListener('pointerup', handlePointerUp)
     },
   )
   const handleSimulationViewModeChange = useCallbackRef(
@@ -601,6 +662,15 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
   }, [previewMapRef, previewViewMode, showSimulationSidePanels, simulationViewMode])
 
   React.useEffect(() => {
+    if (!layoutSize.width) {
+      return
+    }
+    if (sidebarWidth > maxSidebarWidth) {
+      setSidebarWidth(maxSidebarWidth)
+    }
+  }, [layoutSize.width, maxSidebarWidth, sidebarWidth])
+
+  React.useEffect(() => {
     if (allowSimulationCameraGrid) {
       return
     }
@@ -650,7 +720,10 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
         />
       ) : null}
 
-      <div className='vs:flex vs:flex-1 vs:min-h-0 vs:min-w-0 vs:overflow-hidden'>
+      <div
+        ref={layoutRef}
+        className='vs:flex vs:flex-1 vs:min-h-0 vs:min-w-0 vs:overflow-hidden'
+      >
         <SimulationViewport
           fps={fps}
           isLowFps={isLowFps}
@@ -724,22 +797,33 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
           ) : null}
         </SimulationViewport>
         {showSimulationSidePanels ? (
-          <div className='vs:flex vs:h-full vs:min-h-0 vs:w-[360px] vs:max-w-[360px] vs:shrink-0 vs:flex-col vs:gap-4 vs:overflow-x-hidden vs:overflow-y-auto vs:overscroll-contain vs:border-l'>
-            <React.Suspense fallback={<SidePanelLoading />}>
-              <LazySimulationRadar
-                size={radarPanelSize}
-                scene={scene}
-                selectedEntityIds={selectedEntityIds}
-                focusAreaId={activePreviewAreaId}
-                onSelectEntity={handleSelectEntity}
-              />
-              <LazySimulationCameraSidebar
-                feedTargets={feedTargets}
-                scene={scene}
-                focusAreaId={activePreviewAreaId}
-              />
-            </React.Suspense>
-          </div>
+          <>
+            <div
+              className='vs:w-2 vs:cursor-col-resize vs:bg-border/60 hover:vs:bg-border vs:transition-colors'
+              onPointerDown={handleSidebarResizeStart}
+            />
+            <div
+              ref={sidebarRef}
+              className='vs:flex vs:h-full vs:min-h-0 vs:min-w-[360px] vs:shrink-0 vs:flex-col vs:gap-4 vs:overflow-x-hidden vs:overflow-y-auto vs:overscroll-contain'
+              style={{width: sidebarWidth}}
+            >
+              <React.Suspense fallback={<SidePanelLoading />}>
+                <LazySimulationRadar
+                  size={radarPanelSize}
+                  scene={scene}
+                  selectedEntityIds={selectedEntityIds}
+                  focusAreaId={activePreviewAreaId}
+                  onSelectEntity={handleSelectEntity}
+                />
+                <LazySimulationCameraSidebar
+                  feedTargets={feedTargets}
+                  scene={scene}
+                  focusAreaId={activePreviewAreaId}
+                  columnCount={sidebarColumnCount}
+                />
+              </React.Suspense>
+            </div>
+          </>
         ) : null}
       </div>
     </div>

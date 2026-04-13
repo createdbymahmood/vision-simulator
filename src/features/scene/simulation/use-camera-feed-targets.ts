@@ -8,13 +8,17 @@ import {MAX_CAMERA_FEEDS} from './camera-feed-helpers'
 
 interface UseCameraFeedTargetsInput {
   cameras: CameraEntity[]
+  maxFeeds?: number
 }
 
 const createMutableRef = <T>(): React.MutableRefObject<T | null> => ({
   current: null,
 })
 
-export const useCameraFeedTargets = ({cameras}: UseCameraFeedTargetsInput) => {
+export const useCameraFeedTargets = ({
+  cameras,
+  maxFeeds,
+}: UseCameraFeedTargetsInput) => {
   const containerRefs = React.useRef(
     new Map<string, React.MutableRefObject<HTMLDivElement | null>>(),
   )
@@ -27,10 +31,10 @@ export const useCameraFeedTargets = ({cameras}: UseCameraFeedTargetsInput) => {
     [cameras],
   )
 
-  const targetIds = React.useMemo(
-    () => orderedIds.slice(0, MAX_CAMERA_FEEDS),
-    [orderedIds],
-  )
+  const targetIds = React.useMemo(() => {
+    const limit = typeof maxFeeds === 'number' ? maxFeeds : MAX_CAMERA_FEEDS
+    return orderedIds.slice(0, Math.max(limit, 0))
+  }, [maxFeeds, orderedIds])
 
   return React.useMemo<CameraFeedTarget[]>(
     () =>

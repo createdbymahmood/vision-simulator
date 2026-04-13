@@ -239,6 +239,23 @@ export const RealDeviceFeedPlayer: React.FC<RealDeviceFeedPlayerProps> = ({
 
   useBodyScrollLock(isFullscreen)
 
+  React.useEffect(() => {
+    if (!isFullscreen) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsExpanded(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isFullscreen])
+
   return (
     <div className={wrapperClassName}>
       <div

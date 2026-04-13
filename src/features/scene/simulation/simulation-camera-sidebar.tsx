@@ -19,6 +19,7 @@ interface SimulationCameraSidebarProps {
   scene: SceneRoot
   feedTargets: CameraFeedTarget[]
   focusAreaId?: string
+  columnCount?: number
 }
 
 const LazyCameraFeedTile = React.lazy(async () => {
@@ -82,7 +83,11 @@ const DeferredCameraFeedTile: React.FC<CameraFeedTileProps> = (props) => {
 
 export const SimulationCameraSidebar: React.FC<
   SimulationCameraSidebarProps
-> = ({scene, feedTargets, focusAreaId}) => {
+> = ({scene, feedTargets, focusAreaId, columnCount = 1}) => {
+  const effectiveColumns = Math.max(
+    1,
+    Math.min(columnCount, feedTargets.length || 1),
+  )
   const peopleWorld = useUiStore((state) => state.visionState.peopleWorld)
   const detectionsByCamera = useUiStore(
     (state) => state.visionState.visibleByCameraId,
@@ -130,7 +135,9 @@ export const SimulationCameraSidebar: React.FC<
         </CardHeader>
 
         <CardContent className='vs:px-0'>
-          <div className='vs:grid vs:gap-2'>
+          <div
+            className={`vs:grid vs:gap-2 ${effectiveColumns >= 3 ? 'vs:grid-cols-3' : effectiveColumns === 2 ? 'vs:grid-cols-2' : 'vs:grid-cols-1'}`}
+          >
             {feedTargets.map((target) => {
               const camera = camerasById.get(target.id)
               if (!camera) {
