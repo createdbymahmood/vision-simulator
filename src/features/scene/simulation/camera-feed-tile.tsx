@@ -221,7 +221,7 @@ const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
           </div>
         </CardContent>
 
-        {!isFullscreen ? (
+        {!isFullscreen && !isRealDeviceFeed ? (
           <CardFooter>
             <div className='vs:flex vs:w-full vs:items-center vs:justify-between vs:text-xs vs:text-muted-foreground'>
               <span>{camera.name}</span>
