@@ -29,6 +29,19 @@
   --color-sidebar-accent-foreground: var(--vs-sidebar-accent-foreground);
   --color-sidebar-border: var(--vs-sidebar-border);
   --color-sidebar-ring: var(--vs-sidebar-ring);
+
+  --color-plumWine-25: #e4d2e7;
+  --color-plumWine-50: #d6c2d9;
+  --color-plumWine-100: #c8b2cc;
+  --color-plumWine-200: #baa2be;
+  --color-plumWine-300: #ac92b1;
+  --color-plumWine-400: #917295;
+  --color-plumWine-500: #75527a;
+  --color-plumWine-600: #59325f;
+  --color-plumWine-700: #351e39;
+  --color-plumWine-800: #241426;
+  --color-plumWine-900: #120a13;
+  --color-plumWine-950: #09050a;
 }
 
 :root {
@@ -99,6 +112,13 @@
   --vs-sidebar-accent-foreground: oklch(0.985 0 0);
   --vs-sidebar-border: oklch(1 0 0 / 10%);
   --vs-sidebar-ring: oklch(0.556 0 0);
+}
+
+.brand-modara {
+  --vs-brand-primary: theme(colors.plumWine.600);
+  --vs-brand-primary-alt: theme(colors.plumWine.600);
+  --vs-primary: var(--vs-brand-primary);
+  --vs-primary-foreground: oklch(0.985 0 0);
 }
 
 @keyframes recording-dot-pulse {

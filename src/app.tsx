@@ -1,7 +1,7 @@
 import type {QueryClient} from '@tanstack/react-query'
 
 import {QueryClientProvider} from '@tanstack/react-query'
-import React, {Suspense} from 'react'
+import React, {Suspense, useEffect} from 'react'
 
 import type {VisionSimulatorMode} from '@/features/scene/services/vision-simulator-mode'
 import type {SceneStoreInitialState} from '@/features/scene/state/scene.store'
@@ -24,6 +24,11 @@ import {
 import {HistoryStoreProvider} from '@/features/scene/state/history.store'
 import {SceneStoreProvider} from '@/features/scene/state/scene.store'
 import {UiStoreProvider} from '@/features/scene/state/ui.store'
+import {
+  applyBrandRootClassName,
+  clearBrandRootClassName,
+  getBrandRootClassName,
+} from '@/lib/brand'
 import {get} from '@/lib/lodash-es'
 import {PortalContainerProvider} from '@/lib/portal-container'
 
@@ -174,11 +179,18 @@ export const App: React.FC<AppProps> = ({
   uiOverrides,
 }) => {
   configureDataProvider({apiBaseUrl, accessToken})
+
+  useEffect(() => {
+    applyBrandRootClassName()
+    return () => clearBrandRootClassName()
+  }, [])
+
   const effectiveMode = resolveVisionSimulatorMode(mode)
+  const brandRootClassName = getBrandRootClassName()
 
   return (
     <PortalContainerProvider container={null}>
-      <div className={APP_SURFACE_CLASSNAME}>
+      <div className={`${APP_SURFACE_CLASSNAME} ${brandRootClassName}`}>
         <VisionSimulatorAppShell
           apiWsServiceUrl={apiWsServiceUrl}
           mediaMtxUrl={mediaMtxUrl}
