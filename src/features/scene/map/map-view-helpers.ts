@@ -413,6 +413,7 @@ const buildOcclusionRayAngles = ({
   halfFov,
   depth,
   baseSegments,
+  maxRayCount = MAX_OCCLUSION_RAYS,
   obstacles,
 }: {
   origin: GeoPoint
@@ -420,6 +421,7 @@ const buildOcclusionRayAngles = ({
   halfFov: number
   depth: number
   baseSegments: number
+  maxRayCount?: number
   obstacles: FovOcclusionObstacle[]
 }) => {
   const angleSet = new Set<number>()
@@ -462,13 +464,14 @@ const buildOcclusionRayAngles = ({
   addAngle(angleEnd)
 
   let sorted = [...angleSet].sort((a, b) => a - b)
-  if (sorted.length <= MAX_OCCLUSION_RAYS) {
+  const resolvedMaxRayCount = Math.max(Math.floor(maxRayCount), 3)
+  if (sorted.length <= resolvedMaxRayCount) {
     return sorted
   }
 
   const downsampled: number[] = []
-  const step = (sorted.length - 1) / (MAX_OCCLUSION_RAYS - 1)
-  for (let index = 0; index < MAX_OCCLUSION_RAYS; index += 1) {
+  const step = (sorted.length - 1) / (resolvedMaxRayCount - 1)
+  for (let index = 0; index < resolvedMaxRayCount; index += 1) {
     downsampled.push(sorted[Math.round(index * step)] ?? 0)
   }
   sorted = [...new Set(downsampled)].sort((a, b) => a - b)
@@ -639,6 +642,8 @@ export const buildOccludedFovRing = ({
   area,
   obstacles,
   segments = DEFAULT_FOV_SEGMENTS,
+  maxSegments = MAX_DYNAMIC_FOV_SEGMENTS,
+  maxRayCount = MAX_OCCLUSION_RAYS,
 }: {
   origin: GeoPoint
   direction: number
@@ -648,10 +653,12 @@ export const buildOccludedFovRing = ({
   area?: AreaEntity | null
   obstacles: FovOcclusionObstacle[]
   segments?: number
+  maxSegments?: number
+  maxRayCount?: number
 }) => {
   const halfFov = fov / 2
   const resolvedSegments = Math.min(
-    MAX_DYNAMIC_FOV_SEGMENTS,
+    maxSegments,
     Math.max(segments, MIN_DYNAMIC_FOV_SEGMENTS, Math.ceil(fov * 1.5)),
   )
   const ring: GeoPoint[] = [origin]
@@ -662,6 +669,7 @@ export const buildOccludedFovRing = ({
     halfFov,
     depth,
     baseSegments: resolvedSegments,
+    maxRayCount,
     obstacles,
   })
   const areaBoundary = area

@@ -131,10 +131,12 @@ export const useCameraFeedRenderers = ({
   cameraFeedTargets,
   cameras,
   transformer,
+  paused = false,
 }: {
   cameraFeedTargets?: CameraFeedTarget[]
   cameras: CameraEntity[]
   transformer: CoordinateTransformer
+  paused?: boolean
 }) => {
   const {scene: threeScene} = useThree()
   const camerasById = React.useMemo(
@@ -185,6 +187,9 @@ export const useCameraFeedRenderers = ({
   )
 
   useFrame(({clock}) => {
+    if (paused) {
+      return
+    }
     const targets = cameraFeedTargets ?? []
     if (targets.length === 0) {
       return

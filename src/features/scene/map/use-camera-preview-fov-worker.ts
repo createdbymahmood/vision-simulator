@@ -29,6 +29,7 @@ interface CameraPreviewFovRequest {
 }
 
 interface UseCameraPreviewFovWorkerParams {
+  enabled?: boolean
   areas: AreaEntity[]
   walls: WallEntity[]
   shapes: ShapeEntity[]
@@ -41,6 +42,7 @@ interface UseCameraPreviewFovWorkerResult {
 }
 
 export const useCameraPreviewFovWorker = ({
+  enabled = true,
   areas,
   walls,
   shapes,
@@ -60,7 +62,7 @@ export const useCameraPreviewFovWorker = ({
   }, [onPreviewResult])
 
   React.useEffect(() => {
-    if (typeof Worker === 'undefined') {
+    if (!enabled || typeof Worker === 'undefined') {
       setWorkerReady(false)
       return
     }
@@ -88,13 +90,14 @@ export const useCameraPreviewFovWorker = ({
     return () => {
       workerRef.current = null
       lastStaticRefsRef.current = null
+      setWorkerReady(false)
       worker.terminate()
     }
-  }, [])
+  }, [enabled])
 
   React.useEffect(() => {
     const worker = workerRef.current
-    if (!worker || !workerReady) {
+    if (!enabled || !worker || !workerReady) {
       return
     }
 
@@ -117,12 +120,12 @@ export const useCameraPreviewFovWorker = ({
     }
     worker.postMessage(staticMessage)
     lastStaticRefsRef.current = {areas, walls, shapes}
-  }, [areas, shapes, walls, workerReady])
+  }, [areas, enabled, shapes, walls, workerReady])
 
   const requestPreviewFov = React.useCallback(
     (request: CameraPreviewFovRequest) => {
       const worker = workerRef.current
-      if (!worker || !workerReady) {
+      if (!enabled || !worker || !workerReady) {
         return false
       }
       const previousStaticRefs = lastStaticRefsRef.current
@@ -154,7 +157,7 @@ export const useCameraPreviewFovWorker = ({
       worker.postMessage(computeMessage)
       return true
     },
-    [areas, shapes, walls, workerReady],
+    [areas, enabled, shapes, walls, workerReady],
   )
 
   return {requestPreviewFov, workerReady}

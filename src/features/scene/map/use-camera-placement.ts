@@ -233,6 +233,7 @@ export const useCameraPlacement = ({
   )
 
   const {requestPreviewFov} = useCameraPreviewFovWorker({
+    enabled: isEditMode && activeTool === 'place-camera',
     areas,
     walls,
     shapes,

@@ -8,13 +8,10 @@ import type {
   ShapeEntity,
   WallEntity,
 } from '@/features/scene/types/types'
-import type {
-  CameraFovWorkerComputeMessage,
-  CameraFovWorkerResponse,
-  CameraFovWorkerSetStaticMessage,
-} from '@/features/scene/map/camera-fov-worker-types'
-
-import {buildCameraLayerData} from '@/features/scene/map/map-view-helpers'
+import {
+  buildCameraLayerData,
+  createCameraLayerDataCache,
+} from '@/features/scene/map/map-view-helpers'
 
 interface CameraFovLayerData {
   fovs: FeatureCollection<Polygon>
@@ -33,108 +30,38 @@ const EMPTY_CAMERA_FOV_LAYER_DATA: CameraFovLayerData = {
   directions: {type: 'FeatureCollection', features: []},
 }
 
-const buildMainThreadFovData = ({
-  cameras,
-  areas,
-  walls,
-  shapes,
-}: UseCameraFovWorkerParams): CameraFovLayerData => {
-  const result = buildCameraLayerData(cameras, areas, walls, shapes)
-  return {
-    fovs: result.fovs,
-    directions: result.directions,
-  }
-}
-
 export const useCameraFovWorker = ({
   cameras,
   areas,
   walls,
   shapes,
 }: UseCameraFovWorkerParams): CameraFovLayerData => {
-  const [fovData, setFovData] = React.useState<CameraFovLayerData>(
-    EMPTY_CAMERA_FOV_LAYER_DATA,
-  )
-  const [workerReady, setWorkerReady] = React.useState(false)
-  const workerRef = React.useRef<Worker | null>(null)
-  const latestRequestIdRef = React.useRef(0)
-  const lastStaticRefsRef = React.useRef<{
-    areas: AreaEntity[]
-    walls: WallEntity[]
-    shapes: ShapeEntity[]
-  } | null>(null)
+  const layerDataCacheRef = React.useRef(createCameraLayerDataCache())
+  const deferredCameras = React.useDeferredValue(cameras)
+  const deferredAreas = React.useDeferredValue(areas)
+  const deferredWalls = React.useDeferredValue(walls)
+  const deferredShapes = React.useDeferredValue(shapes)
 
-  React.useEffect(() => {
-    if (typeof Worker === 'undefined') {
-      setWorkerReady(false)
-      return
+  return React.useMemo(() => {
+    if (
+      deferredCameras.length === 0 &&
+      deferredAreas.length === 0 &&
+      deferredWalls.length === 0 &&
+      deferredShapes.length === 0
+    ) {
+      return EMPTY_CAMERA_FOV_LAYER_DATA
     }
 
-    const worker = new Worker(
-      new URL('./camera-fov.worker.js', import.meta.url),
-      {type: 'module'},
+    const result = buildCameraLayerData(
+      deferredCameras,
+      deferredAreas,
+      deferredWalls,
+      deferredShapes,
+      layerDataCacheRef.current,
     )
-    workerRef.current = worker
-    lastStaticRefsRef.current = null
-    setWorkerReady(true)
-
-    worker.onmessage = (event: MessageEvent<CameraFovWorkerResponse>) => {
-      const message = event.data
-      if (message.requestId !== latestRequestIdRef.current) {
-        return
-      }
-      if (message.type !== 'result') {
-        return
-      }
-      setFovData({
-        fovs: message.fovs,
-        directions: message.directions,
-      })
+    return {
+      fovs: result.fovs,
+      directions: result.directions,
     }
-
-    return () => {
-      workerRef.current = null
-      lastStaticRefsRef.current = null
-      worker.terminate()
-    }
-  }, [])
-
-  React.useEffect(() => {
-    const worker = workerRef.current
-
-    if (!worker || !workerReady) {
-      setFovData(buildMainThreadFovData({cameras, areas, walls, shapes}))
-      return
-    }
-
-    const previousStaticRefs = lastStaticRefsRef.current
-    const staticChanged =
-      !previousStaticRefs ||
-      previousStaticRefs.areas !== areas ||
-      previousStaticRefs.walls !== walls ||
-      previousStaticRefs.shapes !== shapes
-
-    if (staticChanged) {
-      const staticMessage: CameraFovWorkerSetStaticMessage = {
-        type: 'set-static',
-        areas,
-        walls,
-        shapes,
-      }
-      worker.postMessage(staticMessage)
-      lastStaticRefsRef.current = {areas, walls, shapes}
-    }
-
-    const requestId = latestRequestIdRef.current + 1
-    latestRequestIdRef.current = requestId
-
-    const computeMessage: CameraFovWorkerComputeMessage = {
-      type: 'compute-fov',
-      requestId,
-      cameras,
-    }
-    worker.postMessage(computeMessage)
-  }, [areas, cameras, shapes, walls, workerReady])
-
-  return fovData
+  }, [deferredAreas, deferredCameras, deferredShapes, deferredWalls])
 }

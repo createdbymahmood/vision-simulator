@@ -620,6 +620,8 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
     (!hideAreaSelection && scene.areas.length > 0)
   const showViewportControls = showPreviewViewportControls && !isCameraGridView
   const showGridViewportControls = isCameraGridView && allowSimulationCameraGrid
+  const isThreeViewportVisible =
+    previewViewMode === '3d' && simulationViewMode === 'scene'
   const isPreviewSurfacePending = isCameraGridView
     ? !isSimulationCanvasReady
     : previewViewMode === '3d'
@@ -753,15 +755,15 @@ export const SimulationAnalysisView: React.FC<SimulationAnalysisViewProps> = ({
               selectedEntityIds={selectedEntityIds}
               editorMode={scene.editorMode}
               focusAreaId={activePreviewAreaId}
+              isViewportVisible={isThreeViewportVisible}
               onCaptureReady={handleCaptureReady}
               onSelectEntity={handleSelectEntity}
               previewViewMode={previewViewMode}
               showMapTexture={scene.editorMode === 'map' && scene.mapVisible}
               className={cn(
-                'vs:h-full vs:w-full',
-                previewViewMode === '2d' || isCameraGridView
-                  ? 'vs:pointer-events-none vs:opacity-0'
-                  : 'vs:opacity-100',
+                isThreeViewportVisible
+                  ? 'vs:h-full vs:w-full'
+                  : 'vs:pointer-events-none vs:absolute vs:left-0 vs:top-0 vs:h-px vs:w-px vs:overflow-hidden vs:opacity-0',
               )}
             />
           </React.Suspense>

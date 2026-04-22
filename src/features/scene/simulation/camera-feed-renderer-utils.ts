@@ -13,8 +13,10 @@ const MIN_CAMERA_NEAR_DISTANCE = 0.1
 export const createFeedRenderer = (canvas: HTMLCanvasElement) => {
   const renderer = new THREE.WebGLRenderer({
     canvas,
-    antialias: false,
+    antialias: true,
     alpha: false,
+    powerPreference: 'high-performance',
+    stencil: false,
   })
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.NoToneMapping

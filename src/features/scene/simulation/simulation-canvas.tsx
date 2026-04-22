@@ -20,8 +20,13 @@ const SimulationCanvasComponent: React.FC<SimulationCanvasProps> = ({
   <Canvas
     camera={{fov: 50, position: [40, 30, 40], near: 0.5, far: 1200}}
     className={className ?? 'vs:h-full vs:w-full'}
-    dpr={[1, 1.5]}
-    gl={{antialias: true, alpha: true, logarithmicDepthBuffer: true}}
+    dpr={[1, 1.25]}
+    gl={{
+      antialias: true,
+      alpha: false,
+      powerPreference: 'high-performance',
+      stencil: false,
+    }}
     onCreated={({gl}) => {
       gl.outputColorSpace = THREE.SRGBColorSpace
       gl.toneMapping = THREE.NoToneMapping

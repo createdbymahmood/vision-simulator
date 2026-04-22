@@ -18,9 +18,9 @@ export const getFeedQualityScale = (feedCount: number) => {
     return 1
   }
   if (feedCount <= 4) {
-    return 0.75
+    return 0.8
   }
-  return 0.5
+  return 0.6
 }
 
 export const getFeedFps = (feedCount: number) => {
@@ -28,7 +28,7 @@ export const getFeedFps = (feedCount: number) => {
     return 24
   }
   if (feedCount <= MAX_CAMERA_FEEDS) {
-    return 20
+    return 18
   }
   return 15
 }

@@ -25,9 +25,11 @@ const MAX_ACCUMULATOR = FIXED_STEP * MAX_STEPS_PER_FRAME
 export const useSimulatedPeople = ({
   scene,
   transformer,
+  paused = false,
 }: {
   scene: SceneRoot
   transformer: CoordinateTransformer
+  paused?: boolean
 }) => {
   const [positions, setPositions] = React.useState<Map<string, THREE.Vector3>>(
     () => new Map(),
@@ -88,7 +90,18 @@ export const useSimulatedPeople = ({
     )
   }, [areaPolygons, scene.people, scene.simulationSeed, transformer])
 
+  React.useEffect(() => {
+    if (!paused) {
+      return
+    }
+    simRef.current.accumulator = 0
+    simRef.current.publishTimer = 0
+  }, [paused])
+
   useFrame((_, delta) => {
+    if (paused) {
+      return
+    }
     const clampedDelta = Math.min(delta, MAX_ACCUMULATOR)
     const state = simRef.current
     state.accumulator = Math.min(

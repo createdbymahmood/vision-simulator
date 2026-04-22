@@ -45,6 +45,11 @@ interface FocusRequest {
   distance: number
 }
 
+const INTERACTION_IDLE_MS = 180
+const INTERACTION_VISION_TICK_INTERVAL = 1 / 8
+const INTERACTION_PIXEL_RATIO_CAP = 1
+const IDLE_PIXEL_RATIO_CAP = 1.25
+
 const getFramedScene = (scene: SceneRoot, focusAreaId?: string): SceneRoot => {
   if (!focusAreaId) {
     return scene
@@ -77,6 +82,7 @@ export interface SimulationSceneProps {
   scene: SceneRoot
   editorMode: EditorMode
   previewViewMode: PreviewViewMode
+  isViewportVisible: boolean
   showMapTexture: boolean
   focusAreaId?: string
   onSelectEntity: (id?: string) => void
@@ -85,13 +91,13 @@ export interface SimulationSceneProps {
   onCaptureReady?: (api: SimulationCaptureApi) => void
 }
 
-const Lights: React.FC = () => (
+const Lights: React.FC<{enableShadows: boolean}> = ({enableShadows}) => (
   <>
     <hemisphereLight args={['#cdeaff', '#e2e8f0', 0.35]} />
     <ambientLight intensity={0.25} />
     <directionalLight
       intensity={0.9}
-      castShadow
+      castShadow={enableShadows}
       color='#f8fafc'
       position={[120, 180, 80]}
       shadow-mapSize-height={1024}
@@ -166,6 +172,7 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   scene,
   editorMode: _editorMode,
   previewViewMode,
+  isViewportVisible,
   showMapTexture,
   focusAreaId,
   onSelectEntity,
@@ -177,6 +184,8 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   const setVisionState = useUiStore((state) => state.setVisionState)
   const mapboxToken = useUiStore((state) => state.mapboxToken)
   const controlsRef = React.useRef<OrbitControlsImpl | null>(null)
+  const interactionStateRef = React.useRef({active: false, lastEventAt: 0})
+  const [isInteracting, setIsInteracting] = React.useState(false)
   const originPoint = React.useMemo(() => {
     const nextScene = getFramedScene(scene, focusAreaId)
     return computeSceneOrigin(nextScene)
@@ -341,11 +350,18 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       ),
     [focusAreaId, scene, transformer],
   )
-  const simulatedPeoplePositions = useSimulatedPeople({scene, transformer})
+  const simulatedPeoplePositions = useSimulatedPeople({
+    scene,
+    transformer,
+    paused: isInteracting,
+  })
   const obstaclesByArea = React.useMemo(
     () => buildObstacleSegmentsByArea(scene, transformer),
     [scene, transformer],
   )
+  const hasFeedTargets = (cameraFeedTargets?.length ?? 0) > 0
+  const shouldRenderWorldScene = isViewportVisible || hasFeedTargets
+  const enableShadows = isViewportVisible && !isInteracting
   const visionFovCacheRef = React.useRef(createCameraVisionFovCache())
   const visionTickInterval = React.useMemo(() => {
     const complexity = Math.max(scene.cameras.length, 1) * scene.people.length
@@ -360,7 +376,18 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     }
     return 1 / 24
   }, [scene.cameras.length, scene.people.length])
+  const effectiveVisionTickInterval = isInteracting
+    ? Math.max(visionTickInterval, INTERACTION_VISION_TICK_INTERVAL)
+    : visionTickInterval
   const lastVisionTick = React.useRef(0)
+  const targetPixelRatio = React.useMemo(() => {
+    const devicePixelRatio =
+      typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1
+    return Math.min(
+      devicePixelRatio,
+      isInteracting ? INTERACTION_PIXEL_RATIO_CAP : IDLE_PIXEL_RATIO_CAP,
+    )
+  }, [isInteracting])
 
   const renderedEntities = React.useMemo(() => {
     if (simulatedPeoplePositions.size === 0) {
@@ -465,6 +492,14 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   const requestFocus = useCallbackRef((point: THREE.Vector3, distance = 10) => {
     setFocusRequest({point, distance})
   })
+  const markInteractionActive = useCallbackRef(() => {
+    interactionStateRef.current.lastEventAt = performance.now()
+    if (interactionStateRef.current.active) {
+      return
+    }
+    interactionStateRef.current.active = true
+    setIsInteracting(true)
+  })
 
   React.useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {
@@ -475,10 +510,23 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   }, [camera, size.height, size.width])
 
   React.useEffect(() => {
+    if (!size.width || !size.height) {
+      return
+    }
+    gl.setPixelRatio(targetPixelRatio)
+    gl.setSize(size.width, size.height, false)
+  }, [gl, size.height, size.width, targetPixelRatio])
+
+  React.useEffect(() => {
     if (camera instanceof THREE.Camera) {
       camera.layers.enable(DEBUG_LAYER)
     }
   }, [camera])
+
+  React.useEffect(() => {
+    gl.shadowMap.enabled = enableShadows
+    gl.shadowMap.needsUpdate = true
+  }, [enableShadows, gl])
 
   React.useEffect(() => {
     if (!controlsRef.current) {
@@ -505,8 +553,25 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
     controlsRef.current.update()
   }, [bounds])
 
+  useFrame(() => {
+    if (!interactionStateRef.current.active) {
+      return
+    }
+    if (
+      performance.now() - interactionStateRef.current.lastEventAt <
+      INTERACTION_IDLE_MS
+    ) {
+      return
+    }
+    interactionStateRef.current.active = false
+    setIsInteracting(false)
+  })
+
   useFrame(({clock}) => {
-    if (clock.elapsedTime - lastVisionTick.current < visionTickInterval) {
+    if (
+      clock.elapsedTime - lastVisionTick.current <
+      effectiveVisionTickInterval
+    ) {
       return
     }
     lastVisionTick.current = clock.elapsedTime
@@ -524,61 +589,76 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
   useCameraFeedRenderers({
     cameraFeedTargets,
     cameras: scene.cameras,
+    paused: isInteracting,
     transformer,
   })
 
   return (
     <>
-      {previewViewMode === '3d' ? (
+      {previewViewMode === '3d' && isViewportVisible ? (
         <RealRadarSubscriptionBridge scene={scene} focusAreaId={focusAreaId} />
       ) : null}
-      <color args={['#E0F2FE']} attach='background' />
-      <fog args={['#E0F2FE', 150, 1200]} attach='fog' />
-      <Lights />
-      <GroundPlane
-        gridPlaneSize={gridPlaneSize}
-        gridTexture={gridTexture}
-        isStaticMap={Boolean(staticMapTexture && isStaticMapReady)}
-        mapPlaneSize={mapPlaneSize}
-        mapTexture={staticMapTexture ?? fallbackMapTexture}
-        showMapTexture={showMapTexture}
-      />
+      {shouldRenderWorldScene ? (
+        <>
+          <color args={['#E0F2FE']} attach='background' />
+          <fog args={['#E0F2FE', 150, 1200]} attach='fog' />
+          <Lights enableShadows={enableShadows} />
+          <GroundPlane
+            gridPlaneSize={gridPlaneSize}
+            gridTexture={gridTexture}
+            isStaticMap={Boolean(staticMapTexture && isStaticMapReady)}
+            mapPlaneSize={mapPlaneSize}
+            mapTexture={staticMapTexture ?? fallbackMapTexture}
+            showMapTexture={showMapTexture}
+          />
 
-      <EntitiesMesh
-        entities={visibleEntities}
-        selectedEntityIds={selectedEntityIds}
-        onFocus={requestFocus}
-        onSelectEntity={onSelectEntity}
-        showCameraFrustums={false}
-      />
-      {previewViewMode === '3d' ? (
+          <EntitiesMesh
+            entities={visibleEntities}
+            selectedEntityIds={selectedEntityIds}
+            onFocus={requestFocus}
+            onSelectEntity={onSelectEntity}
+            showCameraFrustums={false}
+          />
+        </>
+      ) : null}
+      {previewViewMode === '3d' && isViewportVisible ? (
         <LiveRadarDetectionsMesh
           scene={scene}
           focusAreaId={focusAreaId}
           transformer={transformer}
         />
       ) : null}
-      <PersonTrail
-        positions={visibleSimulatedPeoplePositions}
-        selectedPersonId={selectedPersonId}
-      />
-      {collisionCameras.length > 0 ? (
+      {isViewportVisible && !isInteracting ? (
+        <PersonTrail
+          positions={visibleSimulatedPeoplePositions}
+          selectedPersonId={selectedPersonId}
+        />
+      ) : null}
+      {isViewportVisible && collisionCameras.length > 0 ? (
         <CameraFovFootprints
           cameras={collisionCameras}
+          quality='full'
           scene={scene}
           transformer={transformer}
         />
       ) : null}
 
-      <OrbitControls
-        enableDamping
-        maxDistance={500}
-        minDistance={5}
-        ref={controlsRef}
-        target={[0, 0, 0]}
-        dampingFactor={0.08}
-      />
-      <FocusController request={focusRequest} controlsRef={controlsRef} />
+      {isViewportVisible ? (
+        <>
+          <OrbitControls
+            enableDamping
+            maxDistance={500}
+            minDistance={5}
+            ref={controlsRef}
+            target={[0, 0, 0]}
+            dampingFactor={0.08}
+            onChange={markInteractionActive}
+            onStart={markInteractionActive}
+            onEnd={markInteractionActive}
+          />
+          <FocusController request={focusRequest} controlsRef={controlsRef} />
+        </>
+      ) : null}
     </>
   )
 }
