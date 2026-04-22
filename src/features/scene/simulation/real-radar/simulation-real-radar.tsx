@@ -26,7 +26,6 @@ import type {
   DetectionState,
 } from './real-radar-types'
 
-import {RealDeviceFeedPlayer} from '../real-device-feed-player'
 import {SimulationRealRadarActivities} from '../simulation-real-radar-activities'
 import {
   createCameraMarkerElement,
@@ -599,14 +598,9 @@ export const SimulationRealRadar: React.FC<SimulationRealRadarProps> = ({
             </DialogTitle>
           </DialogHeader>
           <div className='vs:h-[540px]'>
-            {selectedCamera ? (
-              <RealDeviceFeedPlayer
-                camera={selectedCamera}
-                allowFullscreen={false}
-                autoPlay
-                showControls
-              />
-            ) : null}
+            <div className='vs:flex vs:h-full vs:items-center vs:justify-center vs:text-sm vs:text-muted-foreground'>
+              Live streams are not available in local-only mode.
+            </div>
           </div>
         </DialogContent>
       </Dialog>
