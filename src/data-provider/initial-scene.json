@@ -1,0 +1,868 @@
+{
+  "version": "1.1",
+  "editorMode": "map",
+  "mapVisible": true,
+  "units": "meters",
+  "origin": {
+    "lat": 0,
+    "lng": 0,
+    "description": "Geographic reference point"
+  },
+  "simulationSeed": 1776844029733,
+  "activeAreaId": "area-2",
+  "areas": [
+    {
+      "id": "area-2",
+      "type": "area",
+      "name": "area-2",
+      "geometry": {
+        "type": "polygon",
+        "coordinates": [
+          [
+            -118.26911917382097,
+            34.05696808821067
+          ],
+          [
+            -118.26963458783469,
+            34.05618982301077
+          ],
+          [
+            -118.26786389130422,
+            34.05535989516888
+          ],
+          [
+            -118.26728612882127,
+            34.05621737234371
+          ],
+          [
+            -118.26911917382097,
+            34.05696808821067
+          ]
+        ],
+        "bezierControls": []
+      },
+      "pointCount": 4,
+      "color": "#FF6B6B",
+      "style": {
+        "fillColor": "#FF6B6B",
+        "fillOpacity": 0.12,
+        "borderColor": "#FF6B6B",
+        "borderWidth": 2
+      }
+    }
+  ],
+  "walls": [
+    {
+      "id": "wall-1",
+      "type": "wall",
+      "areaId": "area-2",
+      "points": [
+        [
+          -118.26949508743203,
+          34.056193543569094
+        ],
+        [
+          -118.26929069466928,
+          34.056503627825705
+        ],
+        [
+          -118.26894384634454,
+          34.056350418488336
+        ],
+        [
+          -118.26886332798331,
+          34.05646550878164
+        ],
+        [
+          -118.26891730182997,
+          34.05648969971554
+        ],
+        [
+          -118.26887040652079,
+          34.05655860718511
+        ],
+        [
+          -118.26916557567682,
+          34.056692931900756
+        ],
+        [
+          -118.26911895117661,
+          34.0567635107799
+        ],
+        [
+          -118.26913046339897,
+          34.05676732585242
+        ],
+        [
+          -118.26909304867648,
+          34.056826459459785
+        ],
+        [
+          -118.2690567851763,
+          34.05683599713463
+        ],
+        [
+          -118.26853166835517,
+          34.05661379174457
+        ],
+        [
+          -118.26854273246705,
+          34.056596153277155
+        ],
+        [
+          -118.26820905047472,
+          34.05645459800277
+        ],
+        [
+          -118.26842042680757,
+          34.056157021119375
+        ],
+        [
+          -118.26874861637704,
+          34.05630317626769
+        ],
+        [
+          -118.26876848257365,
+          34.056268941750986
+        ],
+        [
+          -118.26848074581734,
+          34.05613681304047
+        ],
+        [
+          -118.26868535207785,
+          34.055825638913845
+        ],
+        [
+          -118.26949535013797,
+          34.05619384614103
+        ]
+      ],
+      "thickness": 0.2,
+      "height": 3.4,
+      "color": "#a1595f"
+    }
+  ],
+  "shapes": [],
+  "cameras": [
+    {
+      "id": "camera-1",
+      "type": "camera",
+      "name": "Wide 4K",
+      "areaId": "area-2",
+      "sourceDeviceId": "virtual-wide-4k",
+      "sourceDeviceName": "Wide 4K",
+      "sourceDeviceKind": "virtual",
+      "x": -118.26868768481282,
+      "y": 34.055833679363886,
+      "height": 3.2,
+      "fovHorizontal": 120,
+      "fovVertical": 88.50715548032275,
+      "depth": 18,
+      "zoom": 1,
+      "resolution": {
+        "width": 3840,
+        "height": 2160
+      },
+      "color": "#FF6B6B",
+      "sourceDeviceFeatures": [
+        {
+          "field": "camera_fov_horizontal",
+          "label": "horizontal fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "120"
+        },
+        {
+          "field": "camera_fov_vertical",
+          "label": "vertical fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "88.50715548032275"
+        },
+        {
+          "field": "camera_resolution_width",
+          "label": "resolution width",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "3840"
+        },
+        {
+          "field": "camera_resolution_height",
+          "label": "resolution height",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "2160"
+        },
+        {
+          "field": "camera_zoom_optical_value",
+          "label": "optical zoom",
+          "path": "camera_zoom_optical",
+          "unit": "x",
+          "value": "1"
+        },
+        {
+          "field": "camera_depth",
+          "label": "depth",
+          "path": "camera_depth",
+          "unit": "m",
+          "value": "18"
+        },
+        {
+          "field": "camera_height",
+          "label": "height",
+          "path": "camera_mount",
+          "unit": "m",
+          "value": "3.2"
+        },
+        {
+          "field": "camera_model",
+          "label": "model",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Wide 4K"
+        },
+        {
+          "field": "camera_manufacturer",
+          "label": "manufacturer",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Virtual"
+        },
+        {
+          "field": "camera_virtual_id",
+          "label": "virtual id",
+          "path": "camera_virtual",
+          "unit": "string",
+          "value": "virtual-wide-4k"
+        }
+      ],
+      "ptz": {
+        "pan": 345,
+        "tilt": 0,
+        "zoom": 1,
+        "limits": {
+          "panMin": 0,
+          "panMax": 360,
+          "tiltMin": -45,
+          "tiltMax": 90,
+          "zoomMin": 1,
+          "zoomMax": 10
+        }
+      }
+    },
+    {
+      "id": "camera-2",
+      "type": "camera",
+      "name": "PTZ Pro",
+      "areaId": "area-2",
+      "sourceDeviceId": "virtual-ptz-pro",
+      "sourceDeviceName": "PTZ Pro",
+      "sourceDeviceKind": "virtual",
+      "x": -118.26947824650519,
+      "y": 34.05619802083707,
+      "height": 3.2,
+      "fovHorizontal": 180,
+      "fovVertical": 33,
+      "depth": 40,
+      "zoom": 4,
+      "resolution": {
+        "width": 2688,
+        "height": 1520
+      },
+      "color": "#4ECDC4",
+      "sourceDeviceFeatures": [
+        {
+          "field": "camera_fov_horizontal",
+          "label": "horizontal fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "80"
+        },
+        {
+          "field": "camera_fov_vertical",
+          "label": "vertical fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "50.76782432289487"
+        },
+        {
+          "field": "camera_resolution_width",
+          "label": "resolution width",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "2688"
+        },
+        {
+          "field": "camera_resolution_height",
+          "label": "resolution height",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "1520"
+        },
+        {
+          "field": "camera_zoom_optical_value",
+          "label": "optical zoom",
+          "path": "camera_zoom_optical",
+          "unit": "x",
+          "value": "4"
+        },
+        {
+          "field": "camera_depth",
+          "label": "depth",
+          "path": "camera_depth",
+          "unit": "m",
+          "value": "40"
+        },
+        {
+          "field": "camera_height",
+          "label": "height",
+          "path": "camera_mount",
+          "unit": "m",
+          "value": "3.2"
+        },
+        {
+          "field": "camera_model",
+          "label": "model",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "PTZ Pro"
+        },
+        {
+          "field": "camera_manufacturer",
+          "label": "manufacturer",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Virtual"
+        },
+        {
+          "field": "camera_virtual_id",
+          "label": "virtual id",
+          "path": "camera_virtual",
+          "unit": "string",
+          "value": "virtual-ptz-pro"
+        }
+      ],
+      "ptz": {
+        "pan": 80,
+        "tilt": 0,
+        "zoom": 4,
+        "limits": {
+          "panMin": 0,
+          "panMax": 360,
+          "tiltMin": -45,
+          "tiltMax": 90,
+          "zoomMin": 1,
+          "zoomMax": 10
+        }
+      }
+    },
+    {
+      "id": "camera-3",
+      "type": "camera",
+      "name": "Panoramic",
+      "areaId": "area-2",
+      "sourceDeviceId": "virtual-panoramic",
+      "sourceDeviceName": "Panoramic",
+      "sourceDeviceKind": "virtual",
+      "x": -118.26832087900458,
+      "y": 34.05630578321947,
+      "height": 3,
+      "fovHorizontal": 180,
+      "fovVertical": 178.22231971097366,
+      "depth": 22,
+      "zoom": 1,
+      "resolution": {
+        "width": 1920,
+        "height": 1080
+      },
+      "color": "#45B7D1",
+      "sourceDeviceFeatures": [
+        {
+          "field": "camera_fov_horizontal",
+          "label": "horizontal fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "180"
+        },
+        {
+          "field": "camera_fov_vertical",
+          "label": "vertical fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "178.22231971097366"
+        },
+        {
+          "field": "camera_resolution_width",
+          "label": "resolution width",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "1920"
+        },
+        {
+          "field": "camera_resolution_height",
+          "label": "resolution height",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "1080"
+        },
+        {
+          "field": "camera_zoom_optical_value",
+          "label": "optical zoom",
+          "path": "camera_zoom_optical",
+          "unit": "x",
+          "value": "1"
+        },
+        {
+          "field": "camera_depth",
+          "label": "depth",
+          "path": "camera_depth",
+          "unit": "m",
+          "value": "22"
+        },
+        {
+          "field": "camera_height",
+          "label": "height",
+          "path": "camera_mount",
+          "unit": "m",
+          "value": "3"
+        },
+        {
+          "field": "camera_model",
+          "label": "model",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Panoramic"
+        },
+        {
+          "field": "camera_manufacturer",
+          "label": "manufacturer",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Virtual"
+        },
+        {
+          "field": "camera_virtual_id",
+          "label": "virtual id",
+          "path": "camera_virtual",
+          "unit": "string",
+          "value": "virtual-panoramic"
+        }
+      ],
+      "ptz": {
+        "pan": 300,
+        "tilt": 0,
+        "zoom": 1,
+        "limits": {
+          "panMin": 0,
+          "panMax": 360,
+          "tiltMin": -45,
+          "tiltMax": 90,
+          "zoomMin": 1,
+          "zoomMax": 10
+        }
+      }
+    },
+    {
+      "id": "camera-4",
+      "type": "camera",
+      "name": "Wide 4K",
+      "areaId": "area-2",
+      "sourceDeviceId": "virtual-wide-4k",
+      "sourceDeviceName": "Wide 4K",
+      "sourceDeviceKind": "virtual",
+      "x": -118.26928589959228,
+      "y": 34.05648468443154,
+      "height": 3.2,
+      "fovHorizontal": 120,
+      "fovVertical": 88.50715548032275,
+      "depth": 57,
+      "zoom": 1,
+      "resolution": {
+        "width": 3840,
+        "height": 2160
+      },
+      "color": "#FFA07A",
+      "sourceDeviceFeatures": [
+        {
+          "field": "camera_fov_horizontal",
+          "label": "horizontal fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "120"
+        },
+        {
+          "field": "camera_fov_vertical",
+          "label": "vertical fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "88.50715548032275"
+        },
+        {
+          "field": "camera_resolution_width",
+          "label": "resolution width",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "3840"
+        },
+        {
+          "field": "camera_resolution_height",
+          "label": "resolution height",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "2160"
+        },
+        {
+          "field": "camera_zoom_optical_value",
+          "label": "optical zoom",
+          "path": "camera_zoom_optical",
+          "unit": "x",
+          "value": "1"
+        },
+        {
+          "field": "camera_depth",
+          "label": "depth",
+          "path": "camera_depth",
+          "unit": "m",
+          "value": "18"
+        },
+        {
+          "field": "camera_height",
+          "label": "height",
+          "path": "camera_mount",
+          "unit": "m",
+          "value": "3.2"
+        },
+        {
+          "field": "camera_model",
+          "label": "model",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Wide 4K"
+        },
+        {
+          "field": "camera_manufacturer",
+          "label": "manufacturer",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Virtual"
+        },
+        {
+          "field": "camera_virtual_id",
+          "label": "virtual id",
+          "path": "camera_virtual",
+          "unit": "string",
+          "value": "virtual-wide-4k"
+        }
+      ],
+      "ptz": {
+        "pan": 160,
+        "tilt": 0,
+        "zoom": 1,
+        "limits": {
+          "panMin": 0,
+          "panMax": 360,
+          "tiltMin": -45,
+          "tiltMax": 90,
+          "zoomMin": 1,
+          "zoomMax": 10
+        }
+      }
+    },
+    {
+      "id": "camera-5",
+      "type": "camera",
+      "name": "Wide 4K",
+      "areaId": "area-2",
+      "sourceDeviceId": "virtual-wide-4k",
+      "sourceDeviceName": "Wide 4K",
+      "sourceDeviceKind": "virtual",
+      "x": -118.26907297143963,
+      "y": 34.05682132897316,
+      "height": 3.2,
+      "fovHorizontal": 120,
+      "fovVertical": 88.50715548032275,
+      "depth": 46,
+      "zoom": 1,
+      "resolution": {
+        "width": 3840,
+        "height": 2160
+      },
+      "color": "#98D8C8",
+      "sourceDeviceFeatures": [
+        {
+          "field": "camera_fov_horizontal",
+          "label": "horizontal fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "120"
+        },
+        {
+          "field": "camera_fov_vertical",
+          "label": "vertical fov",
+          "path": "camera_fov",
+          "unit": "°",
+          "value": "88.50715548032275"
+        },
+        {
+          "field": "camera_resolution_width",
+          "label": "resolution width",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "3840"
+        },
+        {
+          "field": "camera_resolution_height",
+          "label": "resolution height",
+          "path": "camera_resolution",
+          "unit": "px",
+          "value": "2160"
+        },
+        {
+          "field": "camera_zoom_optical_value",
+          "label": "optical zoom",
+          "path": "camera_zoom_optical",
+          "unit": "x",
+          "value": "1"
+        },
+        {
+          "field": "camera_depth",
+          "label": "depth",
+          "path": "camera_depth",
+          "unit": "m",
+          "value": "18"
+        },
+        {
+          "field": "camera_height",
+          "label": "height",
+          "path": "camera_mount",
+          "unit": "m",
+          "value": "3.2"
+        },
+        {
+          "field": "camera_model",
+          "label": "model",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Wide 4K"
+        },
+        {
+          "field": "camera_manufacturer",
+          "label": "manufacturer",
+          "path": "camera_system_info",
+          "unit": "string",
+          "value": "Virtual"
+        },
+        {
+          "field": "camera_virtual_id",
+          "label": "virtual id",
+          "path": "camera_virtual",
+          "unit": "string",
+          "value": "virtual-wide-4k"
+        }
+      ],
+      "ptz": {
+        "pan": 150,
+        "tilt": 0,
+        "zoom": 1,
+        "limits": {
+          "panMin": 0,
+          "panMax": 360,
+          "tiltMin": -45,
+          "tiltMax": 90,
+          "zoomMin": 1,
+          "zoomMax": 10
+        }
+      }
+    }
+  ],
+  "people": [
+    {
+      "id": "person-1",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26939861112693,
+      "y": 34.056201319687716,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-2",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.2692937578787,
+      "y": 34.05620791738805,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-3",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26920748621842,
+      "y": 34.05629258783274,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-4",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26874825553594,
+      "y": 34.0559143192159,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-5",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26871640138438,
+      "y": 34.05589782490662,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-6",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.2686686201577,
+      "y": 34.0559682006042,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-7",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26844962286683,
+      "y": 34.056285990139045,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-8",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.2684031688961,
+      "y": 34.05643993619776,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-9",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.2685186401947,
+      "y": 34.056386055109314,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-10",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26842175048404,
+      "y": 34.05633217398588,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-11",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26898070257323,
+      "y": 34.05622007206084,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-12",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26922024674525,
+      "y": 34.056406770873764,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-13",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26887068969424,
+      "y": 34.056198020992596,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-14",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26903748341414,
+      "y": 34.05607894512575,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-15",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26901619059873,
+      "y": 34.05671254441948,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-16",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26887956170069,
+      "y": 34.0566375712005,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-17",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26875357921021,
+      "y": 34.05665080177344,
+      "height": 1.7,
+      "speed": 1.2
+    },
+    {
+      "id": "person-18",
+      "type": "person",
+      "name": "Person",
+      "areaId": "area-2",
+      "x": -118.26896473296176,
+      "y": 34.05673165522947,
+      "height": 1.7,
+      "speed": 1.2
+    }
+  ],
+  "meta": {
+    "createdAt": "2026-04-22T07:47:09.733Z",
+    "updatedAt": "2026-04-22T08:00:20.773Z",
+    "mapStyle": "street",
+    "radarEnabled": false,
+    "collisionVisualizationEnabled": false
+  }
+}

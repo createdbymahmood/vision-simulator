@@ -6,10 +6,6 @@ import {toast} from 'sonner'
 import type {SceneRoot} from '@/features/scene/types/types'
 import type {UnsavedChangesOptions} from '@/features/scene/types/leave-guard/types'
 
-import {uploadFile} from '@/data-provider/api/services/v2/file'
-import {updateVision} from '@/data-provider/api/services/v2/vision-simulator'
-import {createSnapshotFilename} from '@/features/scene/utils/scene-export'
-
 import {useSceneDirtyState} from './use-scene-dirty-state'
 
 interface UseEditorUnsavedChangesGuardParams {
@@ -64,30 +60,6 @@ interface UseManualAnchorNavigationBlockerParams {
 const DEFAULT_DIALOG_TITLE = 'Unsaved changes'
 const DEFAULT_DIALOG_DESCRIPTION =
   'You have unsaved changes. Do you want to save before leaving?'
-
-const createSnapshotUploadBlob = (snapshotBlob: Blob) => {
-  const defaultFilename = createSnapshotFilename()
-  const filename =
-    snapshotBlob.type === 'image/jpeg'
-      ? defaultFilename.replace(/\.png$/i, '.jpg')
-      : defaultFilename
-
-  if (typeof File === 'undefined') {
-    return snapshotBlob
-  }
-
-  return new File([snapshotBlob], filename, {
-    type: snapshotBlob.type || 'image/png',
-  })
-}
-
-const resolveSaveErrorMessage = (error: unknown) => {
-  if (error instanceof Error && /snapshot/i.test(error.message)) {
-    return error.message
-  }
-
-  return 'Failed to save scene'
-}
 
 const useOptionalRouteBlocker = (enabled: boolean, isDirty: boolean) => {
   try {
@@ -208,11 +180,13 @@ const useManualAnchorNavigationBlocker = ({
 }
 
 export const useEditorUnsavedChangesGuard = ({
-  captureSnapshot,
+  captureSnapshot: _captureSnapshot,
   scene,
-  visionSimulatorId,
+  visionSimulatorId: _visionSimulatorId,
   unsavedChanges,
 }: UseEditorUnsavedChangesGuardParams) => {
+  void _captureSnapshot
+  void _visionSimulatorId
   const [saveLoading, setSaveLoading] = React.useState(false)
   const [leaveDialogSaving, setLeaveDialogSaving] = React.useState(false)
   const isSavingRef = React.useRef(false)
@@ -263,27 +237,12 @@ export const useEditorUnsavedChangesGuard = ({
     setSavingState(true)
 
     try {
-      const snapshotBlob = await captureSnapshot(sceneToSave)
-      const snapshotUploadBlob = createSnapshotUploadBlob(snapshotBlob)
-      const uploadResponse = await uploadFile({file: snapshotUploadBlob})
-      const snapshotFileKey = uploadResponse?.fileKey
-
-      if (!snapshotFileKey) {
-        throw new Error('Failed to upload snapshot: missing file key')
-      }
-
-      await updateVision(visionSimulatorId, {
-        snapshot: snapshotFileKey,
-        vision: {
-          data: sceneToSave,
-        },
-      })
-
       markSaved(saveSnapshot)
-      toast.success('Scene saved')
+      toast.success('Scene saved locally')
       return true
     } catch (error) {
-      toast.error(resolveSaveErrorMessage(error))
+      void error
+      toast.error('Failed to save scene')
       return false
     } finally {
       setSavingState(false)

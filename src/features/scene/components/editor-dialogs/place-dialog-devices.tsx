@@ -1,13 +1,10 @@
-import type {DevicePopulate} from '@/data-provider/api/services/v2/api.schemas'
 import type {
   CameraOptics,
   CameraPlacementProfile,
   CameraSourceFeature,
 } from '@/features/scene/types/types'
 
-import {DeviceUpdateDtoType} from '@/data-provider/api/services/v2/api.schemas'
 import {createDefaultCameraOptics} from '@/features/scene/services/camera-optics'
-import {createCameraPlacementProfileFromDevice} from '@/features/scene/utils/camera-device-features'
 
 export interface PlaceDeviceOption {
   id: string
@@ -221,18 +218,3 @@ const VIRTUAL_PLACE_DEVICE_OPTIONS: PlaceDeviceOption[] =
   })
 
 export const getVirtualPlaceDeviceOptions = () => VIRTUAL_PLACE_DEVICE_OPTIONS
-
-export const getRealPlaceDeviceOptions = (
-  devices: DevicePopulate[],
-): PlaceDeviceOption[] =>
-  devices
-    .filter((device) => device.type === DeviceUpdateDtoType.ipCamera)
-    .map((device, index) => {
-      const profile = createCameraPlacementProfileFromDevice(device)
-      return toPlaceDeviceOption({
-        id: device.id ?? device.deviceId ?? `ip-camera-${index}`,
-        name: device.name ?? device.deviceId ?? `IP Camera ${index + 1}`,
-        description: device.description ?? 'IP camera',
-        profile,
-      })
-    })

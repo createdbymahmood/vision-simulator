@@ -1,6 +1,7 @@
 import type {StateCreator, StoreApi} from 'zustand'
 
 import {produce} from 'immer'
+import {persist} from 'zustand/middleware'
 
 import type {
   CameraPlacementProfile,
@@ -10,6 +11,7 @@ import type {
 } from '@/features/scene/types/types'
 
 import {createZustandContextStore} from '@/components/shared/zustand'
+import {jsonLocalStorage} from '@/lib/zustand-persist'
 
 export type EditorTool =
   | 'draw-area'
@@ -163,6 +165,10 @@ export interface UiState {
 
 type SetState = StoreApi<UiState>['setState']
 type GetState = StoreApi<UiState>['getState']
+
+export type UiStoreInitialState = Partial<UiState> & {
+  persistKey?: string
+}
 
 const setViewMode = (set: SetState, get: GetState, mode: ViewMode) => {
   const nextValue = produce<UiState>((state) => {
@@ -531,56 +537,80 @@ const triggerFlyToActiveArea = (set: SetState, get: GetState) => {
 }
 
 const createUiStore: (
-  initialValues: Partial<UiState>,
-) => StateCreator<UiState> = (initialValues) => (set, get) => ({
-  ...mergeUiState(initialValues),
-  setViewMode: (mode) => setViewMode(set, get, mode),
-  toggleViewMode: () => toggleViewMode(set, get),
-  setPreviewViewMode: (mode) => setPreviewViewMode(set, get, mode),
-  togglePreviewViewMode: () => togglePreviewViewMode(set, get),
-  setSimulationViewMode: (mode) => setSimulationViewMode(set, get, mode),
-  toggleSimulationViewMode: () => toggleSimulationViewMode(set, get),
-  setActiveTool: (tool) => setActiveTool(set, get, tool),
-  setEditMode: (enabled) => setEditMode(set, get, enabled),
-  toggleEditMode: () => toggleEditMode(set, get),
-  openPanel: (panel) => openPanel(set, get, panel),
-  closePanel: (panel) => closePanel(set, get, panel),
-  togglePanel: (panel) => togglePanel(set, get, panel),
-  setPopoverState: (popoverId, isOpen) =>
-    setPopoverState(set, get, popoverId, isOpen),
-  closeAllPanels: () => closeAllPanels(set, get),
-  closeAllPopovers: () => closeAllPopovers(set, get),
-  setCameraPlacement: (profile, color) => {
-    const nextValue = produce<UiState>((state) => {
-      state.cameraPlacement = {profile, color}
-    })
-    set(nextValue)
-    return get().cameraPlacement
-  },
-  clearCameraPlacement: () => {
-    const nextValue = produce<UiState>((state) => {
-      state.cameraPlacement = {profile: null, color: null}
-    })
-    set(nextValue)
-    return get().cameraPlacement
-  },
-  triggerFlyToActiveArea: () => triggerFlyToActiveArea(set, get),
-  setRadarSettings: (settings) => setRadarSettings(set, get, settings),
-  setVisionState: (state) => setVisionState(set, get, state),
-  setLiveRadarCameraState: (cameraId, cameraState) =>
-    setLiveRadarCameraState(set, get, cameraId, cameraState),
-  setLiveRadarDetectionState: (detectionId, detectionState) =>
-    setLiveRadarDetectionState(set, get, detectionId, detectionState),
-  removeLiveRadarDetectionState: (detectionId) =>
-    removeLiveRadarDetectionState(set, get, detectionId),
-  setLiveRadarUpdatesByTracker: (updatesByTracker) =>
-    setLiveRadarUpdatesByTracker(set, get, updatesByTracker),
-  clearLiveRadarState: () => clearLiveRadarState(set, get),
-  resetUi: () => resetUi(set, get),
-})
+  initialValues: UiStoreInitialState,
+) => StateCreator<UiState, any, any> = (initialValues) => {
+  const {persistKey: _persistKey, ...restInitialValues} = initialValues
+  const persistKey = initialValues.persistKey ?? 'vision-simulator:ui'
+
+  return persist(
+    (set, get) => ({
+      ...mergeUiState(restInitialValues),
+      setViewMode: (mode) => setViewMode(set, get, mode),
+      toggleViewMode: () => toggleViewMode(set, get),
+      setPreviewViewMode: (mode) => setPreviewViewMode(set, get, mode),
+      togglePreviewViewMode: () => togglePreviewViewMode(set, get),
+      setSimulationViewMode: (mode) => setSimulationViewMode(set, get, mode),
+      toggleSimulationViewMode: () => toggleSimulationViewMode(set, get),
+      setActiveTool: (tool) => setActiveTool(set, get, tool),
+      setEditMode: (enabled) => setEditMode(set, get, enabled),
+      toggleEditMode: () => toggleEditMode(set, get),
+      openPanel: (panel) => openPanel(set, get, panel),
+      closePanel: (panel) => closePanel(set, get, panel),
+      togglePanel: (panel) => togglePanel(set, get, panel),
+      setPopoverState: (popoverId, isOpen) =>
+        setPopoverState(set, get, popoverId, isOpen),
+      closeAllPanels: () => closeAllPanels(set, get),
+      closeAllPopovers: () => closeAllPopovers(set, get),
+      setCameraPlacement: (profile, color) => {
+        const nextValue = produce<UiState>((state) => {
+          state.cameraPlacement = {profile, color}
+        })
+        set(nextValue)
+        return get().cameraPlacement
+      },
+      clearCameraPlacement: () => {
+        const nextValue = produce<UiState>((state) => {
+          state.cameraPlacement = {profile: null, color: null}
+        })
+        set(nextValue)
+        return get().cameraPlacement
+      },
+      triggerFlyToActiveArea: () => triggerFlyToActiveArea(set, get),
+      setRadarSettings: (settings) => setRadarSettings(set, get, settings),
+      setVisionState: (state) => setVisionState(set, get, state),
+      setLiveRadarCameraState: (cameraId, cameraState) =>
+        setLiveRadarCameraState(set, get, cameraId, cameraState),
+      setLiveRadarDetectionState: (detectionId, detectionState) =>
+        setLiveRadarDetectionState(set, get, detectionId, detectionState),
+      removeLiveRadarDetectionState: (detectionId) =>
+        removeLiveRadarDetectionState(set, get, detectionId),
+      setLiveRadarUpdatesByTracker: (updatesByTracker) =>
+        setLiveRadarUpdatesByTracker(set, get, updatesByTracker),
+      clearLiveRadarState: () => clearLiveRadarState(set, get),
+      resetUi: () => resetUi(set, get),
+    }),
+    {
+      name: persistKey,
+      storage: jsonLocalStorage,
+      version: 1,
+      partialize: (state) => ({
+        viewMode: state.viewMode,
+        previewViewMode: state.previewViewMode,
+        simulationViewMode: state.simulationViewMode,
+        activeTool: state.activeTool,
+        isEditMode: state.isEditMode,
+        openPanels: state.openPanels,
+        openPopovers: state.openPopovers,
+        mapboxToken: state.mapboxToken,
+        cameraPlacement: state.cameraPlacement,
+        radarSettings: state.radarSettings,
+      }),
+    },
+  )
+}
 
 export const {
   Provider: UiStoreProvider,
   useStore: useUiStore,
   getState: getUiStore,
-} = createZustandContextStore<UiState, Partial<UiState>>(createUiStore)
+} = createZustandContextStore<UiState, UiStoreInitialState>(createUiStore)

@@ -145,7 +145,9 @@ export const useCameraFeedRenderers = ({
   const sizeMap = React.useRef(
     new Map<string, {width: number; height: number}>(),
   )
-  const observerMap = React.useRef(new Map<string, ResizeObserver>())
+  const observerMap = React.useRef(
+    new Map<string, {observer: ResizeObserver; element: Element}>(),
+  )
 
   React.useEffect(() => {
     const targets = cameraFeedTargets ?? []

@@ -14,6 +14,9 @@ importers:
       '@floating-ui/react':
         specifier: 0.27.16
         version: 0.27.16(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@fontsource-variable/geist':
+        specifier: 5.2.8
+        version: 5.2.8
       '@hookform/resolvers':
         specifier: 5.2.2
         version: 5.2.2(react-hook-form@7.69.0(react@19.2.0))
@@ -837,6 +840,9 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fontsource-variable/geist@5.2.8':
+    resolution: {integrity: sha512-cJ6m9e+8MQ5dCYJsLylfZrgBh6KkG4bOLckB35Tr9J/EqdkEM6QllH5PxqP1dhTvFup+HtMRPuz9xOjxXJggxw==}
 
   '@fullstacksjs/eslint-config@13.2.2':
     resolution: {integrity: sha512-cSX+cq41X3wX7mDXDszeFHgLJS3ipir2w7ro9xkVDt7Y+H/JWfMtUVeqgrj5IA5oHyPXeuumB4oM1jLXcDgejA==}
@@ -7210,6 +7216,8 @@ snapshots:
       tabbable: 6.4.0
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@fontsource-variable/geist@5.2.8': {}
 
   '@fullstacksjs/eslint-config@13.2.2(@typescript-eslint/eslint-plugin@8.57.0(@typescript-eslint/parser@8.35.1(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/utils@8.57.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1))(prettier@3.6.2)(react@19.2.0)(tailwindcss@4.1.18)(ts-api-utils@2.4.0(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:

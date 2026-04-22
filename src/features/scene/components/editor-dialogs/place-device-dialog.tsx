@@ -1,6 +1,5 @@
 import React from 'react'
 
-import type {DevicePopulate} from '@/data-provider/api/services/v2/api.schemas'
 import type {CameraPlacementProfile} from '@/features/scene/types/types'
 
 import {Badge} from '@/components/ui/badge'
@@ -12,24 +11,14 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command'
-import {useGetAllDevicesSuspense} from '@/data-provider/api/services/v2/device'
-import {get} from '@/lib/lodash-es'
 
-import {
-  getRealPlaceDeviceOptions,
-  getVirtualPlaceDeviceOptions,
-} from './place-dialog-devices'
+import {getVirtualPlaceDeviceOptions} from './place-dialog-devices'
 
 interface PlaceDeviceDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelectDevice: (profile: CameraPlacementProfile) => void
   nextColor: string
-}
-
-export const DEFAULT_LIST_PARAMS_V2 = {
-  page: 1,
-  limit: Number.MAX_SAFE_INTEGER,
 }
 
 interface PlaceDeviceDialogListProps {
@@ -43,21 +32,10 @@ const PlaceDeviceDialogList: React.FC<PlaceDeviceDialogListProps> = ({
   onSelectDevice,
   nextColor,
 }) => {
-  const {data: devices} = useGetAllDevicesSuspense(DEFAULT_LIST_PARAMS_V2, {
-    query: {
-      select: (s) =>
-        (get(s, 'List') as unknown as DevicePopulate[] | undefined) ?? [],
-    },
-  })
-
-  const realDevices = React.useMemo(
-    () => getRealPlaceDeviceOptions(devices),
-    [devices],
-  )
   const virtualDevices = React.useMemo(() => getVirtualPlaceDeviceOptions(), [])
 
   const renderDevice = (
-    device: ReturnType<typeof getRealPlaceDeviceOptions>[number],
+    device: ReturnType<typeof getVirtualPlaceDeviceOptions>[number],
   ) => (
     <CommandItem
       key={device.id}
@@ -94,11 +72,6 @@ const PlaceDeviceDialogList: React.FC<PlaceDeviceDialogListProps> = ({
   return (
     <CommandList>
       <CommandEmpty>No devices available</CommandEmpty>
-      {realDevices.length > 0 ? (
-        <CommandGroup className='vs:pb-2' heading='Real Devices'>
-          {realDevices.map(renderDevice)}
-        </CommandGroup>
-      ) : null}
       <CommandGroup className='vs:pb-2' heading='Virtual Devices'>
         {virtualDevices.map(renderDevice)}
       </CommandGroup>

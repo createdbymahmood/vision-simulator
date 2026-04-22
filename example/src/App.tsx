@@ -5,7 +5,6 @@ import {
   Outlet,
   RouterProvider,
 } from '@tanstack/react-router'
-import {QueryClient} from '@tanstack/react-query'
 import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import React from 'react'
@@ -40,8 +39,6 @@ declare module '@tanstack/react-router' {
 
 export const App: React.FC = () => <RouterProvider router={router} />
 
-const queryClient = new QueryClient()
-
 const ExampleLayout: React.FC = () => {
   return <Outlet />
 }
@@ -64,19 +61,12 @@ const HomePage: React.FC = () => {
 }
 
 const SimulatorPage: React.FC = () => {
-  const accessToken = import.meta.env.VITE_ACCESS_TOKEN
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-  const apiWsServiceUrl = import.meta.env.VITE_API_WS_SERVICE_URL
   const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN
   const visionSimulatorId = import.meta.env.VITE_VISION_SIMULATOR_ID
 
   return (
     <div style={{height: '100vh', width: '100vw'}}>
       <VisionSimulator
-        queryClient={queryClient}
-        apiBaseUrl={apiBaseUrl}
-        apiWsServiceUrl={apiWsServiceUrl}
-        accessToken={accessToken}
         mapboxToken={mapboxToken}
         mode='preview'
         visionSimulatorId={visionSimulatorId}

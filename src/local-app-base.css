@@ -7,7 +7,6 @@
 
   body {
     @apply vs:bg-background vs:text-foreground vs:font-sans vs:antialiased vs:overflow-hidden;
-    font-family: Geist, sans-serif;
   }
 
   ::selection {

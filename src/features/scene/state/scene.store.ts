@@ -1,6 +1,7 @@
 import type {StateCreator, StoreApi} from 'zustand'
 
 import {produce} from 'immer'
+import {persist} from 'zustand/middleware'
 
 import type {
   CameraEntity,
@@ -22,6 +23,7 @@ import {createAreaEntity} from '@/features/scene/services/area-factory'
 import {createCameraEntity} from '@/features/scene/services/camera-factory'
 import {createDefaultCameraOptics} from '@/features/scene/services/camera-optics'
 import {createInitialScene} from '@/features/scene/services/scene-factory'
+import {jsonLocalStorage} from '@/lib/zustand-persist'
 
 export interface SceneState {
   scene: SceneRoot
@@ -58,50 +60,11 @@ export interface SceneState {
 export interface SceneStoreInitialState extends Partial<SceneState> {
   editorMode?: EditorMode
   sceneOverrides?: Partial<SceneRoot>
+  persistKey?: string
 }
 
 type SetState = StoreApi<SceneState>['setState']
 type GetState = StoreApi<SceneState>['getState']
-
-const STORAGE_KEY = 'scene-store'
-
-const isBrowser = () => typeof window !== 'undefined'
-
-const loadSceneFromStorage = (): SceneRoot | null => {
-  if (!isBrowser()) {
-    return null
-  }
-  void STORAGE_KEY
-  // NOTE: Local storage persistence is temporarily disabled.
-  // Do not remove the commented code below; it will be re-enabled later.
-  // const raw = window.localStorage.getItem(STORAGE_KEY)
-  // if (!raw) {
-  //   return null
-  // }
-  // try {
-  //   const parsed = JSON.parse(raw) as SceneRoot
-  //   return parsed
-  // } catch (error) {
-  //   console.warn('Failed to parse persisted scene', error)
-  //   return null
-  // }
-  return null
-}
-
-const persistScene = (scene: SceneRoot) => {
-  if (!isBrowser()) {
-    return
-  }
-  void scene
-  void STORAGE_KEY
-  // NOTE: Local storage persistence is temporarily disabled.
-  // Do not remove the commented code below; it will be re-enabled later.
-  // try {
-  //   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(scene))
-  // } catch (error) {
-  //   console.warn('Failed to persist scene', error)
-  // }
-}
 
 const setScene = (set: SetState, get: GetState, scene: SceneRoot) => {
   const nextValue = produce<SceneState>((state) => {
@@ -109,9 +72,7 @@ const setScene = (set: SetState, get: GetState, scene: SceneRoot) => {
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const updateScene = (
@@ -125,9 +86,7 @@ const updateScene = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const setMode = (set: SetState, get: GetState, mode: EditorMode) => {
@@ -137,9 +96,7 @@ const setMode = (set: SetState, get: GetState, mode: EditorMode) => {
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const setMapVisibility = (set: SetState, get: GetState, visible: boolean) => {
@@ -149,9 +106,7 @@ const setMapVisibility = (set: SetState, get: GetState, visible: boolean) => {
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const setMapStyle = (set: SetState, get: GetState, style: SceneMapStyle) => {
@@ -161,9 +116,7 @@ const setMapStyle = (set: SetState, get: GetState, style: SceneMapStyle) => {
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const setSimulationSeed = (set: SetState, get: GetState, seed: number) => {
@@ -173,9 +126,7 @@ const setSimulationSeed = (set: SetState, get: GetState, seed: number) => {
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const setSelection = (set: SetState, get: GetState, ids: string[]) => {
@@ -205,9 +156,7 @@ const addArea = (set: SetState, get: GetState, geometry: PolygonGeometry) => {
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const setActiveArea = (
@@ -220,9 +169,7 @@ const setActiveArea = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const updateAreaName = (
@@ -240,9 +187,7 @@ const updateAreaName = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const deleteArea = (set: SetState, get: GetState, areaId: string) => {
@@ -275,9 +220,7 @@ const deleteArea = (set: SetState, get: GetState, areaId: string) => {
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const addWall = (
@@ -292,9 +235,7 @@ const addWall = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const addShape = (
@@ -311,9 +252,7 @@ const addShape = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const getNextId = (existingIds: string[], prefix: string) => {
@@ -388,9 +327,7 @@ const addCamera = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const addPerson = (
@@ -414,9 +351,7 @@ const addPerson = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const updateCamera = (
@@ -434,9 +369,7 @@ const updateCamera = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const updatePerson = (
@@ -454,9 +387,7 @@ const updatePerson = (
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const deleteEntities = (set: SetState, get: GetState, ids: string[]) => {
@@ -516,9 +447,7 @@ const deleteEntities = (set: SetState, get: GetState, ids: string[]) => {
   })
 
   set(nextValue)
-  const updated = get().scene
-  persistScene(updated)
-  return updated
+  return get().scene
 }
 
 const mergeSceneRoot = (base: SceneRoot, override: Partial<SceneRoot>) => ({
@@ -593,13 +522,9 @@ const normalizeCameraEntity = (camera: CameraEntity): CameraEntity => {
 
 const resolveInitialScene = (initialValues: SceneStoreInitialState) => {
   const baseScene = createInitialScene()
-  const persistedScene = loadSceneFromStorage()
-  const withPersistedScene = persistedScene
-    ? mergeSceneRoot(baseScene, persistedScene)
-    : baseScene
   const withInitialScene = initialValues.scene
-    ? mergeSceneRoot(withPersistedScene, initialValues.scene)
-    : withPersistedScene
+    ? mergeSceneRoot(baseScene, initialValues.scene)
+    : baseScene
   const mergedScene = initialValues.sceneOverrides
     ? mergeSceneRoot(withInitialScene, initialValues.sceneOverrides)
     : withInitialScene
@@ -620,39 +545,75 @@ const resolveInitialScene = (initialValues: SceneStoreInitialState) => {
 
 const createSceneStore: (
   initialValues: SceneStoreInitialState,
-) => StateCreator<SceneState> = (initialValues) => {
+) => StateCreator<SceneState, any, any> = (initialValues) => {
   const {
+    persistKey: _persistKey,
     scene: _scene,
     editorMode: _editorMode,
     sceneOverrides: _sceneOverrides,
     ...restInitialValues
   } = initialValues
 
-  return (set, get) => ({
-    scene: resolveInitialScene(initialValues),
-    projectName: initialValues.projectName ?? 'Untitled project',
-    selectedEntityIds: restInitialValues.selectedEntityIds ?? [],
-    setScene: (scene) => setScene(set, get, scene),
-    updateScene: (updater) => updateScene(set, get, updater),
-    setMode: (mode) => setMode(set, get, mode),
-    setMapVisibility: (visible) => setMapVisibility(set, get, visible),
-    setMapStyle: (style) => setMapStyle(set, get, style),
-    setSimulationSeed: (seed) => setSimulationSeed(set, get, seed),
-    setSelection: (ids) => setSelection(set, get, ids),
-    clearSelection: () => clearSelection(set, get),
-    addArea: (geometry) => addArea(set, get, geometry),
-    setActiveArea: (areaId) => setActiveArea(set, get, areaId),
-    updateAreaName: (areaId, name) => updateAreaName(set, get, areaId, name),
-    deleteArea: (areaId) => deleteArea(set, get, areaId),
-    addWall: (wall) => addWall(set, get, wall),
-    addShape: (shape) => addShape(set, get, shape),
-    addCamera: (camera) => addCamera(set, get, camera),
-    updateCamera: (id, updater) => updateCamera(set, get, id, updater),
-    addPerson: (person) => addPerson(set, get, person),
-    updatePerson: (id, updater) => updatePerson(set, get, id, updater),
-    deleteEntities: (entityIds) => deleteEntities(set, get, entityIds),
-    ...restInitialValues,
-  })
+  const persistKey = initialValues.persistKey ?? 'vision-simulator:scene'
+
+  return persist(
+    (set, get) => ({
+      scene: resolveInitialScene(initialValues),
+      projectName: initialValues.projectName ?? 'Untitled project',
+      selectedEntityIds: restInitialValues.selectedEntityIds ?? [],
+      setScene: (scene) => setScene(set, get, scene),
+      updateScene: (updater) => updateScene(set, get, updater),
+      setMode: (mode) => setMode(set, get, mode),
+      setMapVisibility: (visible) => setMapVisibility(set, get, visible),
+      setMapStyle: (style) => setMapStyle(set, get, style),
+      setSimulationSeed: (seed) => setSimulationSeed(set, get, seed),
+      setSelection: (ids) => setSelection(set, get, ids),
+      clearSelection: () => clearSelection(set, get),
+      addArea: (geometry) => addArea(set, get, geometry),
+      setActiveArea: (areaId) => setActiveArea(set, get, areaId),
+      updateAreaName: (areaId, name) => updateAreaName(set, get, areaId, name),
+      deleteArea: (areaId) => deleteArea(set, get, areaId),
+      addWall: (wall) => addWall(set, get, wall),
+      addShape: (shape) => addShape(set, get, shape),
+      addCamera: (camera) => addCamera(set, get, camera),
+      updateCamera: (id, updater) => updateCamera(set, get, id, updater),
+      addPerson: (person) => addPerson(set, get, person),
+      updatePerson: (id, updater) => updatePerson(set, get, id, updater),
+      deleteEntities: (entityIds) => deleteEntities(set, get, entityIds),
+      ...restInitialValues,
+    }),
+    {
+      name: persistKey,
+      storage: jsonLocalStorage,
+      version: 1,
+      merge: (persisted, current) => {
+        const persistedState = persisted as Partial<SceneState> | undefined
+        const persistedScene = persistedState?.scene
+        const mergedScene = persistedScene
+          ? mergeSceneRoot(current.scene, persistedScene)
+          : current.scene
+
+        const withOverrides = initialValues.sceneOverrides
+          ? mergeSceneRoot(mergedScene, initialValues.sceneOverrides)
+          : mergedScene
+
+        const withEditorMode = initialValues.editorMode
+          ? {...withOverrides, editorMode: initialValues.editorMode}
+          : withOverrides
+
+        return {
+          ...current,
+          ...persistedState,
+          scene: {
+            ...withEditorMode,
+            cameras: withEditorMode.cameras.map((camera) =>
+              normalizeCameraEntity(camera),
+            ),
+          },
+        } as SceneState
+      },
+    },
+  )
 }
 
 export const {

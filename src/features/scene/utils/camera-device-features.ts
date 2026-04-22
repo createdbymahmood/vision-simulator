@@ -1,8 +1,4 @@
 import type {
-  DeviceFeature,
-  DevicePopulate,
-} from '@/data-provider/api/services/v2/api.schemas'
-import type {
   CameraEntity,
   CameraOptics,
   CameraPlacementProfile,
@@ -14,6 +10,22 @@ import {
   getCameraAspect,
   resolveVerticalFovFromHorizontal,
 } from '@/features/scene/services/camera-optics'
+
+export interface DeviceFeature {
+  field?: string
+  label?: string
+  path?: string
+  unit?: string
+  value?: string
+}
+
+export interface DevicePopulate {
+  id?: string
+  deviceId?: string
+  name?: string
+  description?: string
+  features?: DeviceFeature[]
+}
 
 const CAMERA_FEATURE_FIELDS = {
   resolutionWidth: 'camera_resolution_width',

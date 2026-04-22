@@ -30,7 +30,7 @@ export function createZustandContextStore<
   State extends object,
   InitialState extends Partial<State>,
 >(
-  initializer: (initial: InitialState) => StateCreator<State>,
+  initializer: (initial: InitialState) => StateCreator<State, any, any>,
 ): ZustandContextStore<State, InitialState> {
   const StoreContext = createContext<StoreApi<State> | null>(null)
 

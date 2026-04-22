@@ -20,34 +20,26 @@
 
 ## Required Props
 
-The `VisionSimulator` export requires an `apiBaseUrl`, `apiWsServiceUrl`,
-`mapboxToken`, `visionSimulatorId`, and `accessToken` to be provided via props.
-The app does not fall back to `import.meta.env` internally.
+The `VisionSimulator` export is **local-only**: it loads and saves scene data
+from `localStorage` via Zustand persistence (scoped by `visionSimulatorId`).
+
+`mapboxToken` is optional but required for Mapbox map tiles and location search.
 
 ```tsx
 import {VisionSimulator} from '@vega-tek-hub/vision-simulator-v2'
 
 interface AppProps {
-  apiBaseUrl: string
-  apiWsServiceUrl: string
-  mapboxToken: string
   visionSimulatorId: string
-  accessToken: string
+  mapboxToken?: string
   mode?: 'editor' | 'preview'
 }
 
 export const App: React.FC<AppProps> = ({
-  accessToken,
-  apiBaseUrl,
-  apiWsServiceUrl,
   mapboxToken,
   visionSimulatorId,
 }) => {
   return (
     <VisionSimulator
-      accessToken={accessToken}
-      apiBaseUrl={apiBaseUrl}
-      apiWsServiceUrl={apiWsServiceUrl}
       mapboxToken={mapboxToken}
       mode='editor'
       visionSimulatorId={visionSimulatorId}
@@ -65,9 +57,6 @@ export const App: React.FC<AppProps> = ({
 
 ```tsx
 <VisionSimulator
-  accessToken={accessToken}
-  apiBaseUrl={apiBaseUrl}
-  apiWsServiceUrl={apiWsServiceUrl}
   mapboxToken={mapboxToken}
   mode='preview'
   visionSimulatorId={visionSimulatorId}
@@ -76,9 +65,6 @@ export const App: React.FC<AppProps> = ({
 
 ```tsx
 <VisionSimulator
-  accessToken={accessToken}
-  apiBaseUrl={apiBaseUrl}
-  apiWsServiceUrl={apiWsServiceUrl}
   mapboxToken={mapboxToken}
   mode='editor'
   visionSimulatorId={visionSimulatorId}

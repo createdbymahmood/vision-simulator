@@ -1,4 +1,3 @@
-import {debounce} from '@lodash-es'
 import {useCallbackRef} from '@radix-ui/react-use-callback-ref'
 import {ArrowDown, ArrowLeft, ArrowRight, ArrowUp} from 'lucide-react'
 import React from 'react'
@@ -9,12 +8,10 @@ import {Button} from '@/components/ui/button'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
 import {Slider} from '@/components/ui/slider'
-import {useUpdateDevice} from '@/data-provider/api/services/v2/device'
 import {useSceneStore} from '@/features/scene/state/scene.store'
 import {useUiStore} from '@/features/scene/state/ui.store'
 import {formatMeters} from '@/features/scene/map/map-view-helpers'
 import {useHistoryRecorder} from '@/features/scene/hooks/use-history-recorder'
-import {mergeCameraFeaturesWithCamera} from '@/features/scene/utils/camera-device-features'
 
 import {
   PropertiesDeleteAction,
@@ -79,7 +76,6 @@ const PtzDpad: React.FC<PtzDpadProps> = ({onPan, onTilt, color}) => (
 // eslint-disable-next-line max-lines-per-function, max-statements
 export const CameraPropertiesSheet: React.FC = () => {
   const {recordAction, recordActionDebounced} = useHistoryRecorder()
-  const {mutate: updateDevice} = useUpdateDevice()
   const openPanels = useUiStore((state) => state.openPanels)
   const openPanel = useUiStore((state) => state.openPanel)
   const closePanel = useUiStore((state) => state.closePanel)
@@ -121,48 +117,6 @@ export const CameraPropertiesSheet: React.FC = () => {
         {type: 'update', entity: 'camera'},
         updated,
       )
-    },
-  )
-
-  const syncDeviceFeatures = useCallbackRef((camera: CameraEntity) => {
-    if (!camera.sourceDeviceId || camera.sourceDeviceKind === 'virtual') {
-      return
-    }
-
-    updateDevice({
-      deviceId: camera.sourceDeviceId,
-      data: {
-        features: mergeCameraFeaturesWithCamera(camera),
-      },
-    })
-  })
-
-  const debouncedSyncDeviceFeatures = React.useMemo(
-    () => debounce((camera: CameraEntity) => syncDeviceFeatures(camera), 800),
-    [syncDeviceFeatures],
-  )
-
-  React.useEffect(
-    () => () => {
-      debouncedSyncDeviceFeatures.cancel()
-    },
-    [debouncedSyncDeviceFeatures],
-  )
-
-  const queueDeviceSync = useCallbackRef(
-    (updated?: ReturnType<typeof updateCamera>) => {
-      if (!updated || !selectedCamera) {
-        return
-      }
-
-      const nextCamera = updated.cameras.find(
-        (camera) => camera.id === selectedCamera.id,
-      )
-      if (!nextCamera) {
-        return
-      }
-
-      debouncedSyncDeviceFeatures(nextCamera)
     },
   )
 
@@ -215,7 +169,6 @@ export const CameraPropertiesSheet: React.FC = () => {
         updater(camera)
       })
       recordCameraUpdate(updated)
-      queueDeviceSync(updated)
       return updated
     },
   )
@@ -419,7 +372,6 @@ export const CameraPropertiesSheet: React.FC = () => {
       return
     }
 
-    debouncedSyncDeviceFeatures.cancel()
     const updated = deleteEntities([selectedCamera.id])
     recordAction({type: 'delete', entity: 'camera', count: 1}, updated)
     clearSelection()

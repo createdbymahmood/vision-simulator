@@ -1,10 +1,12 @@
 import type {StateCreator, StoreApi} from 'zustand'
 
 import {produce} from 'immer'
+import {persist} from 'zustand/middleware'
 
 import type {SceneRoot} from '@/features/scene/types/types'
 
 import {createZustandContextStore} from '@/components/shared/zustand'
+import {jsonLocalStorage} from '@/lib/zustand-persist'
 
 const DEFAULT_HISTORY_CAPACITY = 100
 
@@ -37,6 +39,10 @@ export interface HistoryState {
 
 type SetState = StoreApi<HistoryState>['setState']
 type GetState = StoreApi<HistoryState>['getState']
+
+type HistoryStoreInitialState = Partial<HistoryState> & {
+  persistKey?: string
+}
 
 const record = (
   set: SetState,
@@ -143,27 +149,53 @@ const canUndo = (get: GetState) => get().past.length > 1
 const canRedo = (get: GetState) => get().future.length > 0
 
 const createHistoryStore: (
-  initialValues: Partial<HistoryState>,
-) => StateCreator<HistoryState> = (initialValues) => (set, get) => ({
-  past: initialValues?.past ?? [],
-  future: initialValues?.future ?? [],
-  capacity: initialValues?.capacity ?? DEFAULT_HISTORY_CAPACITY,
-  applying: initialValues?.applying ?? false,
-  record: (scene, description) => record(set, get, scene, description),
-  undo: (currentScene) => undo(set, get, currentScene),
-  redo: (currentScene) => redo(set, get, currentScene),
-  clear: () => clear(set, get),
-  seed: (scene, description) => seed(set, get, scene, description),
-  setApplying: (value) => setApplying(set, get, value),
-  canUndo: () => canUndo(get),
-  canRedo: () => canRedo(get),
-  ...initialValues,
-})
+  initialValues: HistoryStoreInitialState,
+) => StateCreator<HistoryState, any, any> = (initialValues) => {
+  const {persistKey: _persistKey, ...restInitialValues} = initialValues
+  const persistKey = initialValues.persistKey ?? 'vision-simulator:history'
+
+  return persist(
+    (set, get) => ({
+      past: restInitialValues?.past ?? [],
+      future: restInitialValues?.future ?? [],
+      capacity: restInitialValues?.capacity ?? DEFAULT_HISTORY_CAPACITY,
+      applying: false,
+      record: (scene, description) => record(set, get, scene, description),
+      undo: (currentScene) => undo(set, get, currentScene),
+      redo: (currentScene) => redo(set, get, currentScene),
+      clear: () => clear(set, get),
+      seed: (scene, description) => seed(set, get, scene, description),
+      setApplying: (value) => setApplying(set, get, value),
+      canUndo: () => canUndo(get),
+      canRedo: () => canRedo(get),
+      ...restInitialValues,
+    }),
+    {
+      name: persistKey,
+      storage: jsonLocalStorage,
+      version: 1,
+      partialize: (state) => ({
+        past: state.past.slice(-Math.min(state.capacity, 20)),
+        future: [],
+        capacity: state.capacity,
+        applying: false,
+      }),
+      merge: (persisted, current) => {
+        const persistedState = persisted as Partial<HistoryState> | undefined
+        return {
+          ...current,
+          ...persistedState,
+          applying: false,
+        } as HistoryState
+      },
+    },
+  )
+}
 
 export const {
   Provider: HistoryStoreProvider,
   useStore: useHistoryStore,
   getState: getHistoryStore,
-} = createZustandContextStore<HistoryState, Partial<HistoryState>>(
+} = createZustandContextStore<HistoryState, HistoryStoreInitialState>(
   createHistoryStore,
 )

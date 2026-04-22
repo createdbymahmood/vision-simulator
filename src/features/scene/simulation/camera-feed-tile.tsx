@@ -13,7 +13,6 @@ import type {createCoordinateTransformer} from './simulation-helpers'
 
 import {computeFeedRenderConfig} from './camera-feed-helpers'
 import {computeFeedBoundingBoxes, useElementSize} from './camera-feed-utils'
-import {RealDeviceFeedPlayer} from './real-device-feed-player'
 
 export interface CameraFeedTileProps {
   camera: CameraEntity
@@ -53,7 +52,7 @@ const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
   feedCount,
   variant = 'list',
 }) => {
-  const isRealDeviceFeed = camera.sourceDeviceKind === 'real'
+  const isRealDeviceFeed = false
   const [isExpanded, setIsExpanded] = React.useState(false)
   const isFullscreen = !isRealDeviceFeed && isExpanded
   const isGridVariant = variant === 'grid'
@@ -150,57 +149,53 @@ const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
           )}
         >
           <div className={feedContainerClassName}>
-            {isRealDeviceFeed ? (
-              <RealDeviceFeedPlayer camera={camera} autoPlay />
-            ) : (
-              <>
+            <>
+              <div
+                className='vs:absolute vs:inset-0'
+                ref={feedTarget.containerRef}
+              />
+              <canvas
+                className='vs:absolute vs:inset-0 vs:h-full vs:w-full'
+                ref={feedTarget.canvasRef}
+              />
+              {ENABLE_FEED_OPTICS ? (
                 <div
-                  className='vs:absolute vs:inset-0'
-                  ref={feedTarget.containerRef}
+                  className='vs:absolute vs:inset-0 vs:pointer-events-none'
+                  style={{
+                    background:
+                      'radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(15,23,42,0.35) 100%)',
+                  }}
                 />
-                <canvas
-                  className='vs:absolute vs:inset-0 vs:h-full vs:w-full'
-                  ref={feedTarget.canvasRef}
-                />
-                {ENABLE_FEED_OPTICS ? (
+              ) : null}
+              <div className='vs:pointer-events-none vs:absolute vs:inset-0'>
+                {boxes.map((box) => (
                   <div
-                    className='vs:absolute vs:inset-0 vs:pointer-events-none'
+                    key={box.id}
+                    className={`vs:absolute vs:border-2 ${
+                      selectedPersonIdSet.has(box.id)
+                        ? 'vs:border-purple-500'
+                        : 'vs:border-yellow-300'
+                    }`}
                     style={{
-                      background:
-                        'radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(15,23,42,0.35) 100%)',
+                      left: `${box.left * 100}%`,
+                      top: `${box.top * 100}%`,
+                      width: `${box.width * 100}%`,
+                      height: `${box.height * 100}%`,
                     }}
-                  />
-                ) : null}
-                <div className='vs:pointer-events-none vs:absolute vs:inset-0'>
-                  {boxes.map((box) => (
-                    <div
-                      key={box.id}
-                      className={`vs:absolute vs:border-2 ${
+                  >
+                    <span
+                      className={`vs:absolute vs:-top-5 vs:left-0 vs:text-[10px] vs:px-1 vs:rounded ${
                         selectedPersonIdSet.has(box.id)
-                          ? 'vs:border-purple-500'
-                          : 'vs:border-yellow-300'
+                          ? 'vs:bg-purple-500/90 vs:text-white'
+                          : 'vs:bg-yellow-300/90 vs:text-black'
                       }`}
-                      style={{
-                        left: `${box.left * 100}%`,
-                        top: `${box.top * 100}%`,
-                        width: `${box.width * 100}%`,
-                        height: `${box.height * 100}%`,
-                      }}
                     >
-                      <span
-                        className={`vs:absolute vs:-top-5 vs:left-0 vs:text-[10px] vs:px-1 vs:rounded ${
-                          selectedPersonIdSet.has(box.id)
-                            ? 'vs:bg-purple-500/90 vs:text-white'
-                            : 'vs:bg-yellow-300/90 vs:text-black'
-                        }`}
-                      >
-                        {box.id}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+                      {box.id}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
             {!isRealDeviceFeed ? (
               <div className='vs:absolute vs:bottom-2 vs:right-2 vs:z-20'>
                 <Button
