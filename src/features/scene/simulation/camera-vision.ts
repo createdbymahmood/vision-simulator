@@ -33,6 +33,7 @@ export interface VisionPersonState {
   z: number
   height: number
   areaId: string
+  name: string
 }
 
 export interface VisionState {
@@ -235,6 +236,7 @@ export const computeCameraVisionState = ({
       z: base.z,
       height: person.height,
       areaId: person.areaId,
+      name: person.name,
     }
     peopleWorld[person.id] = {
       ...worldState,

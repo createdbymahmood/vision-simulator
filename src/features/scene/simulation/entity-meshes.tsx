@@ -1,9 +1,9 @@
 import React from 'react'
 import * as THREE from 'three'
+import {useGLTF, Html} from '@react-three/drei'
 
 import type {CameraEntity} from '@/features/scene/types/types'
 
-import {DEFAULT_PERSON_RADIUS} from '@/features/scene/constants/person-defaults'
 import {
   getEffectiveHorizontalFov,
   getEffectiveVerticalFov,
@@ -14,6 +14,9 @@ import type {WorldEntity} from './simulation-helpers'
 import {ShapeMesh} from './shape-mesh'
 import {parseColorAndAlpha} from './simulation-helpers'
 import {DEBUG_LAYER} from './simulation-layers'
+
+const PERSON_MODEL_URL = '/entity-mesh-models/Character_Base.glb'
+const PERSON_MODEL_SCALE = 1
 
 const WALL_BASE_OPACITY = 1
 const MAX_RENDER_FOV_DEG = 150
@@ -406,32 +409,43 @@ export const PersonMesh: React.FC<{
   onSelect: (id?: string) => void
   onFocus: (point: THREE.Vector3, distance?: number) => void
   selected: boolean
-}> = ({data, onSelect, onFocus, selected}) => {
-  const radius = DEFAULT_PERSON_RADIUS
-  const bodyHeight = Math.max(data.entity.height - radius * 2, radius)
-  const color = selected ? '#F7DC6F' : '#4ECDC4'
+}> = ({data, onSelect, onFocus}) => {
+  const {scene: modelScene} = useGLTF(PERSON_MODEL_URL)
+
+  const clonedScene = React.useMemo(() => {
+    const clone = modelScene.clone()
+    clone.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.position.set(0, 1.5, 0)
+      }
+    })
+    return clone
+  }, [modelScene])
+  const rotationY = data.direction ?? 0
+
   return (
-    <group position={data.position}>
-      <mesh
+    <group
+      position={data.position}
+      rotation={[0, rotationY, 0]}
+      onClick={(event) => {
+        event.stopPropagation()
+        onSelect(data.entity.id)
+        if (event.detail === 2) {
+          onFocus(data.position.clone(), Math.max(data.entity.height * 2, 8))
+        }
+      }}
+    >
+      <primitive
+        object={clonedScene}
+        scale={PERSON_MODEL_SCALE}
         castShadow
-        onClick={(event) => {
-          event.stopPropagation()
-          onSelect(data.entity.id)
-          if (event.detail === 2) {
-            onFocus(data.position.clone(), Math.max(data.entity.height * 2, 8))
-          }
-        }}
         receiveShadow
-      >
-        <capsuleGeometry args={[radius, bodyHeight, 8, 16]} />
-        <meshStandardMaterial
-          emissive={selected ? '#F7DC6F' : '#000000'}
-          emissiveIntensity={selected ? 0.4 : 0}
-          transparent={data.dimmed}
-          color={color}
-          opacity={data.dimmed ? 0.5 : 1}
-        />
-      </mesh>
+      />
+      <Html center position={[0, data.entity.height + 1, 0]}>
+        <div className='vs:pointer-events-none vs:whitespace-nowrap vs:rounded vs:bg-black/70 vs:px-2 vs:py-1 vs:text-[14px] vs:font-medium vs:text-white vs:shadow-lg'>
+          {data.entity.name || data.entity.id}
+        </div>
+      </Html>
     </group>
   )
 }

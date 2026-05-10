@@ -350,11 +350,12 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       ),
     [focusAreaId, scene, transformer],
   )
-  const simulatedPeoplePositions = useSimulatedPeople({
-    scene,
-    transformer,
-    paused: isInteracting,
-  })
+  const {positions: simulatedPeoplePositions, velocities: simulatedPeopleVelocities} =
+    useSimulatedPeople({
+      scene,
+      transformer,
+      paused: isInteracting,
+    })
   const obstaclesByArea = React.useMemo(
     () => buildObstacleSegmentsByArea(scene, transformer),
     [scene, transformer],
@@ -403,9 +404,18 @@ export const SimulationScene: React.FC<SimulationSceneProps> = ({
       }
       const nextPosition = override.clone()
       nextPosition.y = entity.position.y
-      return {...entity, position: nextPosition}
+      const velocity = simulatedPeopleVelocities.get(entity.entity.id)
+      let direction: number | undefined
+      if (velocity && velocity.length() > 0.01) {
+        direction = Math.atan2(-velocity.z, velocity.x) + Math.PI / 2
+      }
+      return {...entity, position: nextPosition, direction}
     })
-  }, [entities, simulatedPeoplePositions])
+  }, [
+    entities,
+    simulatedPeoplePositions,
+    simulatedPeopleVelocities,
+  ])
   const visibleAreaEntities = React.useMemo(
     () =>
       entities.filter(

@@ -19,7 +19,7 @@ export interface CameraFeedTileProps {
   feedTarget: CameraFeedTarget
   peopleIds: string[]
   selectedPersonIds: string[]
-  peopleWorld: Record<string, {x: number; y: number; z: number; height: number}>
+  peopleWorld: Record<string, {x: number; y: number; z: number; height: number; name: string}>
   transformer: ReturnType<typeof createCoordinateTransformer>
   feedCount: number
   variant?: 'list' | 'grid'
@@ -131,7 +131,9 @@ const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
     isGridVariant
       ? 'vs:flex vs:h-full vs:min-h-0 vs:flex-col vs:rounded-lg vs:p-3'
       : 'vs:rounded-none vs:py-4',
-    isFullscreen ? 'vs:flex vs:h-full vs:flex-col vs:rounded-none vs:p-0' : null,
+    isFullscreen
+      ? 'vs:flex vs:h-full vs:flex-col vs:rounded-none vs:p-0'
+      : null,
   )
 
   const feedContainerClassName = cn(
@@ -190,7 +192,7 @@ const CameraFeedTileComponent: React.FC<CameraFeedTileProps> = ({
                           : 'vs:bg-yellow-300/90 vs:text-black'
                       }`}
                     >
-                      {box.id}
+                      {peopleWorld[box.id]?.name ?? box.id}
                     </span>
                   </div>
                 ))}

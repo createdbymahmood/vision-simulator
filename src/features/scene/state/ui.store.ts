@@ -33,6 +33,7 @@ export interface VisionPersonState {
   z: number
   height: number
   areaId: string
+  name: string
 }
 
 export interface VisionState {

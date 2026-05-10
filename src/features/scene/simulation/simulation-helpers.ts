@@ -35,6 +35,7 @@ export type WorldEntity =
       type: 'person'
       entity: PersonEntity
       position: THREE.Vector3
+      direction?: number
       dimmed: boolean
     }
   | {
@@ -253,7 +254,7 @@ export const transformPeopleFeatureCollectionsToThreeJSShape = (
     .map((person) => ({
       type: 'person',
       entity: person,
-      position: transformer.toVector3([person.x, person.y], person.height / 2),
+      position: transformer.toVector3([person.x, person.y], 0),
       dimmed: isDimmed(person.areaId),
     }))
 

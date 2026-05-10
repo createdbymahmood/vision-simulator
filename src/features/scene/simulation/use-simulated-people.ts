@@ -34,6 +34,9 @@ export const useSimulatedPeople = ({
   const [positions, setPositions] = React.useState<Map<string, THREE.Vector3>>(
     () => new Map(),
   )
+  const [velocities, setVelocities] = React.useState<Map<string, THREE.Vector3>>(
+    () => new Map(),
+  )
   const simRef = React.useRef<{
     people: Map<string, SimPersonState>
     accumulator: number
@@ -133,8 +136,16 @@ export const useSimulatedPeople = ({
           ]),
         ),
       )
+      setVelocities(
+        new Map(
+          [...state.people.values()].map((person) => [
+            person.id,
+            person.velocity.clone(),
+          ]),
+        ),
+      )
     }
   })
 
-  return positions
+  return {positions, velocities}
 }

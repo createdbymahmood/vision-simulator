@@ -23,9 +23,7 @@ const degToRad = (deg: number) => (deg * Math.PI) / 180
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 const MIN_CAMERA_NEAR_DISTANCE = 0.1
 
-export const useElementSize = (
-  ref: React.RefObject<HTMLDivElement | null>,
-) => {
+export const useElementSize = (ref: React.RefObject<HTMLDivElement | null>) => {
   const [size, setSize] = React.useState({width: 1, height: 1})
 
   React.useLayoutEffect(() => {
